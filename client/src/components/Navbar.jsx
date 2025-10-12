@@ -19,16 +19,20 @@ function Navbar() {
                 <span>Home</span>
               </NavLink>
             </li>
-            <li className="loginLink">
-              <NavLink to="login">
-                <span>Login</span>
-              </NavLink>
-            </li>
-            <li className="registerLink">
-              <NavLink to="register">
-                <span>Register</span>
-              </NavLink>
-            </li>
+            {!loggedUser && !token && (
+              <>
+                <li className="loginLink">
+                  <NavLink to="login">
+                    <span>Login</span>
+                  </NavLink>
+                </li>
+                <li className="registerLink">
+                  <NavLink to="register">
+                    <span>Register</span>
+                  </NavLink>
+                </li>
+              </>
+            )}
             {loggedUser && (
               <li className="profileLink">
                 <NavLink to="userProfile">

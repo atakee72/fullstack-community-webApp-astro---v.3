@@ -2,7 +2,7 @@ import React from "react";
 import Form from "react-bootstrap/Form";
 import Modal from "react-bootstrap/Modal";
 import { Button } from "react-bootstrap";
-import TagSelector from "../components/TagSelector";
+import TagSelector from "./TagSelector";
 
 function PostModal({
   collectionType,

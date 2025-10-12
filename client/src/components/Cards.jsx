@@ -2,12 +2,12 @@ import { useContext, useRef, useState } from "react";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import Nav from "react-bootstrap/Nav";
-import transformDate from "../utils/transformDate";
+import transformDate from "../utils/transformDate.js";
 import { AuthContext } from "../store/AuthContext.js";
 import { Badge } from "react-bootstrap";
-import AccordionItem from "./AccordionItem";
-import CommentModal from "./CommentModal";
-import DeletePostButton from "./DeletePostButton";
+import AccordionItem from "./AccordionItem.jsx";
+import CommentModal from "./CommentModal.jsx";
+import DeletePostButton from "./DeletePostButton.jsx";
 import "./Cards.css";
 
 function Cards({ item, serverMsg, forumHandlers }) {
@@ -17,7 +17,8 @@ function Cards({ item, serverMsg, forumHandlers }) {
     deleteAComment,
     updateLikesCounter,
   } = forumHandlers;
-  const { post, comments, author } = item;
+  const post = item;
+  const { comments, author } = item;
   const [activeTab, setActiveTab] = useState("Posts");
   const commentTextRef = useRef();
   const likeRef = useRef();
@@ -32,7 +33,7 @@ function Cards({ item, serverMsg, forumHandlers }) {
   };
 
   return (
-    <Card className="m-4 ms-5 me-5 p-4 card card-container">
+    <Card className="m-2 m-md-4 p-2 p-md-4 card-container">
       <DeletePostButton
         showAlert={showAlert}
         setShowAlert={setShowAlert}
@@ -137,7 +138,6 @@ function Cards({ item, serverMsg, forumHandlers }) {
         <Card.Body>
           <AccordionItem
             comments={comments}
-            setCommentShow={setCommentShow}
             deleteAComment={deleteAComment}
           />
         </Card.Body>

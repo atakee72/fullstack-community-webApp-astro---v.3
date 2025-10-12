@@ -2,7 +2,7 @@ import { useContext, useState } from "react";
 import React from "react";
 import Alert from "react-bootstrap/Alert";
 import CloseButton from "react-bootstrap/CloseButton";
-import transformDate from "../utils/transformDate";
+import transformDate from "../utils/transformDate.js";
 import { AuthContext } from "../store/AuthContext.js";
 
 function AccordionItem({ comments, setCommentShow, deleteAComment }) {
