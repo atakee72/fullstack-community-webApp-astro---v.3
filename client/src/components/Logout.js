@@ -1,5 +1,4 @@
 import React, { useContext } from "react";
-import Button from "react-bootstrap/Button";
 import { AuthContext } from "../store/AuthContext";
 
 function Logout() {

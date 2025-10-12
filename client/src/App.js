@@ -1,4 +1,3 @@
-// import { useEffect, useState } from "react";
 import "./App.css";
 import "./HobbySelector.css";
 import LandingPage from "./pages/LandingPage";
@@ -9,7 +8,6 @@ import UserProfile from "./pages/UserProfile";
 import NoMatch from "./pages/NoMatch";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
-// import Button from "react-bootstrap/Button";
 import { AuthContextProvider } from "./store/AuthContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -18,7 +16,7 @@ function App() {
   const showNavbar = location.pathname !== "/landingPage";
 
   return (
-    <div className="App" style={{ backgroundColor: "#eccc6e" }}>
+    <div className="App">
       <AuthContextProvider>
         <header>{showNavbar && <Navbar />}</header>
 
