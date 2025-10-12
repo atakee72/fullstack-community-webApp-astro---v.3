@@ -1,9 +1,12 @@
 .user-profile-form-group {
   display: flex;
   flex-direction: row;
-  gap: 30px;
+  gap: 20px;
   justify-content: space-evenly;
   align-items: center;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .user-profile-picture {
@@ -26,9 +29,67 @@
   display: flex;
   flex-direction: row;
   justify-content: center;
-  padding: 5%;
-  margin: 5%;
+  padding: 2%;
+  margin: 1%;
   border: 1px dashed gray;
-  min-width: 400px;
+  width: 100%;
+  max-width: 400px;
   background-color: black;
+}
+
+.form-group {
+  width: 100%;
+  max-width: 450px;
+  margin: 10px auto;
+}
+
+.container form {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+@media (max-width: 900px) {
+  .user-profile-form-group {
+    padding: 0 15px;
+  }
+
+  .hobbies-container {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .user-profile-form-group {
+    flex-direction: column;
+    gap: 15px;
+    padding: 0 10px;
+  }
+
+  .hobbies-container {
+    padding: 2%;
+    margin: 1%;
+  }
+
+  .form-group {
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 300px) {
+  .hobbies-container {
+    padding: 1px;
+    margin: 1px;
+  }
+
+  .user-profile-form-group {
+    gap: 5px;
+    padding: 0 2px;
+  }
+
+  .user-profile-picture {
+    width: 100px;
+    height: 130px;
+  }
 }

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState, useCallback } from "react";
+import React, { useContext, useEffect, useState, useCallback } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { getToken } from "../utils/getToken";
@@ -11,9 +11,20 @@ function UserProfile() {
   const [user, setUser] = useState({});
   const [error, setError] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [loading, setLoading] = useState(false);
   const token = getToken();
 
   const userId = useContext(AuthContext);
+
+  // Form state for controlled components
+  const [formData, setFormData] = useState({
+    firstName: '',
+    surName: '',
+    birthDay: '',
+    roleBadge: '',
+    hobbies: []
+  });
 
   const availableHobbies = [
     "sports",
@@ -24,14 +35,8 @@ function UserProfile() {
     "politics",
   ];
 
-  const fNameRef = useRef();
-  const sNameRef = useRef();
-  const bDayRef = useRef();
-  const rBadgeRef = useRef();
-  const hobbiesRef = useRef();
-
   const handleHobbiesSelected = (selectedHobbies) => {
-    console.log("Selected hobbies:", selectedHobbies);
+    setFormData(prev => ({ ...prev, hobbies: selectedHobbies }));
   };
 
   const getProfile = useCallback(() => {
@@ -106,13 +111,19 @@ function UserProfile() {
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccessMsg("");
 
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
 
     const urlencoded = new URLSearchParams();
-    urlencoded.append("firstname", fNameRef.current.value);
-    urlencoded.append("surname", sNameRef.current.value);
+    urlencoded.append("firstname", formData.firstName);
+    urlencoded.append("surname", formData.surName);
+    urlencoded.append("birthday", formData.birthDay);
+    urlencoded.append("rolebadge", formData.roleBadge);
+    urlencoded.append("hobbies", JSON.stringify(formData.hobbies));
 
     const requestOptions = {
       method: "POST",
@@ -122,12 +133,24 @@ function UserProfile() {
     };
 
     try {
-      await fetch(
+      const response = await fetch(
         `http://localhost:5000/api/users/${userId.userId}`,
         requestOptions
       );
+
+      if (response.ok) {
+        setSuccessMsg("Profile updated successfully!");
+        getProfile(); // Refresh profile data
+        setTimeout(() => setSuccessMsg(""), 3000);
+      } else {
+        const error = await response.json();
+        setError(error.message || "Failed to update profile");
+      }
     } catch (error) {
       console.log("error", error);
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -135,9 +158,31 @@ function UserProfile() {
     getProfile();
   }, [token, getProfile]);
 
+  // Initialize form data when userProfile loads
+  useEffect(() => {
+    if (userProfile) {
+      setFormData({
+        firstName: userProfile.firstName || '',
+        surName: userProfile.surName || '',
+        birthDay: userProfile.birthDay || '',
+        roleBadge: userProfile.roleBadge || '',
+        hobbies: userProfile.hobbies || []
+      });
+    }
+  }, [userProfile]);
+
   return (
     <div>
-      {error && <h2>{error}</h2>}
+      {error && (
+        <div style={{ backgroundColor: '#f8d7da', color: '#721c24', padding: '10px', margin: '10px', borderRadius: '5px' }}>
+          {error}
+        </div>
+      )}
+      {successMsg && (
+        <div style={{ backgroundColor: '#d4edda', color: '#155724', padding: '10px', margin: '10px', borderRadius: '5px' }}>
+          {successMsg}
+        </div>
+      )}
 
       {userProfile && (
         <main>
@@ -179,7 +224,7 @@ function UserProfile() {
                   )}
                 </div>
               </div>
-              <Form>
+              <Form onSubmit={handleProfileUpdate}>
                 <div className="form-group">
                   <label htmlFor="username">Username*</label>
                   <input
@@ -196,41 +241,25 @@ function UserProfile() {
                 </div>
                 <div className="form-group">
                   <label htmlFor="firstName">First Name</label>
-                  {userProfile.firstName ? (
-                    <input
-                      type="text"
-                      id="firstName"
-                      name="firstName"
-                      defaultValue={userProfile.firstName}
-                    />
-                  ) : (
-                    <input
-                      type="text"
-                      id="firstName"
-                      name="firstName"
-                      ref={fNameRef}
-                      required
-                    />
-                  )}
+                  <input
+                    type="text"
+                    id="firstName"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                    required
+                  />
                 </div>
                 <div className="form-group">
                   <label htmlFor="surname">Surname</label>
-                  {userProfile.surName ? (
-                    <input
-                      type="text"
-                      id="surName"
-                      name="surName"
-                      defaultValue={userProfile.surName}
-                    />
-                  ) : (
-                    <input
-                      type="text"
-                      id="surname"
-                      name="surname"
-                      ref={sNameRef}
-                      required
-                    />
-                  )}
+                  <input
+                    type="text"
+                    id="surname"
+                    name="surname"
+                    value={formData.surName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, surName: e.target.value }))}
+                    required
+                  />
                 </div>
                 <div className="form-group">
                   <label htmlFor="email">Email*</label>
@@ -249,85 +278,33 @@ function UserProfile() {
 
                 <div className="form-group">
                   <label htmlFor="birthDay">Birthday</label>
-
-                  {userProfile.birthDay ? (
-                    <input
-                      type="text"
-                      id="birthDay"
-                      name="birthDay"
-                      defaultValue={userProfile.birthDay}
-                    />
-                  ) : (
-                    <input
-                      type="date"
-                      id="birthDay"
-                      name="birthDay"
-                      ref={bDayRef}
-                    />
-                  )}
+                  <input
+                    type="date"
+                    id="birthDay"
+                    name="birthDay"
+                    value={formData.birthDay}
+                    onChange={(e) => setFormData(prev => ({ ...prev, birthDay: e.target.value }))}
+                  />
                 </div>
 
                 <div className="form-group">
                   <label htmlFor="roleBadge">Role Badge</label>
-
-                  {userProfile.roleBadge ? (
-                    <select id="roleBadge" name="roleBadge">
-                      <option value="Choose a badge..." disabled>
-                        Choose a badge...
-                      </option>
-                      {userProfile.roleBadge === "Parent" ? (
-                        <option value="parent" selected>
-                          Parent
-                        </option>
-                      ) : (
-                        <option value="parent">Parent</option>
-                      )}
-                      {userProfile.roleBadge === "Teacher" ? (
-                        <option value="teacher" selected>
-                          Teacher
-                        </option>
-                      ) : (
-                        <option value="teacher">Teacher</option>
-                      )}
-                      {userProfile.roleBadge === "Senior" ? (
-                        <option value="senior" selected>
-                          Senior
-                        </option>
-                      ) : (
-                        <option value="senior">Senior</option>
-                      )}
-                      {userProfile.roleBadge === "Pupil" ? (
-                        <option value="pupil" selected>
-                          Pupil
-                        </option>
-                      ) : (
-                        <option value="pupil">Pupil</option>
-                      )}
-                      {userProfile.roleBadge === "Neighbor" ? (
-                        <option value="neigbor" selected>
-                          Neighbor
-                        </option>
-                      ) : (
-                        <option value="neighbor">Neigbor</option>
-                      )}
-                    </select>
-                  ) : (
-                    <select
-                      id="roleBadge"
-                      name="roleBadge"
-                      ref={rBadgeRef}
-                      required
-                    >
-                      <option value="Choose a badge..." disabled>
-                        Choose a badge...
-                      </option>
-                      <option value="parent">Parent</option>
-                      <option value="teacher">Teacher</option>
-                      <option value="senior">Senior</option>
-                      <option value="pupil">Pupil</option>
-                      <option value="neighbor">Neighbor</option>
-                    </select>
-                  )}
+                  <select
+                    id="roleBadge"
+                    name="roleBadge"
+                    value={formData.roleBadge}
+                    onChange={(e) => setFormData(prev => ({ ...prev, roleBadge: e.target.value }))}
+                    required
+                  >
+                    <option value="" disabled>
+                      Choose a badge...
+                    </option>
+                    <option value="parent">Parent</option>
+                    <option value="teacher">Teacher</option>
+                    <option value="senior">Senior</option>
+                    <option value="pupil">Pupil</option>
+                    <option value="neighbor">Neighbor</option>
+                  </select>
                 </div>
 
                 <div className="form-group">
@@ -336,14 +313,13 @@ function UserProfile() {
                     <HobbySelector
                       handleHobbiesSelected={handleHobbiesSelected}
                       availableHobbies={availableHobbies}
-                      ref={hobbiesRef}
                     />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <Button type="submit" onClick={handleProfileUpdate}>
-                    Update Profile
+                  <Button type="submit" disabled={loading}>
+                    {loading ? "Updating..." : "Update Profile"}
                   </Button>
                 </div>
               </Form>

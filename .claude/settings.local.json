@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__netlify__netlify-team-services-reader",
+      "mcp__netlify__netlify-project-services-reader",
+      "Read(//mnt/c/Users/ercan/Desktop/**)",
+      "Bash(ls:*)",
+      "mcp__vercel__list_projects",
+      "mcp__vercel__list_teams",
+      "mcp__vercel__get_project"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

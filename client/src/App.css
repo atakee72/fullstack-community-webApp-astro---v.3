@@ -136,7 +136,7 @@ body {
 }
 
 .container {
-  max-width: 600px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -194,6 +194,222 @@ input[type="submit"]:hover {
   font-size: 1rem;
 }
 
+/* Mobile-first responsive adjustments */
+@media (max-width: 300px) {
+  .navContainer {
+    padding: 0 !important;
+    font-size: 0.75rem;
+  }
+  .container {
+    max-width: 100%;
+    padding: 0 1px !important;
+  }
+  .mainCard {
+    padding: 1px !important;
+    margin: 1px !important;
+    min-width: 99vw;
+  }
+  #accordion {
+    width: 100%;
+    max-width: 99vw;
+    padding: 0;
+    margin: 0;
+  }
+  .main {
+    padding: 1px !important;
+  }
+  nav a {
+    margin-right: 1px;
+    font-size: 0.7rem;
+    padding: 1px;
+  }
+  nav a:hover {
+    padding: 1px;
+  }
+  form {
+    padding: 1px !important;
+    margin: 1px !important;
+  }
+  .card-header-info {
+    padding: 1px !important;
+    margin: 0 !important;
+    font-size: 0.65em !important;
+  }
+  .hero,
+  .about,
+  .features,
+  .call-to-action,
+  .footer {
+    padding: 1px !important;
+  }
+  h1 {
+    font-size: 1.2rem;
+    margin: 1px;
+  }
+  .p-4, .p-2, .p-md-4 {
+    padding: 1px !important;
+  }
+  .m-4, .m-2, .m-md-4 {
+    margin: 1px !important;
+  }
+  Button {
+    padding: 1px 2px !important;
+    font-size: 0.7rem;
+  }
+  .tags-list,
+  .tag-span {
+    padding: 1px !important;
+    margin: 1px !important;
+    font-size: 0.65em !important;
+  }
+}
+
+@media (max-width: 500px) {
+  .navContainer {
+    padding: 0 !important;
+    font-size: 0.85rem;
+  }
+  .container {
+    max-width: 100%;
+    padding: 0 2px !important;
+  }
+  .mainCard {
+    padding: 4px !important;
+    margin: 2px !important;
+    min-width: 98vw;
+  }
+  #accordion {
+    width: 100%;
+    max-width: 98vw;
+    padding: 0;
+  }
+  .main {
+    padding: 2px !important;
+  }
+  nav a {
+    margin-right: 2px;
+    font-size: 0.8rem;
+    padding: 1px 2px;
+  }
+  nav a:hover {
+    padding: 2px 3px;
+  }
+  form {
+    padding: 5px !important;
+  }
+  .card-header-info {
+    padding: 2px !important;
+    margin: 0 0 1% 0 !important;
+    font-size: 0.7em !important;
+  }
+  .hero,
+  .about,
+  .features,
+  .call-to-action,
+  .footer {
+    padding: 5px !important;
+  }
+  h1 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+  .p-4 {
+    padding: 0.5rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .navContainer {
+    padding: 2px !important;
+    font-size: 0.9rem;
+  }
+  .container {
+    max-width: 100%;
+    padding: 0 5px !important;
+  }
+  .mainCard {
+    padding: 8px !important;
+    margin: 5px !important;
+    min-width: 95vw;
+  }
+  #accordion {
+    width: 100%;
+    max-width: 95vw;
+    padding: 2px;
+  }
+  .main {
+    padding: 5px !important;
+  }
+  nav a {
+    margin-right: 3px;
+    font-size: 0.85rem;
+    padding: 2px;
+  }
+  nav a:hover {
+    padding: 3px;
+  }
+  form {
+    padding: 10px !important;
+  }
+  .card-header-info {
+    padding: 1% !important;
+    margin: 0 0 2% 0 !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .mainCard {
+    padding: 10px !important;
+    margin: 8px !important;
+  }
+  .container {
+    max-width: 98%;
+    padding: 0 8px !important;
+  }
+  .main {
+    padding: 10px !important;
+  }
+  .navContainer {
+    padding: 3px !important;
+  }
+  form {
+    padding: 12px !important;
+  }
+  .hero {
+    padding: 1% !important;
+  }
+  .about {
+    padding: 0.5% !important;
+  }
+  .features {
+    padding: 2% !important;
+  }
+  .call-to-action {
+    padding: 10px !important;
+  }
+  .footer {
+    padding: 10px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .mainCard {
+    padding: 15px !important;
+    margin: 10px 5px !important;
+  }
+  .container {
+    max-width: 98%;
+    padding: 0 10px !important;
+  }
+  .card-body-container {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .forum-container {
+    padding: 0 5px !important;
+  }
+}
+
 @media (min-width: 768px) {
   .main {
     padding: 80px;
@@ -205,7 +421,13 @@ input[type="submit"]:hover {
 	} */
 
   .container {
-    max-width: 800px;
+    max-width: 1200px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .container {
+    max-width: 1400px;
   }
 }
 
@@ -401,12 +623,12 @@ label {
 .mainCard {
   border-radius: 5px;
   box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.2);
-  padding: 50px;
-  margin: 20px 100px 20px 100px;
+  padding: 30px;
+  margin: 20px auto;
   gap: 20px;
   background-color: #4b9aaa !important;
-  max-width: 90vw;
-  min-width: 50vw;
+  width: 95%;
+  max-width: 1400px;
   min-height: 40vh;
   overflow: auto;
   resize: vertical;
@@ -426,7 +648,8 @@ label {
 }
 
 #accordion{
-  width: 600px;
+  width: 100%;
+  max-width: 600px;
   margin: 0px;
   padding: 0px;
   list-style: none;

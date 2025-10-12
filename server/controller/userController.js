@@ -263,21 +263,44 @@ const getProfile = async (req, res) => {
 const updateUser = async (req, res) => {
   const { userId } = req.params;
   const { firstname, surname, birthday, rolebadge, hobbies } = req.body;
-  // const birthDayInMillis = new Date(birthday).getMilliseconds();
-  //   const birthDayInMillis = new Date(birthday).getTime();
+
+  // Parse hobbies if it's a JSON string
+  let parsedHobbies = hobbies;
+  if (typeof hobbies === 'string') {
+    try {
+      parsedHobbies = JSON.parse(hobbies);
+    } catch (e) {
+      parsedHobbies = [];
+    }
+  }
+
+  // Convert birthday to number (timestamp) if provided and valid
+  let birthDayInMillis = null;
+  if (birthday) {
+    const date = new Date(birthday);
+    const timestamp = date.getTime();
+    // Only set if it's a valid date (not NaN)
+    if (!isNaN(timestamp)) {
+      birthDayInMillis = timestamp;
+    }
+  }
 
   try {
+    const updateFields = {
+      firstName: firstname,
+      surName: surname,
+      roleBadge: rolebadge,
+      hobbies: parsedHobbies,
+    };
+
+    // Only include birthDay if it's a valid value
+    if (birthDayInMillis !== null) {
+      updateFields.birthDay = birthDayInMillis;
+    }
+
     const updatedUser = await userModel.findOneAndUpdate(
       { _id: userId },
-      {
-        $set: {
-          firstName: firstname,
-          surName: surname,
-          birthDay: birthday,
-          roleBadge: rolebadge,
-          hobbies: hobbies,
-        },
-      },
+      { $set: updateFields },
       { new: true }
     );
     const response = {
@@ -287,9 +310,10 @@ const updateUser = async (req, res) => {
 
     res.status(200).json(response);
   } catch (error) {
+    console.error("Update user error:", error);
     const response = {
       msg: "An error occurred while updating the user",
-      error: error,
+      error: error.message,
     };
 
     res.status(500).json(response);

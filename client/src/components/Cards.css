@@ -1,19 +1,19 @@
 .card-container {
-  background-color: #c9c4b9;
+  background-color: #c9c4b9 !important;
 }
 
 .card-header-info {
   padding: 2%;
   border-radius: 5px;
   margin: 0 0 5% 0;
-  background-color: #4b9aaa;
+  background-color: #4b9aaa !important;
   text-decoration: underline;
   color: gray;
   font-size: 0.8em;
 }
 
 .card-header-info-span {
-  color: white;
+  color: white !important;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -38,8 +38,8 @@
   display: inline-block;
   margin: 1%;
   list-style: none;
-  background-color: #4b9aaa;
-  color: white;
+  background-color: #4b9aaa !important;
+  color: white !important;
   border-radius: 5px;
   text-decoration: underline;
   font-size: 0.8em;
@@ -47,8 +47,8 @@
 
 .tag-span {
   display: inline-block;
-  background-color: #4b9aaa;
-  color: white;
+  background-color: #4b9aaa !important;
+  color: white !important;
   border-radius: 5px;
   padding: 0.2em 0.5em;
   margin: 0.2em;
@@ -58,6 +58,14 @@
 
 .new-comment-body {
   display: inline-flex;
-  gap: 10vw;
+  gap: 5vw;
+  flex-direction: column;
   height: 100%;
+}
+
+@media (min-width: 768px) {
+  .new-comment-body {
+    flex-direction: row;
+    gap: 10vw;
+  }
 }
