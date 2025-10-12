@@ -9,14 +9,11 @@ function AccordionItem({ comments, setCommentShow, deleteAComment }) {
   const { userId } = useContext(AuthContext);
   const [clickedIndex, setClickedIndex] = useState(null);
 
-  //   const handleDeleteClick = (e, comment, index) => {
-  //     e.stopPropagation();
-  //     setClickedIndex(index);
-  //   };
-
   const handleCloseAlert = () => {
     setClickedIndex(null);
-    setCommentShow(false);
+    if (setCommentShow) {
+      setCommentShow(false);
+    }
   };
 
   return (
@@ -66,7 +63,9 @@ function AccordionItem({ comments, setCommentShow, deleteAComment }) {
                   id="isCommentAuthor"
                   onClick={() => {
                     setClickedIndex(i);
-                    setCommentShow(false);
+                    if (setCommentShow) {
+                      setCommentShow(false);
+                    }
                   }}
                 />
               )}
@@ -82,10 +81,11 @@ function AccordionItem({ comments, setCommentShow, deleteAComment }) {
                     objectFit: "cover",
                   }}
                   src={comment.author?.userPicture}
+                  alt="author"
                 />
               }
             </div>
-            <div class="content">{comment?.body}</div>
+            <div className="content">{comment?.body}</div>
           </li>
         ))}
       </ul>

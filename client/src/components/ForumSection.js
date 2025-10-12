@@ -6,6 +6,7 @@ import SearchForm from "./SearchForm";
 import AddNewPost from "./AddNewPost";
 import PostModal from "./PostModal";
 import Cards from "./Cards";
+import "./ForumSection.css";
 
 function ForumSection({
   collectionType,
@@ -41,6 +42,13 @@ function ForumSection({
       collectionType: "recommendations",
     },
   ];
+
+  const forumHandlers = {
+    postAComment,
+    deleteForumPost,
+    deleteAComment,
+    updateLikesCounter,
+  };
 
   return (
     <Card className="mainCard">
@@ -92,24 +100,11 @@ function ForumSection({
 
         {filteredData.length > 0 ? (
           filteredData.map((item, i) => (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                width: "100%",
-              }}
-              key={i}
-            >
+            <div className="card-body-container" key={i}>
               <Cards
                 item={item}
-                post={item}
-                comments={item.comments}
-                author={item.author}
-                postAComment={postAComment}
-                deleteForumPost={deleteForumPost}
-                deleteAComment={deleteAComment}
-                updateLikesCounter={updateLikesCounter}
                 serverMsg={serverMsg}
+                forumHandlers={forumHandlers}
               />
             </div>
           ))

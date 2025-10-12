@@ -1,26 +1,14 @@
 import React from "react";
 import { Button } from "react-bootstrap";
+import "./LandingPage.css";
+import { Link } from "react-router-dom";
 
 function LandingPage() {
   return (
-    <div
-      style={{
-        height: "50vh",
-      }}
-    >
-      <main
-        style={{
-          display: "flex",
-          justifyContent: "flex-start",
-          alignItems: "baseline",
-          alignContent: "stretch",
-          // height: "100vh",
-        }}
-      >
-        <section className="hero mb-0 pb-0 pt-5" style={{ width: "33%" }}>
-          <h1 style={{ writingMode: "vertical-rl" }} className=" mb-2">
-            About Our App
-          </h1>
+    <div>
+      <main className="landing-page-main">
+        <section className="hero mb-0 pb-0 pt-5 landing-page-section">
+          <h1 className="vertical-text mb-2">About Our App</h1>
           <p>
             The community app is designed to help people connect with their
             local community. Our app helps you connect with people in your local
@@ -28,14 +16,8 @@ function LandingPage() {
           </p>
         </section>
 
-        <section
-          className="about"
-          style={{
-            flexGrow: "1",
-            width: "33%",
-          }}
-        >
-          <h1 className=" mb-2 pt-5" style={{ writingMode: "vertical-rl" }}>
+        <section className="about landing-page-section">
+          <h1 className="vertical-text mb-2 pt-5">
             Connect with <br /> Your Community
           </h1>
           <p>
@@ -45,28 +27,9 @@ function LandingPage() {
           </p>
         </section>
 
-        <section
-          className="features"
-          style={{
-            display: "flex",
-            // alignItems: "center",
-            // alignContent: "stretch",
-            justifyContent: "flex-end",
-            width: "33%",
-            flexDirection: "column",
-            // height: "100%",
-            position: "relative",
-            // top: "0",
-            bottom: "0",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "evenly" }}>
-            <h1
-              className="text-center mb-2 pt-5"
-              style={{ writingMode: "vertical-lr" }}
-            >
-              Features
-            </h1>
+        <section className="features features-section">
+          <div className="features-content">
+            <h1 className="text-center mb-2 pt-5 vertical-text">Features</h1>
             <ul>
               <li>Event Discovery</li>
               <li>Group Creation</li>
@@ -80,40 +43,13 @@ function LandingPage() {
         <section className="call-to-action">
           <h2>Join Our Community</h2>
           <p>
-            <Button
-              style={{
-                color: "#eccc6e",
-                backgroundColor: "#4b9aaa",
-                border: "none",
-              }}
-            >
-              <a
-                style={{
-                  textDecoration: "none",
-                  color: "#eccc6e",
-                }}
-                href="./register"
-              >
-                Sign Up
-              </a>
+            <Button as={Link} to="/register" className="signup-button">
+              Sign Up
             </Button>{" "}
             today to start connecting with your local community.
           </p>
         </section>
         <p className="p-0 m-0">&copy; 2023 Local Community Web App</p>
-        {/* <nav style={{ display: "flex", justifyContent: "center" }}>
-          <ul>
-            <li>
-              <a href="/">Privacy Policy</a>
-            </li>
-            <li>
-              <a href="/">Terms of Use</a>
-            </li>
-            <li>
-              <a href="/">Contact Us</a>
-            </li>
-          </ul>
-        </nav> */}
       </footer>
     </div>
   );

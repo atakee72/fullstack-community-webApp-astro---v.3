@@ -21,6 +21,14 @@ router.post("/imageUpload", multerUpload.single("image"), imageUpload);
 router.post("/signup", signup);
 router.post("/login", login);
 router.post("/:userId", updateUser);
-
+router.post("/user", (req, res) => {
+  userModel
+    .create({
+      userName: req.body.username,
+      eMail: req.body.email,
+      passWord: req.body.password,
+    })
+    .then((user) => res.json(user));
+});
 
 export default router;

@@ -1,14 +1,13 @@
-import React, { useEffect, useContext } from "react";
+import React, { useContext } from "react";
 import { NavLink } from "react-router-dom";
 import Logout from "./Logout";
 import { AuthContext } from "../store/AuthContext";
 import { getToken } from "../utils/getToken";
+import "./Navbar.css";
 
 function Navbar() {
   const { userId, loggedUser } = useContext(AuthContext);
   const token = getToken();
-
-  // const nav = document.querySelector("#navigation");
 
   return (
     <div className="navContainer">
@@ -46,39 +45,18 @@ function Navbar() {
         </ul>
       </nav>
 
-      <div
-        style={{
-          position: "fixed",
-          top: "45%",
-          right: "5%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
+      <div className="user-info">
         {token && (
           <>
             <NavLink to="userProfile">
               <img
-                className="loggedUserPic"
-                style={{
-                  width: "60px",
-                  height: "60px",
-                  borderRadius: "30px",
-                  objectFit: "cover",
-                  background: "none",
-                  boxShadow: "0px 0px 10px 0px rgba(0, 0, 0, 0.2)",
-                  cursor: "pointer",
-                }}
+                className="logged-user-pic"
                 src={loggedUser?.picture}
-                alt={`${loggedUser?.userName}'s profile picture`}
+                alt={loggedUser?.userName}
               />
             </NavLink>
 
-            <h2 style={{ color: "#4b9aaa", fontSize: "1rem" }}>
-              {" "}
-              {loggedUser?.userName}{" "}
-            </h2>
+            <h2 className="user-name"> {loggedUser?.userName} </h2>
           </>
         )}
       </div>
