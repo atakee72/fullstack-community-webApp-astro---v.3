@@ -215,7 +215,7 @@ export default function ForumContainer() {
                           'px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm transition-colors rounded-md border max-w-xs overflow-x-auto whitespace-nowrap scrollbar-hide',
                           currentTab === 'posts'
                             ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
-                            : 'bg-transparent text-gray-700 border-transparent hover:bg-white/50'
+                            : 'bg-transparent text-gray-700 border-white hover:bg-white/50'
                         )}
                       >
                         {item.title}
@@ -226,7 +226,7 @@ export default function ForumContainer() {
                           'px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm transition-colors rounded-md border',
                           currentTab === 'comments'
                             ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
-                            : 'bg-transparent text-gray-700 border-transparent hover:bg-white/50'
+                            : 'bg-transparent text-gray-700 border-white hover:bg-white/50'
                         )}
                       >
                         Comments <span className="ml-1 px-1.5 md:px-2 py-0.5 bg-gray-500 text-white text-xs rounded-full">{item.comments?.length || 0}</span>
@@ -245,8 +245,8 @@ export default function ForumContainer() {
                           currentTab === 'newComment'
                             ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
                             : user
-                            ? 'bg-transparent text-gray-700 border-transparent hover:bg-white/50'
-                            : 'bg-transparent text-gray-400 border-transparent cursor-not-allowed'
+                            ? 'bg-transparent text-gray-700 border-white hover:bg-white/50'
+                            : 'bg-transparent text-gray-400 border-white cursor-not-allowed'
                         )}
                       >
                         Write a comment
@@ -257,14 +257,14 @@ export default function ForumContainer() {
                         <div className="ml-auto flex gap-1">
                           <button
                             onClick={() => {/* TODO: Implement edit */}}
-                            className="p-1.5 rounded-md transition-colors text-base bg-gray-400/60 text-gray-700 hover:bg-gray-500/60 hover:text-gray-900"
+                            className="p-1.5 rounded-md transition-colors text-base text-gray-700 hover:text-gray-900"
                             title="Edit post"
                           >
                             ✏️
                           </button>
                           <button
                             onClick={() => {/* TODO: Implement delete */}}
-                            className="p-1.5 rounded-md transition-colors text-base bg-gray-400/60 text-gray-700 hover:bg-red-400/60 hover:text-red-900"
+                            className="p-1.5 rounded-md transition-colors text-base text-gray-700 hover:text-red-700"
                             title="Delete post"
                           >
                             ✕
