@@ -207,8 +207,8 @@ export default function ForumContainer() {
                 const currentTab = getCardActiveTab(item._id);
                 return (
                   <div key={item._id} className="bg-[#c9c4b9] rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow p-4 md:p-6 min-h-[300px] md:min-h-[400px] flex flex-col">
-                    {/* Card Header with Tabs */}
-                    <div className="flex flex-wrap gap-1 mb-4">
+                    {/* Card Header with Tabs and Action Icons */}
+                    <div className="flex flex-wrap gap-1 mb-4 items-center">
                       <button
                         onClick={() => setCardActiveTab(item._id, 'posts')}
                         className={cn(
@@ -251,6 +251,36 @@ export default function ForumContainer() {
                       >
                         Write a comment
                       </button>
+
+                      {/* Edit and Delete Icons - Right Side */}
+                      <div className="ml-auto flex gap-1">
+                        <button
+                          onClick={() => {/* TODO: Implement edit */}}
+                          disabled={!user || user._id !== item.author?._id}
+                          className={cn(
+                            'p-1.5 rounded-md transition-colors text-base',
+                            user && user._id === item.author?._id
+                              ? 'bg-gray-700 text-white hover:bg-gray-800'
+                              : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
+                          )}
+                          title="Edit post"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => {/* TODO: Implement delete */}}
+                          disabled={!user || user._id !== item.author?._id}
+                          className={cn(
+                            'p-1.5 rounded-md transition-colors text-base',
+                            user && user._id === item.author?._id
+                              ? 'bg-red-500 text-white hover:bg-red-600'
+                              : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
+                          )}
+                          title="Delete post"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     </div>
 
                     {/* Card Body */}
@@ -278,18 +308,6 @@ export default function ForumContainer() {
 
                         {/* Post Content */}
                         <p className="text-gray-700 mb-3 md:mb-4 leading-relaxed px-2 md:px-4 text-sm md:text-base">{item.description || item.body}</p>
-
-                        {/* Action Buttons */}
-                        {user && user._id === item.author?._id && (
-                          <div className="flex flex-col sm:flex-row gap-2 md:gap-3 pt-3 md:pt-4 mb-3 md:mb-4 border-t border-gray-300 px-2 md:px-4">
-                            <button className="px-3 md:px-4 py-1.5 md:py-2 bg-[#aca89f] text-white rounded-md hover:bg-[#8a8880] transition-colors text-xs md:text-sm font-medium">
-                              ✏️ Edit
-                            </button>
-                            <button className="px-3 md:px-4 py-1.5 md:py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-xs md:text-sm font-medium">
-                              🗑️ Delete
-                            </button>
-                          </div>
-                        )}
 
                         {/* Spacer */}
                         <div className="flex-1"></div>
