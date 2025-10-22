@@ -4,28 +4,28 @@ import LoginForm from '../components/LoginForm';
 ---
 
 <BaseLayout title="Login">
-  <main class="min-h-[calc(100vh-80px)] flex items-center justify-center bg-gradient-to-br from-[#eccc6e] to-[#dabb5d]">
+  <main class="min-h-[calc(100vh-80px)] flex items-center justify-center bg-gradient-to-br from-[#eccc6e] to-[#dabb5d] py-4 md:py-0">
     <div class="max-w-md w-full mx-4">
       {/* Logo Section */}
-      <div class="text-center mb-8">
-        <div class="inline-block bg-white rounded-full p-4 shadow-lg mb-4">
-          <span class="text-5xl">🏘️</span>
+      <div class="text-center mb-6 md:mb-8">
+        <div class="inline-block bg-white rounded-full p-3 md:p-4 shadow-lg mb-3 md:mb-4">
+          <span class="text-4xl md:text-5xl">🏘️</span>
         </div>
-        <h2 class="text-3xl font-bold text-[#814256]">Welcome Back!</h2>
-        <p class="text-gray-700 mt-2">Login to your Mahalle community</p>
+        <h2 class="text-2xl md:text-3xl font-bold text-[#814256]">Welcome Back!</h2>
+        <p class="text-sm md:text-base text-gray-700 mt-2">Login to your Mahalle community</p>
       </div>
 
       {/* Login Card */}
       <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div class="bg-gradient-to-r from-[#4b9aaa] to-[#3a7888] p-6">
-          <h1 class="text-2xl font-bold text-white text-center">User Login</h1>
+        <div class="bg-gradient-to-r from-[#4b9aaa] to-[#3a7888] p-4 md:p-6">
+          <h1 class="text-xl md:text-2xl font-bold text-white text-center">User Login</h1>
         </div>
 
-        <div class="p-8">
+        <div class="p-6 md:p-8">
           <LoginForm client:load />
 
-          <div class="mt-8 pt-6 border-t border-gray-200 text-center">
-            <p class="text-gray-600">
+          <div class="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-gray-200 text-center">
+            <p class="text-sm md:text-base text-gray-600">
               Don't have an account?{" "}
               <a href="/register" class="text-[#4b9aaa] font-semibold hover:text-[#814256] transition-colors">
                 Sign up here
@@ -36,7 +36,7 @@ import LoginForm from '../components/LoginForm';
       </div>
 
       {/* Footer Text */}
-      <p class="text-center text-gray-700 mt-8 text-sm">
+      <p class="text-center text-gray-700 mt-6 md:mt-8 text-xs md:text-sm">
         © 2024 Mahalle Community. All rights reserved.
       </p>
     </div>

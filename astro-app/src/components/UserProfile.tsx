@@ -89,8 +89,8 @@ export default function UserProfile() {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
         <div className="text-center">
-          <div className="text-4xl mb-4 animate-spin inline-block">⏳</div>
-          <p className="text-xl text-gray-600">Loading profile...</p>
+          <div className="text-3xl md:text-4xl mb-4 animate-spin inline-block">⏳</div>
+          <p className="text-lg md:text-xl text-gray-600">Loading profile...</p>
         </div>
       </div>
     );
@@ -99,10 +99,10 @@ export default function UserProfile() {
   if (!user) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-          <div className="text-6xl mb-4">🔒</div>
-          <p className="text-xl mb-4 text-gray-700">Please log in to view your profile</p>
-          <a href="/login" className="inline-block bg-[#4b9aaa] text-white px-8 py-3 rounded-lg hover:bg-[#3a7888] transition-colors font-semibold">
+        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 text-center">
+          <div className="text-5xl md:text-6xl mb-4">🔒</div>
+          <p className="text-lg md:text-xl mb-4 text-gray-700">Please log in to view your profile</p>
+          <a href="/login" className="inline-block bg-[#4b9aaa] text-white px-6 md:px-8 py-2 md:py-3 text-sm md:text-base rounded-lg hover:bg-[#3a7888] transition-colors font-semibold">
             Go to Login
           </a>
         </div>
@@ -113,10 +113,10 @@ export default function UserProfile() {
   return (
     <div className="max-w-7xl mx-auto px-4">
       {/* Profile Header Card */}
-      <div className="bg-white rounded-2xl shadow-2xl overflow-hidden mb-8">
-        <div className="bg-gradient-to-r from-[#4b9aaa] to-[#3a7888] p-8 text-white">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-6">
+      <div className="bg-white rounded-2xl shadow-2xl overflow-hidden mb-6 md:mb-8">
+        <div className="bg-gradient-to-r from-[#4b9aaa] to-[#3a7888] p-4 md:p-6 lg:p-8 text-white">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 md:gap-6">
               {isEditing ? (
                 <ImageUpload
                   onUpload={handleImageUpload}
@@ -127,29 +127,29 @@ export default function UserProfile() {
                 <img
                   src={profileData.userPicture || `https://ui-avatars.com/api/?name=${profileData.userName}&background=814256&color=fff&size=200`}
                   alt={profileData.userName}
-                  className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-xl"
+                  className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border-4 border-white shadow-xl"
                 />
               )}
-              <div>
-                <h1 className="text-4xl font-bold mb-2">{profileData.userName}</h1>
-                <p className="text-white/90 text-lg">{profileData.email}</p>
+              <div className="text-center sm:text-left">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-1 md:mb-2">{profileData.userName}</h1>
+                <p className="text-white/90 text-sm md:text-base lg:text-lg">{profileData.email}</p>
                 {user?.roleBadge && (
-                  <span className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
+                  <span className="inline-block mt-2 px-3 py-1 bg-white/20 rounded-full text-xs md:text-sm font-medium">
                     {user.roleBadge}
                   </span>
                 )}
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 md:gap-3 w-full sm:w-auto">
               <button
                 onClick={() => setIsEditing(!isEditing)}
-                className="px-6 py-3 bg-white text-[#4b9aaa] rounded-lg hover:bg-gray-100 transition-all font-semibold shadow-md"
+                className="px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-white text-[#4b9aaa] rounded-lg hover:bg-gray-100 transition-all font-semibold shadow-md"
               >
                 {isEditing ? '✕ Cancel' : '✏️ Edit Profile'}
               </button>
               <button
                 onClick={handleLogout}
-                className="px-6 py-3 bg-[#814256] text-white rounded-lg hover:bg-[#6a3646] transition-all font-semibold shadow-md"
+                className="px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-[#814256] text-white rounded-lg hover:bg-[#6a3646] transition-all font-semibold shadow-md"
               >
                 🚪 Logout
               </button>
@@ -160,11 +160,11 @@ export default function UserProfile() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
         {/* Left Column - Profile Details */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-[#814256] mb-6 flex items-center gap-2">
+        <div className="md:col-span-2 lg:col-span-1">
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+            <h2 className="text-lg md:text-xl font-bold text-[#814256] mb-4 md:mb-6 flex items-center gap-2">
               <span>👤</span> Profile Information
             </h2>
 
@@ -219,8 +219,8 @@ export default function UserProfile() {
           </div>
 
           {/* Hobbies Section */}
-          <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
-            <h3 className="text-xl font-bold text-[#814256] mb-4 flex items-center gap-2">
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mt-4 md:mt-6">
+            <h3 className="text-lg md:text-xl font-bold text-[#814256] mb-4 flex items-center gap-2">
               <span>🎯</span> Hobbies & Interests
             </h3>
             {isEditing ? (
@@ -278,9 +278,9 @@ export default function UserProfile() {
         </div>
 
         {/* Right Column - User Activity */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-[#814256] mb-6 flex items-center gap-2">
+        <div className="md:col-span-2 lg:col-span-2">
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+            <h2 className="text-xl md:text-2xl font-bold text-[#814256] mb-4 md:mb-6 flex items-center gap-2">
               <span>📝</span> Your Topics
             </h2>
 
@@ -331,12 +331,12 @@ export default function UserProfile() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">📝</div>
-                <p className="text-gray-500 text-lg mb-4">You haven't created any topics yet</p>
+              <div className="text-center py-8 md:py-12">
+                <div className="text-5xl md:text-6xl mb-4">📝</div>
+                <p className="text-gray-500 text-base md:text-lg mb-4">You haven't created any topics yet</p>
                 <a
                   href="/"
-                  className="inline-block bg-[#4b9aaa] text-white px-6 py-3 rounded-lg hover:bg-[#3a7888] transition-colors font-semibold"
+                  className="inline-block bg-[#4b9aaa] text-white px-5 md:px-6 py-2 md:py-3 text-sm md:text-base rounded-lg hover:bg-[#3a7888] transition-colors font-semibold"
                 >
                   Create Your First Topic
                 </a>
@@ -345,26 +345,26 @@ export default function UserProfile() {
           </div>
 
           {/* Stats Card */}
-          <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
-            <h3 className="text-xl font-bold text-[#814256] mb-4 flex items-center gap-2">
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mt-4 md:mt-6">
+            <h3 className="text-lg md:text-xl font-bold text-[#814256] mb-4 flex items-center gap-2">
               <span>📊</span> Community Stats
             </h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-gradient-to-br from-[#4b9aaa]/10 to-[#4b9aaa]/5 rounded-lg">
-                <div className="text-3xl font-bold text-[#4b9aaa]">{userTopics.length}</div>
-                <div className="text-sm text-gray-600 mt-1">Topics</div>
+            <div className="grid grid-cols-3 gap-2 md:gap-4">
+              <div className="text-center p-3 md:p-4 bg-gradient-to-br from-[#4b9aaa]/10 to-[#4b9aaa]/5 rounded-lg">
+                <div className="text-2xl md:text-3xl font-bold text-[#4b9aaa]">{userTopics.length}</div>
+                <div className="text-xs md:text-sm text-gray-600 mt-1">Topics</div>
               </div>
-              <div className="text-center p-4 bg-gradient-to-br from-[#814256]/10 to-[#814256]/5 rounded-lg">
-                <div className="text-3xl font-bold text-[#814256]">
+              <div className="text-center p-3 md:p-4 bg-gradient-to-br from-[#814256]/10 to-[#814256]/5 rounded-lg">
+                <div className="text-2xl md:text-3xl font-bold text-[#814256]">
                   {userTopics.reduce((acc, t) => acc + (t.comments?.length || 0), 0)}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Comments</div>
+                <div className="text-xs md:text-sm text-gray-600 mt-1">Comments</div>
               </div>
-              <div className="text-center p-4 bg-gradient-to-br from-[#eccc6e]/30 to-[#eccc6e]/10 rounded-lg">
-                <div className="text-3xl font-bold text-[#c9aa4c]">
+              <div className="text-center p-3 md:p-4 bg-gradient-to-br from-[#eccc6e]/30 to-[#eccc6e]/10 rounded-lg">
+                <div className="text-2xl md:text-3xl font-bold text-[#c9aa4c]">
                   {userTopics.reduce((acc, t) => acc + (t.likes?.length || 0), 0)}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Likes</div>
+                <div className="text-xs md:text-sm text-gray-600 mt-1">Likes</div>
               </div>
             </div>
           </div>

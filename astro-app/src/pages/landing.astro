@@ -3,31 +3,31 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout title="Mahalle - Connect with Your Community">
-  <main class="flex justify-start items-baseline content-stretch">
-    <section class="w-1/3 mb-0 pb-0 pt-20">
-      <h1 class="writing-mode-vertical-rl mb-2 text-4xl font-bold text-[#814256]">About Our App</h1>
-      <p class="px-8 text-gray-700">
+  <main class="flex flex-col md:flex-row justify-start items-baseline content-stretch">
+    <section class="w-full md:w-1/3 mb-8 md:mb-0 pb-0 pt-8 md:pt-20 px-4 md:px-0">
+      <h1 class="mb-4 md:mb-2 text-2xl md:text-3xl lg:text-4xl md:writing-mode-vertical-rl font-bold text-[#814256]">About Our App</h1>
+      <p class="px-4 md:px-8 text-gray-700">
         The community app is designed to help people connect with their
         local community. Our app helps you connect with people in your local
         area, discover new events, and join local groups.
       </p>
     </section>
 
-    <section class="w-1/3">
-      <h1 class="writing-mode-vertical-rl mb-2 pt-20 text-4xl font-bold text-[#4b9aaa]">
-        Connect with <br /> Your Community
+    <section class="w-full md:w-1/3 mb-8 md:mb-0 px-4 md:px-0">
+      <h1 class="mb-4 md:mb-2 pt-8 md:pt-20 text-2xl md:text-3xl lg:text-4xl md:writing-mode-vertical-rl font-bold text-[#4b9aaa]">
+        Connect with Your Community
       </h1>
-      <p class="px-8 text-gray-700">
+      <p class="px-4 md:px-8 text-gray-700">
         With features such as event discovery, group creation, and community
         messaging, you can easily stay connected with the people and events
         in your area.
       </p>
     </section>
 
-    <section class="w-1/3 flex flex-col justify-end relative">
-      <div class="flex items-center">
-        <h1 class="text-center mb-2 pt-20 writing-mode-vertical-rl text-4xl font-bold text-[#eccc6e]">Features</h1>
-        <ul class="ml-8 text-gray-700">
+    <section class="w-full md:w-1/3 flex flex-col justify-end relative mb-8 md:mb-0 px-4 md:px-0">
+      <div class="flex flex-col md:flex-row md:items-center">
+        <h1 class="mb-4 md:mb-2 pt-8 md:pt-20 text-2xl md:text-3xl lg:text-4xl md:writing-mode-vertical-rl font-bold text-[#eccc6e]">Features</h1>
+        <ul class="md:ml-8 text-gray-700">
           <li class="mb-2">Event Discovery</li>
           <li class="mb-2">Group Creation</li>
           <li class="mb-2">Community Messaging</li>
@@ -37,16 +37,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </main>
 
   <footer class="pt-4 m-0 bg-[#aca89f] text-white">
-    <section class="p-8 text-center bg-gray-50 text-gray-800">
-      <h2 class="text-3xl mb-4 font-bold">Join Our Community</h2>
-      <p>
-        <a href="/register" class="inline-block px-6 py-3 bg-[#4b9aaa] text-[#eccc6e] no-underline rounded hover:bg-[#3a7a8a] hover:-translate-y-0.5 transition-all">
+    <section class="p-4 md:p-8 text-center bg-gray-50 text-gray-800">
+      <h2 class="text-xl md:text-2xl lg:text-3xl mb-4 font-bold">Join Our Community</h2>
+      <p class="text-sm md:text-base">
+        <a href="/register" class="inline-block px-4 py-2 md:px-6 md:py-3 bg-[#4b9aaa] text-[#eccc6e] no-underline rounded hover:bg-[#3a7a8a] hover:-translate-y-0.5 transition-all">
           Sign Up
         </a>{" "}
         today to start connecting with your local community.
       </p>
     </section>
-    <p class="text-center py-4 m-0">&copy; 2023 Local Community Web App</p>
+    <p class="text-center py-4 m-0 text-sm md:text-base">&copy; 2023 Local Community Web App</p>
   </footer>
 </BaseLayout>
 

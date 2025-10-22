@@ -4,24 +4,24 @@ import ForumWrapper from '../components/ForumWrapper';
 ---
 
 <BaseLayout title="Your Local Forum">
-  <main class="min-h-[calc(100vh-60px)] py-8">
-    <div class="max-w-7xl mx-auto px-16">
-      <div class="p-4 bg-[#4b9aaa] rounded-full w-fit mx-auto">
+  <main class="min-h-[calc(100vh-60px)] py-4 md:py-8">
+    <div class="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+      <div class="p-3 md:p-4 bg-[#4b9aaa] rounded-full w-fit mx-auto">
         <a href="/">
           <img
-            class="max-w-[min(15vw,150px)] min-w-[100px] w-full rounded-[50px] shadow-lg"
+            class="max-w-[min(20vw,150px)] md:max-w-[min(15vw,150px)] min-w-[80px] md:min-w-[100px] w-full rounded-[50px] shadow-lg"
             src="https://res.cloudinary.com/djgxiadrc/image/upload/v1677334203/communityWebApp/Beige_und_Grau_Minimalistisch_Zitat_Instagram-Beitrag_Kopyas%C4%B1_6_g2r1na.png"
             alt="logo"
           />
         </a>
       </div>
-      <h1 class="text-center text-4xl font-bold mb-3 pb-1 text-[#814256]">Your Local Forum</h1>
-      <div class="bg-[#4b9aaa] flex justify-center px-12 py-8 rounded-lg mt-8 min-h-[400px]">
+      <h1 class="text-center text-2xl md:text-3xl lg:text-4xl font-bold mb-3 pb-1 text-[#814256]">Your Local Forum</h1>
+      <div class="bg-[#4b9aaa] flex justify-center px-4 md:px-8 lg:px-12 py-6 md:py-8 rounded-lg mt-6 md:mt-8 min-h-[400px]">
         <ForumWrapper client:load />
       </div>
     </div>
   </main>
-  <footer class="bg-gray-800 text-white text-center py-6 mt-auto">
-    <p>&copy; 2023 Mahalle Community App. All rights reserved.</p>
+  <footer class="bg-gray-800 text-white text-center py-4 md:py-6 mt-auto">
+    <p class="text-sm md:text-base">&copy; 2023 Mahalle Community App. All rights reserved.</p>
   </footer>
 </BaseLayout>
