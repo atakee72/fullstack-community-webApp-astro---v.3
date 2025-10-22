@@ -207,15 +207,15 @@ export default function ForumContainer() {
                 const currentTab = getCardActiveTab(item._id);
                 return (
                   <div key={item._id} className="bg-[#c9c4b9] rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow p-4 md:p-6 min-h-[300px] md:min-h-[400px] flex flex-col">
-                    {/* Card Header with Tabs and Action Icons */}
-                    <div className="flex flex-wrap gap-1 mb-4 items-center">
+                    {/* Card Header with Tabs and Action Icons - Shared Gray Background Strip */}
+                    <div className="bg-gray-200/60 -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-4 md:px-6 py-2 mb-4 flex flex-wrap gap-1 items-center">
                       <button
                         onClick={() => setCardActiveTab(item._id, 'posts')}
                         className={cn(
                           'px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm transition-colors rounded-md border max-w-xs overflow-x-auto whitespace-nowrap scrollbar-hide',
                           currentTab === 'posts'
-                            ? 'bg-gray-200 text-gray-900 border-gray-400'
-                            : 'bg-transparent text-gray-700 border-white hover:bg-gray-100'
+                            ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
+                            : 'bg-transparent text-gray-700 border-transparent hover:bg-white/50'
                         )}
                       >
                         {item.title}
@@ -225,8 +225,8 @@ export default function ForumContainer() {
                         className={cn(
                           'px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm transition-colors rounded-md border',
                           currentTab === 'comments'
-                            ? 'bg-gray-200 text-gray-900 border-gray-400'
-                            : 'bg-transparent text-gray-700 border-white hover:bg-gray-100'
+                            ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
+                            : 'bg-transparent text-gray-700 border-transparent hover:bg-white/50'
                         )}
                       >
                         Comments <span className="ml-1 px-1.5 md:px-2 py-0.5 bg-gray-500 text-white text-xs rounded-full">{item.comments?.length || 0}</span>
@@ -243,44 +243,34 @@ export default function ForumContainer() {
                         className={cn(
                           'px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm transition-colors rounded-md border',
                           currentTab === 'newComment'
-                            ? 'bg-gray-200 text-gray-900 border-gray-400'
+                            ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
                             : user
-                            ? 'bg-transparent text-gray-700 border-white hover:bg-gray-100'
-                            : 'bg-transparent text-gray-400 border-white cursor-not-allowed'
+                            ? 'bg-transparent text-gray-700 border-transparent hover:bg-white/50'
+                            : 'bg-transparent text-gray-400 border-transparent cursor-not-allowed'
                         )}
                       >
                         Write a comment
                       </button>
 
-                      {/* Edit and Delete Icons - Right Side */}
-                      <div className="ml-auto flex gap-1">
-                        <button
-                          onClick={() => {/* TODO: Implement edit */}}
-                          disabled={!user || user._id !== item.author?._id}
-                          className={cn(
-                            'p-1.5 rounded-md transition-colors text-base',
-                            user && user._id === item.author?._id
-                              ? 'bg-gray-700 text-white hover:bg-gray-800'
-                              : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
-                          )}
-                          title="Edit post"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          onClick={() => {/* TODO: Implement delete */}}
-                          disabled={!user || user._id !== item.author?._id}
-                          className={cn(
-                            'p-1.5 rounded-md transition-colors text-base',
-                            user && user._id === item.author?._id
-                              ? 'bg-red-500 text-white hover:bg-red-600'
-                              : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
-                          )}
-                          title="Delete post"
-                        >
-                          ✕
-                        </button>
-                      </div>
+                      {/* Edit and Delete Icons - Right Side - Only show if user is author */}
+                      {user && user._id === item.author?._id && (
+                        <div className="ml-auto flex gap-1">
+                          <button
+                            onClick={() => {/* TODO: Implement edit */}}
+                            className="p-1.5 rounded-md transition-colors text-base bg-gray-400/60 text-gray-700 hover:bg-gray-500/60 hover:text-gray-900"
+                            title="Edit post"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => {/* TODO: Implement delete */}}
+                            className="p-1.5 rounded-md transition-colors text-base bg-gray-400/60 text-gray-700 hover:bg-red-400/60 hover:text-red-900"
+                            title="Delete post"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Card Body */}
