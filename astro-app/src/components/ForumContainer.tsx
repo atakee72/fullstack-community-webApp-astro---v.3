@@ -173,8 +173,8 @@ export default function ForumContainer() {
           </h2>
         </div>
 
-        {/* Search and Add New in a green box */}
-        <div className="bg-green-100 rounded-lg shadow-md p-4 md:p-6">
+        {/* Search and Add New in a teal/green box */}
+        <div className="bg-[#4b9aaa]/10 rounded-lg shadow-md p-4 md:p-6">
           <div className="mb-4">
             <input
               type="text"
@@ -256,17 +256,17 @@ export default function ForumContainer() {
 
                       {/* Edit and Delete Icons - Right Side - Only show if user is author */}
                       {user && user._id === item.author?._id && (
-                        <div className="ml-auto flex gap-1">
+                        <div className="ml-auto flex gap-1.5">
                           <button
                             onClick={() => {/* TODO: Implement edit */}}
-                            className="p-1.5 rounded-md transition-colors text-base text-gray-700 hover:text-gray-900"
+                            className="p-2 rounded-md transition-colors text-lg bg-slate-500 text-white hover:bg-slate-600"
                             title="Edit post"
                           >
                             ✏️
                           </button>
                           <button
                             onClick={() => {/* TODO: Implement delete */}}
-                            className="p-1.5 rounded-md transition-colors text-base text-gray-700 hover:text-red-700"
+                            className="p-2 rounded-md transition-colors text-lg bg-slate-500 text-white hover:bg-red-500"
                             title="Delete post"
                           >
                             ✕
