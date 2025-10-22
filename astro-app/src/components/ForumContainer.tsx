@@ -134,10 +134,10 @@ export default function ForumContainer() {
           <button
             onClick={() => setCollectionType('topics')}
             className={cn(
-              'px-3 md:px-5 py-1.5 md:py-2 text-sm md:text-base rounded-md font-medium transition-all',
+              'px-3 md:px-5 py-1.5 md:py-2 text-sm md:text-base rounded-md font-medium transition-all border',
               collectionType === 'topics'
-                ? 'bg-white text-gray-900'
-                : 'bg-transparent text-white hover:bg-white/10'
+                ? 'bg-white text-gray-900 border-transparent'
+                : 'bg-transparent text-white border-white hover:bg-white/10'
             )}
           >
             Discussions
@@ -145,10 +145,10 @@ export default function ForumContainer() {
           <button
             onClick={() => setCollectionType('announcements')}
             className={cn(
-              'px-3 md:px-5 py-1.5 md:py-2 text-sm md:text-base rounded-md font-medium transition-all',
+              'px-3 md:px-5 py-1.5 md:py-2 text-sm md:text-base rounded-md font-medium transition-all border',
               collectionType === 'announcements'
-                ? 'bg-white text-gray-900'
-                : 'bg-transparent text-white hover:bg-white/10'
+                ? 'bg-white text-gray-900 border-transparent'
+                : 'bg-transparent text-white border-white hover:bg-white/10'
             )}
           >
             Announcements
@@ -156,10 +156,10 @@ export default function ForumContainer() {
           <button
             onClick={() => setCollectionType('recommendations')}
             className={cn(
-              'px-3 md:px-5 py-1.5 md:py-2 text-sm md:text-base rounded-md font-medium transition-all',
+              'px-3 md:px-5 py-1.5 md:py-2 text-sm md:text-base rounded-md font-medium transition-all border',
               collectionType === 'recommendations'
-                ? 'bg-white text-gray-900'
-                : 'bg-transparent text-white hover:bg-white/10'
+                ? 'bg-white text-gray-900 border-transparent'
+                : 'bg-transparent text-white border-white hover:bg-white/10'
             )}
           >
             Recommendations
@@ -173,8 +173,8 @@ export default function ForumContainer() {
           </h2>
         </div>
 
-        {/* Search and Add New in a white box */}
-        <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
+        {/* Search and Add New in a green box */}
+        <div className="bg-green-100 rounded-lg shadow-md p-4 md:p-6">
           <div className="mb-4">
             <input
               type="text"
@@ -186,23 +186,25 @@ export default function ForumContainer() {
           </div>
 
           {user && (
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-[#814256] text-white rounded-md hover:bg-[#6a3646] transition-all shadow-md font-medium"
-            >
-              ✏️ Add New {collectionType.charAt(0).toUpperCase() + collectionType.slice(1, -1)}
-            </button>
+            <div className="flex justify-center">
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="w-full md:w-2/3 lg:w-1/2 px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-[#814256] text-white rounded-md hover:bg-[#6a3646] transition-all shadow-md font-medium"
+              >
+                ✏️ Add New {collectionType.charAt(0).toUpperCase() + collectionType.slice(1, -1)}
+              </button>
+            </div>
           )}
         </div>
 
         {/* Posts Grid */}
-        <div>
+        <div className="mt-3 md:mt-4">
           {filteredItems.length === 0 ? (
             <div className="bg-white rounded-lg shadow-md p-6 md:p-8 text-center">
               <p className="text-gray-600 text-base md:text-lg">No {collectionType} found. Be the first to create one!</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {filteredItems.map((item) => {
                 const currentTab = getCardActiveTab(item._id);
                 return (
@@ -212,7 +214,7 @@ export default function ForumContainer() {
                       <button
                         onClick={() => setCardActiveTab(item._id, 'posts')}
                         className={cn(
-                          'px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm transition-colors rounded-md border max-w-xs overflow-x-auto whitespace-nowrap scrollbar-hide',
+                          'px-2 md:px-3 py-2 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border max-w-xs overflow-x-auto whitespace-nowrap scrollbar-hide',
                           currentTab === 'posts'
                             ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
                             : 'bg-transparent text-gray-700 border-white hover:bg-white/50'
@@ -223,7 +225,7 @@ export default function ForumContainer() {
                       <button
                         onClick={() => setCardActiveTab(item._id, 'comments')}
                         className={cn(
-                          'px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm transition-colors rounded-md border',
+                          'px-2 md:px-3 py-2 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border',
                           currentTab === 'comments'
                             ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
                             : 'bg-transparent text-gray-700 border-white hover:bg-white/50'
@@ -241,7 +243,7 @@ export default function ForumContainer() {
                         }}
                         disabled={!user}
                         className={cn(
-                          'px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm transition-colors rounded-md border',
+                          'px-2 md:px-3 py-2 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border',
                           currentTab === 'newComment'
                             ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
                             : user
