@@ -191,7 +191,7 @@ export default function ForumContainer() {
                 onClick={() => setShowAddModal(true)}
                 className="w-full md:w-2/3 lg:w-1/2 px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-[#814256] text-white rounded-md hover:bg-[#6a3646] transition-all shadow-md font-medium"
               >
-                ✏️ Add New {collectionType.charAt(0).toUpperCase() + collectionType.slice(1, -1)}
+                <span className="text-gray-400">✎</span> Add New {collectionType.charAt(0).toUpperCase() + collectionType.slice(1, -1)}
               </button>
             </div>
           )}
@@ -259,14 +259,14 @@ export default function ForumContainer() {
                         <div className="ml-auto flex gap-1.5">
                           <button
                             onClick={() => {/* TODO: Implement edit */}}
-                            className="p-2 rounded-md transition-colors text-lg bg-slate-500 text-white hover:bg-slate-600"
+                            className="p-1 rounded-md transition-colors text-2xl text-gray-500 hover:text-gray-700"
                             title="Edit post"
                           >
-                            ✏️
+                            ✎
                           </button>
                           <button
                             onClick={() => {/* TODO: Implement delete */}}
-                            className="p-2 rounded-md transition-colors text-lg bg-slate-500 text-white hover:bg-red-500"
+                            className="p-1 rounded-md transition-colors text-2xl text-gray-500 hover:text-red-600"
                             title="Delete post"
                           >
                             ✕
