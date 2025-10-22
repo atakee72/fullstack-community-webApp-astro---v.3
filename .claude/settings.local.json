@@ -7,7 +7,16 @@
       "Bash(ls:*)",
       "mcp__vercel__list_projects",
       "mcp__vercel__list_teams",
-      "mcp__vercel__get_project"
+      "mcp__vercel__get_project",
+      "Read(//home/ercan/.local/share/**)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "mcp__mongodb-mcp__connect",
+      "mcp__mongodb-mcp__list-databases",
+      "mcp__mongodb-mcp__list-collections",
+      "mcp__mongodb-mcp__collection-schema",
+      "mcp__mongodb-mcp__count",
+      "Read(//mnt/c/Users/ercan/Downloads/**)"
     ],
     "deny": [],
     "ask": []

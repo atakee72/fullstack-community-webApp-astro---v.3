@@ -29,10 +29,6 @@ const getAllTopics = async (req, res) => {
 };
 
 const getTopicById = async (req, res) => {
-  if (error) {
-    throw error;
-  }
-
   const postId = req.params.topicId;
   try {
     const requestedTopic = await topicModel.findById(postId);

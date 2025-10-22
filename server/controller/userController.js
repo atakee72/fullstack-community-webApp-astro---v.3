@@ -2,7 +2,6 @@ import userModel from "../models/userModel.js";
 import { v2 as cloudinary } from "cloudinary";
 import { encryptPassword, verifyPassword } from "../utils/passEncryp.js";
 import generateToken from "../utils/jwt.js";
-import { body, validationResult } from "express-validator";
 
 const imageUpload = async (req, res) => {
   console.log("🚀 ~ ~ req.file", req.file);
@@ -119,25 +118,12 @@ const getUsersByRoleBadge = async (req, res) => {
   }
 };
 
-// const { validationResult } = require("express-validator");
-
-const validateEmailAndPassword = [
-  body("username").isLength({ min: 5 }),
-  body("email").isEmail(),
-  body("password").isLength({ min: 6 }),
-];
-
 const signup = async (req, res) => {
   console.log("req.body", req.body);
   // to use the destructured variables:
   // const { userName, eMail, passWord, userPicture } = req.body;
 
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const existingUser = await userModel.findOne({ eMail: req.body.email });
     console.log("🚀 existingUser", existingUser);
 

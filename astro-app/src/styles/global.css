@@ -1,0 +1,116 @@
+/* Tailwind base styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Hide scrollbar utility */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+}
+
+/* CSS Variables for Brand Colors */
+:root {
+  /* Original Mahalle Colors */
+  --color-primary: #4b9aaa;      /* Teal */
+  --color-secondary: #814256;     /* Wine/Burgundy */
+  --color-yellow: #eccc6e;        /* Yellow/Gold */
+  --color-gray: #aca89f;          /* Gray/Beige */
+
+  /* Extended palette */
+  --color-primary-dark: #3a7a8a;
+  --color-secondary-dark: #6a3646;
+  --color-yellow-light: #f9f9f9;
+  --color-gray-light: #c9c4b9;
+}
+
+/* Base styles */
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Utility class for vertical text (used in landing page) */
+.writing-mode-vertical-rl {
+  writing-mode: vertical-rl;
+}
+
+/* Modal animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Spin animation for loading */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+/* Accordion Styles for Comments */
+.accordion-wrap {
+  width: 100%;
+}
+
+.accordion-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.accordion-item {
+  margin-bottom: 2px;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.accordion-item:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.ribbon {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.accordion-item:hover .ribbon {
+  background-color: #eccc6e !important;
+}
+
+.content {
+  transition: all 0.3s ease;
+  max-height: 0;
+  overflow: hidden;
+}
+
+.accordion-item:hover .content {
+  max-height: 500px;
+}

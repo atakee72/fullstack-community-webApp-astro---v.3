@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LoginForm from '../components/LoginForm';
+---
+
+<BaseLayout title="Login">
+  <main class="min-h-[calc(100vh-80px)] flex items-center justify-center bg-gradient-to-br from-[#eccc6e] to-[#dabb5d]">
+    <div class="max-w-md w-full mx-4">
+      {/* Logo Section */}
+      <div class="text-center mb-8">
+        <div class="inline-block bg-white rounded-full p-4 shadow-lg mb-4">
+          <span class="text-5xl">🏘️</span>
+        </div>
+        <h2 class="text-3xl font-bold text-[#814256]">Welcome Back!</h2>
+        <p class="text-gray-700 mt-2">Login to your Mahalle community</p>
+      </div>
+
+      {/* Login Card */}
+      <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div class="bg-gradient-to-r from-[#4b9aaa] to-[#3a7888] p-6">
+          <h1 class="text-2xl font-bold text-white text-center">User Login</h1>
+        </div>
+
+        <div class="p-8">
+          <LoginForm client:load />
+
+          <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+            <p class="text-gray-600">
+              Don't have an account?{" "}
+              <a href="/register" class="text-[#4b9aaa] font-semibold hover:text-[#814256] transition-colors">
+                Sign up here
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Text */}
+      <p class="text-center text-gray-700 mt-8 text-sm">
+        © 2024 Mahalle Community. All rights reserved.
+      </p>
+    </div>
+  </main>
+</BaseLayout>
