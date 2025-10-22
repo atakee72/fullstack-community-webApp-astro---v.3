@@ -212,7 +212,7 @@ export default function ForumContainer() {
                       <button
                         onClick={() => setCardActiveTab(item._id, 'posts')}
                         className={cn(
-                          'px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm transition-colors rounded-md border max-w-xs overflow-x-auto whitespace-nowrap scrollbar-hide',
+                          'px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm transition-colors rounded-md border max-w-xs overflow-x-auto whitespace-nowrap scrollbar-hide',
                           currentTab === 'posts'
                             ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
                             : 'bg-transparent text-gray-700 border-white hover:bg-white/50'
@@ -223,7 +223,7 @@ export default function ForumContainer() {
                       <button
                         onClick={() => setCardActiveTab(item._id, 'comments')}
                         className={cn(
-                          'px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm transition-colors rounded-md border',
+                          'px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm transition-colors rounded-md border',
                           currentTab === 'comments'
                             ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
                             : 'bg-transparent text-gray-700 border-white hover:bg-white/50'
@@ -241,7 +241,7 @@ export default function ForumContainer() {
                         }}
                         disabled={!user}
                         className={cn(
-                          'px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm transition-colors rounded-md border',
+                          'px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm transition-colors rounded-md border',
                           currentTab === 'newComment'
                             ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
                             : user
