@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore';
-import { useForumStore } from '../stores/forumStore';
-import { useTopicsQuery, useCreatePost } from '../hooks/api/useTopicsQuery';
+import { useTopicsQuery, useCreatePost, useDeletePost } from '../hooks/api/useTopicsQuery';
 import { useCreateComment } from '../hooks/api/useCommentsQuery';
 import PostModal from './PostModal';
 import CommentModal from './CommentModal';
@@ -29,6 +28,7 @@ export default function ForumContainer() {
   // Mutations
   const createPost = useCreatePost(collectionType);
   const createComment = useCreateComment();
+  const deletePost = useDeletePost(collectionType);
 
   useEffect(() => {
     setIsClient(true);
@@ -45,8 +45,13 @@ export default function ForumContainer() {
 
   const handlePostSubmit = async (data: { title: string; body: string; tags: string[] }) => {
     try {
+      // Prepare data based on collection type
+      const postData = collectionType === 'announcements'
+        ? { title: data.title, description: data.body, tags: data.tags }
+        : { title: data.title, body: data.body, tags: data.tags };
+
       // Use React Query mutation
-      await createPost.mutateAsync(data);
+      await createPost.mutateAsync(postData);
       setShowAddModal(false);
       // Data will auto-refresh due to cache invalidation
     } catch (error) {
@@ -265,11 +270,16 @@ export default function ForumContainer() {
                             ✎
                           </button>
                           <button
-                            onClick={() => {/* TODO: Implement delete */}}
+                            onClick={() => {
+                              if (window.confirm(`Are you sure you want to delete this ${collectionType.slice(0, -1)}?`)) {
+                                deletePost.mutate(item._id);
+                              }
+                            }}
                             className="p-1 rounded-md transition-colors text-2xl text-gray-500 hover:text-red-600"
                             title="Delete post"
+                            disabled={deletePost.isPending}
                           >
-                            ✕
+                            {deletePost.isPending ? '⏳' : '✕'}
                           </button>
                         </div>
                       )}

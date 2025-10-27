@@ -61,25 +61,6 @@ export default function CommentsList({ postId, collectionType }: CommentsListPro
                   {/* Ribbon Header */}
                   <div className="ribbon bg-[#4b9aaa] group-hover:bg-[#eccc6e] text-white group-hover:text-gray-900 p-3 flex items-center justify-between transition-colors duration-300">
                     <div className="flex items-center gap-3">
-                      {/* Delete button or permission message */}
-                      {isOwner ? (
-                        <button
-                          onClick={() => {
-                            if (window.confirm('Delete your comment irreversibly?')) {
-                              handleDeleteComment(comment._id as string);
-                            }
-                          }}
-                          className="bg-gray-300 hover:bg-red-400 text-gray-700 hover:text-white rounded px-2 py-1 text-xs transition-colors"
-                          title="Delete comment"
-                        >
-                          ✕
-                        </button>
-                      ) : (
-                        <div className="bg-gray-300 text-gray-700 rounded px-2 py-1 text-xs opacity-50 cursor-not-allowed">
-                          ✕
-                        </div>
-                      )}
-
                       <span className="text-sm">{formatDate(comment.date)}</span>
                       <span className="font-semibold">{author?.userName || 'Anonymous'}</span>
 
@@ -91,6 +72,21 @@ export default function CommentsList({ postId, collectionType }: CommentsListPro
                         />
                       )}
                     </div>
+
+                    {/* Delete button - only shown for comment owner */}
+                    {isOwner && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm('Delete your comment irreversibly?')) {
+                            handleDeleteComment(comment._id as string);
+                          }
+                        }}
+                        className="bg-gray-300 hover:bg-red-400 text-gray-700 hover:text-white rounded px-2 py-1 text-xs transition-colors"
+                        title="Delete comment"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
 
                   {/* Content - Hidden by default, shown on hover with transition */}
