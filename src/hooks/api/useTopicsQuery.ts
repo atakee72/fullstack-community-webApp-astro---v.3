@@ -177,3 +177,44 @@ export function useUpdateLikes(type: 'topics' | 'announcements' | 'recommendatio
     },
   });
 }
+
+// Delete a post
+async function deletePost(
+  postId: string,
+  type: 'topics' | 'announcements' | 'recommendations'
+) {
+  const token = localStorage.getItem('token');
+
+  const response = await fetch(`${API_URL}/${type}/delete/${postId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || `Failed to delete ${type.slice(0, -1)}`);
+  }
+
+  return response.json();
+}
+
+// Hook for deleting posts
+export function useDeletePost(type: 'topics' | 'announcements' | 'recommendations') {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (postId: string) => deletePost(postId, type),
+    onSuccess: (data, postId) => {
+      // Remove the deleted item from the cache
+      queryClient.setQueryData([type], (old: any[] | undefined) => {
+        if (!old) return old;
+        return old.filter(item => item._id !== postId);
+      });
+
+      // Also invalidate to ensure consistency
+      queryClient.invalidateQueries({ queryKey: [type] });
+    },
+  });
+}
