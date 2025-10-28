@@ -10,7 +10,16 @@ export default defineConfig({
   adapter: netlify({
     edgeMiddleware: true,
     cacheOnDemandPages: true,
-    functionPerRoute: false
+    functionPerRoute: false,
+    builders: {
+      // Configure esbuild to handle Node.js built-ins
+      functionBuilder: {
+        external: ['mongodb', 'bcrypt', '@mongodb-js/saslprep'],
+        platform: 'node',
+        target: 'node20',
+        format: 'esm'
+      }
+    }
   }),
 
   integrations: [
