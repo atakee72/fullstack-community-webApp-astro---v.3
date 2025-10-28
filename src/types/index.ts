@@ -66,8 +66,18 @@ export interface Announcement {
   _id?: ObjectId | string;
   title: string;
   content: string;
+  body?: string;
+  description?: string;
   author: ObjectId | string | User;
+  comments: (ObjectId | string)[];
+  views: number;
+  likes: number;
+  likedBy: (ObjectId | string)[];
+  tags: string[];
   date: number;
+  editHistory?: EditHistory[];
+  isEdited?: boolean;
+  lastEditedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -77,9 +87,19 @@ export interface Recommendation {
   _id?: ObjectId | string;
   title: string;
   content: string;
+  body?: string;
+  description?: string;
   author: ObjectId | string | User;
   category?: string;
+  comments: (ObjectId | string)[];
+  views: number;
+  likes: number;
+  likedBy: (ObjectId | string)[];
+  tags: string[];
   date: number;
+  editHistory?: EditHistory[];
+  isEdited?: boolean;
+  lastEditedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
