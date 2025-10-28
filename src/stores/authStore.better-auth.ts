@@ -54,8 +54,6 @@ export const useAuthStore = create<AuthState>()(
               throw new Error(result.error.message || 'Login failed');
             }
 
-            // Wait for session to be established
-            await new Promise(resolve => setTimeout(resolve, 300));
 
             // Get the session data
             const session = await authClient.getSession();
@@ -118,8 +116,6 @@ export const useAuthStore = create<AuthState>()(
               throw new Error(result.error.message || 'Registration failed');
             }
 
-            // Wait for session to be established
-            await new Promise(resolve => setTimeout(resolve, 300));
 
             // Get the session data after successful registration
             const session = await authClient.getSession();
