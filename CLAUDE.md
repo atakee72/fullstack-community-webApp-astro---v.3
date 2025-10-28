@@ -148,3 +148,4 @@ Server configured with dynamic CORS origin from env variable, credentials enable
 - Vercel config exists but references root `index.js` (needs adjustment for `/server/index.js`)
 - Both Bootstrap and Tailwind CSS loaded (potential conflicts)
 - Console logs present throughout codebase for debugging
+- When I say yellow, red, green, I always mean the default variants of the project.

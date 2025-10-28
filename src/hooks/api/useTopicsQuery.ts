@@ -78,14 +78,12 @@ async function createPost(
   type: 'topics' | 'announcements' | 'recommendations',
   data: { title: string; body?: string; description?: string; tags?: string[]; category?: string }
 ) {
-  const token = localStorage.getItem('token');
-
   const response = await fetch(`${API_URL}/${type}/create`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
     },
+    credentials: 'include', // Include cookies for Better Auth session
     body: JSON.stringify(data),
   });
 
@@ -108,6 +106,7 @@ export function useCreatePost(type: 'topics' | 'announcements' | 'recommendation
       // Invalidate and refetch the list
       queryClient.invalidateQueries({ queryKey: [type] });
     },
+    retry: false, // Disable automatic retries
   });
 }
 
@@ -138,14 +137,12 @@ async function updateLikes(
   action: 'like' | 'unlike',
   type: 'topics' | 'announcements' | 'recommendations'
 ) {
-  const token = localStorage.getItem('token');
-
   const response = await fetch(`${API_URL}/${type}/${postId}/like`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
     },
+    credentials: 'include', // Include cookies for Better Auth session
     body: JSON.stringify({ action }),
   });
 
@@ -178,18 +175,51 @@ export function useUpdateLikes(type: 'topics' | 'announcements' | 'recommendatio
   });
 }
 
+// Edit a post
+async function editPost(
+  postId: string,
+  type: 'topics' | 'announcements' | 'recommendations',
+  data: { title: string; body: string; tags: string[] }
+) {
+  const response = await fetch(`${API_URL}/${type}/edit/${postId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include', // Include cookies for Better Auth session
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to update post');
+  }
+
+  return response.json();
+}
+
+// Hook for editing posts
+export function useEditPost(type: 'topics' | 'announcements' | 'recommendations') {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, data }: { postId: string; data: { title: string; body: string; tags: string[] } }) =>
+      editPost(postId, type, data),
+    onSuccess: () => {
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: [type] });
+    },
+  });
+}
+
 // Delete a post
 async function deletePost(
   postId: string,
   type: 'topics' | 'announcements' | 'recommendations'
 ) {
-  const token = localStorage.getItem('token');
-
   const response = await fetch(`${API_URL}/${type}/delete/${postId}`, {
     method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
+    credentials: 'include', // Include cookies for Better Auth session
   });
 
   if (!response.ok) {

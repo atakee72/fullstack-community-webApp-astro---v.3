@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuthStore } from '../stores/authStore';
+import { useAuthStore } from '../stores/authStore.better-auth';
 import { useForumStore } from '../stores/forumStore';
 import ImageUpload from './ImageUpload';
 

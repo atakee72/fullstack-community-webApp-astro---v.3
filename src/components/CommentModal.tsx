@@ -23,8 +23,17 @@ export default function CommentModal({
       // Reset form when modal closes
       setComment('');
       setIsSubmitting(false);
+    } else {
+      // Add escape key listener when modal is open
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          handleClose();
+        }
+      };
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
     }
-  }, [show]);
+  }, [show, handleClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,10 +42,10 @@ export default function CommentModal({
     setIsSubmitting(true);
     try {
       await onSubmit(comment);
-      handleClose();
+      // Don't call handleClose here - let the parent component handle it
+      // This prevents the tab from being reset to 'posts'
     } catch (error) {
       console.error('Failed to submit comment:', error);
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -52,8 +61,8 @@ export default function CommentModal({
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 flex items-center justify-center z-50 p-2 md:p-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-hidden animate-fade-in">
+      <div className="fixed inset-0 flex items-center justify-center z-50 p-2 md:p-4" onClick={handleClose}>
+        <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-hidden animate-fade-in" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <div className="bg-gradient-to-r from-[#814256] to-[#6a3646] p-4 md:p-6 relative">
             <button

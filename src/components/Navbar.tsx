@@ -1,19 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { useAuthStore } from '../stores/authStore';
+import { useAuthStore } from '../stores/authStore.better-auth';
 
 export default function Navbar() {
   const [isClient, setIsClient] = useState(false);
   const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const logout = useAuthStore((state) => state.logout);
+  const checkAuth = useAuthStore((state) => state.checkAuth);
 
   useEffect(() => {
     setIsClient(true);
-    // Rehydrate the auth store on client side
+    // Rehydrate the auth store and check for existing Better Auth session
     if (typeof window !== 'undefined') {
       useAuthStore.persist.rehydrate();
+      // Check if there's an existing Better Auth session
+      checkAuth();
     }
-  }, []);
+  }, [checkAuth]);
 
   // Don't render user-specific content during SSR
   if (!isClient) {
@@ -62,7 +65,7 @@ export default function Navbar() {
               </li>
 
               {/* Navigation Links */}
-              {!user && !token && (
+              {!isAuthenticated && (
                 <>
                   <li>
                     <a
@@ -110,7 +113,7 @@ export default function Navbar() {
       </div>
 
       {/* User Profile Sidebar - Hidden on mobile/tablet, visible on large screens */}
-      {token && user && (
+      {isAuthenticated && user && (
         <div className="hidden lg:flex fixed top-[45%] right-[5%] flex-col items-center gap-3 z-50">
           <a
             href="/profile"

@@ -1,4 +1,4 @@
-import { useAuthStore } from '../stores/authStore';
+import { useAuthStore } from '../stores/authStore.better-auth';
 import { useForumStore } from '../stores/forumStore';
 
 export function initializeStores() {

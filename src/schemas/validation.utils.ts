@@ -63,6 +63,7 @@ export async function parseRequestBody<T>(
 ): Promise<{ success: true; data: T } | { success: false; response: Response }> {
   try {
     const body = await request.json();
+
     const result = schema.safeParse(body);
 
     if (result.success) {
