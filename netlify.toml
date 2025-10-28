@@ -16,7 +16,18 @@
 [functions]
   directory = "netlify/functions/"
   node_bundler = "nft"
-  external_node_modules = ["mongodb", "bcrypt", "@mongodb-js/saslprep", "node-gyp-build"]
+  external_node_modules = [
+    "mongodb",
+    "mongoose",
+    "bcrypt",
+    "@mongodb-js/saslprep",
+    "node-gyp-build",
+    "kerberos",
+    "snappy",
+    "socks",
+    "mongodb-client-encryption",
+    "bson-ext"
+  ]
 
 # Headers for better security and performance
 [[headers]]
