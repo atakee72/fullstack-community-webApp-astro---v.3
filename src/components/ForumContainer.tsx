@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore.better-auth';
 import { useTopicsQuery, useCreatePost, useDeletePost, useEditPost } from '../hooks/api/useTopicsQuery';
 import { useCreateComment } from '../hooks/api/useCommentsQuery';
+import { useLikeMutation } from '../hooks/api/useLikeMutation';
 import PostModal from './PostModal';
 import CommentModal from './CommentModal';
 import CommentsList from './CommentsList';
+import ReadMoreModal from './ReadMoreModal';
+import HeartBtn from './HeartBtn';
+import EyeIcon from './EyeIcon';
 import { cn } from '../lib/utils';
 import type { Topic, Announcement, Recommendation } from '../types';
 
@@ -15,6 +19,7 @@ export default function ForumContainer() {
   const [searchValue, setSearchValue] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showCommentModal, setShowCommentModal] = useState(false);
+  const [showReadMoreModal, setShowReadMoreModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [activeCardTabs, setActiveCardTabs] = useState<{ [key: string]: 'posts' | 'comments' | 'newComment' }>({});
   const [editingPost, setEditingPost] = useState<any>(null);
@@ -31,6 +36,7 @@ export default function ForumContainer() {
   const createComment = useCreateComment();
   const deletePost = useDeletePost(collectionType);
   const editPost = useEditPost(collectionType);
+  const likeMutation = useLikeMutation(collectionType);
 
   useEffect(() => {
     setIsClient(true);
@@ -109,6 +115,68 @@ export default function ForumContainer() {
     } catch (error) {
       console.error('Failed to add comment:', error);
       // You might want to show an error toast here
+    }
+  };
+
+  // Increment view count
+  const incrementViews = async (postId: string) => {
+    try {
+      await fetch('/api/views/increment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId, collectionType })
+      });
+    } catch (error) {
+      console.error('Failed to increment views:', error);
+    }
+  };
+
+  // Handle read more click
+  const handleReadMore = (item: any) => {
+    setSelectedPost(item);
+    setShowReadMoreModal(true);
+    // Increment views when read more is clicked (only if not the author)
+    const isAuthor = user && (
+      (typeof item.author === 'string' && user.id === item.author) ||
+      (item.author && typeof item.author === 'object' && 'betterAuthId' in item.author && user.id === item.author.betterAuthId)
+    );
+    if (!isAuthor) {
+      incrementViews(item._id);
+    }
+  };
+
+  // Handle comment tab click for view tracking
+  const handleCommentTabClick = (itemId: string, item: any) => {
+    setCardActiveTab(itemId, 'comments');
+    // Increment views when comments tab is clicked (only if not the author)
+    const isAuthor = user && (
+      (typeof item.author === 'string' && user.id === item.author) ||
+      (item.author && typeof item.author === 'object' && 'betterAuthId' in item.author && user.id === item.author.betterAuthId)
+    );
+    if (!isAuthor) {
+      incrementViews(itemId);
+    }
+  };
+
+  // Truncate text to approximately 3 lines (about 150 characters)
+  const truncateText = (text: string, maxLength: number = 150) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + '...';
+  };
+
+  // Handle like toggle
+  const handleLikeToggle = async (postId: string, isCurrentlyLiked: boolean) => {
+    if (!user) return;
+
+    try {
+      await likeMutation.mutateAsync({
+        postId,
+        collectionType,
+        action: isCurrentlyLiked ? 'unlike' : 'like'
+      });
+    } catch (error) {
+      console.error('Failed to toggle like:', error);
     }
   };
 
@@ -228,33 +296,41 @@ export default function ForumContainer() {
                     key={item._id}
                     className="bg-[#c9c4b9] rounded-lg shadow-md overflow-hidden p-4 md:p-6 flex flex-col min-h-[300px] md:min-h-[400px] hover:shadow-lg transition-all duration-400 ease-out">
                     {/* Card Header with Tabs and Action Icons - Shared Gray Background Strip */}
-                    <div className="bg-gray-200/60 -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-2 md:px-6 py-2 mb-4">
+                    <div className="bg-gray-200/60 -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-2 md:px-6 py-2 mb-4 overflow-hidden">
                       <div className="flex items-center gap-1">
                         {/* Tabs Group */}
-                        <div className="flex flex-1 gap-1 overflow-x-auto scrollbar-hide">
+                        <div className="flex flex-1 gap-1 min-w-0">
                           <button
                             onClick={() => setCardActiveTab(item._id, 'posts')}
                             className={cn(
-                              'px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border flex-shrink-0',
+                              'px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border min-w-0',
                               currentTab === 'posts'
-                                ? 'bg-white text-gray-900 border-gray-300 shadow-sm min-w-[120px] md:min-w-0'
-                                : 'bg-transparent text-gray-700 border-white hover:bg-white/50'
+                                ? 'bg-white text-gray-900 border-gray-300 shadow-sm flex-1 md:flex-initial'
+                                : 'bg-transparent text-gray-700 border-white hover:bg-white/50 flex-shrink-0 max-w-[40%]'
                             )}
                           >
-                            <span className={cn(
-                              "block",
+                            <div className={cn(
+                              "min-w-0",
                               currentTab === 'posts'
-                                ? "whitespace-nowrap overflow-x-auto scrollbar-hide max-w-[120px] md:max-w-xs"
-                                : "truncate max-w-[120px] md:max-w-xs"
-                            )}>{item.title}</span>
+                                ? "overflow-x-auto scrollbar-hide"
+                                : "truncate"
+                            )}>
+                              <span className={cn(
+                                currentTab === 'posts'
+                                  ? "inline-block whitespace-nowrap px-1"
+                                  : "block"
+                              )}>{item.title}</span>
+                            </div>
                           </button>
+
                           <button
-                            onClick={() => setCardActiveTab(item._id, 'comments')}
+                            onClick={() => handleCommentTabClick(item._id, item)}
                             className={cn(
                               'px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border whitespace-nowrap flex-shrink-0',
                               currentTab === 'comments'
                                 ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
-                                : 'bg-transparent text-gray-700 border-white hover:bg-white/50'
+                                : 'bg-transparent text-gray-700 border-white hover:bg-white/50',
+                              currentTab === 'posts' && 'ml-auto md:ml-0'
                             )}
                           >
                             Comments <span className="ml-0.5 px-1 md:px-2 py-0.5 bg-gray-500 text-white text-[10px] md:text-xs rounded-full">{item.comments?.length || 0}</span>
@@ -337,14 +413,31 @@ export default function ForumContainer() {
                               )}
                             </div>
                           </div>
-                          <div className="flex gap-2 md:gap-3 text-xs md:text-sm">
-                            <button className="hover:scale-110 transition-transform whitespace-nowrap">👍 {item.likes?.length || 0}</button>
-                            <button className="hover:scale-110 transition-transform whitespace-nowrap">👀 {item.views || 0}</button>
+                          <div className="flex gap-2 md:gap-3 items-center text-xs md:text-sm">
+                            <EyeIcon viewCount={item.views || 0} createdAt={item.date} />
+                            <HeartBtn
+                              isLiked={user ? item.likedBy?.includes(user.id) || false : false}
+                              likeCount={item.likes || 0}
+                              onToggle={() => handleLikeToggle(item._id, item.likedBy?.includes(user?.id))}
+                              disabled={!user}
+                            />
                           </div>
                         </div>
 
-                        {/* Post Content */}
-                        <p className="text-gray-700 mb-3 md:mb-4 leading-relaxed px-2 md:px-4 text-sm md:text-base">{item.description || item.body}</p>
+                        {/* Post Content - Truncated with Read More */}
+                        <div className="px-2 md:px-4 mb-3 md:mb-4">
+                          <p className="text-gray-700 leading-relaxed text-sm md:text-base">
+                            {truncateText(item.description || item.body)}
+                          </p>
+                          {(item.description || item.body)?.length > 150 && (
+                            <button
+                              onClick={() => handleReadMore(item)}
+                              className="mt-2 text-[#4b9aaa] hover:text-[#3a7a8a] font-medium text-sm md:text-base underline"
+                            >
+                              Read more
+                            </button>
+                          )}
+                        </div>
 
                         {/* Spacer */}
                         <div className="flex-1"></div>
@@ -412,6 +505,17 @@ export default function ForumContainer() {
         postTitle={selectedPost?.title || ''}
         postId={selectedPost?._id || ''}
         onSubmit={handleCommentSubmit}
+      />
+
+      {/* Read More Modal */}
+      <ReadMoreModal
+        isOpen={showReadMoreModal}
+        onClose={() => setShowReadMoreModal(false)}
+        title={selectedPost?.title || ''}
+        body={selectedPost?.body || selectedPost?.description || ''}
+        author={selectedPost?.author?.userName || 'Anonymous'}
+        date={selectedPost?.date}
+        tags={selectedPost?.tags}
       />
     </div>
   );

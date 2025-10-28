@@ -44,7 +44,8 @@ export const POST: APIRoute = async ({ request }) => {
       tags: tags || [],
       comments: [],
       views: 0,
-      likes: [],
+      likes: 0,
+      likedBy: [],
       date: Date.now(),
       createdAt: new Date(),
       updatedAt: new Date()
