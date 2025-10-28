@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import jwt from 'jsonwebtoken';
+import { auth } from '../../../../auth';
 import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 
@@ -14,28 +14,19 @@ export const DELETE: APIRoute = async ({ params, request }) => {
       });
     }
 
-    // Extract token from Authorization header
-    const authHeader = request.headers.get('Authorization');
+    // Get session from Better Auth
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'No token provided' }), {
+    if (!session) {
+      return new Response(JSON.stringify({ error: 'Unauthorized - Please login' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    const token = authHeader.substring(7);
-
-    // Verify token
-    let decoded;
-    try {
-      decoded = jwt.verify(token, import.meta.env.JWT_SECRET || 'default-secret') as any;
-    } catch (error) {
-      return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    const userId = session.user.id;
 
     // Connect to database
     const db = await connectDB();
@@ -52,7 +43,12 @@ export const DELETE: APIRoute = async ({ params, request }) => {
     }
 
     // Check if user is the author of the comment
-    if (comment.author.toString() !== decoded.userId) {
+    // Handle both new format (Better Auth ID as string) and old format (ObjectId)
+    const commentAuthorId = typeof comment.author === 'string'
+      ? comment.author
+      : comment.author?.toString();
+
+    if (commentAuthorId !== userId) {
       return new Response(JSON.stringify({ error: 'Unauthorized to delete this comment' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' }

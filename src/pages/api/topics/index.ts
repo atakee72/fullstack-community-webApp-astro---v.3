@@ -42,13 +42,58 @@ export const GET: APIRoute = async ({ url }) => {
     let populatedTopics = topics;
     if (shouldPopulateAuthor) {
       const usersCollection = db.collection('users');
+      const betterAuthUserCollection = db.collection('user');
+
       populatedTopics = await Promise.all(
         topics.map(async (topic) => {
           if (topic.author) {
-            const author = await usersCollection.findOne(
-              { _id: topic.author },
-              { projection: { password: 0 } }
-            );
+            // Handle both old MongoDB ObjectId authors and new Better Auth string IDs
+            let author = null;
+
+            // If author is already an object (populated), return as is
+            if (typeof topic.author === 'object' && 'userName' in topic.author) {
+              return topic;
+            }
+
+            // Try to find by Better Auth ID first (for new posts)
+            if (typeof topic.author === 'string') {
+              author = await usersCollection.findOne(
+                { betterAuthId: topic.author },
+                { projection: { password: 0 } }
+              );
+
+              // If not found in users collection, check Better Auth user collection
+              if (!author) {
+                const betterAuthUser = await betterAuthUserCollection.findOne({
+                  _id: new (await import('mongodb')).ObjectId(topic.author)
+                });
+
+                if (betterAuthUser) {
+                  // Extract username - handle corrupted field name
+                  let userName = betterAuthUser.name || betterAuthUser.email?.split('@')[0] || 'User';
+                  if (betterAuthUser['[object Object]']) {
+                    userName = betterAuthUser['[object Object]'];
+                  }
+
+                  // Create a minimal author object
+                  author = {
+                    _id: betterAuthUser._id,
+                    betterAuthId: topic.author,
+                    userName: userName,
+                    email: betterAuthUser.email,
+                    userPicture: betterAuthUser.image || '',
+                    roleBadge: 'resident'
+                  };
+                }
+              }
+            } else {
+              // Try old MongoDB ObjectId lookup for backwards compatibility
+              author = await usersCollection.findOne(
+                { _id: topic.author },
+                { projection: { password: 0 } }
+              );
+            }
+
             return { ...topic, author };
           }
           return topic;

@@ -1,0 +1,6 @@
+ignoredBuiltDependencies:
+  - '@parcel/watcher'
+  - bcrypt
+  - esbuild
+  - protobufjs
+  - sharp

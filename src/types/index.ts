@@ -19,6 +19,14 @@ export interface User {
   updatedAt?: Date;
 }
 
+// Edit History Type
+export interface EditHistory {
+  originalTitle: string;
+  originalBody: string;
+  editedAt: Date;
+  editedBy: string; // Better Auth user ID
+}
+
 // Topic Types
 export interface Topic {
   _id?: ObjectId | string;
@@ -32,6 +40,9 @@ export interface Topic {
   tags: string[];
   date: number;
   wasLiked?: number;
+  editHistory?: EditHistory[]; // Track all edits
+  isEdited?: boolean; // Quick flag to check if post was edited
+  lastEditedAt?: Date; // When was it last edited
   createdAt?: Date;
   updatedAt?: Date;
 }

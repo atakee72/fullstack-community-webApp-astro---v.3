@@ -5,11 +5,17 @@ interface ImportMetaEnv {
   readonly MONGODB_URI: string;
   readonly DB: string;
   readonly JWT_SECRET: string;
+  readonly BETTER_AUTH_SECRET: string;
   readonly CLOUD_NAME: string;
   readonly CLOUDINARY_API_KEY: string;
   readonly CLOUDINARY_API_SECRET: string;
   readonly PUBLIC_API_URL: string;
   readonly NODE_ENV: 'development' | 'production' | 'test';
+  // Social provider keys (optional)
+  readonly GITHUB_CLIENT_ID?: string;
+  readonly GITHUB_CLIENT_SECRET?: string;
+  readonly GOOGLE_CLIENT_ID?: string;
+  readonly GOOGLE_CLIENT_SECRET?: string;
 }
 
 interface ImportMeta {
@@ -21,7 +27,7 @@ type NetlifyLocals = import('@astrojs/netlify').NetlifyLocals;
 
 declare namespace App {
   interface Locals extends NetlifyLocals {
-    user?: import('./types').User;
-    token?: string;
+    user: import("better-auth").User | null;
+    session: import("better-auth").Session | null;
   }
 }

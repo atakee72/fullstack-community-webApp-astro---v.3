@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import jwt from 'jsonwebtoken';
+import { auth } from '../../../../auth';
 import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 
@@ -14,28 +14,19 @@ export const DELETE: APIRoute = async ({ params, request }) => {
       });
     }
 
-    // Extract token from Authorization header
-    const authHeader = request.headers.get('Authorization');
+    // Get session from Better Auth
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'No token provided' }), {
+    if (!session) {
+      return new Response(JSON.stringify({ error: 'Unauthorized - Please login' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    const token = authHeader.substring(7);
-
-    // Verify token
-    let decoded;
-    try {
-      decoded = jwt.verify(token, import.meta.env.JWT_SECRET || 'default-secret') as any;
-    } catch (error) {
-      return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    const userId = session.user.id;
 
     const db = await connectDB();
     const announcementsCollection = db.collection('announcements');
@@ -51,7 +42,12 @@ export const DELETE: APIRoute = async ({ params, request }) => {
     }
 
     // Check if user is the author
-    if (announcement.author.toString() !== decoded.userId) {
+    // Handle both new format (Better Auth ID as string) and old format (ObjectId)
+    const announcementAuthorId = typeof announcement.author === 'string'
+      ? announcement.author
+      : announcement.author?.toString();
+
+    if (announcementAuthorId !== userId) {
       return new Response(JSON.stringify({ error: 'Unauthorized - you can only delete your own announcements' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' }

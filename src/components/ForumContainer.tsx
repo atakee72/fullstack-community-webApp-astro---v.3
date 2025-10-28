@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuthStore } from '../stores/authStore';
-import { useTopicsQuery, useCreatePost, useDeletePost } from '../hooks/api/useTopicsQuery';
+import { useAuthStore } from '../stores/authStore.better-auth';
+import { useTopicsQuery, useCreatePost, useDeletePost, useEditPost } from '../hooks/api/useTopicsQuery';
 import { useCreateComment } from '../hooks/api/useCommentsQuery';
 import PostModal from './PostModal';
 import CommentModal from './CommentModal';
@@ -17,6 +17,7 @@ export default function ForumContainer() {
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [activeCardTabs, setActiveCardTabs] = useState<{ [key: string]: 'posts' | 'comments' | 'newComment' }>({});
+  const [editingPost, setEditingPost] = useState<any>(null);
 
   // Use React Query for data fetching with field selection
   const { data: items = [], isLoading, error, refetch } = useTopicsQuery(collectionType, {
@@ -29,12 +30,15 @@ export default function ForumContainer() {
   const createPost = useCreatePost(collectionType);
   const createComment = useCreateComment();
   const deletePost = useDeletePost(collectionType);
+  const editPost = useEditPost(collectionType);
 
   useEffect(() => {
     setIsClient(true);
-    // Rehydrate stores on client side
+    // Rehydrate stores on client side and check for existing session
     if (typeof window !== 'undefined') {
       useAuthStore.persist.rehydrate();
+      // Check if there's an existing Better Auth session
+      useAuthStore.getState().checkAuth();
     }
   }, []);
 
@@ -45,17 +49,25 @@ export default function ForumContainer() {
 
   const handlePostSubmit = async (data: { title: string; body: string; tags: string[] }) => {
     try {
-      // Prepare data based on collection type
-      const postData = collectionType === 'announcements'
-        ? { title: data.title, description: data.body, tags: data.tags }
-        : { title: data.title, body: data.body, tags: data.tags };
+      if (editingPost) {
+        // Edit mode - update existing post
+        await editPost.mutateAsync({
+          postId: editingPost._id,
+          data: { title: data.title, body: data.body, tags: data.tags }
+        });
+        setEditingPost(null);
+      } else {
+        // Create mode - new post
+        const postData = collectionType === 'announcements'
+          ? { title: data.title, description: data.body, tags: data.tags }
+          : { title: data.title, body: data.body, tags: data.tags };
 
-      // Use React Query mutation
-      await createPost.mutateAsync(postData);
+        await createPost.mutateAsync(postData);
+      }
       setShowAddModal(false);
       // Data will auto-refresh due to cache invalidation
     } catch (error) {
-      console.error('Failed to create post:', error);
+      console.error('Failed to save post:', error);
       // You might want to show an error toast here
     }
   };
@@ -87,12 +99,11 @@ export default function ForumContainer() {
         collectionType
       });
 
-      setShowCommentModal(false);
+      // Switch to comments tab BEFORE closing modal
+      setCardActiveTab(selectedPost._id, 'comments');
 
-      // Switch to comments tab after posting
-      if (selectedPost) {
-        setCardActiveTab(selectedPost._id, 'comments');
-      }
+      // Close modal after setting the tab
+      setShowCommentModal(false);
 
       // Data will auto-refresh due to cache invalidation
     } catch (error) {
@@ -194,9 +205,9 @@ export default function ForumContainer() {
             <div className="flex justify-center">
               <button
                 onClick={() => setShowAddModal(true)}
-                className="w-full md:w-2/3 lg:w-1/2 px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-[#814256] text-white rounded-md hover:bg-[#6a3646] transition-all shadow-md font-medium"
+                className="w-full md:w-2/3 lg:w-1/2 px-3 md:px-6 py-2 md:py-3 text-xs sm:text-sm md:text-base bg-[#814256] text-white rounded-md hover:bg-[#6a3646] transition-all shadow-md font-medium"
               >
-                <span className="text-gray-400">✎</span> Add New {collectionType.charAt(0).toUpperCase() + collectionType.slice(1, -1)}
+                <span className="text-gray-400 text-sm md:text-base">✎</span> Add New {collectionType.charAt(0).toUpperCase() + collectionType.slice(1, -1)}
               </button>
             </div>
           )}
@@ -209,80 +220,99 @@ export default function ForumContainer() {
               <p className="text-gray-600 text-base md:text-lg">No {collectionType} found. Be the first to create one!</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 transition-all duration-400 ease-out">
               {filteredItems.map((item) => {
                 const currentTab = getCardActiveTab(item._id);
                 return (
-                  <div key={item._id} className="bg-[#c9c4b9] rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow p-4 md:p-6 min-h-[300px] md:min-h-[400px] flex flex-col">
+                  <div
+                    key={item._id}
+                    className="bg-[#c9c4b9] rounded-lg shadow-md overflow-hidden p-4 md:p-6 flex flex-col min-h-[300px] md:min-h-[400px] hover:shadow-lg transition-all duration-400 ease-out">
                     {/* Card Header with Tabs and Action Icons - Shared Gray Background Strip */}
-                    <div className="bg-gray-200/60 -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-4 md:px-6 py-2 mb-4 flex flex-wrap gap-1 items-center">
-                      <button
-                        onClick={() => setCardActiveTab(item._id, 'posts')}
-                        className={cn(
-                          'px-2 md:px-3 py-2 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border max-w-xs overflow-x-auto whitespace-nowrap scrollbar-hide',
-                          currentTab === 'posts'
-                            ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
-                            : 'bg-transparent text-gray-700 border-white hover:bg-white/50'
-                        )}
-                      >
-                        {item.title}
-                      </button>
-                      <button
-                        onClick={() => setCardActiveTab(item._id, 'comments')}
-                        className={cn(
-                          'px-2 md:px-3 py-2 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border',
-                          currentTab === 'comments'
-                            ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
-                            : 'bg-transparent text-gray-700 border-white hover:bg-white/50'
-                        )}
-                      >
-                        Comments <span className="ml-1 px-1.5 md:px-2 py-0.5 bg-gray-500 text-white text-xs rounded-full">{item.comments?.length || 0}</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (user) {
-                            setSelectedPost(item);
-                            setShowCommentModal(true);
-                            setCardActiveTab(item._id, 'newComment');
-                          }
-                        }}
-                        disabled={!user}
-                        className={cn(
-                          'px-2 md:px-3 py-2 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border',
-                          currentTab === 'newComment'
-                            ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
-                            : user
-                            ? 'bg-transparent text-gray-700 border-white hover:bg-white/50'
-                            : 'bg-transparent text-gray-400 border-white cursor-not-allowed'
-                        )}
-                      >
-                        Write a comment
-                      </button>
-
-                      {/* Edit and Delete Icons - Right Side - Only show if user is author */}
-                      {user && user._id === item.author?._id && (
-                        <div className="ml-auto flex gap-1.5">
+                    <div className="bg-gray-200/60 -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-2 md:px-6 py-2 mb-4">
+                      <div className="flex items-center gap-1">
+                        {/* Tabs Group */}
+                        <div className="flex flex-1 gap-1 overflow-x-auto scrollbar-hide">
                           <button
-                            onClick={() => {/* TODO: Implement edit */}}
-                            className="p-1 rounded-md transition-colors text-2xl text-gray-500 hover:text-gray-700"
-                            title="Edit post"
+                            onClick={() => setCardActiveTab(item._id, 'posts')}
+                            className={cn(
+                              'px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border flex-shrink-0',
+                              currentTab === 'posts'
+                                ? 'bg-white text-gray-900 border-gray-300 shadow-sm min-w-[120px] md:min-w-0'
+                                : 'bg-transparent text-gray-700 border-white hover:bg-white/50'
+                            )}
                           >
-                            ✎
+                            <span className={cn(
+                              "block",
+                              currentTab === 'posts'
+                                ? "whitespace-nowrap overflow-x-auto scrollbar-hide max-w-[120px] md:max-w-xs"
+                                : "truncate max-w-[120px] md:max-w-xs"
+                            )}>{item.title}</span>
+                          </button>
+                          <button
+                            onClick={() => setCardActiveTab(item._id, 'comments')}
+                            className={cn(
+                              'px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border whitespace-nowrap flex-shrink-0',
+                              currentTab === 'comments'
+                                ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
+                                : 'bg-transparent text-gray-700 border-white hover:bg-white/50'
+                            )}
+                          >
+                            Comments <span className="ml-0.5 px-1 md:px-2 py-0.5 bg-gray-500 text-white text-[10px] md:text-xs rounded-full">{item.comments?.length || 0}</span>
                           </button>
                           <button
                             onClick={() => {
-                              if (window.confirm(`Are you sure you want to delete this ${collectionType.slice(0, -1)}?`)) {
-                                deletePost.mutate(item._id);
+                              if (user) {
+                                setSelectedPost(item);
+                                setShowCommentModal(true);
+                                setCardActiveTab(item._id, 'newComment');
                               }
                             }}
-                            className="p-1 rounded-md transition-colors text-2xl text-gray-500 hover:text-red-600"
-                            title="Delete post"
-                            disabled={deletePost.isPending}
+                            disabled={!user}
+                            className={cn(
+                              'px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border whitespace-nowrap flex-shrink-0 hidden md:block',
+                              currentTab === 'newComment'
+                                ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
+                                : user
+                                ? 'bg-transparent text-gray-700 border-white hover:bg-white/50'
+                                : 'bg-transparent text-gray-400 border-white cursor-not-allowed'
+                            )}
                           >
-                            {deletePost.isPending ? '⏳' : '✕'}
+                            Write a comment
                           </button>
                         </div>
-                      )}
+
+                        {/* Edit and Delete Icons - Always visible if user is author */}
+                        {user && (
+                          (typeof item.author === 'string' && user.id === item.author) ||
+                          (item.author && typeof item.author === 'object' &&
+                           'betterAuthId' in item.author && user.id === item.author.betterAuthId)
+                        ) && (
+                          <div className="flex gap-1 flex-shrink-0">
+                            <button
+                              onClick={() => {
+                                setEditingPost(item);
+                                setShowAddModal(true);
+                              }}
+                              className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-gray-700"
+                              title="Edit post"
+                            >
+                              ✎
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (window.confirm(`Are you sure you want to delete this ${collectionType.slice(0, -1)}?`)) {
+                                  deletePost.mutate(item._id);
+                                }
+                              }}
+                              className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-red-600"
+                              title="Delete post"
+                              disabled={deletePost.isPending}
+                            >
+                              {deletePost.isPending && deletePost.variables === item._id ? '⏳' : '✕'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Card Body */}
@@ -300,6 +330,11 @@ export default function ForumContainer() {
                             <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2">
                               <span className="font-medium truncate">{item.author?.userName || 'Anonymous'}</span>
                               <span className="text-gray-200 text-xs">• {new Date(item.date).toLocaleDateString()}</span>
+                              {item.isEdited && (
+                                <span className="text-gray-200 text-xs" title={item.lastEditedAt ? `Last edited: ${new Date(item.lastEditedAt).toLocaleString()}` : 'Edited'}>
+                                  • (edited)
+                                </span>
+                              )}
                             </div>
                           </div>
                           <div className="flex gap-2 md:gap-3 text-xs md:text-sm">
@@ -332,6 +367,11 @@ export default function ForumContainer() {
                       <CommentsList
                         postId={item._id}
                         collectionType={collectionType}
+                        postTitle={item.title}
+                        onAddComment={() => {
+                          setSelectedPost(item);
+                          setShowCommentModal(true);
+                        }}
                       />
                     ) : null}
                   </div>
@@ -346,9 +386,19 @@ export default function ForumContainer() {
       {/* Post Modal */}
       <PostModal
         show={showAddModal}
-        handleClose={() => setShowAddModal(false)}
+        handleClose={() => {
+          setShowAddModal(false);
+          setEditingPost(null); // Clear editing state when closing
+        }}
         collectionType={collectionType}
         onSubmit={handlePostSubmit}
+        editMode={!!editingPost}
+        initialData={editingPost ? {
+          id: editingPost._id,
+          title: editingPost.title,
+          body: editingPost.body || editingPost.description,
+          tags: editingPost.tags
+        } : undefined}
       />
 
       {/* Comment Modal */}
@@ -356,10 +406,8 @@ export default function ForumContainer() {
         show={showCommentModal}
         handleClose={() => {
           setShowCommentModal(false);
-          // Reset tab to posts when closing without submitting
-          if (selectedPost) {
-            setCardActiveTab(selectedPost._id, 'posts');
-          }
+          // Don't reset tab when closing - keep whatever tab is currently active
+          // This preserves the comments tab after successful submission
         }}
         postTitle={selectedPost?.title || ''}
         postId={selectedPost?._id || ''}

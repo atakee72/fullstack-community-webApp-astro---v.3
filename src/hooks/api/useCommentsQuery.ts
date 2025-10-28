@@ -32,14 +32,12 @@ async function createComment(data: {
   topicId: string;
   collectionType: 'topics' | 'announcements' | 'recommendations';
 }) {
-  const token = localStorage.getItem('token');
-
   const response = await fetch(`${API_URL}/comments/create`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
     },
+    credentials: 'include', // Include cookies for Better Auth session
     body: JSON.stringify(data),
   });
 
@@ -79,13 +77,9 @@ export function useCreateComment() {
 
 // Delete a comment
 async function deleteComment(commentId: string) {
-  const token = localStorage.getItem('token');
-
   const response = await fetch(`${API_URL}/comments/delete/${commentId}`, {
     method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
+    credentials: 'include', // Include cookies for Better Auth session
   });
 
   if (!response.ok) {

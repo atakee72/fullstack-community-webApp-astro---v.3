@@ -1,14 +1,16 @@
 import React from 'react';
-import { useAuthStore } from '../stores/authStore';
+import { useAuthStore } from '../stores/authStore.better-auth';
 import { useCommentsQuery, useDeleteComment } from '../hooks/api/useCommentsQuery';
 import type { Comment } from '../types';
 
 interface CommentsListProps {
   postId: string;
   collectionType: string;
+  postTitle?: string;
+  onAddComment?: () => void;
 }
 
-export default function CommentsList({ postId, collectionType }: CommentsListProps) {
+export default function CommentsList({ postId, collectionType, postTitle, onAddComment }: CommentsListProps) {
   const user = useAuthStore(state => state.user);
 
   // Use React Query for fetching comments
@@ -43,32 +45,47 @@ export default function CommentsList({ postId, collectionType }: CommentsListPro
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
+      {/* Mobile Add Comment Button - At the top on mobile */}
+      {user && onAddComment && (
+        <div className="md:hidden mb-3">
+          <button
+            onClick={onAddComment}
+            className="w-full py-1.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-all flex items-center justify-center gap-1"
+            title="Write a comment"
+          >
+            <span className="text-base">+</span>
+            <span className="text-xs">Write a comment</span>
+          </button>
+        </div>
+      )}
+
       {/* Comments List - Accordion Style */}
       {comments.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-500 text-lg">No comments yet. Be the first to comment!</p>
+        <div className="text-center py-6">
+          <p className="text-gray-500 text-sm md:text-lg">No comments yet. Be the first to comment!</p>
         </div>
       ) : (
         <div className="accordion-wrap">
           <ul className="accordion-list">
             {comments.map((comment, i) => {
               const author = typeof comment.author === 'object' ? comment.author : null;
-              const isOwner = user?._id === author?._id;
+              // Check ownership - Better Auth users have 'id', profiles have 'betterAuthId'
+              const isOwner = user?.id && author?.betterAuthId && user.id === author.betterAuthId;
 
               return (
                 <li key={comment._id} className="accordion-item group">
                   {/* Ribbon Header */}
-                  <div className="ribbon bg-[#4b9aaa] group-hover:bg-[#eccc6e] text-white group-hover:text-gray-900 p-3 flex items-center justify-between transition-colors duration-300">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm">{formatDate(comment.date)}</span>
-                      <span className="font-semibold">{author?.userName || 'Anonymous'}</span>
+                  <div className="ribbon bg-[#4b9aaa] group-hover:bg-[#eccc6e] text-white group-hover:text-gray-900 p-2 md:p-3 flex items-center justify-between transition-colors duration-300">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <span className="text-xs md:text-sm">{formatDate(comment.date)}</span>
+                      <span className="font-semibold text-sm md:text-base">{author?.userName || 'Anonymous'}</span>
 
                       {author?.userPicture && (
                         <img
                           src={author.userPicture}
                           alt={author.userName}
-                          className="w-8 h-8 rounded-full object-cover"
+                          className="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover"
                         />
                       )}
                     </div>
@@ -81,7 +98,7 @@ export default function CommentsList({ postId, collectionType }: CommentsListPro
                             handleDeleteComment(comment._id as string);
                           }
                         }}
-                        className="bg-gray-300 hover:bg-red-400 text-gray-700 hover:text-white rounded px-2 py-1 text-xs transition-colors"
+                        className="bg-gray-300 hover:bg-red-400 text-gray-700 hover:text-white rounded px-1.5 py-0.5 md:px-2 md:py-1 text-xs transition-colors"
                         title="Delete comment"
                       >
                         ✕
