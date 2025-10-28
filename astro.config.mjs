@@ -8,9 +8,10 @@ export default defineConfig({
   output: 'server', // Server mode with prerendering in Astro 5
 
   adapter: netlify({
-    edgeMiddleware: true,
+    edgeMiddleware: false, // Disable edge middleware to avoid bundling issues
     cacheOnDemandPages: true,
-    functionPerRoute: false
+    functionPerRoute: true, // Split functions to reduce individual bundle size
+    imageCDN: false
   }),
 
   integrations: [
@@ -25,15 +26,40 @@ export default defineConfig({
   vite: {
     optimizeDeps: {
       include: ['zustand', 'zustand/middleware'],
-      exclude: ['mongodb']
+      exclude: ['mongodb', 'bcrypt', '@mongodb-js/saslprep', 'node-gyp-build']
     },
     ssr: {
-      external: ['mongodb', 'mongoose', 'bcrypt', 'jsonwebtoken'],
+      external: [
+        'mongodb',
+        'mongoose',
+        'bcrypt',
+        'jsonwebtoken',
+        '@mongodb-js/saslprep',
+        'node-gyp-build',
+        'kerberos',
+        'snappy',
+        'socks',
+        'mongodb-client-encryption',
+        'bson-ext',
+        'win32-x64-msvc',
+        'darwin-x64',
+        'linux-x64-gnu'
+      ],
       noExternal: ['zustand', 'zustand/middleware']
     },
     resolve: {
       alias: {
         '@': new URL('./src', import.meta.url).pathname
+      }
+    },
+    build: {
+      rollupOptions: {
+        external: [
+          'mongodb',
+          'bcrypt',
+          '@mongodb-js/saslprep',
+          'node-gyp-build'
+        ]
       }
     }
   },
