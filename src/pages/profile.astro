@@ -1,13 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import UserProfile from '../components/UserProfile';
-import { QueryProvider } from '../providers/QueryProvider';
+import UserProfileWrapper from '../components/UserProfileWrapper';
 ---
 
 <BaseLayout title="User Profile">
   <main class="min-h-[calc(100vh-80px)] bg-gradient-to-br from-[#eccc6e] to-[#dabb5d] py-8">
-    <QueryProvider>
-      <UserProfile client:load />
-    </QueryProvider>
+    <UserProfileWrapper client:load />
   </main>
 </BaseLayout>
