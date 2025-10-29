@@ -54,8 +54,10 @@ export const useAuthStore = create<AuthState>()(
               throw new Error(result.error.message || 'Login failed');
             }
 
+            // Give the server a moment to establish the session
+            await new Promise(resolve => setTimeout(resolve, 100));
 
-            // Poll for the session
+            // Poll for the session with optimized timing
             const session = await pollForSession();
 
             if (session?.data?.user || session?.user) {
@@ -66,9 +68,25 @@ export const useAuthStore = create<AuthState>()(
                 isLoading: false,
                 error: null,
               });
+
+              // Force a small delay before redirect to ensure cookies are set
+              await new Promise(resolve => setTimeout(resolve, 100));
               return session.data || session;
             } else {
-              throw new Error('Session could not be established after login');
+              // If polling failed, try one more direct check
+              const finalCheck = await authClient.getSession();
+              if (finalCheck?.user || finalCheck?.data?.user) {
+                const user = finalCheck.data?.user || finalCheck.user;
+                set({
+                  user,
+                  isAuthenticated: true,
+                  isLoading: false,
+                  error: null,
+                });
+                return finalCheck.data || finalCheck;
+              }
+
+              throw new Error('Session could not be established. Please try again.');
             }
           } catch (error) {
             const message = error instanceof Error ? error.message : 'Login failed';
@@ -316,18 +334,32 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-// Helper function to poll for session
-// Increased timeout for production environments with network latency
-const pollForSession = async (retries = 20, delay = 500) => {
-  for (let i = 0; i < retries; i++) {
+// Helper function to poll for session with progressive backoff
+const pollForSession = async (maxWaitTime = 5000) => {
+  const startTime = Date.now();
+  // Progressive delays: immediate, then quick retries, then slower
+  const delays = [0, 100, 200, 300, 500, 500, 1000, 1000, 1000];
+
+  for (const delay of delays) {
+    // Stop if we've exceeded max wait time
+    if (Date.now() - startTime > maxWaitTime) {
+      console.warn(`Session polling timeout after ${Date.now() - startTime}ms`);
+      break;
+    }
+
+    // Wait for the specified delay (0 for immediate first attempt)
+    if (delay > 0) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+
+    // Try to get the session
     const session = await authClient.getSession();
     if (session?.user || session?.data?.user) {
+      console.log(`Session established after ${Date.now() - startTime}ms`);
       return session;
     }
-    // Use exponential backoff for better reliability
-    const backoffDelay = Math.min(delay * Math.pow(1.2, i), 2000);
-    await new Promise(resolve => setTimeout(resolve, backoffDelay));
   }
+
   return null;
 };
 
