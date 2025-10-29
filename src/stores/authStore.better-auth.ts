@@ -317,13 +317,16 @@ export const useAuthStore = create<AuthState>()(
 );
 
 // Helper function to poll for session
-const pollForSession = async (retries = 10, delay = 300) => {
+// Increased timeout for production environments with network latency
+const pollForSession = async (retries = 20, delay = 500) => {
   for (let i = 0; i < retries; i++) {
     const session = await authClient.getSession();
     if (session?.user || session?.data?.user) {
       return session;
     }
-    await new Promise(resolve => setTimeout(resolve, delay));
+    // Use exponential backoff for better reliability
+    const backoffDelay = Math.min(delay * Math.pow(1.2, i), 2000);
+    await new Promise(resolve => setTimeout(resolve, backoffDelay));
   }
   return null;
 };
