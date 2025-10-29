@@ -68,10 +68,12 @@ export function useTopicsQuery(
   return useQuery({
     queryKey: [type, options],
     queryFn: () => fetchTopics(type, options),
-    // Keep data fresh for 5 seconds for more responsive updates
-    staleTime: 5 * 1000,
+    // Keep data fresh for 30 seconds to reduce unnecessary refetches
+    staleTime: 30 * 1000,
+    // Cache for 5 minutes
+    gcTime: 5 * 60 * 1000,
     // Refetch when window regains focus
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: 'always',
   });
 }
 
@@ -104,9 +106,12 @@ export function useCreatePost(type: 'topics' | 'announcements' | 'recommendation
 
   return useMutation({
     mutationFn: (data: Parameters<typeof createPost>[1]) => createPost(type, data),
-    onSuccess: () => {
-      // Invalidate and refetch the list
-      queryClient.invalidateQueries({ queryKey: [type] });
+    onSettled: async () => {
+      // Single invalidation point for active queries only
+      await queryClient.invalidateQueries({
+        queryKey: [type],
+        refetchType: 'active'
+      });
     },
     retry: false, // Disable automatic retries
   });
@@ -198,9 +203,12 @@ export function useEditPost(type: 'topics' | 'announcements' | 'recommendations'
   return useMutation({
     mutationFn: ({ postId, data }: { postId: string; data: { title: string; body: string; tags: string[] } }) =>
       editPost(postId, type, data),
-    onSuccess: () => {
-      // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: [type] });
+    onSettled: async () => {
+      // Single invalidation point for active queries only
+      await queryClient.invalidateQueries({
+        queryKey: [type],
+        refetchType: 'active'
+      });
     },
   });
 }
@@ -229,15 +237,33 @@ export function useDeletePost(type: 'topics' | 'announcements' | 'recommendation
 
   return useMutation({
     mutationFn: (postId: string) => deletePost(postId, type),
-    onSuccess: (data, postId) => {
-      // Remove the deleted item from the cache
+    onMutate: async (postId) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: [type] });
+
+      // Snapshot previous value
+      const previousData = queryClient.getQueryData([type]);
+
+      // Optimistically remove from cache
       queryClient.setQueryData([type], (old: any[] | undefined) => {
         if (!old) return old;
         return old.filter(item => item._id !== postId);
       });
 
-      // Also invalidate to ensure consistency
-      queryClient.invalidateQueries({ queryKey: [type] });
+      return { previousData };
+    },
+    onError: (err, postId, context) => {
+      // Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData([type], context.previousData);
+      }
+    },
+    onSettled: () => {
+      // Single invalidation point
+      queryClient.invalidateQueries({
+        queryKey: [type],
+        refetchType: 'active'
+      });
     },
   });
 }

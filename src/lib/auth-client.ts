@@ -5,12 +5,34 @@ import type { Auth } from "../auth";
  * Better Auth client for React components
  * This provides all the hooks and methods needed for authentication
  */
+// Determine the base URL based on the environment
+const getBaseURL = () => {
+  // Always use PUBLIC_API_URL if set (production and preview)
+  if (import.meta.env.PUBLIC_API_URL) {
+    const url = import.meta.env.PUBLIC_API_URL;
+    // Ensure no trailing slash
+    return url.endsWith('/') ? url.slice(0, -1) : url;
+  }
+
+  // In browser, use current origin for development
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+
+  // Fallback for SSR
+  return "http://localhost:3000";
+};
+
 export const authClient = createAuthClient<Auth>({
-  baseURL: import.meta.env.PUBLIC_API_URL || "http://localhost:3000",
+  baseURL: getBaseURL(),
   // Session refresh configuration
   fetchOptions: {
     // Include credentials for cross-origin requests
     credentials: "include",
+    // Add headers for better compatibility
+    headers: {
+      'Content-Type': 'application/json',
+    },
   },
 });
 

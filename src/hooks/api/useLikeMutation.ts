@@ -39,46 +39,62 @@ export function useLikeMutation(collectionType: 'topics' | 'announcements' | 're
 
     // Optimistic update for immediate UI feedback
     onMutate: async ({ postId, action }) => {
-      // Cancel outgoing refetches
+      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: [collectionType] });
 
-      // Snapshot the previous value
-      const previousData = queryClient.getQueryData([collectionType]);
+      // Get all query variations that might contain this data
+      const queries = queryClient.getQueriesData({ queryKey: [collectionType] });
 
-      // Optimistically update the cache
-      queryClient.setQueryData([collectionType], (old: any) => {
-        if (!old) return old;
+      // Store all previous data for potential rollback
+      const previousQueries = queries.map(([queryKey, data]) => ({
+        queryKey,
+        data
+      }));
 
-        // Find and update the post
-        const posts = Array.isArray(old) ? old : old[collectionType] || [];
-        return posts.map((post: any) => {
-          if (post._id === postId) {
-            return {
-              ...post,
-              likes: action === 'like' ? (post.likes || 0) + 1 : Math.max((post.likes || 0) - 1, 0),
-              likedBy: action === 'like'
-                ? [...(post.likedBy || []), 'optimistic-user-id']
-                : (post.likedBy || []).filter((id: string) => id !== 'optimistic-user-id')
-            };
-          }
-          return post;
+      // Update all matching queries optimistically
+      queries.forEach(([queryKey, oldData]) => {
+        queryClient.setQueryData(queryKey, (old: any) => {
+          if (!old) return old;
+
+          // Handle different data structures
+          const posts = Array.isArray(old) ? old : (old[collectionType] || []);
+          const updatedPosts = posts.map((post: any) => {
+            if (post._id === postId) {
+              return {
+                ...post,
+                likes: action === 'like' ? (post.likes || 0) + 1 : Math.max((post.likes || 0) - 1, 0),
+                likedBy: action === 'like'
+                  ? [...(post.likedBy || []), 'optimistic-user-id']
+                  : (post.likedBy || []).filter((id: string) => id !== 'optimistic-user-id')
+              };
+            }
+            return post;
+          });
+
+          // Return data in the same structure
+          return Array.isArray(old) ? updatedPosts : { ...old, [collectionType]: updatedPosts };
         });
       });
 
-      // Return context with snapshot
-      return { previousData };
+      return { previousQueries };
     },
 
-    // On error, revert to previous state
+    // On error, rollback all queries
     onError: (_err, _variables, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData([collectionType], context.previousData);
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(({ queryKey, data }) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
     },
 
-    // Always refetch after mutation settles
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [collectionType] });
+    // Single invalidation point after mutation settles
+    onSettled: async () => {
+      // Invalidate only active queries to reduce network calls
+      await queryClient.invalidateQueries({
+        queryKey: [collectionType],
+        refetchType: 'active'
+      });
     },
   });
 }

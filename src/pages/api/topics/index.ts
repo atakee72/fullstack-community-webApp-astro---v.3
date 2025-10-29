@@ -111,6 +111,7 @@ export const GET: APIRoute = async ({ url }) => {
         headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Netlify-CDN-Cache-Control': 'no-store', // Netlify-specific cache control
           'Pragma': 'no-cache',
           'Expires': '0'
         }

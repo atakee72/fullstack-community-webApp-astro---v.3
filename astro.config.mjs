@@ -10,7 +10,7 @@ export default defineConfig({
   adapter: netlify({
     edgeMiddleware: false, // Disable edge middleware to avoid bundling issues
     cacheOnDemandPages: true,
-    functionPerRoute: true, // Split functions to reduce individual bundle size
+    functionPerRoute: false, // Bundle auth routes together to reduce cold starts
     imageCDN: false
   }),
 
