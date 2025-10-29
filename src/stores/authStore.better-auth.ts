@@ -55,34 +55,20 @@ export const useAuthStore = create<AuthState>()(
             }
 
 
-            // Get the session data
-            const session = await authClient.getSession();
+            // Poll for the session
+            const session = await pollForSession();
 
-            if (session?.data?.user) {
+            if (session?.data?.user || session?.user) {
+              const user = session.data?.user || session.user;
               set({
-                user: session.data.user,
+                user,
                 isAuthenticated: true,
                 isLoading: false,
                 error: null,
               });
-              return session.data;
-            } else if (session?.user) {
-              // Try different session structure
-              set({
-                user: session.user,
-                isAuthenticated: true,
-                isLoading: false,
-                error: null,
-              });
-              return session;
+              return session.data || session;
             } else {
-              // Try checking auth again
-              const authResult = await get().checkAuth();
-              if (authResult) {
-                return authResult;
-              } else {
-                throw new Error('Session could not be established after login');
-              }
+              throw new Error('Session could not be established after login');
             }
           } catch (error) {
             const message = error instanceof Error ? error.message : 'Login failed';
@@ -117,34 +103,20 @@ export const useAuthStore = create<AuthState>()(
             }
 
 
-            // Get the session data after successful registration
-            const session = await authClient.getSession();
+            // Poll for the session
+            const session = await pollForSession();
 
-            if (session?.data?.user) {
+            if (session?.data?.user || session?.user) {
+              const user = session.data?.user || session.user;
               set({
-                user: session.data.user,
+                user,
                 isAuthenticated: true,
                 isLoading: false,
                 error: null,
               });
-              return session.data;
-            } else if (session?.user) {
-              // Try different session structure
-              set({
-                user: session.user,
-                isAuthenticated: true,
-                isLoading: false,
-                error: null,
-              });
-              return session;
+              return session.data || session;
             } else {
-              // Try checking auth again
-              const authResult = await get().checkAuth();
-              if (authResult) {
-                return authResult;
-              } else {
-                throw new Error('Session could not be established after registration');
-              }
+              throw new Error('Session could not be established after registration');
             }
           } catch (error) {
             const message = error instanceof Error ? error.message : 'Registration failed';
@@ -343,6 +315,18 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+
+// Helper function to poll for session
+const pollForSession = async (retries = 10, delay = 300) => {
+  for (let i = 0; i < retries; i++) {
+    const session = await authClient.getSession();
+    if (session?.user || session?.data?.user) {
+      return session;
+    }
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  return null;
+};
 
 // Hydration helper for client-side
 export const hydrateAuthStore = () => {
