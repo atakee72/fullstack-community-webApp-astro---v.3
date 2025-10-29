@@ -3,10 +3,10 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient } from "mongodb";
 import bcrypt from "bcrypt";
 
-// MongoDB connection - simplified for debugging
+// MongoDB connection with connection pooling
 const mongoUri = import.meta.env.MONGODB_URI || 'mongodb://localhost:27017/CommunityWebApp';
 
-// Create a single MongoDB client instance
+// Create MongoDB client with connection pooling
 const mongoClient = new MongoClient(mongoUri, {
   maxPoolSize: 10,
   minPoolSize: 2,
@@ -14,10 +14,9 @@ const mongoClient = new MongoClient(mongoUri, {
   serverSelectionTimeoutMS: 5000,
 });
 
-// Connect immediately
+// Establish connection
 await mongoClient.connect();
-const database = mongoClient.db();
-console.log('MongoDB connected');
+const db = mongoClient.db();
 
 export const auth = betterAuth({
   // Base configuration
@@ -25,7 +24,7 @@ export const auth = betterAuth({
   secret: import.meta.env.BETTER_AUTH_SECRET || import.meta.env.JWT_SECRET || "default-dev-secret-change-in-production",
 
   // Database configuration with MongoDB adapter
-  database: mongodbAdapter(database, {
+  database: mongodbAdapter(db, {
     // Pass the client for transaction support
     client: mongoClient
   }),
