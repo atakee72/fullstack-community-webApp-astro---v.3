@@ -65,7 +65,7 @@ export default function EyeIcon({ viewCount, createdAt }: EyeIconProps) {
         </svg>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes blink {
           0%, 88% {
             opacity: 1;
