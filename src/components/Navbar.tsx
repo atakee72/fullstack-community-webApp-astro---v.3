@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuthStore } from '../stores/authStore.better-auth';
+import { useAuthStore, hydrateAuthStore } from '../stores/authStore.better-auth';
 
 export default function Navbar() {
   const [isClient, setIsClient] = useState(false);
@@ -12,11 +12,35 @@ export default function Navbar() {
     setIsClient(true);
     // Rehydrate the auth store and check for existing Better Auth session
     if (typeof window !== 'undefined') {
-      useAuthStore.persist.rehydrate();
+      hydrateAuthStore();
       // Check if there's an existing Better Auth session
-      checkAuth();
+      checkAuth().catch(error => {
+        console.error('Auth check failed:', error);
+        // Clear invalid state if auth check fails
+        useAuthStore.setState({
+          user: null,
+          isAuthenticated: false,
+          error: null,
+          isLoading: false,
+        });
+      });
     }
-  }, [checkAuth]);
+  }, []);
+
+  // Listen for storage changes to sync logout across tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'auth-storage' && e.newValue === null) {
+        // Storage was cleared, user logged out in another tab
+        window.location.reload();
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorageChange);
+      return () => window.removeEventListener('storage', handleStorageChange);
+    }
+  }, []);
 
   // Don't render user-specific content during SSR
   if (!isClient) {

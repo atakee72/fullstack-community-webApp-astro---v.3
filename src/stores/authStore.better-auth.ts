@@ -152,34 +152,31 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: true });
 
           try {
+            // Call Better Auth signOut
             await authClient.signOut();
-
-            set({
-              user: null,
-              isAuthenticated: false,
-              error: null,
-              isLoading: false,
-            });
-
-            // Clear localStorage
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem('auth-storage');
-              localStorage.removeItem('token');
-              // Use the logout page to ensure server-side session is cleared
-              window.location.href = '/logout';
-            }
           } catch (error) {
             console.error('Logout error:', error);
-            // Even if logout fails, clear local state
+          } finally {
+            // Always clear local state regardless of API call result
             set({
               user: null,
               isAuthenticated: false,
               error: null,
               isLoading: false,
             });
-            // Still redirect to logout page to clear server session
+
+            // Clear all localStorage items
             if (typeof window !== 'undefined') {
-              window.location.href = '/logout';
+              // Clear Zustand persist storage
+              localStorage.removeItem('auth-storage');
+              localStorage.removeItem('token');
+
+              // Force clear the entire auth store state
+              useAuthStore.persist.clearStorage();
+
+              // Redirect to logout page to clear server-side session
+              // Use replace to prevent back button issues
+              window.location.replace('/logout');
             }
           }
         },
