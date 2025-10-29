@@ -65,7 +65,7 @@ export default function ForumContainer() {
       } else {
         // Create mode - new post
         const postData = collectionType === 'announcements'
-          ? { title: data.title, description: data.body, tags: data.tags }
+          ? { title: data.title, body: data.body, tags: data.tags }
           : { title: data.title, body: data.body, tags: data.tags };
 
         await createPost.mutateAsync(postData);
