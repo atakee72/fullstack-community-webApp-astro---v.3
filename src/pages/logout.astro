@@ -1,36 +1,6 @@
 ---
-// Logout page - clears Better Auth session
-import BaseLayout from '../layouts/BaseLayout.astro';
-
-// Server-side logout
-if (Astro.request.method === 'GET') {
-  // Clear the Better Auth session cookie
-  Astro.cookies.delete('mahalle-session', {
-    path: '/',
-  });
-
-  // Redirect to home after logout
-  return Astro.redirect('/');
-}
+// Logout page - simple redirect (Better Auth handles session clearing)
+// Better Auth's API endpoint already handles session clearing through authClient.signOut()
+// This page is just a fallback redirect
+return Astro.redirect('/');
 ---
-
-<BaseLayout title="Logging out...">
-  <main class="min-h-[calc(100vh-80px)] flex items-center justify-center">
-    <div class="text-center">
-      <h2 class="text-2xl font-bold mb-4">Logging out...</h2>
-      <p>You will be redirected shortly.</p>
-    </div>
-  </main>
-</BaseLayout>
-
-<script>
-  // Client-side logout - clear local storage and redirect
-  if (typeof window !== 'undefined') {
-    // Clear all auth-related items from localStorage
-    localStorage.removeItem('auth-storage');
-    localStorage.removeItem('token');
-
-    // Redirect to home
-    window.location.href = '/';
-  }
-</script>

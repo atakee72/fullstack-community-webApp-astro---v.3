@@ -152,6 +152,7 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: true });
 
           try {
+            // Better Auth handles session clearing through its API
             await authClient.signOut();
 
             set({
@@ -165,8 +166,8 @@ export const useAuthStore = create<AuthState>()(
             if (typeof window !== 'undefined') {
               localStorage.removeItem('auth-storage');
               localStorage.removeItem('token');
-              // Use the logout page to ensure server-side session is cleared
-              window.location.href = '/logout';
+              // Redirect to home page after successful logout
+              window.location.href = '/';
             }
           } catch (error) {
             console.error('Logout error:', error);
@@ -177,9 +178,9 @@ export const useAuthStore = create<AuthState>()(
               error: null,
               isLoading: false,
             });
-            // Still redirect to logout page to clear server session
+            // Redirect to home page
             if (typeof window !== 'undefined') {
-              window.location.href = '/logout';
+              window.location.href = '/';
             }
           }
         },
