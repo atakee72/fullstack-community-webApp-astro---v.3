@@ -3,31 +3,21 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient } from "mongodb";
 import bcrypt from "bcrypt";
 
-// MongoDB connection with connection pooling and lazy initialization
+// MongoDB connection - simplified for debugging
 const mongoUri = import.meta.env.MONGODB_URI || 'mongodb://localhost:27017/CommunityWebApp';
 
-// Connection pooling configuration for serverless environments
-let mongoClient: MongoClient | null = null;
-let db: any = null;
+// Create a single MongoDB client instance
+const mongoClient = new MongoClient(mongoUri, {
+  maxPoolSize: 10,
+  minPoolSize: 2,
+  maxIdleTimeMS: 30000,
+  serverSelectionTimeoutMS: 5000,
+});
 
-// Lazy connection function with connection pooling
-async function getDB() {
-  if (!db) {
-    mongoClient = new MongoClient(mongoUri, {
-      maxPoolSize: 10, // Maximum number of connections in the pool
-      minPoolSize: 2,  // Minimum number of connections in the pool
-      maxIdleTimeMS: 30000, // Close idle connections after 30 seconds
-      serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds if can't connect
-    });
-    await mongoClient.connect();
-    db = mongoClient.db();
-    console.log('MongoDB connected with connection pooling');
-  }
-  return db;
-}
-
-// Initialize database connection
-const database = await getDB();
+// Connect immediately
+await mongoClient.connect();
+const database = mongoClient.db();
+console.log('MongoDB connected');
 
 export const auth = betterAuth({
   // Base configuration
@@ -37,7 +27,7 @@ export const auth = betterAuth({
   // Database configuration with MongoDB adapter
   database: mongodbAdapter(database, {
     // Pass the client for transaction support
-    client: mongoClient!
+    client: mongoClient
   }),
 
   // Email and password authentication configuration
