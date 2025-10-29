@@ -3,18 +3,11 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient } from "mongodb";
 import bcrypt from "bcrypt";
 
-// MongoDB connection with connection pooling
+// Get MongoDB client
 const mongoUri = import.meta.env.MONGODB_URI || 'mongodb://localhost:27017/CommunityWebApp';
+const mongoClient = new MongoClient(mongoUri);
 
-// Create MongoDB client with connection pooling
-const mongoClient = new MongoClient(mongoUri, {
-  maxPoolSize: 10,
-  minPoolSize: 2,
-  maxIdleTimeMS: 30000,
-  serverSelectionTimeoutMS: 5000,
-});
-
-// Establish connection
+// Connect to MongoDB
 await mongoClient.connect();
 const db = mongoClient.db();
 
