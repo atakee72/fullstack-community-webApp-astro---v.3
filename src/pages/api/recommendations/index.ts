@@ -45,7 +45,7 @@ export const GET: APIRoute = async ({ url }) => {
         recommendations.map(async (recommendation) => {
           if (recommendation.author) {
             const author = await usersCollection.findOne(
-              { _id: recommendation.author },
+              { betterAuthId: recommendation.author },
               { projection: { password: 0 } }
             );
             return { ...recommendation, author };
