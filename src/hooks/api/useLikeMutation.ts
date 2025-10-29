@@ -88,9 +88,18 @@ export function useLikeMutation(collectionType: 'topics' | 'announcements' | 're
       }
     },
 
-    // Single invalidation point after mutation settles
+    // Force immediate refetch after success
+    onSuccess: async () => {
+      // Immediately invalidate and refetch
+      await queryClient.invalidateQueries({
+        queryKey: [collectionType],
+        refetchType: 'all'
+      });
+    },
+
+    // Ensure data is fresh after mutation
     onSettled: async () => {
-      // Invalidate only active queries to reduce network calls
+      // Final invalidation to ensure consistency
       await queryClient.invalidateQueries({
         queryKey: [collectionType],
         refetchType: 'active'

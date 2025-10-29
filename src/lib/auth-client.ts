@@ -7,19 +7,17 @@ import type { Auth } from "../auth";
  */
 // Determine the base URL based on the environment
 const getBaseURL = () => {
-  // Always use PUBLIC_API_URL if set (production and preview)
+  // If PUBLIC_API_URL is set, use it
   if (import.meta.env.PUBLIC_API_URL) {
-    const url = import.meta.env.PUBLIC_API_URL;
-    // Ensure no trailing slash
-    return url.endsWith('/') ? url.slice(0, -1) : url;
+    return import.meta.env.PUBLIC_API_URL;
   }
 
-  // In browser, use current origin for development
-  if (typeof window !== 'undefined') {
+  // In production, use the current origin
+  if (typeof window !== 'undefined' && window.location.origin !== 'http://localhost:3000') {
     return window.location.origin;
   }
 
-  // Fallback for SSR
+  // Default to localhost for development
   return "http://localhost:3000";
 };
 

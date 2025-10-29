@@ -2,22 +2,16 @@
 // Logout page - clears Better Auth session
 import BaseLayout from '../layouts/BaseLayout.astro';
 
-// Server-side logout - clear cookies
-Astro.cookies.delete('mahalle-session', {
-  path: '/',
-});
+// Server-side logout
+if (Astro.request.method === 'GET') {
+  // Clear the Better Auth session cookie
+  Astro.cookies.delete('mahalle-session', {
+    path: '/',
+  });
 
-// Also try common Better Auth cookie names
-Astro.cookies.delete('better-auth.session_token', {
-  path: '/',
-});
-
-Astro.cookies.delete('better_auth_session', {
-  path: '/',
-});
-
-// Redirect to home after logout
-return Astro.redirect('/');
+  // Redirect to home after logout
+  return Astro.redirect('/');
+}
 ---
 
 <BaseLayout title="Logging out...">

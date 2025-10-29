@@ -152,12 +152,8 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: true });
 
           try {
-            // Call Better Auth signOut
             await authClient.signOut();
-          } catch (error) {
-            console.error('Logout error:', error);
-          } finally {
-            // Always clear local state regardless of API call result
+
             set({
               user: null,
               isAuthenticated: false,
@@ -165,18 +161,25 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
             });
 
-            // Clear all localStorage items
+            // Clear localStorage
             if (typeof window !== 'undefined') {
-              // Clear Zustand persist storage
               localStorage.removeItem('auth-storage');
               localStorage.removeItem('token');
-
-              // Force clear the entire auth store state
-              useAuthStore.persist.clearStorage();
-
-              // Redirect to logout page to clear server-side session
-              // Use replace to prevent back button issues
-              window.location.replace('/logout');
+              // Use the logout page to ensure server-side session is cleared
+              window.location.href = '/logout';
+            }
+          } catch (error) {
+            console.error('Logout error:', error);
+            // Even if logout fails, clear local state
+            set({
+              user: null,
+              isAuthenticated: false,
+              error: null,
+              isLoading: false,
+            });
+            // Still redirect to logout page to clear server session
+            if (typeof window !== 'undefined') {
+              window.location.href = '/logout';
             }
           }
         },
@@ -331,32 +334,23 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-// Helper function to poll for session with progressive backoff
-const pollForSession = async (maxWaitTime = 5000) => {
-  const startTime = Date.now();
-  // Progressive delays: immediate, then quick retries, then slower
-  const delays = [0, 100, 200, 300, 500, 500, 1000, 1000, 1000];
+// Helper function to poll for session
+// Optimized for faster response with reasonable timeout
+const pollForSession = async (retries = 15, delay = 200) => {
+  // First, try immediately
+  const immediateSession = await authClient.getSession();
+  if (immediateSession?.user || immediateSession?.data?.user) {
+    return immediateSession;
+  }
 
-  for (const delay of delays) {
-    // Stop if we've exceeded max wait time
-    if (Date.now() - startTime > maxWaitTime) {
-      console.warn(`Session polling timeout after ${Date.now() - startTime}ms`);
-      break;
-    }
-
-    // Wait for the specified delay (0 for immediate first attempt)
-    if (delay > 0) {
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-
-    // Try to get the session
+  // Then poll with short intervals
+  for (let i = 0; i < retries; i++) {
+    await new Promise(resolve => setTimeout(resolve, delay));
     const session = await authClient.getSession();
     if (session?.user || session?.data?.user) {
-      console.log(`Session established after ${Date.now() - startTime}ms`);
       return session;
     }
   }
-
   return null;
 };
 
