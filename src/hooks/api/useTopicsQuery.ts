@@ -154,23 +154,14 @@ async function updateLikes(
 }
 
 // Hook for updating likes
-export function useUpdateLikes(type: 'topics' | 'announcements' | 'recommendations') {
+export function useLikeMutation(type: 'topics' | 'announcements' | 'recommendations') {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ postId, action }: { postId: string; action: 'like' | 'unlike' }) =>
       updateLikes(postId, action, type),
-    onSuccess: (data, variables) => {
-      // Update the cache optimistically
-      queryClient.setQueryData([type], (old: any[] | undefined) => {
-        if (!old) return old;
-
-        return old.map(item =>
-          item._id === variables.postId
-            ? { ...item, likes: data.likes, likedBy: data.likedBy }
-            : item
-        );
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [type] });
     },
   });
 }

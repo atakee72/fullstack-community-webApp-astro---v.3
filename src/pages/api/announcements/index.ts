@@ -45,7 +45,7 @@ export const GET: APIRoute = async ({ url }) => {
         announcements.map(async (announcement) => {
           if (announcement.author) {
             const author = await usersCollection.findOne(
-              { _id: announcement.author },
+              { betterAuthId: announcement.author },
               { projection: { password: 0 } }
             );
             return { ...announcement, author };

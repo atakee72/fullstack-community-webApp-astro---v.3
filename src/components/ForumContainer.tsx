@@ -65,7 +65,7 @@ export default function ForumContainer() {
       } else {
         // Create mode - new post
         const postData = collectionType === 'announcements'
-          ? { title: data.title, description: data.body, tags: data.tags }
+          ? { title: data.title, body: data.body, tags: data.tags }
           : { title: data.title, body: data.body, tags: data.tags };
 
         await createPost.mutateAsync(postData);
@@ -414,7 +414,7 @@ export default function ForumContainer() {
                             </div>
                           </div>
                           <div className="flex gap-2 md:gap-3 items-center text-xs md:text-sm">
-                            <EyeIcon viewCount={item.views || 0} createdAt={item.date} />
+                            <EyeIcon viewCount={item.views || 0} createdAt={new Date(item.date || item.createdAt)} />
                             <HeartBtn
                               isLiked={user ? item.likedBy?.includes(user.id) || false : false}
                               likeCount={item.likes || 0}
