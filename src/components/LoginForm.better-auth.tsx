@@ -28,8 +28,7 @@ export default function LoginForm() {
       setServerError('');
       try {
         await login(data.email, data.password);
-        // Wait a moment for session to be established
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Session is now established in the login function with proper polling
         // Redirect to home page - the page will reload and check session
         window.location.href = '/';
       } catch (err) {

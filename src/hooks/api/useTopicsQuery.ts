@@ -68,8 +68,10 @@ export function useTopicsQuery(
   return useQuery({
     queryKey: [type, options],
     queryFn: () => fetchTopics(type, options),
-    // Keep data fresh for 1 minute for forum posts
-    staleTime: 60 * 1000,
+    // Keep data fresh for 5 seconds for more responsive updates
+    staleTime: 5 * 1000,
+    // Refetch when window regains focus
+    refetchOnWindowFocus: true,
   });
 }
 

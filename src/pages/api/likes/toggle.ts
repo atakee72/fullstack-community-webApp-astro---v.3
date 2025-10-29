@@ -77,7 +77,12 @@ export const POST: APIRoute = async ({ request }) => {
       isLiked: action === 'like'
     }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
     });
   } catch (error) {
     console.error('Error toggling like:', error);
