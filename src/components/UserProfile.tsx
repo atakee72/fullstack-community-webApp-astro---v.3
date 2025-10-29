@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../stores/authStore.better-auth';
-import { useForumStore } from '../stores/forumStore';
+import { useTopicsQuery } from '../hooks/api/useTopicsQuery';
 import ImageUpload from './ImageUpload';
 
 export default function UserProfile() {
   const { user, updateProfile, logout, checkAuth } = useAuthStore();
-  const { topics } = useForumStore();
+  const { data: topics } = useTopicsQuery('topics');
   const [isEditing, setIsEditing] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -79,7 +79,7 @@ export default function UserProfile() {
     window.location.href = '/';
   };
 
-  const userTopics = topics.filter(topic => {
+  const userTopics = (topics || []).filter(topic => {
     const authorId = typeof topic.author === 'object' && topic.author !== null ? topic.author._id : topic.author;
     return authorId === user?._id;
   });

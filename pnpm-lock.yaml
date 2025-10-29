@@ -41,9 +41,6 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      jsonwebtoken:
-        specifier: ^9.0.0
-        version: 9.0.2
       mongodb:
         specifier: ^6.3.0
         version: 6.20.0
@@ -81,9 +78,6 @@ importers:
       '@types/bcrypt':
         specifier: ^5.0.0
         version: 5.0.2
-      '@types/jsonwebtoken':
-        specifier: ^9.0.0
-        version: 9.0.10
       '@types/node':
         specifier: ^20.0.0
         version: 20.19.23
@@ -1526,9 +1520,6 @@ packages:
 
   '@types/hast@3.0.4':
     resolution: {integrity: sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ==}
-
-  '@types/jsonwebtoken@9.0.10':
-    resolution: {integrity: sha512-asx5hIG9Qmf/1oStypjanR7iKTv0gXQ1Ov/jfrX6kS/EO0OFni8orbmGCn0672NHR3kXHwpAwR+B368ZGN/2rA==}
 
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
@@ -6287,11 +6278,6 @@ snapshots:
   '@types/hast@3.0.4':
     dependencies:
       '@types/unist': 3.0.3
-
-  '@types/jsonwebtoken@9.0.10':
-    dependencies:
-      '@types/ms': 2.1.0
-      '@types/node': 20.19.23
 
   '@types/mdast@4.0.4':
     dependencies:

@@ -124,6 +124,8 @@ export const auth = betterAuth({
 // Export type-safe auth instance
 export type Auth = typeof auth;
 
+// Trigger deployment
+
 // Helper function to get session from request
 export async function getSession(request: Request) {
   return auth.api.getSession({
