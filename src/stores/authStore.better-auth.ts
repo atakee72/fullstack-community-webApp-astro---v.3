@@ -359,15 +359,15 @@ export const useAuthStore = create<AuthState>()(
 );
 
 // Helper function to poll for session
-// Optimized for faster response with reasonable timeout
-const pollForSession = async (retries = 15, delay = 200) => {
+// Longer timeout for production (Netlify serverless cold starts)
+const pollForSession = async (retries = 30, delay = 300) => {
   // First, try immediately
   const immediateSession = await authClient.getSession();
   if (immediateSession?.user || immediateSession?.data?.user) {
     return immediateSession;
   }
 
-  // Then poll with short intervals
+  // Then poll with intervals (30 retries × 300ms = 9 seconds max)
   for (let i = 0; i < retries; i++) {
     await new Promise(resolve => setTimeout(resolve, delay));
     const session = await authClient.getSession();
