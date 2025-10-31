@@ -82,7 +82,7 @@ export default function HeartBtn({ isLiked, likeCount, onToggle, disabled = fals
         />
       ))}
 
-      <style jsx>{`
+      <style>{`
         @keyframes fadeToTransparent {
           to {
             opacity: 0;
