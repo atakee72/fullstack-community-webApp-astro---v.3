@@ -152,34 +152,57 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: true });
 
           try {
-            // Better Auth handles session clearing through its API
-            await authClient.signOut();
-
-            set({
-              user: null,
-              isAuthenticated: false,
-              error: null,
-              isLoading: false,
-            });
-
-            // Clear localStorage
             if (typeof window !== 'undefined') {
+              // Call sign-out endpoint BEFORE redirect
+              try {
+                await fetch('/api/auth/sign-out', {
+                  method: 'POST',
+                  credentials: 'include',
+                });
+              } catch (err) {
+                // Continue anyway - will clear client-side
+                console.error('Sign-out endpoint error:', err);
+              }
+
+              // Clear client-side state
+              set({
+                user: null,
+                isAuthenticated: false,
+                error: null,
+                isLoading: false,
+              });
+
+              // Clear localStorage
               localStorage.removeItem('auth-storage');
               localStorage.removeItem('token');
-              // Redirect to home page after successful logout
+
+              // Clear all possible cookie variations
+              const cookieOptions = [
+                'mahalle-session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;',
+                'better-auth.session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;',
+                'mahalle-session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;',
+                'better-auth.session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;',
+              ];
+              cookieOptions.forEach(cookie => {
+                document.cookie = cookie;
+              });
+
+              // Redirect after everything is cleared
               window.location.href = '/';
             }
           } catch (error) {
             console.error('Logout error:', error);
-            // Even if logout fails, clear local state
+            // Even if logout fails, ensure client state is cleared
             set({
               user: null,
               isAuthenticated: false,
               error: null,
               isLoading: false,
             });
-            // Redirect to home page
+
             if (typeof window !== 'undefined') {
+              localStorage.removeItem('auth-storage');
+              localStorage.removeItem('token');
               window.location.href = '/';
             }
           }

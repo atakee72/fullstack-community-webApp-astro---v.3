@@ -27,10 +27,6 @@ export const authClient = createAuthClient<Auth>({
   fetchOptions: {
     // Include credentials for cross-origin requests
     credentials: "include",
-    // Add headers for better compatibility
-    headers: {
-      'Content-Type': 'application/json',
-    },
   },
 });
 
