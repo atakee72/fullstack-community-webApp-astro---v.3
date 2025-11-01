@@ -13,13 +13,27 @@ import type { APIRoute } from "astro";
  * - And more...
  */
 export const ALL: APIRoute = async (ctx) => {
+  console.error('🔍 [NETLIFY DEBUG] Auth endpoint hit:', ctx.request.method, ctx.request.url);
+
   // Optional: Set forwarded IP for rate limiting
   if (ctx.clientAddress) {
     ctx.request.headers.set("x-forwarded-for", ctx.clientAddress);
   }
 
+  console.error('🔍 [NETLIFY DEBUG] Request headers:', Object.fromEntries(ctx.request.headers.entries()));
+
+  try {
+    const body = await ctx.request.clone().text();
+    console.error('🔍 [NETLIFY DEBUG] Request body:', body);
+  } catch (e) {
+    console.error('🔍 [NETLIFY DEBUG] Could not read body:', e);
+  }
+
   // Pass the request to Better Auth handler
-  return auth.handler(ctx.request);
+  const response = await auth.handler(ctx.request);
+  console.error('🔍 [NETLIFY DEBUG] Response status:', response.status);
+
+  return response;
 };
 
 // Also export individual methods for clarity
