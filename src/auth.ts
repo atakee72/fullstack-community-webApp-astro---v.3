@@ -108,6 +108,8 @@ export const auth = betterAuth({
   trustedOrigins: [
     import.meta.env.PUBLIC_API_URL || "http://localhost:3000",
     "http://localhost:3001", // For development
+    "https://mahalle-ein-kiez-gesichterbuch.netlify.app", // Production
+    "https://*.netlify.app", // All Netlify preview deployments
   ],
 
   // Custom endpoints configuration (if needed)
