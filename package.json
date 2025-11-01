@@ -35,6 +35,7 @@
     "clsx": "^2.1.1",
     "mongodb": "^6.3.0",
     "mongoose": "^8.0.0",
+    "netlify-cli": "^23.9.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwind-merge": "^3.3.1",
