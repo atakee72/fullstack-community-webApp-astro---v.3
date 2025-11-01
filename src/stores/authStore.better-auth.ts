@@ -360,7 +360,7 @@ export const useAuthStore = create<AuthState>()(
 
 // Helper function to poll for session
 // Longer timeout for production (Netlify serverless cold starts)
-const pollForSession = async (retries = 30, delay = 300) => {
+const pollForSession = async (retries = 50, delay = 300) => {
   // First, try immediately
   const immediateSession = await authClient.getSession();
   if (immediateSession?.user || immediateSession?.data?.user) {
