@@ -44,7 +44,10 @@ export const auth = betterAuth({
   session: {
     expiresIn: 7 * 24 * 60 * 60, // 7 days in seconds
     updateAge: 24 * 60 * 60, // Update session if older than 1 day
-    cookieName: "mahalle-session",
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 5 minutes
+    },
   },
 
   // User configuration to match existing schema
