@@ -45,8 +45,7 @@ export const auth = betterAuth({
     expiresIn: 7 * 24 * 60 * 60, // 7 days in seconds
     updateAge: 24 * 60 * 60, // Update session if older than 1 day
     cookieCache: {
-      enabled: true,
-      maxAge: 5 * 60, // 5 minutes
+      enabled: false, // Disable server-side caching for fresh session data
     },
   },
 
@@ -109,10 +108,9 @@ export const auth = betterAuth({
 
   // Security configuration
   trustedOrigins: [
-    import.meta.env.PUBLIC_API_URL || "http://localhost:3000",
-    "http://localhost:3001", // For development
-    "https://mahalle-ein-kiez-gesichterbuch.netlify.app", // Production
-    "https://*.netlify.app", // All Netlify preview deployments
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://mahalle-ein-kiez-gesichterbuch.netlify.app",
   ],
 
   // Custom endpoints configuration (if needed)
