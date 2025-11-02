@@ -24,7 +24,9 @@
       "mcp__mongodb-mcp__find",
       "mcp__netlify__netlify-coding-rules",
       "Bash(git diff:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(netlify status:*)",
+      "Bash(netlify deploy:*)"
     ],
     "deny": [],
     "ask": []
