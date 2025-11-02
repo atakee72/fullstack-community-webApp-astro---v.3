@@ -152,42 +152,23 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: true });
 
           try {
+            // Use Better Auth's signOut method to handle session termination
+            await authClient.signOut();
+
+            // Clear client-side state
+            set({
+              user: null,
+              isAuthenticated: false,
+              error: null,
+              isLoading: false,
+            });
+
+            // Clear localStorage
             if (typeof window !== 'undefined') {
-              // Call sign-out endpoint BEFORE redirect
-              try {
-                await fetch('/api/auth/sign-out', {
-                  method: 'POST',
-                  credentials: 'include',
-                });
-              } catch (err) {
-                // Continue anyway - will clear client-side
-                console.error('Sign-out endpoint error:', err);
-              }
-
-              // Clear client-side state
-              set({
-                user: null,
-                isAuthenticated: false,
-                error: null,
-                isLoading: false,
-              });
-
-              // Clear localStorage
               localStorage.removeItem('auth-storage');
               localStorage.removeItem('token');
 
-              // Clear all possible cookie variations
-              const cookieOptions = [
-                'mahalle-session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;',
-                'better-auth.session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;',
-                'mahalle-session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;',
-                'better-auth.session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;',
-              ];
-              cookieOptions.forEach(cookie => {
-                document.cookie = cookie;
-              });
-
-              // Redirect after everything is cleared
+              // Redirect to home
               window.location.href = '/';
             }
           } catch (error) {
@@ -360,7 +341,7 @@ export const useAuthStore = create<AuthState>()(
 
 // Helper function to poll for session
 // Longer timeout for production (Netlify serverless cold starts)
-const pollForSession = async (retries = 50, delay = 300) => {
+const pollForSession = async (retries = 15, delay = 300) => {
   // First, try immediately
   const immediateSession = await authClient.getSession();
   if (immediateSession?.user || immediateSession?.data?.user) {
