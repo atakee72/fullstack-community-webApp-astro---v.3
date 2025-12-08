@@ -63,17 +63,38 @@ export default function UserProfile({ user: initialUser }: UserProfileProps) {
 
   const handleSave = async () => {
     try {
-      // TODO: Implement profile update API endpoint for NextAuth
-      console.log('Saving profile:', profileData);
+      const response = await fetch('/api/users/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: profileData.userName,
+          hobbies: profileData.hobbies,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+
+      // Optimistically update user state
+      setUser({
+        ...user,
+        name: profileData.userName,
+        hobbies: profileData.hobbies,
+      });
+
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to update profile:', error);
+      // Optionally show an error message to the user
     }
   };
 
   const handleImageUpload = (url: string) => {
     setProfileData({ ...profileData, userPicture: url });
-    // TODO: Implement profile update API endpoint for NextAuth
+    // Note: Image upload saving is handled separately and is out of scope for this task.
   };
 
   const handleLogout = async () => {

@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
 import netlify from '@astrojs/netlify';
+import auth from 'auth-astro';
 
 // https://astro.build/config
 export default defineConfig({
@@ -15,6 +16,7 @@ export default defineConfig({
   }),
 
   integrations: [
+    auth(),
     react({
       experimentalReactChildren: true
     }),
@@ -58,7 +60,8 @@ export default defineConfig({
           'mongodb',
           'bcrypt',
           '@mongodb-js/saslprep',
-          'node-gyp-build'
+          'node-gyp-build',
+          'auth:config'
         ]
       }
     }
