@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { auth } from '../../../../auth';
+import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import type { Topic, EditHistory } from '../../../../types';
@@ -8,12 +8,10 @@ import { parseRequestBody } from '../../../../schemas/validation.utils';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
-    // Get session from Better Auth
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+    // Get session from NextAuth
+    const session = await getSession(request);
 
-    if (!session) {
+    if (!session?.user) {
       return new Response(JSON.stringify({ error: 'Unauthorized - Please login' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
@@ -54,12 +52,11 @@ export const PUT: APIRoute = async ({ request, params }) => {
     }
 
     // Check if user is the author
-    // Need to handle both old MongoDB ObjectId authors and new Better Auth string IDs
     const isAuthor =
       (typeof existingTopic.author === 'string' && existingTopic.author === userId) ||
       (existingTopic.author && typeof existingTopic.author === 'object' &&
-       'betterAuthId' in existingTopic.author &&
-       existingTopic.author.betterAuthId === userId);
+        'betterAuthId' in existingTopic.author &&
+        existingTopic.author.betterAuthId === userId);
 
     if (!isAuthor) {
       return new Response(JSON.stringify({ error: 'You can only edit your own topics' }), {
@@ -102,39 +99,14 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
-    // Get author information for response
-    const usersCollection = db.collection('users');
-    let author = await usersCollection.findOne(
-      { betterAuthId: userId },
-      { projection: { password: 0 } }
-    );
-
-    if (!author) {
-      const betterAuthUserCollection = db.collection('user');
-      const betterAuthUser = await betterAuthUserCollection.findOne({
-        _id: new ObjectId(userId)
-      });
-
-      let userName = session.user.name || session.user.email?.split('@')[0] || 'User';
-
-      if (betterAuthUser && betterAuthUser['[object Object]']) {
-        userName = betterAuthUser['[object Object]'];
-      } else if (betterAuthUser?.name) {
-        userName = betterAuthUser.name;
-      }
-
-      author = {
-        _id: new ObjectId(),
-        betterAuthId: userId,
-        userName: userName,
-        email: session.user.email || betterAuthUser?.email,
-        userPicture: session.user.image || betterAuthUser?.image || '',
-        roleBadge: 'resident',
-        hobbies: [],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-    }
+    // Construct author object from session
+    const author = {
+      _id: userId,
+      name: session.user.name,
+      email: session.user.email,
+      image: session.user.image,
+      roleBadge: 'resident'
+    };
 
     const updatedTopic = {
       ...updateResult,

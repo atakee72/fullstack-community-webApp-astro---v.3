@@ -2,10 +2,14 @@ import React from 'react';
 import { QueryProvider } from '../providers/QueryProvider';
 import ForumContainer from './ForumContainer';
 
-export default function ForumWrapper() {
+interface ForumWrapperProps {
+  session?: any;
+}
+
+export default function ForumWrapper({ session }: ForumWrapperProps) {
   return (
     <QueryProvider>
-      <ForumContainer />
+      <ForumContainer initialSession={session} />
     </QueryProvider>
   );
 }

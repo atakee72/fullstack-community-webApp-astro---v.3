@@ -1,14 +1,13 @@
 import type { APIRoute } from 'astro';
-import { auth } from '../../../auth';
-import { connectDB } from '../../../lib/mongodb';
+import { getSession } from 'auth-astro/server';
+import clientPromise from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 
 export const POST: APIRoute = async ({ request }) => {
+  console.log('Hit /api/likes/toggle endpoint');
   try {
-    // Get the Better Auth session
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+    // Get the NextAuth session
+    const session = await getSession(request);
 
     if (!session?.user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -19,6 +18,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const body = await request.json();
     const { postId, collectionType, action } = body;
+    console.log('Toggle Like Request:', { postId, collectionType, action, userId: session.user.id });
 
     if (!postId || !collectionType || !action) {
       return new Response(JSON.stringify({ error: 'Post ID, collection type, and action are required' }), {
@@ -44,13 +44,25 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const userId = session.user.id;
+    const userId = session.user.id; // NextAuth user ID
 
     // Connect to database
-    const db = await connectDB();
+    const client = await clientPromise;
+    const dbName = new URL(import.meta.env.MONGODB_URI).pathname.substring(1);
+    const db = client.db(dbName);
     const collection = db.collection(collectionType);
 
+    console.log('DB Connection:', {
+      dbName: db.databaseName,
+      collection: collectionType,
+      postId,
+      userId
+    });
+
     // Toggle like/unlike
+    // Note: We store userId in likedBy array.
+    // NextAuth IDs might be different from BetterAuth IDs if not migrated perfectly,
+    // but we are using the ID from the session.
     const updateOperation = action === 'like'
       ? { $addToSet: { likedBy: userId }, $inc: { likes: 1 } }
       : { $pull: { likedBy: userId }, $inc: { likes: -1 } };
@@ -59,6 +71,12 @@ export const POST: APIRoute = async ({ request }) => {
       { _id: new ObjectId(postId) },
       updateOperation
     );
+
+    console.log('Update Result:', {
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+      acknowledged: result.acknowledged
+    });
 
     if (result.matchedCount === 0) {
       return new Response(JSON.stringify({ error: 'Post not found' }), {
