@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAuthStore } from '../stores/authStore.better-auth';
 import { useTopicsQuery, useCreatePost, useDeletePost, useEditPost } from '../hooks/api/useTopicsQuery';
 import { useCreateComment } from '../hooks/api/useCommentsQuery';
 import { useLikeMutation } from '../hooks/api/useLikeMutation';
@@ -12,9 +11,14 @@ import EyeIcon from './EyeIcon';
 import { cn } from '../lib/utils';
 import type { Topic, Announcement, Recommendation } from '../types';
 
-export default function ForumContainer() {
+interface ForumContainerProps {
+  initialSession?: any;
+}
+
+export default function ForumContainer({ initialSession }: ForumContainerProps) {
   const [isClient, setIsClient] = useState(false);
-  const user = useAuthStore((state) => state.user);
+  const user = initialSession?.user;
+
   const [collectionType, setCollectionType] = useState<'topics' | 'announcements' | 'recommendations'>('topics');
   const [searchValue, setSearchValue] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -40,12 +44,6 @@ export default function ForumContainer() {
 
   useEffect(() => {
     setIsClient(true);
-    // Rehydrate stores on client side and check for existing session
-    if (typeof window !== 'undefined') {
-      useAuthStore.persist.rehydrate();
-      // Check if there's an existing Better Auth session
-      useAuthStore.getState().checkAuth();
-    }
   }, []);
 
   const filteredItems = (items as any[]).filter(item =>
@@ -137,8 +135,11 @@ export default function ForumContainer() {
     setShowReadMoreModal(true);
     // Increment views when read more is clicked (only if not the author)
     const isAuthor = user && (
-      (typeof item.author === 'string' && user.id === item.author) ||
-      (item.author && typeof item.author === 'object' && 'betterAuthId' in item.author && user.id === item.author.betterAuthId)
+      (() => {
+        const authorId = typeof item.author === 'string' ? item.author : item.author?.id || item.author?.betterAuthId || item.author?._id;
+        const userId = user?.id || user?._id;
+        return userId && authorId && userId === authorId;
+      })()
     );
     if (!isAuthor) {
       incrementViews(item._id);
@@ -150,8 +151,11 @@ export default function ForumContainer() {
     setCardActiveTab(itemId, 'comments');
     // Increment views when comments tab is clicked (only if not the author)
     const isAuthor = user && (
-      (typeof item.author === 'string' && user.id === item.author) ||
-      (item.author && typeof item.author === 'object' && 'betterAuthId' in item.author && user.id === item.author.betterAuthId)
+      (() => {
+        const authorId = typeof item.author === 'string' ? item.author : item.author?.id || item.author?.betterAuthId || item.author?._id;
+        const userId = user?.id || user?._id;
+        return userId && authorId && userId === authorId;
+      })()
     );
     if (!isAuthor) {
       incrementViews(itemId);
@@ -349,8 +353,8 @@ export default function ForumContainer() {
                               currentTab === 'newComment'
                                 ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
                                 : user
-                                ? 'bg-transparent text-gray-700 border-white hover:bg-white/50'
-                                : 'bg-transparent text-gray-400 border-white cursor-not-allowed'
+                                  ? 'bg-transparent text-gray-700 border-white hover:bg-white/50'
+                                  : 'bg-transparent text-gray-400 border-white cursor-not-allowed'
                             )}
                           >
                             Write a comment
@@ -359,118 +363,120 @@ export default function ForumContainer() {
 
                         {/* Edit and Delete Icons - Always visible if user is author */}
                         {user && (
-                          (typeof item.author === 'string' && user.id === item.author) ||
-                          (item.author && typeof item.author === 'object' &&
-                           'betterAuthId' in item.author && user.id === item.author.betterAuthId)
+                          (() => {
+                            const authorId = typeof item.author === 'string' ? item.author : item.author?.id || item.author?.betterAuthId || item.author?._id;
+                            const userId = user?.id || user?._id;
+                            return userId && authorId && userId === authorId;
+                          })()
                         ) && (
-                          <div className="flex gap-1 flex-shrink-0">
-                            <button
-                              onClick={() => {
-                                setEditingPost(item);
-                                setShowAddModal(true);
-                              }}
-                              className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-gray-700"
-                              title="Edit post"
-                            >
-                              ✎
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (window.confirm(`Are you sure you want to delete this ${collectionType.slice(0, -1)}?`)) {
-                                  deletePost.mutate(item._id);
-                                }
-                              }}
-                              className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-red-600"
-                              title="Delete post"
-                              disabled={deletePost.isPending}
-                            >
-                              {deletePost.isPending && deletePost.variables === item._id ? '⏳' : '✕'}
-                            </button>
-                          </div>
-                        )}
+                            <div className="flex gap-1 flex-shrink-0">
+                              <button
+                                onClick={() => {
+                                  setEditingPost(item);
+                                  setShowAddModal(true);
+                                }}
+                                className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-gray-700"
+                                title="Edit post"
+                              >
+                                ✎
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (window.confirm(`Are you sure you want to delete this ${collectionType.slice(0, -1)}?`)) {
+                                    deletePost.mutate(item._id);
+                                  }
+                                }}
+                                className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-red-600"
+                                title="Delete post"
+                                disabled={deletePost.isPending}
+                              >
+                                {deletePost.isPending && deletePost.variables === item._id ? '⏳' : '✕'}
+                              </button>
+                            </div>
+                          )}
                       </div>
                     </div>
 
                     {/* Card Body */}
                     <div className="p-0 flex flex-col flex-1">
                       {currentTab === 'posts' ? (
-                      <div className="flex flex-col flex-1">
-                        {/* Author Info Header */}
-                        <div className="bg-[#4b9aaa] text-white px-2 md:px-3 py-1 md:py-2 rounded-md mt-0 mb-3 md:mb-4 flex items-center gap-2 md:gap-3 text-xs md:text-sm">
-                          <div className="w-7 h-7 md:w-8 md:h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-[#4b9aaa] font-bold text-xs md:text-sm">
-                              {item.author?.userName?.charAt(0)?.toUpperCase() || 'A'}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2">
-                              <span className="font-medium truncate">{item.author?.userName || 'Anonymous'}</span>
-                              <span className="text-gray-200 text-xs">• {new Date(item.date).toLocaleDateString()}</span>
-                              {item.isEdited && (
-                                <span className="text-gray-200 text-xs" title={item.lastEditedAt ? `Last edited: ${new Date(item.lastEditedAt).toLocaleString()}` : 'Edited'}>
-                                  • (edited)
-                                </span>
-                              )}
+                        <div className="flex flex-col flex-1">
+                          {/* Author Info Header */}
+                          <div className="bg-[#4b9aaa] text-white px-2 md:px-3 py-1 md:py-2 rounded-md mt-0 mb-3 md:mb-4 flex items-center gap-2 md:gap-3 text-xs md:text-sm">
+                            <div className="w-7 h-7 md:w-8 md:h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-[#4b9aaa] font-bold text-xs md:text-sm">
+                                {item.author?.name?.charAt(0)?.toUpperCase() || item.author?.userName?.charAt(0)?.toUpperCase() || 'A'}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2">
+                                <span className="font-medium truncate">{item.author?.name || item.author?.userName || 'Anonymous'}</span>
+                                <span className="text-gray-200 text-xs">• {new Date(item.date).toLocaleDateString()}</span>
+                                {item.isEdited && (
+                                  <span className="text-gray-200 text-xs" title={item.lastEditedAt ? `Last edited: ${new Date(item.lastEditedAt).toLocaleString()}` : 'Edited'}>
+                                    • (edited)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex gap-2 md:gap-3 items-center text-xs md:text-sm">
+                              <EyeIcon viewCount={item.views || 0} createdAt={new Date(item.date || item.createdAt)} />
+                              <HeartBtn
+                                isLiked={user ? item.likedBy?.includes(user.id) || false : false}
+                                likeCount={item.likes || 0}
+                                onToggle={() => handleLikeToggle(item._id, item.likedBy?.includes(user?.id))}
+                                disabled={!user}
+                              />
                             </div>
                           </div>
-                          <div className="flex gap-2 md:gap-3 items-center text-xs md:text-sm">
-                            <EyeIcon viewCount={item.views || 0} createdAt={new Date(item.date || item.createdAt)} />
-                            <HeartBtn
-                              isLiked={user ? item.likedBy?.includes(user.id) || false : false}
-                              likeCount={item.likes || 0}
-                              onToggle={() => handleLikeToggle(item._id, item.likedBy?.includes(user?.id))}
-                              disabled={!user}
-                            />
-                          </div>
-                        </div>
 
-                        {/* Post Content - Truncated with Read More */}
-                        <div className="px-2 md:px-4 mb-3 md:mb-4">
-                          <p className="text-gray-700 leading-relaxed text-sm md:text-base">
-                            {truncateText(item.description || item.body)}
-                          </p>
-                          {(item.description || item.body)?.length > 150 && (
-                            <button
-                              onClick={() => handleReadMore(item)}
-                              className="mt-2 text-[#4b9aaa] hover:text-[#3a7a8a] font-medium text-sm md:text-base underline"
-                            >
-                              Read more
-                            </button>
+                          {/* Post Content - Truncated with Read More */}
+                          <div className="px-2 md:px-4 mb-3 md:mb-4">
+                            <p className="text-gray-700 leading-relaxed text-sm md:text-base">
+                              {truncateText(item.description || item.body)}
+                            </p>
+                            {(item.description || item.body)?.length > 150 && (
+                              <button
+                                onClick={() => handleReadMore(item)}
+                                className="mt-2 text-[#4b9aaa] hover:text-[#3a7a8a] font-medium text-sm md:text-base underline"
+                              >
+                                Read more
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Spacer */}
+                          <div className="flex-1"></div>
+
+                          {/* Tags */}
+                          {Array.isArray(item.tags) && item.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 md:gap-2 pt-3 md:pt-4 border-t border-gray-300 px-2 md:px-4">
+                              {item.tags.map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="px-2 md:px-3 py-0.5 md:py-1 bg-[#4b9aaa] text-white text-xs rounded-md underline"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
                           )}
                         </div>
-
-                        {/* Spacer */}
-                        <div className="flex-1"></div>
-
-                        {/* Tags */}
-                        {Array.isArray(item.tags) && item.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 md:gap-2 pt-3 md:pt-4 border-t border-gray-300 px-2 md:px-4">
-                            {item.tags.map((tag) => (
-                              <span
-                                key={tag}
-                                className="px-2 md:px-3 py-0.5 md:py-1 bg-[#4b9aaa] text-white text-xs rounded-md underline"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ) : currentTab === 'comments' ? (
-                      <CommentsList
-                        postId={item._id}
-                        collectionType={collectionType}
-                        postTitle={item.title}
-                        onAddComment={() => {
-                          setSelectedPost(item);
-                          setShowCommentModal(true);
-                        }}
-                      />
-                    ) : null}
+                      ) : currentTab === 'comments' ? (
+                        <CommentsList
+                          postId={item._id}
+                          collectionType={collectionType}
+                          postTitle={item.title}
+                          onAddComment={() => {
+                            setSelectedPost(item);
+                            setShowCommentModal(true);
+                          }}
+                        />
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
             </div>
           )}
         </div>
@@ -513,7 +519,7 @@ export default function ForumContainer() {
         onClose={() => setShowReadMoreModal(false)}
         title={selectedPost?.title || ''}
         body={selectedPost?.body || selectedPost?.description || ''}
-        author={selectedPost?.author?.userName || 'Anonymous'}
+        author={selectedPost?.author?.name || selectedPost?.author?.userName || 'Anonymous'}
         date={selectedPost?.date}
         tags={selectedPost?.tags}
       />

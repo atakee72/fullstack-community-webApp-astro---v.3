@@ -3,10 +3,14 @@ import React from 'react';
 import { QueryProvider } from '../providers/QueryProvider';
 import UserProfile from './UserProfile';
 
-export default function UserProfileWrapper() {
+interface UserProfileWrapperProps {
+  user?: any;
+}
+
+export default function UserProfileWrapper({ user }: UserProfileWrapperProps) {
   return (
     <QueryProvider>
-      <UserProfile />
+      <UserProfile user={user} />
     </QueryProvider>
   );
 }
