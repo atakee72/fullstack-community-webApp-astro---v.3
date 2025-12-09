@@ -1,18 +1,16 @@
 import React from 'react';
-import { useAuthStore } from '../stores/authStore.better-auth';
 import { useCommentsQuery, useDeleteComment } from '../hooks/api/useCommentsQuery';
-import type { Comment } from '../types';
+import type { Comment, User } from '../types';
 
 interface CommentsListProps {
   postId: string;
   collectionType: string;
   postTitle?: string;
   onAddComment?: () => void;
+  user?: User | null;
 }
 
-export default function CommentsList({ postId, collectionType, postTitle, onAddComment }: CommentsListProps) {
-  const user = useAuthStore(state => state.user);
-
+export default function CommentsList({ postId, collectionType, postTitle, onAddComment, user }: CommentsListProps) {
   // Use React Query for fetching comments
   const { data: comments = [], isLoading: loading } = useCommentsQuery(postId);
   const deleteCommentMutation = useDeleteComment(postId);
