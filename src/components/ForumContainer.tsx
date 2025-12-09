@@ -471,6 +471,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                             setSelectedPost(item);
                             setShowCommentModal(true);
                           }}
+                          user={user}
                         />
                       ) : null}
                     </div>
