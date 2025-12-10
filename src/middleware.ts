@@ -1,8 +1,8 @@
-import { auth } from "./auth";
+import { getSession } from 'auth-astro/server';
 import { defineMiddleware } from "astro:middleware";
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  // Skip middleware for static assets and API routes (except auth)
+  // Skip middleware for static assets
   const pathname = context.url.pathname;
   if (
     pathname.startsWith("/_image") ||
@@ -13,15 +13,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   try {
-    // Get session from Better Auth
-    const session = await auth.api.getSession({
-      headers: context.request.headers,
-    });
+    // Get session from NextAuth via auth-astro
+    const session = await getSession(context.request);
 
-    if (session) {
+    if (session?.user) {
       // Populate Astro.locals with user and session data
       context.locals.user = session.user;
-      context.locals.session = session.session;
+      context.locals.session = session;
     } else {
       // No session found
       context.locals.user = null;

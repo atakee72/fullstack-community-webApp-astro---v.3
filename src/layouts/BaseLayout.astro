@@ -1,5 +1,8 @@
 ---
+import { getSession } from 'auth-astro/server';
 import Navbar from '../components/Navbar';
+
+const session = await getSession(Astro.request);
 import { ViewTransitions } from 'astro:transitions';
 
 export interface Props {
@@ -38,7 +41,7 @@ const { title, description = 'Mahalle - A community web app for local neighborho
     <ViewTransitions />
   </head>
   <body class="min-h-screen bg-[#eccc6e]">
-    <Navbar client:load />
+    <Navbar client:load user={session?.user} />
     <main>
       <slot />
     </main>

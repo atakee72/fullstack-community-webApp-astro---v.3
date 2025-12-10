@@ -1,22 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { useAuthStore } from '../stores/authStore.better-auth';
+import { signOut } from 'auth-astro/client';
 
-export default function Navbar() {
+interface NavbarProps {
+  user?: any;
+}
+
+export default function Navbar({ user: initialUser }: NavbarProps) {
   const [isClient, setIsClient] = useState(false);
-  const user = useAuthStore((state) => state.user);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const logout = useAuthStore((state) => state.logout);
-  const checkAuth = useAuthStore((state) => state.checkAuth);
+  const [user, setUser] = useState(initialUser);
 
   useEffect(() => {
     setIsClient(true);
-    // Rehydrate the auth store and check for existing Better Auth session
-    if (typeof window !== 'undefined') {
-      useAuthStore.persist.rehydrate();
-      // Check if there's an existing Better Auth session
-      checkAuth();
-    }
-  }, [checkAuth]);
+    // Update user state if it changes from server
+    setUser(initialUser);
+  }, [initialUser]);
+
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
+    window.location.href = '/';
+  };
 
   // Don't render user-specific content during SSR
   if (!isClient) {
@@ -65,7 +67,7 @@ export default function Navbar() {
               </li>
 
               {/* Navigation Links */}
-              {!isAuthenticated && (
+              {!user && (
                 <>
                   <li>
                     <a
@@ -101,7 +103,7 @@ export default function Navbar() {
             {user && (
               <li>
                 <button
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="bg-[#814256] text-white border-none px-3 md:px-5 py-2 md:py-2.5 text-sm md:text-base rounded-md cursor-pointer font-medium hover:bg-[#6a3646] transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 >
                   🚪 Logout
@@ -113,7 +115,7 @@ export default function Navbar() {
       </div>
 
       {/* User Profile Sidebar - Hidden on mobile/tablet, visible on large screens */}
-      {isAuthenticated && user && (
+      {user && (
         <div className="hidden lg:flex fixed top-[45%] right-[5%] flex-col items-center gap-3 z-50">
           <a
             href="/profile"
@@ -122,14 +124,14 @@ export default function Navbar() {
             <div className="relative">
               <img
                 className="w-[60px] h-[60px] lg:w-[70px] lg:h-[70px] rounded-full object-cover bg-white shadow-xl cursor-pointer group-hover:scale-110 transition-transform duration-300 border-3 border-[#4b9aaa]"
-                src={user.userPicture || `https://ui-avatars.com/api/?name=${user.userName}&background=4b9aaa&color=fff&size=140`}
-                alt={user.userName}
+                src={user.image || `https://ui-avatars.com/api/?name=${user.name}&background=4b9aaa&color=fff&size=140`}
+                alt={user.name}
               />
               <div className="absolute -bottom-1 -right-1 w-4 h-4 lg:w-5 lg:h-5 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
           </a>
           <div className="text-center">
-            <h2 className="text-[#4b9aaa] text-base lg:text-lg font-bold mb-1">{user.userName}</h2>
+            <h2 className="text-[#4b9aaa] text-base lg:text-lg font-bold mb-1">{user.name}</h2>
             {user.roleBadge && (
               <span className="inline-block px-2 py-1 bg-[#aca89f] text-white text-xs rounded-full">
                 {user.roleBadge}

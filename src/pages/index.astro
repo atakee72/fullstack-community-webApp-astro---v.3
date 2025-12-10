@@ -1,6 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
 import ForumWrapper from '../components/ForumWrapper';
+
+const session = await getSession(Astro.request);
 ---
 
 <BaseLayout title="Your Local Forum">
@@ -17,7 +20,7 @@ import ForumWrapper from '../components/ForumWrapper';
       </div>
       <h1 class="text-center text-2xl md:text-3xl lg:text-4xl font-bold mb-3 pb-1 text-[#814256]">Your Local Forum</h1>
       <div class="bg-[#4b9aaa] flex justify-center px-4 md:px-8 lg:px-12 py-6 md:py-8 rounded-lg mt-6 md:mt-8 min-h-[400px]">
-        <ForumWrapper client:load />
+        <ForumWrapper client:load session={session} />
       </div>
     </div>
   </main>

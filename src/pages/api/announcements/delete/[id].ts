@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { auth } from '../../../../auth';
+import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 
@@ -14,12 +14,10 @@ export const DELETE: APIRoute = async ({ params, request }) => {
       });
     }
 
-    // Get session from Better Auth
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+    // Get session from NextAuth
+    const session = await getSession(request);
 
-    if (!session) {
+    if (!session?.user) {
       return new Response(JSON.stringify({ error: 'Unauthorized - Please login' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }

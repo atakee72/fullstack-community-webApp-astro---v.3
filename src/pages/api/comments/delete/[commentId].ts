@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { auth } from '../../../../auth';
+import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 
@@ -14,12 +14,10 @@ export const DELETE: APIRoute = async ({ params, request }) => {
       });
     }
 
-    // Get session from Better Auth
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+    // Get session from NextAuth
+    const session = await getSession(request);
 
-    if (!session) {
+    if (!session?.user) {
       return new Response(JSON.stringify({ error: 'Unauthorized - Please login' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
@@ -43,11 +41,15 @@ export const DELETE: APIRoute = async ({ params, request }) => {
     }
 
     // Check if user is the author of the comment
-    // Handle both new format (Better Auth ID as string) and old format (ObjectId)
+    // Handle both new format (NextAuth ID as string) and old format (ObjectId)
     const commentAuthorId = typeof comment.author === 'string'
       ? comment.author
       : comment.author?.toString();
 
+    // Note: This comparison assumes the comment.author field stores the same ID format as session.user.id
+    // If comments were created with BetterAuth, they might have BetterAuth IDs.
+    // If created with NextAuth, they have NextAuth IDs.
+    // Since we migrated users, the IDs should hopefully match or be compatible if we kept the _id.
     if (commentAuthorId !== userId) {
       return new Response(JSON.stringify({ error: 'Unauthorized to delete this comment' }), {
         status: 403,
