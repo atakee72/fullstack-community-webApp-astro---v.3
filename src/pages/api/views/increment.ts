@@ -28,10 +28,19 @@ export const POST: APIRoute = async ({ request }) => {
     const collection = db.collection(collectionType);
 
     // Increment views
-    const result = await collection.updateOne(
+    let result = await collection.updateOne(
       { _id: new ObjectId(postId) },
       { $inc: { views: 1 } }
     );
+
+    // If not found with ObjectId, try with string ID
+    if (result.matchedCount === 0) {
+      console.log('Post not found with ObjectId, trying string ID...');
+      result = await collection.updateOne(
+        { _id: postId as any },
+        { $inc: { views: 1 } }
+      );
+    }
 
     if (result.matchedCount === 0) {
       return new Response(JSON.stringify({ error: 'Post not found' }), {

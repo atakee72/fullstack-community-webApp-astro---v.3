@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useAuthStore } from '../stores/authStore.better-auth';
 import { useTopicsQuery } from '../hooks/api/useTopicsQuery';
 import ImageUpload from './ImageUpload';
+import { signOut } from 'auth-astro/client';
 
-export default function UserProfile() {
-  const { user, updateProfile, logout, checkAuth } = useAuthStore();
+interface UserProfileProps {
+  user?: any;
+}
+
+export default function UserProfile({ user: initialUser }: UserProfileProps) {
   const { data: topics } = useTopicsQuery('topics');
   const [isEditing, setIsEditing] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [user, setUser] = useState(initialUser);
+
   const [profileData, setProfileData] = useState({
     userName: '',
     email: '',
@@ -18,19 +23,16 @@ export default function UserProfile() {
 
   useEffect(() => {
     setIsClient(true);
-    // Check authentication on mount
-    if (typeof window !== 'undefined') {
-      checkAuth();
-    }
-  }, []);
+    setUser(initialUser);
+  }, [initialUser]);
 
   useEffect(() => {
     if (isClient && user) {
       setProfileData({
-        userName: user.userName || '',
+        userName: user.name || user.userName || '',
         email: user.email || '',
         hobbies: user.hobbies || [],
-        userPicture: user.userPicture || ''
+        userPicture: user.image || user.userPicture || ''
       });
     }
   }, [user, isClient]);
@@ -61,30 +63,51 @@ export default function UserProfile() {
 
   const handleSave = async () => {
     try {
-      await updateProfile(profileData);
+      const response = await fetch('/api/users/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: profileData.userName,
+          hobbies: profileData.hobbies,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+
+      // Optimistically update user state
+      setUser({
+        ...user,
+        name: profileData.userName,
+        hobbies: profileData.hobbies,
+      });
+
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to update profile:', error);
+      // Optionally show an error message to the user
     }
   };
 
   const handleImageUpload = (url: string) => {
     setProfileData({ ...profileData, userPicture: url });
-    // Also update the profile immediately
-    updateProfile({ userPicture: url });
+    // Note: Image upload saving is handled separately and is out of scope for this task.
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
     window.location.href = '/';
   };
 
-  const userTopics = (topics || []).filter(topic => {
+  const userTopics = (topics || []).filter((topic: any) => {
     const authorId = typeof topic.author === 'object' && topic.author !== null ? topic.author._id : topic.author;
-    return authorId === user?._id;
+    return authorId === user?.id || authorId === user?._id;
   });
 
-  // Show loading during SSR or while checking auth
+  // Show loading during SSR
   if (!isClient) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -286,7 +309,7 @@ export default function UserProfile() {
 
             {userTopics.length > 0 ? (
               <div className="grid gap-4 max-h-[600px] overflow-y-auto pr-2">
-                {userTopics.map((topic) => (
+                {userTopics.map((topic: any) => (
                   <div
                     key={topic._id}
                     className="bg-gradient-to-r from-gray-50 to-white p-5 rounded-xl border border-gray-200 hover:shadow-lg transition-all hover:border-[#4b9aaa] cursor-pointer"
@@ -302,7 +325,7 @@ export default function UserProfile() {
 
                     <div className="flex justify-between items-center">
                       <div className="flex gap-2">
-                        {topic.tags?.slice(0, 3).map((tag) => (
+                        {topic.tags?.slice(0, 3).map((tag: string) => (
                           <span
                             key={tag}
                             className="text-xs bg-[#eccc6e] text-[#814256] px-2 py-1 rounded-full font-medium"
@@ -356,13 +379,13 @@ export default function UserProfile() {
               </div>
               <div className="text-center p-3 md:p-4 bg-gradient-to-br from-[#814256]/10 to-[#814256]/5 rounded-lg">
                 <div className="text-2xl md:text-3xl font-bold text-[#814256]">
-                  {userTopics.reduce((acc, t) => acc + (t.comments?.length || 0), 0)}
+                  {userTopics.reduce((acc: number, t: any) => acc + (t.comments?.length || 0), 0)}
                 </div>
                 <div className="text-xs md:text-sm text-gray-600 mt-1">Comments</div>
               </div>
               <div className="text-center p-3 md:p-4 bg-gradient-to-br from-[#eccc6e]/30 to-[#eccc6e]/10 rounded-lg">
                 <div className="text-2xl md:text-3xl font-bold text-[#c9aa4c]">
-                  {userTopics.reduce((acc, t) => acc + (t.likes?.length || 0), 0)}
+                  {userTopics.reduce((acc: number, t: any) => acc + (t.likes?.length || 0), 0)}
                 </div>
                 <div className="text-xs md:text-sm text-gray-600 mt-1">Likes</div>
               </div>

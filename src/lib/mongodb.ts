@@ -1,61 +1,39 @@
-import { MongoClient, Db } from 'mongodb';
-import type { User, Topic, Comment, Announcement, Recommendation } from '../types';
+import { MongoClient, Db } from "mongodb";
 
-const uri = import.meta.env.MONGODB_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/CommunityWebApp';
-
-if (!uri) {
-  throw new Error('Please add your MongoDB URI to .env file');
+if (!import.meta.env.MONGODB_URI) {
+  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
 }
 
-let cachedClient: MongoClient | null = null;
-let cachedDb: Db | null = null;
+const uri = import.meta.env.MONGODB_URI;
+const options = {};
 
-export async function connectToDatabase(dbName: string = 'CommunityWebApp') {
-  if (cachedClient && cachedDb) {
-    return { client: cachedClient, db: cachedDb };
-  }
+let client: MongoClient;
+let clientPromise: Promise<MongoClient>;
 
-  try {
-    const client = new MongoClient(uri);
-    await client.connect();
-    const db = client.db(dbName);
-
-    cachedClient = client;
-    cachedDb = db;
-
-    console.log('Successfully connected to MongoDB');
-
-    return { client, db };
-  } catch (error) {
-    console.error('Failed to connect to MongoDB:', error);
-    throw error;
-  }
-}
-
-// Alias for API routes compatibility
-export async function connectDB(): Promise<Db> {
-  const { db } = await connectToDatabase();
-  return db;
-}
-
-// Type-safe collection access
-export async function getCollections() {
-  const { db } = await connectToDatabase();
-
-  return {
-    users: db.collection<User>('users'),
-    topics: db.collection<Topic>('topics'),
-    comments: db.collection<Comment>('comments'),
-    announcements: db.collection<Announcement>('announcements'),
-    recommendations: db.collection<Recommendation>('recommendations')
+if (process.env.NODE_ENV === "development") {
+  // In development mode, use a global variable so that the value
+  // is preserved across module reloads caused by HMR (Hot Module Replacement).
+  let globalWithMongo = global as typeof globalThis & {
+    _mongoClientPromise?: Promise<MongoClient>;
   };
+
+  if (!globalWithMongo._mongoClientPromise) {
+    client = new MongoClient(uri, options);
+    globalWithMongo._mongoClientPromise = client.connect();
+  }
+  clientPromise = globalWithMongo._mongoClientPromise;
+} else {
+  // In production mode, it's best to not use a global variable.
+  client = new MongoClient(uri, options);
+  clientPromise = client.connect();
 }
 
-// Helper function to close connection (for cleanup)
-export async function closeDatabase() {
-  if (cachedClient) {
-    await cachedClient.close();
-    cachedClient = null;
-    cachedDb = null;
-  }
+// Export a module-scoped MongoClient promise. By doing this in a
+// separate module, the client can be shared across functions.
+export default clientPromise;
+
+// Helper function to get DB instance (backward compatibility)
+export async function connectDB(): Promise<Db> {
+  const client = await clientPromise;
+  return client.db();
 }

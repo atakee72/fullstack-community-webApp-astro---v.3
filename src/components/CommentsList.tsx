@@ -1,18 +1,16 @@
 import React from 'react';
-import { useAuthStore } from '../stores/authStore.better-auth';
 import { useCommentsQuery, useDeleteComment } from '../hooks/api/useCommentsQuery';
-import type { Comment } from '../types';
+import type { Comment, User } from '../types';
 
 interface CommentsListProps {
   postId: string;
   collectionType: string;
   postTitle?: string;
   onAddComment?: () => void;
+  user?: User | null;
 }
 
-export default function CommentsList({ postId, collectionType, postTitle, onAddComment }: CommentsListProps) {
-  const user = useAuthStore(state => state.user);
-
+export default function CommentsList({ postId, collectionType, postTitle, onAddComment, user }: CommentsListProps) {
   // Use React Query for fetching comments
   const { data: comments = [], isLoading: loading } = useCommentsQuery(postId);
   const deleteCommentMutation = useDeleteComment(postId);
@@ -70,8 +68,10 @@ export default function CommentsList({ postId, collectionType, postTitle, onAddC
           <ul className="accordion-list">
             {comments.map((comment, i) => {
               const author = typeof comment.author === 'object' ? comment.author : null;
-              // Check ownership - Better Auth users have 'id', profiles have 'betterAuthId'
-              const isOwner = user?.id && author?.betterAuthId && user.id === author.betterAuthId;
+              // Check ownership - Handle multiple ID formats
+              const authorId = author?.id || author?.betterAuthId || author?._id;
+              const userId = user?.id || user?._id;
+              const isOwner = userId && authorId && userId === authorId;
 
               return (
                 <li key={comment._id} className="accordion-item group">
@@ -79,12 +79,12 @@ export default function CommentsList({ postId, collectionType, postTitle, onAddC
                   <div className="ribbon bg-[#4b9aaa] group-hover:bg-[#eccc6e] text-white group-hover:text-gray-900 p-2 md:p-3 flex items-center justify-between transition-colors duration-300">
                     <div className="flex items-center gap-2 md:gap-3">
                       <span className="text-xs md:text-sm">{formatDate(comment.date)}</span>
-                      <span className="font-semibold text-sm md:text-base">{author?.userName || 'Anonymous'}</span>
+                      <span className="font-semibold text-sm md:text-base">{author?.name || author?.userName || 'Anonymous'}</span>
 
                       {author?.userPicture && (
                         <img
                           src={author.userPicture}
-                          alt={author.userName}
+                          alt={author.name || author.userName}
                           className="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover"
                         />
                       )}
