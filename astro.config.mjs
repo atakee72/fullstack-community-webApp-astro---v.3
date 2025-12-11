@@ -60,8 +60,7 @@ export default defineConfig({
           'mongodb',
           'bcrypt',
           '@mongodb-js/saslprep',
-          'node-gyp-build',
-          'auth:config'
+          'node-gyp-build'
         ]
       }
     }
