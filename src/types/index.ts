@@ -24,7 +24,7 @@ export interface EditHistory {
   originalTitle: string;
   originalBody: string;
   editedAt: Date;
-  editedBy: string; // Better Auth user ID
+  editedBy: string; // NextAuth user ID
 }
 
 // Topic Types

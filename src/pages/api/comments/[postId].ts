@@ -25,7 +25,6 @@ export const GET: APIRoute = async ({ params }) => {
       .toArray();
 
     // Populate author information for each comment
-    const betterAuthUserCollection = db.collection('user');
     const populatedComments = await Promise.all(
       comments.map(async (comment) => {
         let author = null;
@@ -35,39 +34,20 @@ export const GET: APIRoute = async ({ params }) => {
           return comment;
         }
 
-        // Try to find by Better Auth ID first (for new comments)
+        // Try to find author by ID (string or ObjectId)
         if (typeof comment.author === 'string') {
-          author = await usersCollection.findOne(
-            { betterAuthId: comment.author },
-            { projection: { password: 0 } }
-          );
-
-          // If not found in users collection, check Better Auth user collection
-          if (!author) {
-            const betterAuthUser = await betterAuthUserCollection.findOne({
-              _id: new ObjectId(comment.author)
-            });
-
-            if (betterAuthUser) {
-              // Extract username - handle corrupted field name
-              let userName = betterAuthUser.name || betterAuthUser.email?.split('@')[0] || 'User';
-              if (betterAuthUser['[object Object]']) {
-                userName = betterAuthUser['[object Object]'];
-              }
-
-              // Create a minimal author object
-              author = {
-                _id: betterAuthUser._id,
-                betterAuthId: comment.author,
-                userName: userName,
-                email: betterAuthUser.email,
-                userPicture: betterAuthUser.image || '',
-                roleBadge: 'resident'
-              };
-            }
+          // Try as ObjectId first
+          try {
+            author = await usersCollection.findOne(
+              { _id: new ObjectId(comment.author) },
+              { projection: { password: 0 } }
+            );
+          } catch {
+            // If not valid ObjectId, skip
+            author = null;
           }
         } else {
-          // Try old MongoDB ObjectId lookup for backwards compatibility
+          // Old MongoDB ObjectId lookup for backwards compatibility
           author = await usersCollection.findOne(
             { _id: comment.author },
             { projection: { password: 0 } }

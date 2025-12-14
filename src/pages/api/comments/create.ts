@@ -32,19 +32,10 @@ export const POST: APIRoute = async ({ request }) => {
     const db = await connectDB();
     const commentsCollection = db.collection<Comment>('comments');
 
-    // Construct author object
-    const author = {
-      id: userId,
-      name: session.user.name,
-      email: session.user.email,
-      image: session.user.image,
-      roleBadge: 'resident'
-    };
-
     // Create new comment
     const newComment: Comment = {
       body,
-      author: author as any, // Save full object
+      author: userId as any, // Save author as ID string
       relevantPostId: new ObjectId(topicId),
       date: Date.now(),
       upvotes: 0,
@@ -70,9 +61,17 @@ export const POST: APIRoute = async ({ request }) => {
       }
     );
 
+    // Fetch author info to return with the created comment
+    const usersCollection = db.collection('users');
+    const author = await usersCollection.findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { password: 0 } }
+    );
+
     const createdComment = {
       ...newComment,
-      _id: result.insertedId
+      _id: result.insertedId,
+      author: author || userId // Return populated author or fallback to ID
     };
 
     return new Response(

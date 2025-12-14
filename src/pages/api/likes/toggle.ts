@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
-import clientPromise from '../../../lib/mongodb';
+import { connectDB } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -47,9 +47,7 @@ export const POST: APIRoute = async ({ request }) => {
     const userId = session.user.id; // NextAuth user ID
 
     // Connect to database
-    const client = await clientPromise;
-    const dbName = new URL(import.meta.env.MONGODB_URI).pathname.substring(1);
-    const db = client.db(dbName);
+    const db = await connectDB();
     const collection = db.collection(collectionType);
 
     console.log('DB Connection:', {
@@ -60,9 +58,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     // Toggle like/unlike
-    // Note: We store userId in likedBy array.
-    // NextAuth IDs might be different from BetterAuth IDs if not migrated perfectly,
-    // but we are using the ID from the session.
+    // Note: We store userId in likedBy array using the ID from the NextAuth session.
     const updateOperation = action === 'like'
       ? { $addToSet: { likedBy: userId }, $inc: { likes: 1 } }
       : { $pull: { likedBy: userId }, $inc: { likes: -1 } };

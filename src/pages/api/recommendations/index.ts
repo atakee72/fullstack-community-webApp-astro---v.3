@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { connectDB } from '../../../lib/mongodb';
+import { ObjectId } from 'mongodb';
 import type { Recommendation } from '../../../types';
 import {
   parseQueryParams,
@@ -44,10 +45,30 @@ export const GET: APIRoute = async ({ url }) => {
       populatedRecommendations = await Promise.all(
         recommendations.map(async (recommendation) => {
           if (recommendation.author) {
-            const author = await usersCollection.findOne(
-              { betterAuthId: recommendation.author },
-              { projection: { password: 0 } }
-            );
+            let author = null;
+
+            // If author is already an object (populated), return as is
+            if (typeof recommendation.author === 'object' && 'userName' in recommendation.author) {
+              return recommendation;
+            }
+
+            // Try to find author by ID (string or ObjectId)
+            if (typeof recommendation.author === 'string') {
+              try {
+                author = await usersCollection.findOne(
+                  { _id: new ObjectId(recommendation.author) },
+                  { projection: { password: 0 } }
+                );
+              } catch {
+                author = null;
+              }
+            } else {
+              author = await usersCollection.findOne(
+                { _id: recommendation.author },
+                { projection: { password: 0 } }
+              );
+            }
+
             return { ...recommendation, author };
           }
           return recommendation;

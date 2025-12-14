@@ -5,6 +5,7 @@ import { ObjectId } from 'mongodb';
 import type { Topic, EditHistory } from '../../../../types';
 import { TopicCreateSchema } from '../../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../../schemas/validation.utils';
+import { isOwner } from '../../../../utils/authHelpers';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
@@ -52,13 +53,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
     }
 
     // Check if user is the author
-    const isAuthor =
-      (typeof existingTopic.author === 'string' && existingTopic.author === userId) ||
-      (existingTopic.author && typeof existingTopic.author === 'object' &&
-        'betterAuthId' in existingTopic.author &&
-        existingTopic.author.betterAuthId === userId);
-
-    if (!isAuthor) {
+    if (!isOwner(existingTopic.author, userId)) {
       return new Response(JSON.stringify({ error: 'You can only edit your own topics' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' }

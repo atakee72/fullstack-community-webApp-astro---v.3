@@ -37,7 +37,7 @@ async function createComment(data: {
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include', // Include cookies for Better Auth session
+    credentials: 'include', // Include cookies for NextAuth session
     body: JSON.stringify(data),
   });
 
@@ -79,7 +79,7 @@ export function useCreateComment() {
 async function deleteComment(commentId: string) {
   const response = await fetch(`${API_URL}/comments/delete/${commentId}`, {
     method: 'DELETE',
-    credentials: 'include', // Include cookies for Better Auth session
+    credentials: 'include', // Include cookies for NextAuth session
   });
 
   if (!response.ok) {

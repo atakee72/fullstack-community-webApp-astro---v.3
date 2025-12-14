@@ -35,9 +35,9 @@ export const AnnouncementCreateSchema = z.object({
     .min(5, 'Title must be at least 5 characters')
     .max(200, 'Title must be less than 200 characters')
     .trim(),
-  description: z.string()
-    .min(10, 'Description must be at least 10 characters')
-    .max(5000, 'Description must be less than 5000 characters')
+  body: z.string()
+    .min(10, 'Content must be at least 10 characters')
+    .max(5000, 'Content must be less than 5000 characters')
     .trim(),
   tags: z.array(z.string().max(30))
     .max(5, 'Maximum 5 tags allowed')

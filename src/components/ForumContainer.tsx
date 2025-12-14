@@ -9,6 +9,7 @@ import ReadMoreModal from './ReadMoreModal';
 import HeartBtn from './HeartBtn';
 import EyeIcon from './EyeIcon';
 import { cn } from '../lib/utils';
+import { isOwner } from '../utils/authHelpers';
 import type { Topic, Announcement, Recommendation } from '../types';
 
 interface ForumContainerProps {
@@ -68,11 +69,15 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
 
         await createPost.mutateAsync(postData);
       }
+
+      // Explicitly refetch to ensure latest data with correct sorting
+      await refetch();
+
       setShowAddModal(false);
-      // Data will auto-refresh due to cache invalidation
     } catch (error) {
       console.error('Failed to save post:', error);
-      // You might want to show an error toast here
+      // Re-throw error so PostModal can display it to the user
+      throw error;
     }
   };
 
@@ -134,14 +139,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     setSelectedPost(item);
     setShowReadMoreModal(true);
     // Increment views when read more is clicked (only if not the author)
-    const isAuthor = user && (
-      (() => {
-        const authorId = typeof item.author === 'string' ? item.author : item.author?.id || item.author?.betterAuthId || item.author?._id;
-        const userId = user?.id || user?._id;
-        return userId && authorId && userId === authorId;
-      })()
-    );
-    if (!isAuthor) {
+    if (!isOwner(item.author, user)) {
       incrementViews(item._id);
     }
   };
@@ -150,14 +148,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   const handleCommentTabClick = (itemId: string, item: any) => {
     setCardActiveTab(itemId, 'comments');
     // Increment views when comments tab is clicked (only if not the author)
-    const isAuthor = user && (
-      (() => {
-        const authorId = typeof item.author === 'string' ? item.author : item.author?.id || item.author?.betterAuthId || item.author?._id;
-        const userId = user?.id || user?._id;
-        return userId && authorId && userId === authorId;
-      })()
-    );
-    if (!isAuthor) {
+    if (!isOwner(item.author, user)) {
       incrementViews(itemId);
     }
   };
@@ -362,13 +353,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                         </div>
 
                         {/* Edit and Delete Icons - Always visible if user is author */}
-                        {user && (
-                          (() => {
-                            const authorId = typeof item.author === 'string' ? item.author : item.author?.id || item.author?.betterAuthId || item.author?._id;
-                            const userId = user?.id || user?._id;
-                            return userId && authorId && userId === authorId;
-                          })()
-                        ) && (
+                        {isOwner(item.author, user) && (
                             <div className="flex gap-1 flex-shrink-0">
                               <button
                                 onClick={() => {

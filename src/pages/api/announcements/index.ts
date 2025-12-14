@@ -44,10 +44,25 @@ export const GET: APIRoute = async ({ url }) => {
       populatedAnnouncements = await Promise.all(
         announcements.map(async (announcement) => {
           if (announcement.author) {
-            const author = await usersCollection.findOne(
-              { betterAuthId: announcement.author },
-              { projection: { password: 0 } }
-            );
+            let author = null;
+
+            // Try to find author by ID (string or ObjectId)
+            if (typeof announcement.author === 'string') {
+              try {
+                author = await usersCollection.findOne(
+                  { _id: new ObjectId(announcement.author) },
+                  { projection: { password: 0 } }
+                );
+              } catch {
+                author = null;
+              }
+            } else {
+              author = await usersCollection.findOne(
+                { _id: announcement.author },
+                { projection: { password: 0 } }
+              );
+            }
+
             return { ...announcement, author };
           }
           return announcement;
