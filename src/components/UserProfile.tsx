@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTopicsQuery } from '../hooks/api/useTopicsQuery';
 import ImageUpload from './ImageUpload';
 import { signOut } from 'auth-astro/client';
+import { isOwner } from '../utils/authHelpers';
 
 interface UserProfileProps {
   user?: any;
@@ -103,8 +104,7 @@ export default function UserProfile({ user: initialUser }: UserProfileProps) {
   };
 
   const userTopics = (topics || []).filter((topic: any) => {
-    const authorId = typeof topic.author === 'object' && topic.author !== null ? topic.author._id : topic.author;
-    return authorId === user?.id || authorId === user?._id;
+    return isOwner(topic.author, user);
   });
 
   // Show loading during SSR

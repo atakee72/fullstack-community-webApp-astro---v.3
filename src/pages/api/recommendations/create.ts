@@ -3,6 +3,8 @@ import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import type { Recommendation } from '../../../types';
+import { RecommendationCreateSchema } from '../../../schemas/forum.schema';
+import { parseRequestBody } from '../../../schemas/validation.utils';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -18,36 +20,25 @@ export const POST: APIRoute = async ({ request }) => {
 
     const userId = session.user.id;
 
-    // Get recommendation data from request body
-    const { title, body, tags, category } = await request.json();
+    // Validate request body with Zod
+    const validation = await parseRequestBody(request, RecommendationCreateSchema);
 
-    if (!title || !body) {
-      return new Response(JSON.stringify({ error: 'Title and content are required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    if (!validation.success) {
+      return validation.response;
     }
+
+    const { title, body, tags, category } = validation.data;
 
     // Connect to database
     const db = await connectDB();
     const recommendationsCollection = db.collection<any>('recommendations');
 
-    // Construct author object
-    const author = {
-      id: userId,
-      name: session.user.name,
-      email: session.user.email,
-      image: session.user.image,
-      roleBadge: 'resident'
-    };
-
     // Create new recommendation
     const newRecommendation = {
       title,
       body,
-      description: body,
-      author: author as any, // Save full object
-      category: category || 'general',
+      author: userId, // Save author as ID string
+      category: category || 'other',
       tags: tags || [],
       comments: [],
       views: 0,

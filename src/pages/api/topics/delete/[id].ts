@@ -40,7 +40,7 @@ export const DELETE: APIRoute = async ({ params, request }) => {
     }
 
     // Check if user is the author
-    // Handle both new format (Better Auth ID as string) and old format (ObjectId)
+    // Handle both new format (NextAuth ID as string) and old format (ObjectId)
     const topicAuthorId = typeof topic.author === 'string'
       ? topic.author
       : topic.author?.toString();

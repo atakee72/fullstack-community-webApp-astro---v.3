@@ -3,6 +3,8 @@ import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import type { Announcement } from '../../../types';
+import { AnnouncementCreateSchema } from '../../../schemas/forum.schema';
+import { parseRequestBody } from '../../../schemas/validation.utils';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -18,35 +20,24 @@ export const POST: APIRoute = async ({ request }) => {
 
     const userId = session.user.id;
 
-    // Get announcement data from request body
-    const { title, body, tags } = await request.json();
+    // Validate request body with Zod
+    const validation = await parseRequestBody(request, AnnouncementCreateSchema);
 
-    if (!title || !body) {
-      return new Response(JSON.stringify({ error: 'Title and content are required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    if (!validation.success) {
+      return validation.response;
     }
+
+    const { title, body, tags } = validation.data;
 
     // Connect to database
     const db = await connectDB();
     const announcementsCollection = db.collection<any>('announcements');
 
-    // Construct author object
-    const author = {
-      id: userId,
-      name: session.user.name,
-      email: session.user.email,
-      image: session.user.image,
-      roleBadge: 'resident'
-    };
-
     // Create new announcement
     const newAnnouncement = {
       title,
       body,
-      description: body,
-      author: author as any, // Save full object
+      author: userId, // Save author as ID string
       tags: tags || [],
       comments: [],
       views: 0,

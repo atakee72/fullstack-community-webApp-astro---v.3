@@ -85,7 +85,7 @@ async function createPost(
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include', // Include cookies for Better Auth session
+    credentials: 'include', // Include cookies for NextAuth session
     body: JSON.stringify(data),
   });
 
@@ -154,7 +154,7 @@ async function updateLikes(
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include', // Include cookies for Better Auth session
+    credentials: 'include', // Include cookies for NextAuth session
     body: JSON.stringify({ action }),
   });
 
@@ -189,7 +189,7 @@ async function editPost(
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include', // Include cookies for Better Auth session
+    credentials: 'include', // Include cookies for NextAuth session
     body: JSON.stringify(data),
   });
 
@@ -232,7 +232,7 @@ async function deletePost(
 ) {
   const response = await fetch(`${API_URL}/${type}/delete/${postId}`, {
     method: 'DELETE',
-    credentials: 'include', // Include cookies for Better Auth session
+    credentials: 'include', // Include cookies for NextAuth session
   });
 
   if (!response.ok) {

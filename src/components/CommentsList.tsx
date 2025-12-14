@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCommentsQuery, useDeleteComment } from '../hooks/api/useCommentsQuery';
 import type { Comment, User } from '../types';
+import { isOwner as checkIsOwner, getUserDisplayName } from '../utils/authHelpers';
 
 interface CommentsListProps {
   postId: string;
@@ -68,10 +69,7 @@ export default function CommentsList({ postId, collectionType, postTitle, onAddC
           <ul className="accordion-list">
             {comments.map((comment, i) => {
               const author = typeof comment.author === 'object' ? comment.author : null;
-              // Check ownership - Handle multiple ID formats
-              const authorId = author?.id || author?.betterAuthId || author?._id;
-              const userId = user?.id || user?._id;
-              const isOwner = userId && authorId && userId === authorId;
+              const isCommentOwner = checkIsOwner(comment.author, user);
 
               return (
                 <li key={comment._id} className="accordion-item group">
@@ -79,7 +77,7 @@ export default function CommentsList({ postId, collectionType, postTitle, onAddC
                   <div className="ribbon bg-[#4b9aaa] group-hover:bg-[#eccc6e] text-white group-hover:text-gray-900 p-2 md:p-3 flex items-center justify-between transition-colors duration-300">
                     <div className="flex items-center gap-2 md:gap-3">
                       <span className="text-xs md:text-sm">{formatDate(comment.date)}</span>
-                      <span className="font-semibold text-sm md:text-base">{author?.name || author?.userName || 'Anonymous'}</span>
+                      <span className="font-semibold text-sm md:text-base">{getUserDisplayName(comment.author)}</span>
 
                       {author?.userPicture && (
                         <img
@@ -91,7 +89,7 @@ export default function CommentsList({ postId, collectionType, postTitle, onAddC
                     </div>
 
                     {/* Delete button - only shown for comment owner */}
-                    {isOwner && (
+                    {isCommentOwner && (
                       <button
                         onClick={() => {
                           if (window.confirm('Delete your comment irreversibly?')) {

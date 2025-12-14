@@ -4,8 +4,9 @@ import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import type { Recommendation, EditHistory } from '../../../../types';
-import { TopicCreateSchema } from '../../../../schemas/forum.schema';
+import { RecommendationUpdateSchema } from '../../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../../schemas/validation.utils';
+import { isOwner } from '../../../../utils/authHelpers';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
@@ -29,7 +30,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
-    const validation = await parseRequestBody(request, TopicCreateSchema);
+    const validation = await parseRequestBody(request, RecommendationUpdateSchema);
 
     if (!validation.success) {
       return validation.response;
@@ -49,13 +50,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
-    const isAuthor =
-      (typeof existingRecommendation.author === 'string' && existingRecommendation.author === userId) ||
-      (existingRecommendation.author && typeof existingRecommendation.author === 'object' &&
-        'betterAuthId' in existingRecommendation.author &&
-        existingRecommendation.author.betterAuthId === userId);
-
-    if (!isAuthor) {
+    if (!isOwner(existingRecommendation.author, userId)) {
       return new Response(JSON.stringify({ error: 'You can only edit your own recommendations' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' }

@@ -4,8 +4,9 @@ import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import type { Announcement, EditHistory } from '../../../../types';
-import { TopicCreateSchema } from '../../../../schemas/forum.schema';
+import { AnnouncementUpdateSchema } from '../../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../../schemas/validation.utils';
+import { isOwner } from '../../../../utils/authHelpers';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
@@ -29,7 +30,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
-    const validation = await parseRequestBody(request, TopicCreateSchema);
+    const validation = await parseRequestBody(request, AnnouncementUpdateSchema);
 
     if (!validation.success) {
       return validation.response;
@@ -49,13 +50,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
-    const isAuthor =
-      (typeof existingAnnouncement.author === 'string' && existingAnnouncement.author === userId) ||
-      (existingAnnouncement.author && typeof existingAnnouncement.author === 'object' &&
-        'betterAuthId' in existingAnnouncement.author &&
-        existingAnnouncement.author.betterAuthId === userId);
-
-    if (!isAuthor) {
+    if (!isOwner(existingAnnouncement.author, userId)) {
       return new Response(JSON.stringify({ error: 'You can only edit your own announcements' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' }

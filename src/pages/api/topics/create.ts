@@ -33,20 +33,11 @@ export const POST: APIRoute = async ({ request }) => {
     const db = await connectDB();
     const topicsCollection = db.collection<Topic>('topics');
 
-    // Construct author object
-    const author = {
-      id: userId,
-      name: session.user.name,
-      email: session.user.email,
-      image: session.user.image,
-      roleBadge: 'resident' // Default role
-    };
-
     // Create new topic
     const newTopic: Topic = {
       title,
       body,
-      author: author as any, // Save full object
+      author: userId as any, // Save author as ID string
       tags: tags || [],
       comments: [],
       views: 0,
@@ -59,9 +50,17 @@ export const POST: APIRoute = async ({ request }) => {
 
     const result = await topicsCollection.insertOne(newTopic);
 
+    // Fetch author info to return with the created topic
+    const usersCollection = db.collection('users');
+    const author = await usersCollection.findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { password: 0 } }
+    );
+
     const createdTopic = {
       ...newTopic,
-      _id: result.insertedId
+      _id: result.insertedId,
+      author: author || userId // Return populated author or fallback to ID
     };
 
     return new Response(
