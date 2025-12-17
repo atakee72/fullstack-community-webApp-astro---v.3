@@ -104,6 +104,29 @@ export interface Recommendation {
   updatedAt?: Date;
 }
 
+// Event Types (Calendar)
+export interface Event {
+  _id?: ObjectId | string;
+  title: string;
+  body: string; // description
+  author: ObjectId | string | User;
+  startDate: Date;
+  endDate: Date;
+  location?: string;
+  category?: 'community' | 'sports-health' | 'culture-education' | 'other';
+  tags: string[];
+  comments: (ObjectId | string)[];
+  views: number;
+  likes: number;
+  likedBy: (ObjectId | string)[];
+  date: number; // creation timestamp
+  editHistory?: EditHistory[];
+  isEdited?: boolean;
+  lastEditedAt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 // Auth Types
 export interface AuthState {
   user: User | null;

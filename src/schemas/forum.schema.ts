@@ -80,6 +80,39 @@ export const RecommendationUpdateSchema = RecommendationCreateSchema.partial().r
   { message: 'At least one field must be provided for update' }
 );
 
+// Event Schema (Calendar)
+export const EventCreateSchema = z.object({
+  title: z.string()
+    .min(5, 'Title must be at least 5 characters')
+    .max(200, 'Title must be less than 200 characters')
+    .trim(),
+  body: z.string()
+    .min(10, 'Description must be at least 10 characters')
+    .max(5000, 'Description must be less than 5000 characters')
+    .trim(),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date(),
+  location: z.string().max(200).optional(),
+  category: z.enum([
+    'community',
+    'sports-health',
+    'culture-education',
+    'other'
+  ]).optional().default('other'),
+  tags: z.array(z.string().max(30))
+    .max(5, 'Maximum 5 tags allowed')
+    .default([]),
+  type: z.literal('event').optional()
+}).refine(
+  data => data.endDate >= data.startDate,
+  { message: 'End date must be after or equal to start date', path: ['endDate'] }
+);
+
+export const EventUpdateSchema = EventCreateSchema.partial().refine(
+  data => Object.keys(data).length > 0,
+  { message: 'At least one field must be provided for update' }
+);
+
 // Like/Unlike Schema
 export const LikeActionSchema = z.object({
   postId: ObjectIdSchema,
@@ -111,6 +144,8 @@ export type AnnouncementCreate = z.infer<typeof AnnouncementCreateSchema>;
 export type AnnouncementUpdate = z.infer<typeof AnnouncementUpdateSchema>;
 export type RecommendationCreate = z.infer<typeof RecommendationCreateSchema>;
 export type RecommendationUpdate = z.infer<typeof RecommendationUpdateSchema>;
+export type EventCreate = z.infer<typeof EventCreateSchema>;
+export type EventUpdate = z.infer<typeof EventUpdateSchema>;
 export type LikeAction = z.infer<typeof LikeActionSchema>;
 export type ViewCount = z.infer<typeof ViewCountSchema>;
 export type SearchFilter = z.infer<typeof SearchFilterSchema>;
