@@ -70,14 +70,18 @@ async function fetchEvents(options: QueryOptions = {}): Promise<Event[]> {
 }
 
 // Hook for fetching events
-export function useEventsQuery(options: QueryOptions = {}) {
+export function useEventsQuery(options: QueryOptions = {}, additionalQueryOptions: any = {}) {
   return useQuery({
     queryKey: ['events', options],
     queryFn: () => fetchEvents(options),
-    // Keep data fresh for 5 seconds for more responsive updates
-    staleTime: 5 * 1000,
+    // Keep calendar data fresh for 30 seconds (events don't change rapidly)
+    staleTime: 30 * 1000,
+    // Keep unused data in cache for 5 minutes for instant back navigation
+    gcTime: 5 * 60 * 1000,
     // Refetch when window regains focus
     refetchOnWindowFocus: true,
+    // Allow additional query options (like placeholderData) to be passed in
+    ...additionalQueryOptions,
   });
 }
 
