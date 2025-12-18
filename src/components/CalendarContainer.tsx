@@ -6,7 +6,7 @@ import { useEventsQuery, useCreateEvent, useEditEvent, useDeleteEvent, useEventL
 import { useCreateComment } from '../hooks/api/useCommentsQuery';
 import EventModal from './EventModal';
 import CalendarGridView from './CalendarGridView';
-import EventListView from './EventListView';
+import AgendaView from './AgendaView';
 import CommentModal from './CommentModal';
 import { cn } from '../lib/utils';
 import type { Event } from '../types';
@@ -363,7 +363,7 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
           locale={locales[selectedLocale].locale}
         />
       ) : (
-        <EventListView
+        <AgendaView
           events={events}
           user={user}
           isLoading={isLoading}
@@ -372,6 +372,7 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
           onEventLike={handleEventLike}
           onCommentClick={handleCommentClick}
           deletingEventId={deleteEvent.isPending ? deleteEvent.variables : undefined}
+          locale={locales[selectedLocale].locale}
         />
       )}
 
