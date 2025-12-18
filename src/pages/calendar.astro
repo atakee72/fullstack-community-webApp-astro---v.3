@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
+import CalendarWrapper from '../components/CalendarWrapper';
+
+const session = await getSession(Astro.request);
+---
+
+<BaseLayout title="Neighbourhood Calendar - Mahalle">
+  <main class="min-h-[calc(100vh-60px)] py-4 md:py-8">
+    <div class="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
+      <h1 class="text-center text-2xl md:text-3xl lg:text-4xl font-bold mb-3 pb-1 text-[#814256]">
+        Neighbourhood Calendar
+      </h1>
+      <p class="text-center text-gray-600 mb-6">
+        Community events and gatherings in your neighbourhood
+      </p>
+      <div class="bg-[#4b9aaa] px-4 md:px-8 lg:px-12 py-6 md:py-8 rounded-lg mt-6 md:mt-8">
+        <CalendarWrapper client:load session={session} />
+      </div>
+    </div>
+  </main>
+</BaseLayout>
