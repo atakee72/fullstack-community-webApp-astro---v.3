@@ -273,17 +273,45 @@ export default function CalendarGridView({
                     {day.dayNumber}
                   </div>
 
-                  {/* Event indicators */}
+                  {/* Event indicators - Enhanced with multi-day spanning */}
                   {day.events.length > 0 && (
-                    <div className="flex flex-wrap gap-0.5 md:gap-1 mt-1">
-                      {day.events.slice(0, 3).map((event, idx) => (
-                        <div
-                          key={idx}
-                          className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full"
-                          style={{ backgroundColor: categoryColors[event.category || 'other'] }}
-                          title={event.title}
-                        />
-                      ))}
+                    <div className="flex flex-col gap-0.5 mt-1">
+                      {day.events.slice(0, 3).map((event, idx) => {
+                        const eventStart = startOfDay(new Date(event.startDate));
+                        const eventEnd = startOfDay(new Date(event.endDate));
+                        const currentDay = startOfDay(day.date);
+
+                        // Check if this is a multi-day event
+                        const isMultiDay = eventEnd.getTime() > eventStart.getTime();
+                        const isEventStart = currentDay.getTime() === eventStart.getTime();
+                        const isEventEnd = currentDay.getTime() === eventEnd.getTime();
+                        const isEventMiddle = currentDay > eventStart && currentDay < eventEnd;
+
+                        if (isMultiDay) {
+                          // Show as a bar for multi-day events
+                          return (
+                            <div
+                              key={idx}
+                              className="h-1 md:h-1.5 relative -mx-1 md:-mx-2"
+                              style={{
+                                backgroundColor: categoryColors[event.category || 'other'],
+                                borderRadius: isEventStart ? '4px 0 0 4px' : isEventEnd ? '0 4px 4px 0' : '0'
+                              }}
+                              title={`${event.title} ${isEventStart ? '(starts)' : isEventEnd ? '(ends)' : '(ongoing)'}`}
+                            />
+                          );
+                        } else {
+                          // Show as a dot for single-day events
+                          return (
+                            <div
+                              key={idx}
+                              className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full inline-block mr-0.5"
+                              style={{ backgroundColor: categoryColors[event.category || 'other'] }}
+                              title={event.title}
+                            />
+                          );
+                        }
+                      })}
                       {day.events.length > 3 && (
                         <span className="text-[10px] md:text-xs text-gray-600 font-medium">
                           +{day.events.length - 3}
