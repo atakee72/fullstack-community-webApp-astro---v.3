@@ -62,6 +62,9 @@ prettier.config.js
 prettier.config.cjs
 .prettier-cache
 
+# claude code
+.claude/settings.local.json
+
 # eslint
 .eslintcache
 .eslintignore
