@@ -59,6 +59,20 @@ export default defineConfig({
         maxAge: 7 * 24 * 60 * 60, // 7 days
     },
 
+    cookies: {
+        sessionToken: {
+            name: `__Secure-next-auth.session-token`,
+            options: {
+                httpOnly: true,
+                sameSite: 'lax',
+                path: '/',
+                secure: true
+            }
+        }
+    },
+
+    useSecureCookies: true,
+
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
