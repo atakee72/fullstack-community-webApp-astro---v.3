@@ -8,6 +8,9 @@ interface QueryOptions {
   sortOrder?: 'asc' | 'desc';
   search?: string;
   tags?: string | string[];
+  category?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 /**
@@ -23,7 +26,10 @@ export function parseQueryParams(url: URL): QueryOptions {
     sortBy: params.get('sortBy') || undefined,
     sortOrder: (params.get('sortOrder') || 'desc') as 'asc' | 'desc',
     search: params.get('search') || undefined,
-    tags: params.get('tags')?.split(',').filter(Boolean)
+    tags: params.get('tags')?.split(',').filter(Boolean),
+    category: params.get('category') || undefined,
+    dateFrom: params.get('dateFrom') || undefined,
+    dateTo: params.get('dateTo') || undefined
   };
 }
 
@@ -65,6 +71,8 @@ export function buildSort(sortBy?: string, sortOrder: 'asc' | 'desc' = 'desc'): 
   switch (sortBy) {
     case 'date':
       return { date: sortValue, createdAt: sortValue };
+    case 'startDate':
+      return { startDate: sortValue, createdAt: sortValue };
     case 'likes':
       return { likes: sortValue, date: -1 };
     case 'views':
@@ -77,7 +85,7 @@ export function buildSort(sortBy?: string, sortOrder: 'asc' | 'desc' = 'desc'): 
 }
 
 /**
- * Build MongoDB filter from search and tags
+ * Build MongoDB filter from search, tags, category, and date range
  */
 export function buildFilter(options: QueryOptions): Record<string, any> {
   const filter: Record<string, any> = {};
@@ -94,6 +102,33 @@ export function buildFilter(options: QueryOptions): Record<string, any> {
   if (options.tags && options.tags.length > 0) {
     // Filter by tags
     filter.tags = { $in: options.tags };
+  }
+
+  if (options.category) {
+    // Filter by category
+    filter.category = options.category;
+  }
+
+  // Date range filtering for events
+  // Events should be included if they overlap with the date range
+  if (options.dateFrom || options.dateTo) {
+    const dateFilter: Record<string, any> = {};
+
+    if (options.dateFrom && options.dateTo) {
+      // Event overlaps with date range if:
+      // - Event starts before or during the range AND
+      // - Event ends during or after the range
+      filter.$and = [
+        { startDate: { $lte: new Date(options.dateTo) } },
+        { endDate: { $gte: new Date(options.dateFrom) } }
+      ];
+    } else if (options.dateFrom) {
+      // Events that end on or after dateFrom
+      filter.endDate = { $gte: new Date(options.dateFrom) };
+    } else if (options.dateTo) {
+      // Events that start on or before dateTo
+      filter.startDate = { $lte: new Date(options.dateTo) };
+    }
   }
 
   return filter;

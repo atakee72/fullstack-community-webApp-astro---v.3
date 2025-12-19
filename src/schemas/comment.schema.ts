@@ -8,7 +8,7 @@ export const CommentCreateSchema = z.object({
     .max(1000, 'Comment must be less than 1000 characters')
     .trim(),
   topicId: ObjectIdSchema,
-  collectionType: z.enum(['topics', 'announcements', 'recommendations'])
+  collectionType: z.enum(['topics', 'announcements', 'recommendations', 'events'])
 });
 
 // Comment Update Schema

@@ -42,6 +42,7 @@ export const GET: APIRoute = async ({ url }) => {
     let populatedRecommendations = recommendations;
     if (shouldPopulateAuthor) {
       const usersCollection = db.collection('users');
+
       populatedRecommendations = await Promise.all(
         recommendations.map(async (recommendation) => {
           if (recommendation.author) {
@@ -54,15 +55,18 @@ export const GET: APIRoute = async ({ url }) => {
 
             // Try to find author by ID (string or ObjectId)
             if (typeof recommendation.author === 'string') {
+              // Try as ObjectId
               try {
                 author = await usersCollection.findOne(
                   { _id: new ObjectId(recommendation.author) },
                   { projection: { password: 0 } }
                 );
               } catch {
+                // If not valid ObjectId, skip
                 author = null;
               }
             } else {
+              // Old MongoDB ObjectId lookup
               author = await usersCollection.findOne(
                 { _id: recommendation.author },
                 { projection: { password: 0 } }

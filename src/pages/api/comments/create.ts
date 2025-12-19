@@ -50,7 +50,9 @@ export const POST: APIRoute = async ({ request }) => {
       ? 'announcements'
       : collectionType === 'recommendations'
         ? 'recommendations'
-        : 'topics';
+        : collectionType === 'events'
+          ? 'events'
+          : 'topics';
 
     const postsCollection = db.collection(collection);
     await postsCollection.updateOne(

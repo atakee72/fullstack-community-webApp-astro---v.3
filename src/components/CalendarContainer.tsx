@@ -1,29 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { format, startOfMonth, addMonths, subMonths } from 'date-fns';
-import { enUS, tr, de } from 'date-fns/locale';
+import { de } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEventsQuery, useCreateEvent, useEditEvent, useDeleteEvent, useEventLikeMutation } from '../hooks/api/useEventsQuery';
 import { useCreateComment } from '../hooks/api/useCommentsQuery';
 import EventModal from './EventModal';
 import CalendarGridView from './CalendarGridView';
-import AgendaView from './AgendaView';
-import CommentModal from './CommentModal';
+import DayEventsList from './DayEventsList';
+import EventViewModal from './EventViewModal';
 import { cn } from '../lib/utils';
 import type { Event } from '../types';
-
-const locales = {
-  'en': { locale: enUS, label: 'English' },
-  'tr': { locale: tr, label: 'Türkçe' },
-  'de': { locale: de, label: 'Deutsch' }
-};
 
 interface CalendarContainerProps {
   initialSession?: any;
 }
 
-type ViewMode = 'grid' | 'list';
 type SortBy = 'startDate' | 'likes' | 'views' | 'comments';
-type LocaleKey = keyof typeof locales;
 
 export default function CalendarContainer({ initialSession }: CalendarContainerProps) {
   const [isClient, setIsClient] = useState(false);
@@ -31,34 +23,30 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
   const queryClient = useQueryClient();
 
   // View state
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date()); // Default to today
 
   // Modal state
   const [showEventModal, setShowEventModal] = useState(false);
-  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
 
   // Filter state
   const [searchValue, setSearchValue] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortBy>('startDate');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [selectedLocale, setSelectedLocale] = useState<LocaleKey>('en');
 
-  // Build query options
+  // Build query options - Always filter by current month for calendar view
   const queryOptions = {
     sortBy,
     sortOrder,
     search: searchValue || undefined,
     category: categoryFilter !== 'all' ? categoryFilter : undefined,
-    // Date range filter for current month view in grid mode
-    ...(viewMode === 'grid' && {
-      dateFrom: startOfMonth(currentMonth),
-      dateTo: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
-    })
+    // Date range filter for current month view
+    dateFrom: startOfMonth(currentMonth),
+    dateTo: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
   };
 
   // React Query hooks with placeholderData to keep previous month visible
@@ -77,9 +65,8 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
 
   // Prefetch adjacent months for smooth swipe navigation
   useEffect(() => {
-    if (viewMode === 'grid') {
-      const nextMonth = addMonths(currentMonth, 1);
-      const prevMonth = subMonths(currentMonth, 1);
+    const nextMonth = addMonths(currentMonth, 1);
+    const prevMonth = subMonths(currentMonth, 1);
 
       // Build query options for adjacent months
       const buildAdjacentQuery = (month: Date) => ({
@@ -118,8 +105,7 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
           return data.events || [];
         },
       });
-    }
-  }, [currentMonth, viewMode, queryOptions.sortBy, queryOptions.sortOrder, queryOptions.category, queryClient]);
+  }, [currentMonth, queryOptions.sortBy, queryOptions.sortOrder, queryOptions.category, queryClient]);
 
   // Handle event creation/editing
   const handleEventSubmit = async (data: {
@@ -182,25 +168,33 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
     }
   };
 
-  // Handle comment click
-  const handleCommentClick = (event: Event) => {
-    setSelectedEvent(event);
-    setShowCommentModal(true);
+  // Handle event click - Open view modal
+  const handleEventClick = (event: Event) => {
+    setViewingEvent(event);
+    setShowViewModal(true);
   };
 
   // Handle comment submission
   const handleCommentSubmit = async (comment: string) => {
-    if (!selectedEvent) return;
+    if (!viewingEvent) return;
 
     try {
       await createComment.mutateAsync({
         body: comment,
-        topicId: selectedEvent._id as string,
+        topicId: viewingEvent._id as string,
         collectionType: 'events' // Using 'events' as the collection type
       });
 
-      setShowCommentModal(false);
-      await refetch();
+      // Refetch events to get updated data
+      const result = await refetch();
+
+      // Update the viewingEvent with the refreshed data
+      if (result.data) {
+        const updatedEvent = result.data.find((e: Event) => e._id === viewingEvent._id);
+        if (updatedEvent) {
+          setViewingEvent(updatedEvent);
+        }
+      }
     } catch (error) {
       console.error('Failed to add comment:', error);
     }
@@ -245,136 +239,51 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
   return (
     <div className="w-full max-w-7xl mx-auto">
       {/* Controls Section */}
-      <div className="bg-[#4b9aaa]/10 rounded-lg shadow-md p-4 md:p-6 mb-6">
-        {/* View Toggle and Create Button */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          {/* View Toggle */}
-          <div className="flex gap-2 flex-1">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={cn(
-                'flex-1 px-4 py-2 rounded-lg font-medium transition-all border-2',
-                viewMode === 'grid'
-                  ? 'bg-white text-[#4b9aaa] border-[#4b9aaa]'
-                  : 'bg-white/50 text-gray-700 border-white hover:bg-white'
-              )}
-            >
-              📅 Calendar View
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={cn(
-                'flex-1 px-4 py-2 rounded-lg font-medium transition-all border-2',
-                viewMode === 'list'
-                  ? 'bg-white text-[#4b9aaa] border-[#4b9aaa]'
-                  : 'bg-white/50 text-gray-700 border-white hover:bg-white'
-              )}
-            >
-              📋 List View
-            </button>
-          </div>
-
-          {/* Create Event Button */}
-          {user && (
+      <div className="bg-[#4b9aaa]/10 rounded-lg shadow-md p-4 md:p-6 mb-4">
+        {/* Create Event Button */}
+        {user && (
+          <div className="flex justify-center">
             <button
               onClick={() => setShowEventModal(true)}
-              className="px-6 py-2 bg-[#814256] text-white rounded-lg hover:bg-[#6a3646] transition-all shadow-md font-medium whitespace-nowrap"
+              className="w-full md:w-2/3 lg:w-1/2 px-3 md:px-6 py-2 md:py-3 text-xs sm:text-sm md:text-base bg-[#814256] text-white rounded-md hover:bg-[#6a3646] transition-all shadow-md font-medium"
             >
-              ➕ Create Event
+              <span className="text-gray-400 text-sm md:text-base">✎</span> Create Event
             </button>
-          )}
-        </div>
-
-        {/* Filters Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          {/* Search */}
-          <input
-            type="text"
-            placeholder="Search events..."
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            className="px-3 py-2 border-2 border-gray-200 rounded-md text-sm focus:outline-none focus:border-[#4b9aaa] transition-colors"
-          />
-
-          {/* Category Filter */}
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 border-2 border-gray-200 rounded-md text-sm focus:outline-none focus:border-[#4b9aaa] transition-colors"
-          >
-            <option value="all">All Categories</option>
-            <option value="community">Community</option>
-            <option value="sports-health">Sports & Health</option>
-            <option value="culture-education">Culture & Education</option>
-            <option value="other">Other</option>
-          </select>
-
-          {/* Sort By */}
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortBy)}
-            className="px-3 py-2 border-2 border-gray-200 rounded-md text-sm focus:outline-none focus:border-[#4b9aaa] transition-colors"
-          >
-            <option value="startDate">Sort by Date</option>
-            <option value="likes">Sort by Likes</option>
-            <option value="views">Sort by Views</option>
-            <option value="comments">Sort by Comments</option>
-          </select>
-
-          {/* Sort Order */}
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-            className="px-3 py-2 border-2 border-gray-200 rounded-md text-sm focus:outline-none focus:border-[#4b9aaa] transition-colors"
-          >
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
-          </select>
-
-          {/* Locale Selector */}
-          <select
-            value={selectedLocale}
-            onChange={(e) => setSelectedLocale(e.target.value as LocaleKey)}
-            className="px-3 py-2 border-2 border-gray-200 rounded-md text-sm focus:outline-none focus:border-[#4b9aaa] transition-colors"
-            aria-label="Select language"
-          >
-            {Object.entries(locales).map(([key, { label }]) => (
-              <option key={key} value={key}>
-                🌐 {label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Results Count */}
-        <div className="mt-3 text-sm text-gray-600">
-          {events.length} event{events.length !== 1 ? 's' : ''} found
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Calendar/List View */}
-      {viewMode === 'grid' ? (
-        <CalendarGridView
-          events={events}
-          currentMonth={currentMonth}
-          onMonthChange={setCurrentMonth}
-          onDateClick={handleDateClick}
-          selectedDate={selectedDate}
-          locale={locales[selectedLocale].locale}
-        />
-      ) : (
-        <AgendaView
-          events={events}
-          user={user}
-          isLoading={isLoading}
-          onEventEdit={handleEventEdit}
-          onEventDelete={handleEventDelete}
-          onEventLike={handleEventLike}
-          onCommentClick={handleCommentClick}
-          deletingEventId={deleteEvent.isPending ? deleteEvent.variables : undefined}
-          locale={locales[selectedLocale].locale}
-        />
-      )}
+      {/* Split View: Calendar (2/3) + Day Events List (1/3) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 px-[10px] min-[450px]:px-[clamp(10px,5vw,20px)] min-[500px]:px-[clamp(20px,8vw,60px)] md:px-0">
+        {/* Calendar Grid - 2/3 width on desktop */}
+        <div className="md:col-span-2">
+          <CalendarGridView
+            events={events}
+            currentMonth={currentMonth}
+            onMonthChange={setCurrentMonth}
+            onDateClick={handleDateClick}
+            selectedDate={selectedDate}
+            locale={de}
+          />
+        </div>
+
+        {/* Day Events List - 1/3 width on desktop */}
+        <div className="md:col-span-1">
+          <DayEventsList
+            selectedDate={selectedDate}
+            events={events}
+            onEventClick={handleEventClick}
+            onEventEdit={handleEventEdit}
+            onEventDelete={handleEventDelete}
+            user={user}
+            locale={de}
+            isLoading={isLoading}
+            deletingEventId={deleteEvent.isPending ? deleteEvent.variables : undefined}
+            searchValue={searchValue}
+            onSearchChange={setSearchValue}
+          />
+        </div>
+      </div>
 
       {/* Event Modal */}
       <EventModal
@@ -397,13 +306,14 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
         } : undefined}
       />
 
-      {/* Comment Modal */}
-      <CommentModal
-        show={showCommentModal}
-        handleClose={() => setShowCommentModal(false)}
-        postTitle={selectedEvent?.title || ''}
-        postId={selectedEvent?._id as string || ''}
-        onSubmit={handleCommentSubmit}
+      {/* Event View Modal */}
+      <EventViewModal
+        show={showViewModal}
+        event={viewingEvent}
+        user={user}
+        onClose={() => setShowViewModal(false)}
+        onAddComment={handleCommentSubmit}
+        isAddingComment={createComment.isPending}
       />
     </div>
   );

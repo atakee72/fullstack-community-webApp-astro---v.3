@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { connectDB } from '../../../lib/mongodb';
+import { ObjectId } from 'mongodb';
 import type { Announcement } from '../../../types';
 import {
   parseQueryParams,
@@ -41,22 +42,31 @@ export const GET: APIRoute = async ({ url }) => {
     let populatedAnnouncements = announcements;
     if (shouldPopulateAuthor) {
       const usersCollection = db.collection('users');
+
       populatedAnnouncements = await Promise.all(
         announcements.map(async (announcement) => {
           if (announcement.author) {
             let author = null;
 
+            // If author is already an object (populated), return as is
+            if (typeof announcement.author === 'object' && 'userName' in announcement.author) {
+              return announcement;
+            }
+
             // Try to find author by ID (string or ObjectId)
             if (typeof announcement.author === 'string') {
+              // Try as ObjectId
               try {
                 author = await usersCollection.findOne(
                   { _id: new ObjectId(announcement.author) },
                   { projection: { password: 0 } }
                 );
               } catch {
+                // If not valid ObjectId, skip
                 author = null;
               }
             } else {
+              // Old MongoDB ObjectId lookup
               author = await usersCollection.findOne(
                 { _id: announcement.author },
                 { projection: { password: 0 } }
