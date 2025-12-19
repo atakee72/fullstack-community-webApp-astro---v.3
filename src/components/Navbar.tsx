@@ -6,11 +6,9 @@ interface NavbarProps {
 }
 
 export default function Navbar({ user: initialUser }: NavbarProps) {
-  const [isClient, setIsClient] = useState(false);
   const [user, setUser] = useState(initialUser);
 
   useEffect(() => {
-    setIsClient(true);
     // Update user state if it changes from server
     setUser(initialUser);
   }, [initialUser]);
@@ -19,35 +17,6 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
     await signOut({ redirect: false });
     window.location.href = '/';
   };
-
-  // Don't render user-specific content during SSR
-  if (!isClient) {
-    return (
-      <div className="flex justify-between items-center px-4 md:px-8 py-3 md:py-4 bg-gray-50 shadow-md">
-        <nav>
-          <ul className="list-none m-0 p-0 flex items-center gap-4 md:gap-8">
-            <div className="flex gap-4 md:gap-8">
-              <li>
-                <a href="/" className="text-sm md:text-base text-gray-800 no-underline font-medium hover:text-[#4b9aaa] transition-colors">
-                  <span>Home</span>
-                </a>
-              </li>
-              <li>
-                <a href="/login" className="text-sm md:text-base text-gray-800 no-underline font-medium hover:text-[#4b9aaa] transition-colors">
-                  <span>Login</span>
-                </a>
-              </li>
-              <li>
-                <a href="/register" className="text-sm md:text-base text-gray-800 no-underline font-medium hover:text-[#4b9aaa] transition-colors">
-                  <span>Register</span>
-                </a>
-              </li>
-            </div>
-          </ul>
-        </nav>
-      </div>
-    );
-  }
 
   return (
     <>
