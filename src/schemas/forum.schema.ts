@@ -81,7 +81,7 @@ export const RecommendationUpdateSchema = RecommendationCreateSchema.partial().r
 );
 
 // Event Schema (Calendar)
-export const EventCreateSchema = z.object({
+const EventBaseSchema = z.object({
   title: z.string()
     .min(5, 'Title must be at least 5 characters')
     .max(200, 'Title must be less than 200 characters')
@@ -103,13 +103,23 @@ export const EventCreateSchema = z.object({
     .max(5, 'Maximum 5 tags allowed')
     .default([]),
   type: z.literal('event').optional()
-}).refine(
+});
+
+export const EventCreateSchema = EventBaseSchema.refine(
   data => data.endDate >= data.startDate,
   { message: 'End date must be after or equal to start date', path: ['endDate'] }
 );
 
-export const EventUpdateSchema = EventCreateSchema.partial().refine(
-  data => Object.keys(data).length > 0,
+export const EventUpdateSchema = EventBaseSchema.partial().refine(
+  data => {
+    // Check if at least one field is provided
+    if (Object.keys(data).length === 0) return false;
+    // If both dates are provided, validate that endDate >= startDate
+    if (data.startDate && data.endDate) {
+      return data.endDate >= data.startDate;
+    }
+    return true;
+  },
   { message: 'At least one field must be provided for update' }
 );
 

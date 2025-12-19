@@ -51,9 +51,17 @@ export const POST: APIRoute = async ({ request }) => {
 
     const result = await recommendationsCollection.insertOne(newRecommendation);
 
+    // Fetch author info to return with the created recommendation
+    const usersCollection = db.collection('users');
+    const author = await usersCollection.findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { password: 0 } }
+    );
+
     const createdRecommendation = {
       ...newRecommendation,
-      _id: result.insertedId
+      _id: result.insertedId,
+      author: author || userId // Return populated author or fallback to ID
     };
 
     return new Response(

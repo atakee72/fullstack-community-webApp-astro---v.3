@@ -48,13 +48,38 @@ export default function PostModal({ show, handleClose, collectionType, onSubmit,
       setSelectedTags([]);
       setIsSubmitting(false);
       setErrors({});
+      // Re-enable html and body scroll
+      const htmlElement = document.documentElement;
+      htmlElement.style.overflow = '';
+      htmlElement.style.touchAction = '';
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.touchAction = '';
     } else {
-      // If in edit mode and we have initial data, populate the form
-      if (editMode && initialData) {
-        setTitle(initialData.title || '');
-        setBody(initialData.body || '');
-        setSelectedTags(initialData.tags || []);
-      }
+      // Disable body AND html scroll when modal opens
+      const scrollY = window.scrollY;
+
+      // Lock BOTH html and body elements
+      const htmlElement = document.documentElement;
+
+      const applyLock = () => {
+        htmlElement.style.setProperty('overflow', 'hidden', 'important');
+        htmlElement.style.setProperty('touch-action', 'none', 'important');
+        htmlElement.style.setProperty('scroll-behavior', 'auto', 'important');
+
+        document.body.style.setProperty('position', 'fixed', 'important');
+        document.body.style.setProperty('top', `-${scrollY}px`, 'important');
+        document.body.style.setProperty('width', '100%', 'important');
+        document.body.style.setProperty('overflow', 'hidden', 'important');
+        document.body.style.setProperty('touch-action', 'none', 'important');
+      };
+
+      applyLock();
+      // Re-apply after a tick in case something overrides it
+      setTimeout(applyLock, 0);
+      setTimeout(applyLock, 10);
 
       // Add escape key listener when modal is open
       const handleEscape = (e: KeyboardEvent) => {
@@ -63,9 +88,31 @@ export default function PostModal({ show, handleClose, collectionType, onSubmit,
         }
       };
       document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
+      return () => {
+        document.removeEventListener('keydown', handleEscape);
+        // Clean up: re-enable html and body scroll when component unmounts
+        const scrollY = document.body.style.top;
+        const htmlElement = document.documentElement;
+        htmlElement.style.overflow = '';
+        htmlElement.style.touchAction = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        document.body.style.touchAction = '';
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      };
     }
-  }, [show, handleClose, editMode, initialData]);
+  }, [show, handleClose]);
+
+  // Separate useEffect for populating form in edit mode
+  useEffect(() => {
+    if (show && editMode && initialData) {
+      setTitle(initialData.title || '');
+      setBody(initialData.body || '');
+      setSelectedTags(initialData.tags || []);
+    }
+  }, [show, editMode, initialData]);
 
   const validateForm = () => {
     const newErrors: { title?: string; body?: string } = {};
@@ -146,7 +193,7 @@ export default function PostModal({ show, handleClose, collectionType, onSubmit,
           </div>
 
           {/* Body */}
-          <div className="bg-[#eccc6e] p-3 md:p-4">
+          <div className="bg-[#c9c4b9] p-3 md:p-4 overflow-y-auto max-h-[calc(95vh-80px)]">
             <form onSubmit={handleSubmit} className="space-y-3">
               {/* Title Input */}
               <div>

@@ -50,9 +50,17 @@ export const POST: APIRoute = async ({ request }) => {
 
     const result = await announcementsCollection.insertOne(newAnnouncement);
 
+    // Fetch author info to return with the created announcement
+    const usersCollection = db.collection('users');
+    const author = await usersCollection.findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { password: 0 } }
+    );
+
     const createdAnnouncement = {
       ...newAnnouncement,
-      _id: result.insertedId
+      _id: result.insertedId,
+      author: author || userId // Return populated author or fallback to ID
     };
 
     return new Response(

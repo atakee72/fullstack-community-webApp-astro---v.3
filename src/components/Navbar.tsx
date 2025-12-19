@@ -88,14 +88,24 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
                 </>
               )}
               {user && (
-                <li className="hidden md:block">
-                  <a
-                    href="/profile"
-                    className="text-sm md:text-base text-gray-700 no-underline font-medium hover:text-[#4b9aaa] hover:underline transition-all px-2 md:px-3 py-1 md:py-2 rounded-md hover:bg-gray-50"
-                  >
-                    <span>👤 User Profile</span>
-                  </a>
-                </li>
+                <>
+                  <li className="hidden md:block">
+                    <a
+                      href="/profile"
+                      className="text-sm md:text-base text-gray-700 no-underline font-medium hover:text-[#4b9aaa] hover:underline transition-all px-2 md:px-3 py-1 md:py-2 rounded-md hover:bg-gray-50"
+                    >
+                      <span>👤 User Profile</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/calendar"
+                      className="text-sm md:text-base text-gray-700 no-underline font-medium hover:text-[#4b9aaa] hover:underline transition-all px-2 md:px-3 py-1 md:py-2 rounded-md hover:bg-gray-50"
+                    >
+                      <span>📅 Calendar</span>
+                    </a>
+                  </li>
+                </>
               )}
             </div>
 
@@ -114,30 +124,22 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
         </nav>
       </div>
 
-      {/* User Profile Sidebar - Hidden on mobile/tablet, visible on large screens */}
+      {/* User Profile Avatar - Bottom right corner */}
       {user && (
-        <div className="hidden lg:flex fixed top-[45%] right-[5%] flex-col items-center gap-3 z-50">
+        <div className="flex fixed bottom-[1%] right-[1%] z-50">
           <a
             href="/profile"
             className="group"
           >
             <div className="relative">
               <img
-                className="w-[60px] h-[60px] lg:w-[70px] lg:h-[70px] rounded-full object-cover bg-white shadow-xl cursor-pointer group-hover:scale-110 transition-transform duration-300 border-3 border-[#4b9aaa]"
+                className="w-[50px] h-[50px] lg:w-[60px] lg:h-[60px] rounded-full object-cover bg-white shadow-xl cursor-pointer group-hover:scale-110 transition-transform duration-300 border-3 border-[#4b9aaa]"
                 src={user.image || `https://ui-avatars.com/api/?name=${user.name}&background=4b9aaa&color=fff&size=140`}
                 alt={user.name}
               />
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 lg:w-5 lg:h-5 bg-green-500 rounded-full border-2 border-white"></div>
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 lg:w-4 lg:h-4 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
           </a>
-          <div className="text-center">
-            <h2 className="text-[#4b9aaa] text-base lg:text-lg font-bold mb-1">{user.name}</h2>
-            {user.roleBadge && (
-              <span className="inline-block px-2 py-1 bg-[#aca89f] text-white text-xs rounded-full">
-                {user.roleBadge}
-              </span>
-            )}
-          </div>
         </div>
       )}
     </>

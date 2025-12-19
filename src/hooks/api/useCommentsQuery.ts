@@ -30,7 +30,7 @@ export function useCommentsQuery(postId: string) {
 async function createComment(data: {
   body: string;
   topicId: string;
-  collectionType: 'topics' | 'announcements' | 'recommendations';
+  collectionType: 'topics' | 'announcements' | 'recommendations' | 'events';
 }) {
   const response = await fetch(`${API_URL}/comments/create`, {
     method: 'POST',

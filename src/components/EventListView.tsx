@@ -34,7 +34,7 @@ export default function EventListView({
 
   if (events.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 md:p-8 text-center">
+      <div className="bg-[#c9c4b9] rounded-lg shadow-md p-6 md:p-8 text-center">
         <div className="text-6xl mb-4">📅</div>
         <h3 className="text-xl font-bold text-gray-700 mb-2">No Events Found</h3>
         <p className="text-gray-600">
