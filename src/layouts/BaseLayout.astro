@@ -41,7 +41,7 @@ const { title, description = 'Mahalle - A community web app for local neighborho
     <ViewTransitions />
   </head>
   <body class="min-h-screen bg-[#eccc6e]">
-    <Navbar client:load user={session?.user} />
+    <Navbar client:only="react" user={session?.user} />
     <main>
       <slot />
     </main>
