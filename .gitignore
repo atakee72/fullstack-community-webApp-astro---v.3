@@ -75,3 +75,4 @@ prettier.config.cjs
 .yarnrc.yml
 
 backups/
+.vercel/
