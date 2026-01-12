@@ -35,7 +35,6 @@ export const POST: APIRoute = async ({ request }) => {
 
     // If not found with ObjectId, try with string ID
     if (result.matchedCount === 0) {
-      console.log('Post not found with ObjectId, trying string ID...');
       result = await collection.updateOne(
         { _id: postId as any },
         { $inc: { views: 1 } }

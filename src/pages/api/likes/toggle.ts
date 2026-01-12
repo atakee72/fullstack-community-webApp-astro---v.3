@@ -4,7 +4,6 @@ import { connectDB } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 
 export const POST: APIRoute = async ({ request }) => {
-  console.log('Hit /api/likes/toggle endpoint');
   try {
     // Get the NextAuth session
     const session = await getSession(request);
@@ -18,7 +17,6 @@ export const POST: APIRoute = async ({ request }) => {
 
     const body = await request.json();
     const { postId, collectionType, action } = body;
-    console.log('Toggle Like Request:', { postId, collectionType, action, userId: session.user.id });
 
     if (!postId || !collectionType || !action) {
       return new Response(JSON.stringify({ error: 'Post ID, collection type, and action are required' }), {
@@ -50,13 +48,6 @@ export const POST: APIRoute = async ({ request }) => {
     const db = await connectDB();
     const collection = db.collection(collectionType);
 
-    console.log('DB Connection:', {
-      dbName: db.databaseName,
-      collection: collectionType,
-      postId,
-      userId
-    });
-
     // Toggle like/unlike
     // Note: We store userId in likedBy array using the ID from the NextAuth session.
     const updateOperation = action === 'like'
@@ -67,12 +58,6 @@ export const POST: APIRoute = async ({ request }) => {
       { _id: new ObjectId(postId) },
       updateOperation
     );
-
-    console.log('Update Result:', {
-      matchedCount: result.matchedCount,
-      modifiedCount: result.modifiedCount,
-      acknowledged: result.acknowledged
-    });
 
     if (result.matchedCount === 0) {
       return new Response(JSON.stringify({ error: 'Post not found' }), {
