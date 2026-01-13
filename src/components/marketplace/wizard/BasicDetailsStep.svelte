@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { ListingCategory, ListingCondition } from '../../../types/listing';
   import { LISTING_CATEGORIES, LISTING_CONDITIONS } from '../../../types/listing';
+  import { ListingStep1Schema } from '../../../schemas/listing.schema';
 
   let { listing, updateListing, onNext } = $props<{
     listing: {
@@ -13,26 +13,36 @@
     onNext: () => void;
   }>();
 
-  let errors = $state<Record<string, string>>({});
+  let errors = $state<Record<string, string[]>>({});
+  let touched = $state<Record<string, boolean>>({});
 
+  // Validate single field on blur
+  function validateField(field: string) {
+    touched[field] = true;
+    const result = ListingStep1Schema.safeParse(listing);
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      errors = Object.fromEntries(
+        Object.entries(fieldErrors).map(([k, v]) => [k, v || []])
+      );
+    } else {
+      errors = {};
+    }
+  }
+
+  // Validate all fields on submit
   function validate(): boolean {
-    const newErrors: Record<string, string> = {};
-
-    if (!listing.title || listing.title.length < 5) {
-      newErrors.title = 'Title must be at least 5 characters';
+    const result = ListingStep1Schema.safeParse(listing);
+    if (!result.success) {
+      errors = Object.fromEntries(
+        Object.entries(result.error.flatten().fieldErrors).map(([k, v]) => [k, v || []])
+      );
+      // Mark all as touched to show errors
+      touched = { title: true, description: true, category: true, condition: true };
+      return false;
     }
-    if (!listing.category) {
-      newErrors.category = 'Please select a category';
-    }
-    if (!listing.condition) {
-      newErrors.condition = 'Please select a condition';
-    }
-    if (!listing.description || listing.description.length < 20) {
-      newErrors.description = 'Description must be at least 20 characters';
-    }
-
-    errors = newErrors;
-    return Object.keys(newErrors).length === 0;
+    errors = {};
+    return true;
   }
 
   function handleNext() {
@@ -40,6 +50,9 @@
       onNext();
     }
   }
+
+  // Helper to get first error for a field
+  const getError = (field: string) => touched[field] && errors[field]?.[0];
 </script>
 
 <div class="space-y-6">
@@ -58,12 +71,16 @@
       type="text"
       value={listing.title}
       oninput={(e) => updateListing('title', (e.target as HTMLInputElement).value)}
+      onblur={() => validateField('title')}
       placeholder="e.g., Vintage Oak Coffee Table"
-      class="w-full px-4 py-3 rounded-xl border border-[#aca89f]/30 focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] focus:border-transparent"
+      class="w-full px-4 py-3 rounded-xl border transition-colors
+        {getError('title') ? 'border-red-500 focus:ring-red-500' : 'border-[#aca89f]/30 focus:ring-[#4b9aaa]'}
+        focus:outline-none focus:ring-2 focus:border-transparent"
     />
-    {#if errors.title}
-      <p class="text-red-500 text-sm mt-1">{errors.title}</p>
+    {#if getError('title')}
+      <p class="text-red-500 text-sm mt-1">{getError('title')}</p>
     {/if}
+    <p class="text-xs text-gray-400 mt-1">{listing.title?.length || 0}/100 characters (min 5)</p>
   </div>
 
   <!-- Category -->
@@ -74,22 +91,24 @@
     <select
       id="category"
       value={listing.category}
-      onchange={(e) => updateListing('category', (e.target as HTMLSelectElement).value)}
-      class="w-full px-4 py-3 rounded-xl border border-[#aca89f]/30 focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] focus:border-transparent"
+      onchange={(e) => { updateListing('category', (e.target as HTMLSelectElement).value); validateField('category'); }}
+      class="w-full px-4 py-3 rounded-xl border transition-colors
+        {getError('category') ? 'border-red-500 focus:ring-red-500' : 'border-[#aca89f]/30 focus:ring-[#4b9aaa]'}
+        focus:outline-none focus:ring-2 focus:border-transparent"
     >
       <option value="">Select a category</option>
       {#each LISTING_CATEGORIES as cat}
         <option value={cat.value}>{cat.label}</option>
       {/each}
     </select>
-    {#if errors.category}
-      <p class="text-red-500 text-sm mt-1">{errors.category}</p>
+    {#if getError('category')}
+      <p class="text-red-500 text-sm mt-1">{getError('category')}</p>
     {/if}
   </div>
 
   <!-- Condition -->
   <div>
-    <label class="block text-sm font-medium text-gray-700 mb-3">
+    <label for="condition" class="block text-sm font-medium text-gray-700 mb-3">
       Condition <span class="text-red-500">*</span>
     </label>
     <div class="space-y-2">
@@ -98,14 +117,14 @@
           class="flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all
             {listing.condition === cond.value
               ? 'border-[#4b9aaa] bg-[#4b9aaa]/5'
-              : 'border-[#aca89f]/30 hover:border-[#4b9aaa]/50'}"
+              : getError('condition') ? 'border-red-300' : 'border-[#aca89f]/30 hover:border-[#4b9aaa]/50'}"
         >
           <input
             type="radio"
             name="condition"
             value={cond.value}
             checked={listing.condition === cond.value}
-            onchange={() => updateListing('condition', cond.value)}
+            onchange={() => { updateListing('condition', cond.value); validateField('condition'); }}
             class="mt-1 w-4 h-4 text-[#4b9aaa] focus:ring-[#4b9aaa]"
           />
           <div>
@@ -115,8 +134,8 @@
         </label>
       {/each}
     </div>
-    {#if errors.condition}
-      <p class="text-red-500 text-sm mt-1">{errors.condition}</p>
+    {#if getError('condition')}
+      <p class="text-red-500 text-sm mt-1">{getError('condition')}</p>
     {/if}
   </div>
 
@@ -129,13 +148,16 @@
       id="description"
       value={listing.description}
       oninput={(e) => updateListing('description', (e.target as HTMLTextAreaElement).value)}
+      onblur={() => validateField('description')}
       placeholder="Describe your item in detail. Include brand, size, material, any flaws, etc."
       rows={5}
-      class="w-full px-4 py-3 rounded-xl border border-[#aca89f]/30 focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] focus:border-transparent resize-none"
+      class="w-full px-4 py-3 rounded-xl border transition-colors
+        {getError('description') ? 'border-red-500 focus:ring-red-500' : 'border-[#aca89f]/30 focus:ring-[#4b9aaa]'}
+        focus:outline-none focus:ring-2 focus:border-transparent resize-none"
     ></textarea>
-    <p class="text-sm text-gray-500 mt-1">{listing.description?.length || 0}/2000 characters</p>
-    {#if errors.description}
-      <p class="text-red-500 text-sm mt-1">{errors.description}</p>
+    <p class="text-xs text-gray-400 mt-1">{listing.description?.length || 0}/2000 characters (min 20)</p>
+    {#if getError('description')}
+      <p class="text-red-500 text-sm mt-1">{getError('description')}</p>
     {/if}
   </div>
 

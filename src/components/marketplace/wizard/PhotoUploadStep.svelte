@@ -1,4 +1,7 @@
 <script lang="ts">
+  import ImageCropper from '../ImageCropper.svelte';
+  import { ListingStep2Schema } from '../../../schemas/listing.schema';
+
   let { listing, updateListing, onNext, onPrev } = $props<{
     listing: { images: string[] };
     updateListing: (field: string, value: any) => void;
@@ -9,59 +12,118 @@
   let uploading = $state(false);
   let dragOver = $state(false);
   let error = $state<string | null>(null);
+  let validationError = $state<string | null>(null);
 
-  async function uploadImages(files: FileList) {
+  // Cropping state
+  let cropQueue = $state<string[]>([]);  // Data URLs waiting to be cropped
+  let currentCropImage = $state<string | null>(null);
+
+  // Read file as data URL for cropping
+  function readFileAsDataURL(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Queue files for cropping
+  async function queueFilesForCrop(files: FileList) {
     if (listing.images.length + files.length > 5) {
       error = 'Maximum 5 images allowed';
       return;
     }
 
+    error = null;
+    const dataUrls: string[] = [];
+
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith('image/')) {
+        continue;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        error = 'Images must be under 10MB';
+        continue;
+      }
+
+      try {
+        const dataUrl = await readFileAsDataURL(file);
+        dataUrls.push(dataUrl);
+      } catch (e) {
+        console.error('Failed to read file:', e);
+      }
+    }
+
+    if (dataUrls.length > 0) {
+      cropQueue = [...cropQueue, ...dataUrls];
+      // Start cropping first image if not already cropping
+      if (!currentCropImage) {
+        currentCropImage = cropQueue[0];
+        cropQueue = cropQueue.slice(1);
+      }
+    }
+  }
+
+  // Upload cropped blob
+  async function uploadCroppedImage(blob: Blob) {
     uploading = true;
     error = null;
 
     try {
-      const newImages: string[] = [];
+      const formData = new FormData();
+      formData.append('file', blob, 'cropped-image.jpg');
 
-      for (const file of Array.from(files)) {
-        if (!file.type.startsWith('image/')) {
-          continue;
-        }
+      const response = await fetch('/api/listings/upload', {
+        method: 'POST',
+        body: formData
+      });
 
-        if (file.size > 10 * 1024 * 1024) {
-          error = 'Images must be under 10MB';
-          continue;
-        }
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch('/api/listings/upload', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          newImages.push(data.url);
-        } else {
-          error = 'Failed to upload image';
-        }
-      }
-
-      if (newImages.length > 0) {
-        updateListing('images', [...listing.images, ...newImages]);
+      if (response.ok) {
+        const data = await response.json();
+        updateListing('images', [...listing.images, data.url]);
+      } else {
+        error = 'Failed to upload image';
       }
     } catch (e) {
-      error = 'Failed to upload images';
+      error = 'Failed to upload image';
     } finally {
       uploading = false;
+    }
+  }
+
+  // Handle crop complete - close modal immediately, upload in background
+  function handleCropComplete(croppedBlob: Blob) {
+    // Move to next image or close modal FIRST (better UX)
+    if (cropQueue.length > 0) {
+      currentCropImage = cropQueue[0];
+      cropQueue = cropQueue.slice(1);
+    } else {
+      currentCropImage = null;
+    }
+
+    // Upload in background (don't await)
+    uploadCroppedImage(croppedBlob);
+  }
+
+  // Handle crop cancel
+  function handleCropCancel() {
+    // Skip current image, move to next or close
+    if (cropQueue.length > 0) {
+      currentCropImage = cropQueue[0];
+      cropQueue = cropQueue.slice(1);
+    } else {
+      currentCropImage = null;
     }
   }
 
   function handleFileSelect(e: Event) {
     const input = e.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      uploadImages(input.files);
+      queueFilesForCrop(input.files);
+      // Reset input so same file can be selected again
+      input.value = '';
     }
   }
 
@@ -69,7 +131,7 @@
     e.preventDefault();
     dragOver = false;
     if (e.dataTransfer?.files) {
-      uploadImages(e.dataTransfer.files);
+      queueFilesForCrop(e.dataTransfer.files);
     }
   }
 
@@ -88,7 +150,26 @@
   }
 
   const canProceed = $derived(listing.images.length >= 1);
+
+  function handleNext() {
+    const result = ListingStep2Schema.safeParse({ images: listing.images });
+    if (!result.success) {
+      validationError = result.error.flatten().fieldErrors.images?.[0] || 'Please add at least one image';
+      return;
+    }
+    validationError = null;
+    onNext();
+  }
 </script>
+
+<!-- Image Cropper Modal -->
+{#if currentCropImage}
+  <ImageCropper
+    imageSrc={currentCropImage}
+    onCropComplete={handleCropComplete}
+    onCancel={handleCropCancel}
+  />
+{/if}
 
 <div class="space-y-6">
   <div>
@@ -98,7 +179,7 @@
 
   <!-- Upload Zone -->
   <div
-    class="border-2 border-dashed rounded-2xl p-8 text-center transition-colors
+    class="border-2 border-dashed rounded-2xl p-8 text-center transition-colors relative
       {dragOver ? 'border-[#4b9aaa] bg-[#4b9aaa]/5' : 'border-[#aca89f]/50'}
       {listing.images.length >= 5 ? 'opacity-50 pointer-events-none' : ''}"
     ondrop={handleDrop}
@@ -120,7 +201,7 @@
       </div>
     {:else}
       <p class="text-gray-600 mb-2">Drop photos here or click to browse</p>
-      <p class="text-sm text-gray-400">PNG, JPG up to 10MB each</p>
+      <p class="text-sm text-gray-400">PNG, JPG up to 10MB each • You'll crop each photo</p>
     {/if}
 
     <input
@@ -132,20 +213,25 @@
       class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
     />
 
-    <label class="relative">
-      <button
-        type="button"
-        class="mt-4 bg-[#4b9aaa] text-white px-6 py-2 rounded-xl hover:bg-[#3a7a8a] transition-colors disabled:opacity-50"
-        disabled={uploading || listing.images.length >= 5}
-        onclick={() => document.querySelector('input[type="file"]')?.click()}
-      >
-        Choose Photos
-      </button>
-    </label>
+    <button
+      type="button"
+      class="mt-4 bg-[#4b9aaa] text-white px-6 py-2 rounded-xl hover:bg-[#3a7a8a] transition-colors disabled:opacity-50"
+      disabled={uploading || listing.images.length >= 5}
+      onclick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
+    >
+      Choose Photos
+    </button>
   </div>
 
   {#if error}
     <p class="text-red-500 text-sm">{error}</p>
+  {/if}
+
+  <!-- Pending crops indicator -->
+  {#if cropQueue.length > 0}
+    <p class="text-sm text-[#4b9aaa]">
+      {cropQueue.length} more {cropQueue.length === 1 ? 'photo' : 'photos'} waiting to crop...
+    </p>
   {/if}
 
   <!-- Image Preview Grid -->
@@ -175,6 +261,10 @@
     <p class="text-sm text-gray-500">{listing.images.length}/5 photos added</p>
   {/if}
 
+  {#if validationError}
+    <p class="text-red-500 text-sm">{validationError}</p>
+  {/if}
+
   <!-- Navigation Buttons -->
   <div class="flex justify-between pt-4">
     <button
@@ -187,8 +277,8 @@
       Back
     </button>
     <button
-      onclick={onNext}
-      disabled={!canProceed}
+      onclick={handleNext}
+      disabled={!canProceed || uploading}
       class="bg-[#4b9aaa] text-white px-8 py-3 rounded-xl hover:bg-[#3a7a8a] transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       Next: Set Price

@@ -74,6 +74,9 @@ importers:
       svelte:
         specifier: ^5.46.3
         version: 5.46.3
+      svelte-easy-crop:
+        specifier: ^5.0.0
+        version: 5.0.0(svelte@5.46.3)
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
@@ -2762,6 +2765,11 @@ packages:
   supports-preserve-symlinks-flag@1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
+
+  svelte-easy-crop@5.0.0:
+    resolution: {integrity: sha512-niWtner+qYVas6ypIOQ277NKNACVz9qz6wfpEW7t+x5Lhv6nOjpv3S1WhEPO+SnDaW3VZv+0bmm6jVDHK2GMAg==}
+    peerDependencies:
+      svelte: ^5.0.0
 
   svelte-toolbelt@0.10.6:
     resolution: {integrity: sha512-YWuX+RE+CnWYx09yseAe4ZVMM7e7GRFZM6OYWpBKOb++s+SQ8RBIMMe+Bs/CznBMc0QPLjr+vDBxTAkozXsFXQ==}
@@ -6212,6 +6220,10 @@ snapshots:
       s.color: 0.0.15
 
   supports-preserve-symlinks-flag@1.0.0: {}
+
+  svelte-easy-crop@5.0.0(svelte@5.46.3):
+    dependencies:
+      svelte: 5.46.3
 
   svelte-toolbelt@0.10.6(svelte@5.46.3):
     dependencies:

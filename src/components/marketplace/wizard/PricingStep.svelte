@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { ListingStep3Schema } from '../../../schemas/listing.schema';
+
   let { listing, updateListing, onNext, onPrev } = $props<{
     listing: {
       price: number;
@@ -9,7 +11,8 @@
     onPrev: () => void;
   }>();
 
-  let errors = $state<Record<string, string>>({});
+  let errors = $state<Record<string, string[]>>({});
+  let touched = $state<Record<string, boolean>>({});
 
   const discount = $derived(
     listing.originalPrice && listing.originalPrice > listing.price
@@ -17,19 +20,37 @@
       : 0
   );
 
-  function validate(): boolean {
-    const newErrors: Record<string, string> = {};
+  function validateField(field: string) {
+    touched[field] = true;
+    runValidation();
+  }
 
-    if (!listing.price || listing.price <= 0) {
-      newErrors.price = 'Price must be greater than 0';
+  function runValidation(): boolean {
+    const result = ListingStep3Schema.safeParse({
+      price: listing.price,
+      originalPrice: listing.originalPrice || undefined
+    });
+
+    if (!result.success) {
+      errors = Object.fromEntries(
+        Object.entries(result.error.flatten().fieldErrors).map(([k, v]) => [k, v || []])
+      );
+      return false;
     }
 
+    // Custom validation: originalPrice should be higher than price
     if (listing.originalPrice && listing.originalPrice < listing.price) {
-      newErrors.originalPrice = 'Original price should be higher than selling price';
+      errors = { originalPrice: ['Original price should be higher than selling price'] };
+      return false;
     }
 
-    errors = newErrors;
-    return Object.keys(newErrors).length === 0;
+    errors = {};
+    return true;
+  }
+
+  function validate(): boolean {
+    touched = { price: true, originalPrice: true };
+    return runValidation();
   }
 
   function handleNext() {
@@ -47,6 +68,8 @@
     const value = (e.target as HTMLInputElement).value;
     updateListing('originalPrice', value ? parseFloat(value) : undefined);
   }
+
+  const getError = (field: string) => touched[field] && errors[field]?.[0];
 </script>
 
 <div class="space-y-6">
@@ -61,7 +84,7 @@
       Selling Price <span class="text-red-500">*</span>
     </label>
     <div class="relative">
-      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">$</span>
+      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">€</span>
       <input
         id="price"
         type="number"
@@ -69,13 +92,17 @@
         min="0"
         value={listing.price || ''}
         oninput={handlePriceInput}
+        onblur={() => validateField('price')}
         placeholder="0.00"
-        class="w-full pl-10 pr-4 py-3 rounded-xl border border-[#aca89f]/30 focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] focus:border-transparent text-lg"
+        class="w-full pl-10 pr-4 py-3 rounded-xl border transition-colors
+          {getError('price') ? 'border-red-500 focus:ring-red-500' : 'border-[#aca89f]/30 focus:ring-[#4b9aaa]'}
+          focus:outline-none focus:ring-2 focus:border-transparent text-lg"
       />
     </div>
-    {#if errors.price}
-      <p class="text-red-500 text-sm mt-1">{errors.price}</p>
+    {#if getError('price')}
+      <p class="text-red-500 text-sm mt-1">{getError('price')}</p>
     {/if}
+    <p class="text-xs text-gray-400 mt-1">Min €0.01 - Max €100,000</p>
   </div>
 
   <!-- Original Price -->
@@ -84,7 +111,7 @@
       Original Retail Price <span class="text-gray-400">(optional)</span>
     </label>
     <div class="relative">
-      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">$</span>
+      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">€</span>
       <input
         id="originalPrice"
         type="number"
@@ -92,13 +119,16 @@
         min="0"
         value={listing.originalPrice || ''}
         oninput={handleOriginalPriceInput}
+        onblur={() => validateField('originalPrice')}
         placeholder="0.00"
-        class="w-full pl-10 pr-4 py-3 rounded-xl border border-[#aca89f]/30 focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] focus:border-transparent"
+        class="w-full pl-10 pr-4 py-3 rounded-xl border transition-colors
+          {getError('originalPrice') ? 'border-red-500 focus:ring-red-500' : 'border-[#aca89f]/30 focus:ring-[#4b9aaa]'}
+          focus:outline-none focus:ring-2 focus:border-transparent"
       />
     </div>
     <p class="text-sm text-gray-500 mt-1">Showing the original price helps buyers see the value</p>
-    {#if errors.originalPrice}
-      <p class="text-red-500 text-sm mt-1">{errors.originalPrice}</p>
+    {#if getError('originalPrice')}
+      <p class="text-red-500 text-sm mt-1">{getError('originalPrice')}</p>
     {/if}
   </div>
 
