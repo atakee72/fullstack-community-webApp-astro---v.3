@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
+import MarketplaceBrowse from '../../components/marketplace/MarketplaceBrowse.svelte';
+
+const session = await getSession(Astro.request);
+---
+
+<BaseLayout title="Mahalle Marketplace">
+  <main class="min-h-[calc(100vh-60px)] py-4 md:py-6">
+    <div class="max-w-7xl mx-auto px-4 md:px-8">
+      <MarketplaceBrowse client:load session={session} />
+    </div>
+  </main>
+</BaseLayout>

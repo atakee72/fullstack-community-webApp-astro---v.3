@@ -76,3 +76,13 @@ prettier.config.cjs
 
 backups/
 .vercel/
+
+# marketplace prototype (reference only, not for commit)
+marketplace_inspiration/
+public/1-*.png
+public/2-*.png
+public/3-*.png
+public/4-*.png
+public/5-*.png
+public/6-*.png
+public/7-*.png

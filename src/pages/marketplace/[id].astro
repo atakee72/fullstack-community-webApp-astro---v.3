@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
+import ProductDetail from '../../components/marketplace/ProductDetail.svelte';
+
+const session = await getSession(Astro.request);
+const { id } = Astro.params;
+---
+
+<BaseLayout title="Product Details - Mahalle Marketplace">
+  <main class="min-h-[calc(100vh-60px)] py-4 md:py-6">
+    <div class="max-w-6xl mx-auto px-4 md:px-8">
+      <ProductDetail client:load listingId={id} session={session} />
+    </div>
+  </main>
+</BaseLayout>

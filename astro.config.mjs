@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
+import svelte from '@astrojs/svelte';
 import tailwind from '@astrojs/tailwind';
 import vercel from '@astrojs/vercel';
 import auth from 'auth-astro';
@@ -19,6 +20,7 @@ export default defineConfig({
     react({
       experimentalReactChildren: true
     }),
+    svelte(),
     tailwind({
       applyBaseStyles: false, // We'll use our own base styles
     })

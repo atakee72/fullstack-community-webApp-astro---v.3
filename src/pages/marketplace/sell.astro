@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
+import ListingWizard from '../../components/marketplace/ListingWizard.svelte';
+
+const session = await getSession(Astro.request);
+
+// Redirect if not logged in
+if (!session?.user) {
+  return Astro.redirect('/login?redirect=/marketplace/sell');
+}
+---
+
+<BaseLayout title="Sell an Item - Mahalle Marketplace">
+  <main class="min-h-[calc(100vh-60px)] py-4 md:py-6">
+    <div class="max-w-4xl mx-auto px-4 md:px-8">
+      <ListingWizard client:load session={session} />
+    </div>
+  </main>
+</BaseLayout>

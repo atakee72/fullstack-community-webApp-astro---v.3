@@ -71,6 +71,14 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
                 <>
                   <li>
                     <a
+                      href="/marketplace"
+                      className="text-sm md:text-base text-gray-700 no-underline font-medium hover:text-[#4b9aaa] hover:underline transition-all px-2 md:px-3 py-1 md:py-2 rounded-md hover:bg-gray-50"
+                    >
+                      <span>🛒 Marketplace</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a
                       href="/login"
                       className="text-sm md:text-base text-gray-700 no-underline font-medium hover:text-[#4b9aaa] hover:underline transition-all px-2 md:px-3 py-1 md:py-2 rounded-md hover:bg-gray-50"
                     >
@@ -103,6 +111,14 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
                       className="text-sm md:text-base text-gray-700 no-underline font-medium hover:text-[#4b9aaa] hover:underline transition-all px-2 md:px-3 py-1 md:py-2 rounded-md hover:bg-gray-50"
                     >
                       <span>📅 Calendar</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/marketplace"
+                      className="text-sm md:text-base text-gray-700 no-underline font-medium hover:text-[#4b9aaa] hover:underline transition-all px-2 md:px-3 py-1 md:py-2 rounded-md hover:bg-gray-50"
+                    >
+                      <span>🛒 Marketplace</span>
                     </a>
                   </li>
                 </>
