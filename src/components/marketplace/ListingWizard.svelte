@@ -12,7 +12,8 @@
 
   let listing = $state({
     title: '',
-    description: '',
+    description: { ops: [{ insert: '\n' }] }, // Delta format
+    descriptionPlainText: '', // Plain text for validation/search
     category: '',
     condition: '',
     images: [] as string[],

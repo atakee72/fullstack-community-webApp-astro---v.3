@@ -1,5 +1,29 @@
 import type { ObjectId } from 'mongodb';
 
+// Delta format from typewriter-editor
+export interface DeltaOp {
+  insert: string | object;
+  attributes?: Record<string, unknown>;
+}
+
+export interface Delta {
+  ops: DeltaOp[];
+}
+
+// Type guard to check if description is rich text (Delta)
+export function isRichText(description: string | Delta): description is Delta {
+  return typeof description === 'object' && description !== null && Array.isArray(description.ops);
+}
+
+// Extract plain text from Delta
+export function deltaToPlainText(delta: Delta): string {
+  if (!delta?.ops) return '';
+  return delta.ops
+    .map(op => (typeof op.insert === 'string' ? op.insert : ''))
+    .join('')
+    .trim();
+}
+
 export type ListingCategory =
   | 'furniture'
   | 'electronics'
@@ -22,7 +46,8 @@ export type ListingStatus = 'available' | 'reserved' | 'sold';
 export interface Listing {
   _id?: ObjectId | string;
   title: string;
-  description: string;
+  description: string | Delta; // Plain text (legacy) or Delta (rich text)
+  descriptionPlainText?: string; // Plain text version for search (new listings only)
   category: ListingCategory;
   condition: ListingCondition;
   price: number;

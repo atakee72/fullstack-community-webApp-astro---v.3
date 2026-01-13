@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Listing } from '../../types/listing';
   import { CONDITION_COLORS } from '../../types/listing';
+  import RichTextDisplay from './RichTextDisplay.svelte';
 
   let { listingId, session } = $props<{ listingId: string; session: any }>();
 
@@ -196,7 +197,7 @@
         <!-- Description -->
         <div>
           <h3 class="font-semibold text-gray-800 mb-2">Description</h3>
-          <p class="text-gray-600 whitespace-pre-wrap">{listing.description}</p>
+          <RichTextDisplay content={listing.description} />
         </div>
 
         <!-- Listed Date -->

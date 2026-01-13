@@ -83,6 +83,9 @@ importers:
       tailwindcss:
         specifier: ^3.4.0
         version: 3.4.18(tsx@4.20.6)(yaml@2.8.1)
+      typewriter-editor:
+        specifier: ^0.12.9
+        version: 0.12.9(svelte@5.46.3)
       zod:
         specifier: ^3.22.4
         version: 3.25.76
@@ -835,6 +838,9 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
+  '@popperjs/core@2.11.8':
+    resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
+
   '@protobufjs/aspromise@1.1.2':
     resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
 
@@ -1124,6 +1130,12 @@ packages:
 
   '@types/whatwg-url@11.0.5':
     resolution: {integrity: sha512-coYR071JRaHa+xoEvvYqvnIHaVqaYrLPbsufM9BF63HkwI5Lgmy2QR8Q5K/lYDYo5AK82wOvSOS0UsLTpTG7uQ==}
+
+  '@typewriter/delta@1.2.4':
+    resolution: {integrity: sha512-mxWgwvahh2eZD1odJjedQT8Xv7qhSfiKhom5TlDmO8XBeYZNqjKbNIkyYdO+Lj5anwiYjqmSIq72D/dUD0bKMA==}
+
+  '@typewriter/document@0.9.5':
+    resolution: {integrity: sha512-+9so8jKn26M+A4iTPFvY8izVVe2/viyIPwu4V2QYQnMuwSnybUjFMnzUp/wWlgz19CRPiM8KurGWc9oGzGh0Ig==}
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
@@ -1579,6 +1591,9 @@ packages:
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
 
+  easy-signal@4.1.6:
+    resolution: {integrity: sha512-CGHBWRS53EvTL5BN7t45qTvtfJNO4DkmFSuCdhdDZoSWGxOka3bvnHb0/Hv5dXT9jdbtw+u0lVl2qIwk17ZmSA==}
+
   ecdsa-sig-formatter@1.0.11:
     resolution: {integrity: sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==}
 
@@ -1656,6 +1671,9 @@ packages:
 
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
+
+  fast-diff@1.3.0:
+    resolution: {integrity: sha512-VxPP4NqbUjj6MaAOafWeUn2cXWLcCtljklUtZf0Ind4XQ+QPtmA0b18zZy0jIQx+ExRVCR/ZQpBmik5lXshNsw==}
 
   fast-glob@3.3.3:
     resolution: {integrity: sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==}
@@ -2901,6 +2919,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  typewriter-editor@0.12.9:
+    resolution: {integrity: sha512-Mq+WyCsd4JWSib3JMWF9odyRdD3UeIRA98ybRw/SvlpC+3L+Muwo3Nl5n2ntE3YUuOhqeUPemi1pMlnqY09q3A==}
+    peerDependencies:
+      svelte: '>=3.43.0 <6'
+
   ufo@1.6.1:
     resolution: {integrity: sha512-9a4/uxlTWJ4+a5i0ooc1rU7C7YOw3wT+UGqdeNNHWnOF9qcMBgLRS+4IYUqbczewFx4mLEig6gawh7X6mFlEkA==}
 
@@ -3962,6 +3985,8 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
+  '@popperjs/core@2.11.8': {}
+
   '@protobufjs/aspromise@1.1.2':
     optional: true
 
@@ -4241,6 +4266,14 @@ snapshots:
   '@types/whatwg-url@11.0.5':
     dependencies:
       '@types/webidl-conversions': 7.0.3
+
+  '@typewriter/delta@1.2.4':
+    dependencies:
+      fast-diff: 1.3.0
+
+  '@typewriter/document@0.9.5':
+    dependencies:
+      '@typewriter/delta': 1.2.4
 
   '@ungap/structured-clone@1.3.0': {}
 
@@ -4754,6 +4787,8 @@ snapshots:
 
   eastasianwidth@0.2.0: {}
 
+  easy-signal@4.1.6: {}
+
   ecdsa-sig-formatter@1.0.11:
     dependencies:
       safe-buffer: 5.2.1
@@ -4834,6 +4869,8 @@ snapshots:
   extend@3.0.2: {}
 
   fast-deep-equal@3.1.3: {}
+
+  fast-diff@1.3.0: {}
 
   fast-glob@3.3.3:
     dependencies:
@@ -6383,6 +6420,13 @@ snapshots:
   type-fest@4.41.0: {}
 
   typescript@5.9.3: {}
+
+  typewriter-editor@0.12.9(svelte@5.46.3):
+    dependencies:
+      '@popperjs/core': 2.11.8
+      '@typewriter/document': 0.9.5
+      easy-signal: 4.1.6
+      svelte: 5.46.3
 
   ufo@1.6.1: {}
 

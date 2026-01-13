@@ -26,7 +26,7 @@ export const POST: APIRoute = async ({ request }) => {
       return validation.response;
     }
 
-    const { title, description, category, condition, price, originalPrice, images } = validation.data;
+    const { title, description, descriptionPlainText, category, condition, price, originalPrice, images } = validation.data;
 
     const db = await connectDB();
     const listingsCollection = db.collection<Listing>('listings');
@@ -35,6 +35,7 @@ export const POST: APIRoute = async ({ request }) => {
     const newListing: Omit<Listing, '_id'> = {
       title,
       description,
+      descriptionPlainText, // Plain text version for search
       category,
       condition,
       price,

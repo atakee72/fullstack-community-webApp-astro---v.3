@@ -36,9 +36,12 @@ export const GET: APIRoute = async ({ url }) => {
       if (filters.priceMax) (filter.price as Record<string, number>).$lte = filters.priceMax;
     }
     if (filters.search) {
+      // Search in title and descriptionPlainText (new) or description (legacy plain text)
       filter.$or = [
         { title: { $regex: filters.search, $options: 'i' } },
-        { description: { $regex: filters.search, $options: 'i' } }
+        { descriptionPlainText: { $regex: filters.search, $options: 'i' } },
+        // Fallback for legacy listings with plain text description
+        { description: { $regex: filters.search, $options: 'i', $type: 'string' } }
       ];
     }
 

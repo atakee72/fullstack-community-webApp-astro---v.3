@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { CONDITION_COLORS } from '../../../types/listing';
+  import { CONDITION_COLORS, type Delta } from '../../../types/listing';
+  import RichTextDisplay from '../RichTextDisplay.svelte';
 
   let { listing, onSubmit, onPrev, isSubmitting } = $props<{
     listing: {
       title: string;
-      description: string;
+      description: string | Delta;
       category: string;
       condition: string;
       images: string[];
@@ -83,7 +84,7 @@
 
           <div>
             <h5 class="font-medium text-gray-700 mb-1">Description</h5>
-            <p class="text-gray-600 text-sm whitespace-pre-wrap">{listing.description}</p>
+            <RichTextDisplay content={listing.description} />
           </div>
         </div>
       </div>

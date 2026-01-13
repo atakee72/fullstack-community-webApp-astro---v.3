@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { LISTING_CATEGORIES, LISTING_CONDITIONS } from '../../../types/listing';
+  import { LISTING_CATEGORIES, LISTING_CONDITIONS, type Delta } from '../../../types/listing';
   import { ListingStep1Schema } from '../../../schemas/listing.schema';
+  import RichTextEditor from '../RichTextEditor.svelte';
 
   let { listing, updateListing, onNext } = $props<{
     listing: {
       title: string;
-      description: string;
+      description: Delta;
+      descriptionPlainText: string;
       category: string;
       condition: string;
     };
@@ -19,7 +21,14 @@
   // Validate single field on blur
   function validateField(field: string) {
     touched[field] = true;
-    const result = ListingStep1Schema.safeParse(listing);
+    // Use descriptionPlainText for validation
+    const validationData = {
+      title: listing.title,
+      description: listing.descriptionPlainText,
+      category: listing.category,
+      condition: listing.condition
+    };
+    const result = ListingStep1Schema.safeParse(validationData);
     if (!result.success) {
       const fieldErrors = result.error.flatten().fieldErrors;
       errors = Object.fromEntries(
@@ -32,7 +41,14 @@
 
   // Validate all fields on submit
   function validate(): boolean {
-    const result = ListingStep1Schema.safeParse(listing);
+    // Use descriptionPlainText for validation
+    const validationData = {
+      title: listing.title,
+      description: listing.descriptionPlainText,
+      category: listing.category,
+      condition: listing.condition
+    };
+    const result = ListingStep1Schema.safeParse(validationData);
     if (!result.success) {
       errors = Object.fromEntries(
         Object.entries(result.error.flatten().fieldErrors).map(([k, v]) => [k, v || []])
@@ -43,6 +59,12 @@
     }
     errors = {};
     return true;
+  }
+
+  // Handle rich text editor changes
+  function handleDescriptionChange(delta: Delta, plainText: string) {
+    updateListing('description', delta);
+    updateListing('descriptionPlainText', plainText);
   }
 
   function handleNext() {
@@ -144,18 +166,13 @@
     <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
       Description <span class="text-red-500">*</span>
     </label>
-    <textarea
-      id="description"
+    <RichTextEditor
       value={listing.description}
-      oninput={(e) => updateListing('description', (e.target as HTMLTextAreaElement).value)}
-      onblur={() => validateField('description')}
+      onChange={handleDescriptionChange}
       placeholder="Describe your item in detail. Include brand, size, material, any flaws, etc."
-      rows={5}
-      class="w-full px-4 py-3 rounded-xl border transition-colors
-        {getError('description') ? 'border-red-500 focus:ring-red-500' : 'border-[#aca89f]/30 focus:ring-[#4b9aaa]'}
-        focus:outline-none focus:ring-2 focus:border-transparent resize-none"
-    ></textarea>
-    <p class="text-xs text-gray-400 mt-1">{listing.description?.length || 0}/2000 characters (min 20)</p>
+      maxLength={2000}
+      minLength={20}
+    />
     {#if getError('description')}
       <p class="text-red-500 text-sm mt-1">{getError('description')}</p>
     {/if}

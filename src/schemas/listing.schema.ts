@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+// Delta format schema (from typewriter-editor)
+export const DeltaOpSchema = z.object({
+  insert: z.union([z.string(), z.record(z.unknown())]),
+  attributes: z.record(z.unknown()).optional()
+});
+
+export const DeltaSchema = z.object({
+  ops: z.array(DeltaOpSchema)
+});
+
 export const ListingCategorySchema = z.enum([
   'furniture',
   'electronics',
@@ -31,7 +41,10 @@ export const ListingCreateSchema = z.object({
     .min(5, 'Title must be at least 5 characters')
     .max(100, 'Title must be less than 100 characters')
     .trim(),
-  description: z
+  // Accept either Delta (rich text) or string (legacy plain text)
+  description: z.union([DeltaSchema, z.string()]),
+  // Plain text version for validation and search
+  descriptionPlainText: z
     .string()
     .min(20, 'Description must be at least 20 characters')
     .max(2000, 'Description must be less than 2000 characters')
@@ -61,7 +74,10 @@ export const ListingUpdateSchema = z.object({
     .max(100, 'Title must be less than 100 characters')
     .trim()
     .optional(),
-  description: z
+  // Accept either Delta (rich text) or string (legacy plain text)
+  description: z.union([DeltaSchema, z.string()]).optional(),
+  // Plain text version for validation and search
+  descriptionPlainText: z
     .string()
     .min(20, 'Description must be at least 20 characters')
     .max(2000, 'Description must be less than 2000 characters')
