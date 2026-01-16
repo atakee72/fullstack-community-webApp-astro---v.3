@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { signOut } from 'auth-astro/client';
 
 interface NavbarProps {
@@ -9,11 +9,25 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
   const [isClient, setIsClient] = useState(false);
   const [user, setUser] = useState(initialUser);
   const [menuOpen, setMenuOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     setIsClient(true);
     setUser(initialUser);
   }, [initialUser]);
+
+  // Ensure video plays after hydration - runs when isClient becomes true
+  useEffect(() => {
+    if (isClient && videoRef.current) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        videoRef.current?.play().catch(() => {
+          // Autoplay was prevented
+        });
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isClient]);
 
   // Close menu on escape key
   useEffect(() => {
@@ -64,44 +78,55 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
   // SSR fallback
   if (!isClient) {
     return (
-      <div className="flex justify-between items-center px-4 md:px-8 py-3 md:py-4 bg-white shadow-lg border-b-4 border-[#4b9aaa]">
-        <a href="/" className="text-lg font-bold text-[#814256] no-underline flex items-center gap-2">
-          <span className="text-2xl">🏘️</span>
-          <span>Mahalle</span>
+      <>
+        {/* Logo - fixed position */}
+        <a href="/" className="fixed top-2 left-4 md:left-8 z-50">
+          <video
+            src="/LogoVideo.mp4"
+            autoPlay
+            muted
+            playsInline
+            className="w-36 md:w-44 lg:w-48"
+            style={{ borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%' }}
+          />
         </a>
-      </div>
+        {/* Hamburger placeholder */}
+        <div className="fixed top-4 right-4 md:right-8 z-50 p-2 rounded-lg bg-white/80 shadow-md">
+          <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </div>
+      </>
     );
   }
 
   return (
     <>
-      {/* Main Navbar */}
-      <div className="relative bg-white shadow-lg border-b-4 border-[#4b9aaa]">
-        <nav className="px-4 md:px-8 py-3 md:py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <a
-              href="/"
-              className="text-lg md:text-xl font-bold text-[#814256] no-underline hover:text-[#4b9aaa] transition-all duration-300 flex items-center gap-2"
-            >
-              <span className="text-2xl">🏘️</span>
-              <span>Mahalle</span>
-            </a>
+      {/* Logo - fixed position, plays once on load */}
+      <a href="/" className="fixed top-2 left-4 md:left-8 z-50">
+        <video
+          ref={videoRef}
+          src="/LogoVideo.mp4"
+          autoPlay
+          muted
+          playsInline
+          onLoadedData={(e) => e.currentTarget.play().catch(() => {})}
+          className="w-36 md:w-44 lg:w-48"
+          style={{ borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%' }}
+        />
+      </a>
 
-            {/* Hamburger Button */}
-            <button
-              onClick={() => setMenuOpen(true)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
-              aria-label="Open menu"
-              aria-expanded={menuOpen}
-            >
-              <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
-        </nav>
-      </div>
+      {/* Hamburger Button - fixed position top right */}
+      <button
+        onClick={() => setMenuOpen(true)}
+        className="fixed top-4 right-4 md:right-8 z-50 p-2 rounded-lg bg-white/80 hover:bg-white shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+        aria-label="Open menu"
+        aria-expanded={menuOpen}
+      >
+        <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
 
       {/* Overlay */}
       <div

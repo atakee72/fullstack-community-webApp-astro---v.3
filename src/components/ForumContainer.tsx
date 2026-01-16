@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTopicsQuery, useCreatePost, useDeletePost, useEditPost } from '../hooks/api/useTopicsQuery';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCreateComment } from '../hooks/api/useCommentsQuery';
 import { useLikeMutation } from '../hooks/api/useLikeMutation';
 import PostModal from './PostModal';
@@ -43,9 +44,32 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   const editPost = useEditPost(collectionType);
   const likeMutation = useLikeMutation(collectionType);
 
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Prefetch other collections on mount for instant tab switching
+  useEffect(() => {
+    const queryOptions = {
+      fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'comments', 'date', 'likes', 'likedBy', 'views'],
+      sortBy: 'date' as const,
+      sortOrder: 'desc' as const,
+    };
+
+    // Prefetch the collections not currently selected
+    const collectionsToFetch = ['topics', 'announcements', 'recommendations'].filter(c => c !== collectionType);
+    collectionsToFetch.forEach(collection => {
+      queryClient.prefetchQuery({
+        queryKey: [collection, queryOptions],
+        queryFn: () => fetch(`/api/${collection}?fields=${queryOptions.fields.join(',')}&sortBy=${queryOptions.sortBy}&sortOrder=${queryOptions.sortOrder}`)
+          .then(res => res.json())
+          .then(data => data[collection] || []),
+        staleTime: 5 * 60 * 1000,
+      });
+    });
+  }, [queryClient, collectionType]);
 
   const filteredItems = (items as any[]).filter(item =>
     (item.title?.toLowerCase() || '').includes(searchValue.toLowerCase()) ||
@@ -180,7 +204,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     return (
       <div className="w-full">
         <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#4b9aaa]"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b border-[#4b9aaa]"></div>
           <p className="text-gray-600 mt-2">Loading forum...</p>
         </div>
       </div>
@@ -208,15 +232,15 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     <div className="w-full max-w-4xl mx-auto">
       {/* Header Section with Collection Selector */}
       <div className="w-full mb-4 md:mb-6">
-        {/* Collection Type Buttons */}
-        <div className="bg-[#5ca9b8] rounded-lg p-1 flex flex-wrap gap-1 mb-6 md:mb-8 border-b-2 border-[#3a8899]">
+        {/* Collection Type Buttons - Lifted Tab Style */}
+        <div className="flex items-end gap-1 mt-2 md:mt-4 mb-6 md:mb-8 ml-4 md:ml-6">
           <button
             onClick={() => setCollectionType('topics')}
             className={cn(
-              'px-3 md:px-5 py-1.5 md:py-2 text-sm md:text-base rounded-md font-medium transition-all border',
+              'px-4 md:px-6 py-2 md:py-3 text-sm md:text-lg font-semibold transition-all duration-300 ease-out rounded-t-lg',
               collectionType === 'topics'
-                ? 'bg-white text-gray-900 border-transparent'
-                : 'bg-transparent text-white border-white hover:bg-white/10'
+                ? 'h-12 md:h-14 bg-[#814256] text-white border-b border-[#814256] shadow-md'
+                : 'h-10 md:h-11 bg-[#4b9aaa] text-white hover:bg-[#3a8a9a] opacity-80 blur-[0.1px] border-b border-[#eccc6e]'
             )}
           >
             Discussions
@@ -224,10 +248,10 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
           <button
             onClick={() => setCollectionType('announcements')}
             className={cn(
-              'px-3 md:px-5 py-1.5 md:py-2 text-sm md:text-base rounded-md font-medium transition-all border',
+              'px-4 md:px-6 py-2 md:py-3 text-sm md:text-lg font-semibold transition-all duration-300 ease-out rounded-t-lg',
               collectionType === 'announcements'
-                ? 'bg-white text-gray-900 border-transparent'
-                : 'bg-transparent text-white border-white hover:bg-white/10'
+                ? 'h-12 md:h-14 bg-[#814256] text-white border-b border-[#814256] shadow-md'
+                : 'h-10 md:h-11 bg-[#4b9aaa] text-white hover:bg-[#3a8a9a] opacity-80 blur-[0.1px] border-b border-[#eccc6e]'
             )}
           >
             Announcements
@@ -235,29 +259,22 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
           <button
             onClick={() => setCollectionType('recommendations')}
             className={cn(
-              'px-3 md:px-5 py-1.5 md:py-2 text-sm md:text-base rounded-md font-medium transition-all border',
+              'px-4 md:px-6 py-2 md:py-3 text-sm md:text-lg font-semibold transition-all duration-300 ease-out rounded-t-lg',
               collectionType === 'recommendations'
-                ? 'bg-white text-gray-900 border-transparent'
-                : 'bg-transparent text-white border-white hover:bg-white/10'
+                ? 'h-12 md:h-14 bg-[#814256] text-white border-b border-[#814256] shadow-md'
+                : 'h-10 md:h-11 bg-[#4b9aaa] text-white hover:bg-[#3a8a9a] opacity-80 blur-[0.1px] border-b border-[#eccc6e]'
             )}
           >
             Recommendations
           </button>
         </div>
 
-        {/* Section Title */}
-        <div className="text-center mb-4 md:mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold text-[#eccc6e]">
-            {collectionType === 'topics' ? 'Discussions' : collectionType === 'announcements' ? 'Announcements' : 'Recommendations'}
-          </h2>
-        </div>
-
         {/* Search and Add New in a teal/green box */}
         <div className="bg-[#4b9aaa]/10 rounded-lg shadow-md p-4 md:p-6">
-          <div className="mb-4">
+          <div className="mb-2">
             <input
               type="text"
-              placeholder="Search in forum..."
+              placeholder={`Search in ${collectionType === 'topics' ? 'discussions' : collectionType}...`}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               className="w-full p-2 md:p-3 border-2 border-gray-200 rounded-md text-sm md:text-base focus:outline-none focus:border-[#4b9aaa] transition-colors"
@@ -265,12 +282,15 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
           </div>
 
           {user && (
-            <div className="flex justify-center">
+            <div className="flex justify-end">
               <button
                 onClick={() => setShowAddModal(true)}
-                className="w-full md:w-2/3 lg:w-1/2 px-3 md:px-6 py-2 md:py-3 text-xs sm:text-sm md:text-base bg-[#814256] text-white rounded-md hover:bg-[#6a3646] transition-all shadow-md font-medium"
+                className="group relative text-[#eccc6e] hover:text-[#d4b85e] hover:scale-110 transition-all duration-200 font-bold text-6xl md:text-7xl leading-none"
               >
-                <span className="text-gray-400 text-sm md:text-base">✎</span> Add New {collectionType.charAt(0).toUpperCase() + collectionType.slice(1, -1)}
+                +
+                <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 bg-[#eccc6e] text-[#814256] text-sm font-medium px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  Add a new {collectionType.slice(0, -1)}
+                </span>
               </button>
             </div>
           )}

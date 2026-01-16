@@ -14,10 +14,12 @@ const availableTags = [
 export default function TagSelector({ onTagsChange, selectedTags }: TagSelectorProps) {
   const [customTag, setCustomTag] = useState('');
 
+  const MAX_TAGS = 5;
+
   const toggleTag = (tag: string) => {
     if (selectedTags.includes(tag)) {
       onTagsChange(selectedTags.filter(t => t !== tag));
-    } else {
+    } else if (selectedTags.length < MAX_TAGS) {
       onTagsChange([...selectedTags, tag]);
     }
   };
@@ -26,12 +28,14 @@ export default function TagSelector({ onTagsChange, selectedTags }: TagSelectorP
     if (e.key === 'Enter' && customTag.trim()) {
       e.preventDefault();
       const newTag = customTag.trim();
-      if (!selectedTags.includes(newTag)) {
+      if (!selectedTags.includes(newTag) && selectedTags.length < MAX_TAGS) {
         onTagsChange([...selectedTags, newTag]);
       }
       setCustomTag('');
     }
   };
+
+  const isAtLimit = selectedTags.length >= MAX_TAGS;
 
   return (
     <div className="space-y-3">
@@ -42,10 +46,13 @@ export default function TagSelector({ onTagsChange, selectedTags }: TagSelectorP
             key={tag}
             type="button"
             onClick={() => toggleTag(tag)}
-            className={`px-2 py-0.5 rounded-full text-xs font-medium transition-all transform hover:scale-105 ${
+            disabled={isAtLimit && !selectedTags.includes(tag)}
+            className={`px-2 py-0.5 rounded-full text-xs font-medium transition-all transform ${
               selectedTags.includes(tag)
-                ? 'bg-[#eccc6e] text-[#814256] ring-1 ring-[#eccc6e]/30'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'bg-[#eccc6e] text-[#814256] ring-1 ring-[#eccc6e]/30 hover:scale-105'
+                : isAtLimit
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 hover:scale-105'
             }`}
           >
             {selectedTags.includes(tag) ? '✓ ' : '+ '}
@@ -70,15 +77,21 @@ export default function TagSelector({ onTagsChange, selectedTags }: TagSelectorP
       </div>
 
       {/* Custom Tag Input */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <input
           type="text"
           value={customTag}
           onChange={(e) => setCustomTag(e.target.value)}
           onKeyDown={addCustomTag}
-          placeholder="Add custom tag (press Enter)"
-          className="flex-1 px-2 py-1 rounded-lg border border-white/30 bg-white/80 text-gray-800 text-xs placeholder-gray-500 focus:outline-none focus:border-white focus:bg-white transition-all"
+          disabled={isAtLimit}
+          placeholder={isAtLimit ? 'Max 5 tags reached' : 'Add custom tag (press Enter)'}
+          className={`flex-1 px-2 py-1 rounded-lg border text-xs transition-all ${
+            isAtLimit
+              ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'border-white/30 bg-white/80 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-white focus:bg-white'
+          }`}
         />
+        <span className="text-xs text-white/70">{selectedTags.length}/{MAX_TAGS}</span>
       </div>
     </div>
   );

@@ -68,8 +68,8 @@ export function useTopicsQuery(
   return useQuery({
     queryKey: [type, options],
     queryFn: () => fetchTopics(type, options),
-    // Keep data fresh for 5 seconds for more responsive updates
-    staleTime: 5 * 1000,
+    // Keep data cached for 5 minutes - enables instant tab switching
+    staleTime: 5 * 60 * 1000,
     // Refetch when window regains focus
     refetchOnWindowFocus: true,
   });
@@ -91,7 +91,9 @@ async function createPost(
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || `Failed to create ${type}`);
+    // Include validation details if available
+    const details = error.details ? Object.values(error.details).join(', ') : '';
+    throw new Error(details || error.error || `Failed to create ${type}`);
   }
 
   const result = await response.json();
@@ -195,7 +197,9 @@ async function editPost(
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || 'Failed to update post');
+    // Include validation details if available
+    const details = error.details ? Object.values(error.details).join(', ') : '';
+    throw new Error(details || error.error || 'Failed to update post');
   }
 
   return response.json();
