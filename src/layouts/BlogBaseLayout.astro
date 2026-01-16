@@ -1,0 +1,50 @@
+---
+import { getSession } from 'auth-astro/server';
+import Navbar from '../components/Navbar';
+import { ViewTransitions } from 'astro:transitions';
+
+const session = await getSession(Astro.request);
+
+export interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+}
+
+const { title, description = 'Mahalle Blog - Community stories and updates', image = '/og-image.png' } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={image} />
+
+    <title>{title} | Mahalle Blog</title>
+
+    <ViewTransitions />
+  </head>
+  <body class="min-h-screen bg-[#4b9aaa]">
+    <Navbar client:load user={session?.user} />
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  @import '../styles/global.css';
+</style>

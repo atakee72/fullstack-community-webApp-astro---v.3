@@ -1,0 +1,101 @@
+---
+export const prerender = true;
+
+import BlogBaseLayout from '../../../layouts/BlogBaseLayout.astro';
+import BlogCard from '../../../components/blog/BlogCard.astro';
+import TagCloud from '../../../components/blog/TagCloud.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+
+  // Get all unique tags
+  const uniqueTags = [...new Set(allPosts.flatMap(post => post.data.tags || []))];
+
+  return uniqueTags.map(tag => ({
+    params: { tag },
+    props: {
+      tag,
+      posts: allPosts.filter(post => post.data.tags?.includes(tag))
+    }
+  }));
+}
+
+const { tag, posts } = Astro.props;
+
+// Sort posts by date
+const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+// Get all posts for the tag cloud
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+---
+
+<BlogBaseLayout title={`Posts tagged "${tag}"`} description={`All blog posts tagged with ${tag}`}>
+  <main class="min-h-[calc(100vh-60px)] py-8">
+    <div class="max-w-7xl mx-auto px-4 md:px-8">
+      <!-- Breadcrumb -->
+      <nav class="mb-6">
+        <ol class="flex items-center gap-2 text-white/80">
+          <li>
+            <a href="/blog" class="hover:text-white transition-colors">Blog</a>
+          </li>
+          <li>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </li>
+          <li class="text-white font-medium">Tag: {tag}</li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <header class="mb-10">
+        <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">
+          Posts tagged "{tag}"
+        </h1>
+        <p class="text-white/80">
+          {sortedPosts.length} {sortedPosts.length === 1 ? 'post' : 'posts'} found
+        </p>
+      </header>
+
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Main content -->
+        <div class="lg:col-span-3">
+          {sortedPosts.length > 0 ? (
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {sortedPosts.map(post => (
+                <BlogCard post={post} />
+              ))}
+            </div>
+          ) : (
+            <div class="text-center py-16 bg-white/10 rounded-xl">
+              <p class="text-white/80">No posts found with this tag.</p>
+              <a href="/blog" class="mt-4 inline-block text-white underline hover:no-underline">
+                View all posts
+              </a>
+            </div>
+          )}
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="lg:col-span-1">
+          <div class="sticky top-24 space-y-6">
+            <TagCloud posts={allPosts} currentTag={tag} />
+
+            <div class="bg-white/90 backdrop-blur rounded-xl shadow-lg p-5">
+              <a
+                href="/blog"
+                class="inline-flex items-center text-[#4b9aaa] hover:text-[#3a7a8a] font-medium"
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                All Posts
+              </a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</BlogBaseLayout>

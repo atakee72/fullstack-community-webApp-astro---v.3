@@ -1,0 +1,47 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  posts: CollectionEntry<'blog'>[];
+  currentTag?: string;
+}
+
+const { posts, currentTag } = Astro.props;
+
+// Extract all unique tags with counts
+const tagCounts = posts.reduce((acc, post) => {
+  post.data.tags?.forEach(tag => {
+    acc[tag] = (acc[tag] || 0) + 1;
+  });
+  return acc;
+}, {} as Record<string, number>);
+
+// Sort by count (descending) then alphabetically
+const sortedTags = Object.entries(tagCounts)
+  .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+---
+
+<div class="bg-white/90 backdrop-blur rounded-xl shadow-lg p-5">
+  <h3 class="text-lg font-bold text-gray-900 mb-4">Tags</h3>
+
+  {sortedTags.length > 0 ? (
+    <div class="flex flex-wrap gap-2">
+      {sortedTags.map(([tag, count]) => (
+        <a
+          href={`/blog/tag/${tag}`}
+          class:list={[
+            'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+            currentTag === tag
+              ? 'bg-[#4b9aaa] text-white'
+              : 'bg-[#4b9aaa]/10 text-[#4b9aaa] hover:bg-[#4b9aaa]/20'
+          ]}
+        >
+          {tag}
+          <span class="ml-1 opacity-70">({count})</span>
+        </a>
+      ))}
+    </div>
+  ) : (
+    <p class="text-gray-500 text-sm">No tags yet</p>
+  )}
+</div>

@@ -4,6 +4,7 @@ import svelte from '@astrojs/svelte';
 import tailwind from '@astrojs/tailwind';
 import vercel from '@astrojs/vercel';
 import auth from 'auth-astro';
+import mdx from '@astrojs/mdx';
 
 // https://astro.build/config
 export default defineConfig({
@@ -23,7 +24,8 @@ export default defineConfig({
     svelte(),
     tailwind({
       applyBaseStyles: false, // We'll use our own base styles
-    })
+    }),
+    mdx()
   ],
 
   vite: {

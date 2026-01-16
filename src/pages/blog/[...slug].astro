@@ -1,0 +1,32 @@
+---
+export const prerender = true;
+
+import { getCollection, render } from 'astro:content';
+import StandardLayout from '../../layouts/blog/StandardLayout.astro';
+import HeroLayout from '../../layouts/blog/HeroLayout.astro';
+import GalleryLayout from '../../layouts/blog/GalleryLayout.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+// Map layout names to components
+const layoutComponents = {
+  standard: StandardLayout,
+  hero: HeroLayout,
+  gallery: GalleryLayout,
+};
+
+const Layout = layoutComponents[post.data.postLayout] || StandardLayout;
+---
+
+<Layout post={post}>
+  <Content />
+</Layout>

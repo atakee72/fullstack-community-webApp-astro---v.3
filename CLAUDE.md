@@ -130,3 +130,8 @@ The project uses these CSS variables (defined in `global.css`):
 - `--color-gray`: #aca89f (Gray/Beige)
 
 When I say yellow, red, green, I always mean the default variants of the project.
+
+## Common Errors to Avoid
+
+### SSR Compatibility
+- `typewriter-editor` requires dynamic import inside `onMount()` to avoid SSR errors - it accesses browser globals (KeyboardEvent) at module load time
