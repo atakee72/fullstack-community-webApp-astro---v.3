@@ -86,3 +86,6 @@ public/4-*.png
 public/5-*.png
 public/6-*.png
 public/7-*.png
+
+# Claude Code
+.claude/
