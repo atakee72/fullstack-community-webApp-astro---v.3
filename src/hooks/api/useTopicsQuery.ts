@@ -97,7 +97,8 @@ async function createPost(
   }
 
   const result = await response.json();
-  return result[type.slice(0, -1)] || result;
+  // Return full response to include moderationStatus and message
+  return result;
 }
 
 // Hook for creating posts

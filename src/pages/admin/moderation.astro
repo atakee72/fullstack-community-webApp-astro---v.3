@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
+import ModerationQueue from '../../components/admin/ModerationQueue.svelte';
+
+const session = await getSession(Astro.request);
+
+// Redirect if not logged in
+if (!session?.user) {
+  return Astro.redirect('/login?redirect=/admin/moderation');
+}
+
+// TODO: Add proper admin role check
+// For now, any logged-in user can access (you should restrict this)
+const userId = session.user.id;
+---
+
+<BaseLayout title="Moderation Queue">
+  <div class="container mx-auto px-4 py-8 pt-24 md:pt-28">
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-[#814256]">Content Moderation</h1>
+      <p class="text-gray-600 mt-2">Review and manage flagged content</p>
+    </div>
+
+    <ModerationQueue client:load userId={userId} />
+  </div>
+</BaseLayout>

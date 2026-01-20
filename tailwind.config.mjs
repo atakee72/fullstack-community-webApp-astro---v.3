@@ -59,7 +59,7 @@ export default {
         'card': '40vh'
       },
       screens: {
-        'xs': '300px',
+        'xs': '390px',
         'sm': '576px',
         'md': '768px',
         'lg': '900px',

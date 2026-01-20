@@ -2,10 +2,11 @@ import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
-import type { Topic, EditHistory } from '../../../../types';
+import type { Topic, EditHistory, FlaggedContent } from '../../../../types';
 import { TopicCreateSchema } from '../../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../../schemas/validation.utils';
 import { isOwner } from '../../../../utils/authHelpers';
+import { moderateText, createFlaggedContentRecord } from '../../../../lib/moderation';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
@@ -38,6 +39,9 @@ export const PUT: APIRoute = async ({ request, params }) => {
 
     const { title, body, tags } = validation.data;
 
+    // Build moderation text including title, body, and tags
+    const tagsText = tags?.length ? `\nTags: ${tags.join(', ')}` : '';
+
     // Connect to database
     const db = await connectDB();
     const topicsCollection = db.collection<Topic>('topics');
@@ -60,6 +64,16 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
+    // Run content moderation on edited content (FAIL-SAFE: queues for review on any error)
+    // Include title, body, AND tags to catch inappropriate content in all fields
+    const moderationResult = await moderateText(`${title}\n\n${body}${tagsText}`);
+
+    // Determine new moderation status
+    // If content is flagged, it goes back to pending regardless of previous status
+    const newModerationStatus = moderationResult.canPublish
+      ? existingTopic.moderationStatus || 'approved' // Keep existing status if clean
+      : 'pending'; // Reset to pending if flagged
+
     // Create edit history entry
     const editHistoryEntry: EditHistory = {
       originalTitle: existingTopic.title,
@@ -68,24 +82,50 @@ export const PUT: APIRoute = async ({ request, params }) => {
       editedBy: userId
     };
 
+    // Build update data
+    const updateData: Record<string, any> = {
+      title,
+      body,
+      tags: tags || [],
+      isEdited: true,
+      lastEditedAt: new Date(),
+      updatedAt: new Date(),
+      moderationStatus: newModerationStatus
+    };
+
+    // Clear rejection reason if going back to pending (new review needed)
+    if (newModerationStatus === 'pending') {
+      updateData.rejectionReason = null;
+    }
+
     // Update the topic with edit history
     const updateResult = await topicsCollection.findOneAndUpdate(
       { _id: new ObjectId(topicId) },
       {
-        $set: {
-          title,
-          body,
-          tags: tags || [],
-          isEdited: true,
-          lastEditedAt: new Date(),
-          updatedAt: new Date()
-        },
+        $set: updateData,
         $push: {
           editHistory: editHistoryEntry
         }
       },
       { returnDocument: 'after' }
     );
+
+    // If content was flagged during edit, create a new flagged content record
+    if (moderationResult.needsReview) {
+      const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
+      const flaggedRecord = createFlaggedContentRecord(
+        'topic',
+        { title, body, tags },
+        {
+          id: userId,
+          name: session.user.name || undefined,
+          email: session.user.email || undefined
+        },
+        moderationResult
+      );
+      flaggedRecord.contentId = topicId;
+      await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
+    }
 
     if (!updateResult) {
       return new Response(JSON.stringify({ error: 'Failed to update topic' }), {
@@ -107,6 +147,21 @@ export const PUT: APIRoute = async ({ request, params }) => {
       ...updateResult,
       author
     };
+
+    // Return appropriate response based on moderation result
+    if (moderationResult.needsReview) {
+      return new Response(
+        JSON.stringify({
+          topic: updatedTopic,
+          message: moderationResult.userMessage,
+          moderationStatus: 'pending'
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     return new Response(
       JSON.stringify({

@@ -29,10 +29,14 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [activeCardTabs, setActiveCardTabs] = useState<{ [key: string]: 'posts' | 'comments' | 'newComment' }>({});
   const [editingPost, setEditingPost] = useState<any>(null);
+  const [revealedWarnings, setRevealedWarnings] = useState<Set<string>>(new Set());
+
+  // localStorage key for persisting revealed warnings
+  const REVEALED_WARNINGS_KEY = 'mahalle_revealed_warnings';
 
   // Use React Query for data fetching with field selection
   const { data: items = [], isLoading, error, refetch } = useTopicsQuery(collectionType, {
-    fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'comments', 'date', 'likes', 'likedBy', 'views'],
+    fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'comments', 'date', 'likes', 'likedBy', 'views', 'moderationStatus', 'rejectionReason', 'hasWarningLabel', 'warningText'],
     sortBy: 'date',
     sortOrder: 'desc',
   });
@@ -48,12 +52,38 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
 
   useEffect(() => {
     setIsClient(true);
+    // Load revealed warnings from localStorage
+    try {
+      const stored = localStorage.getItem(REVEALED_WARNINGS_KEY);
+      if (stored) {
+        const ids = JSON.parse(stored);
+        if (Array.isArray(ids)) {
+          setRevealedWarnings(new Set(ids));
+        }
+      }
+    } catch (e) {
+      // Ignore localStorage errors (private browsing, etc.)
+    }
   }, []);
+
+  // Helper to reveal a warning and persist to localStorage
+  const revealWarning = (postId: string) => {
+    setRevealedWarnings(prev => {
+      const newSet = new Set([...prev, postId]);
+      // Persist to localStorage
+      try {
+        localStorage.setItem(REVEALED_WARNINGS_KEY, JSON.stringify([...newSet]));
+      } catch (e) {
+        // Ignore localStorage errors
+      }
+      return newSet;
+    });
+  };
 
   // Prefetch other collections on mount for instant tab switching
   useEffect(() => {
     const queryOptions = {
-      fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'comments', 'date', 'likes', 'likedBy', 'views'],
+      fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'comments', 'date', 'likes', 'likedBy', 'views', 'moderationStatus', 'rejectionReason', 'hasWarningLabel', 'warningText'],
       sortBy: 'date' as const,
       sortOrder: 'desc' as const,
     };
@@ -91,7 +121,15 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
           ? { title: data.title, body: data.body, tags: data.tags }
           : { title: data.title, body: data.body, tags: data.tags };
 
-        await createPost.mutateAsync(postData);
+        const result = await createPost.mutateAsync(postData);
+
+        // Show moderation notice if content is pending review
+        if (result?.moderationStatus === 'pending') {
+          // Use setTimeout to show alert after modal closes
+          setTimeout(() => {
+            alert('📝 Your post has been submitted for review.\n\nIt will be visible to others once approved by a moderator. You can still see it in your feed while it\'s pending.');
+          }, 100);
+        }
       }
 
       // Explicitly refetch to ensure latest data with correct sorting
@@ -233,14 +271,14 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
       {/* Header Section with Collection Selector */}
       <div className="w-full mb-4 md:mb-6">
         {/* Collection Type Buttons - Lifted Tab Style */}
-        <div className="flex items-end gap-1 mt-2 md:mt-4 mb-6 md:mb-8 ml-4 md:ml-6">
+        <div className="flex flex-wrap xs:flex-nowrap items-center xs:items-end justify-center xs:justify-start gap-1 mt-2 md:mt-4 mb-6 md:mb-8 ml-2 md:ml-6 overflow-x-auto">
           <button
             onClick={() => setCollectionType('topics')}
             className={cn(
-              'px-4 md:px-6 py-2 md:py-3 text-sm md:text-lg font-semibold transition-all duration-300 ease-out rounded-t-lg',
+              'px-2 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm md:text-lg font-semibold transition-all duration-300 ease-out rounded-t-lg whitespace-nowrap',
               collectionType === 'topics'
-                ? 'h-12 md:h-14 bg-[#814256] text-white border-b border-[#814256] shadow-md'
-                : 'h-10 md:h-11 bg-[#4b9aaa] text-white hover:bg-[#3a8a9a] opacity-80 blur-[0.1px] border-b border-[#eccc6e]'
+                ? 'h-9 sm:h-12 md:h-14 bg-[#814256] text-white border-b border-[#814256] shadow-md'
+                : 'h-8 sm:h-10 md:h-11 bg-[#4b9aaa] text-white hover:bg-[#3a8a9a] opacity-80 blur-[0.1px] border-b border-[#eccc6e]'
             )}
           >
             Discussions
@@ -248,10 +286,10 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
           <button
             onClick={() => setCollectionType('announcements')}
             className={cn(
-              'px-4 md:px-6 py-2 md:py-3 text-sm md:text-lg font-semibold transition-all duration-300 ease-out rounded-t-lg',
+              'px-2 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm md:text-lg font-semibold transition-all duration-300 ease-out rounded-t-lg whitespace-nowrap',
               collectionType === 'announcements'
-                ? 'h-12 md:h-14 bg-[#814256] text-white border-b border-[#814256] shadow-md'
-                : 'h-10 md:h-11 bg-[#4b9aaa] text-white hover:bg-[#3a8a9a] opacity-80 blur-[0.1px] border-b border-[#eccc6e]'
+                ? 'h-9 sm:h-12 md:h-14 bg-[#814256] text-white border-b border-[#814256] shadow-md'
+                : 'h-8 sm:h-10 md:h-11 bg-[#4b9aaa] text-white hover:bg-[#3a8a9a] opacity-80 blur-[0.1px] border-b border-[#eccc6e]'
             )}
           >
             Announcements
@@ -259,10 +297,10 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
           <button
             onClick={() => setCollectionType('recommendations')}
             className={cn(
-              'px-4 md:px-6 py-2 md:py-3 text-sm md:text-lg font-semibold transition-all duration-300 ease-out rounded-t-lg',
+              'px-2 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm md:text-lg font-semibold transition-all duration-300 ease-out rounded-t-lg whitespace-nowrap',
               collectionType === 'recommendations'
-                ? 'h-12 md:h-14 bg-[#814256] text-white border-b border-[#814256] shadow-md'
-                : 'h-10 md:h-11 bg-[#4b9aaa] text-white hover:bg-[#3a8a9a] opacity-80 blur-[0.1px] border-b border-[#eccc6e]'
+                ? 'h-9 sm:h-12 md:h-14 bg-[#814256] text-white border-b border-[#814256] shadow-md'
+                : 'h-8 sm:h-10 md:h-11 bg-[#4b9aaa] text-white hover:bg-[#3a8a9a] opacity-80 blur-[0.1px] border-b border-[#eccc6e]'
             )}
           >
             Recommendations
@@ -309,7 +347,11 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                 return (
                   <div
                     key={item._id}
-                    className="bg-[#c9c4b9] rounded-lg shadow-md overflow-hidden p-4 md:p-6 flex flex-col min-h-[300px] md:min-h-[400px] hover:shadow-lg transition-all duration-400 ease-out">
+                    className={cn(
+                      "bg-[#c9c4b9] rounded-lg shadow-md overflow-hidden p-4 md:p-6 flex flex-col min-h-[300px] md:min-h-[400px] hover:shadow-lg transition-all duration-400 ease-out",
+                      item.moderationStatus === 'pending' && isOwner(item.author, user) && "ring-2 ring-amber-300",
+                      item.moderationStatus === 'rejected' && isOwner(item.author, user) && "ring-2 ring-red-400"
+                    )}>
                     {/* Card Header with Tabs and Action Icons - Shared Gray Background Strip */}
                     <div className="bg-gray-200/60 -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-2 md:px-6 py-2 mb-4 overflow-hidden">
                       <div className="flex items-center gap-1">
@@ -352,18 +394,18 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           </button>
                           <button
                             onClick={() => {
-                              if (user) {
+                              if (user && item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected') {
                                 setSelectedPost(item);
                                 setShowCommentModal(true);
                                 setCardActiveTab(item._id, 'newComment');
                               }
                             }}
-                            disabled={!user}
+                            disabled={!user || item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
                             className={cn(
                               'px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border whitespace-nowrap flex-shrink-0 hidden md:block',
                               currentTab === 'newComment'
                                 ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
-                                : user
+                                : user && item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected'
                                   ? 'bg-transparent text-gray-700 border-white hover:bg-white/50'
                                   : 'bg-transparent text-gray-400 border-white cursor-not-allowed'
                             )}
@@ -372,28 +414,31 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           </button>
                         </div>
 
-                        {/* Edit and Delete Icons - Always visible if user is author */}
+                        {/* Edit and Delete Icons - Disabled for pending/rejected posts */}
                         {isOwner(item.author, user) && (
                             <div className="flex gap-1 flex-shrink-0">
                               <button
                                 onClick={() => {
-                                  setEditingPost(item);
-                                  setShowAddModal(true);
+                                  if (item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected') {
+                                    setEditingPost(item);
+                                    setShowAddModal(true);
+                                  }
                                 }}
-                                className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-gray-700"
-                                title="Edit post"
+                                className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={item.moderationStatus === 'pending' ? "Editing disabled while pending review" : item.moderationStatus === 'rejected' ? "Editing disabled for rejected posts" : "Edit post"}
+                                disabled={item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
                               >
                                 ✎
                               </button>
                               <button
                                 onClick={() => {
-                                  if (window.confirm(`Are you sure you want to delete this ${collectionType.slice(0, -1)}?`)) {
+                                  if (item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected' && window.confirm(`Are you sure you want to delete this ${collectionType.slice(0, -1)}?`)) {
                                     deletePost.mutate(item._id);
                                   }
                                 }}
-                                className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-red-600"
-                                title="Delete post"
-                                disabled={deletePost.isPending}
+                                className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={item.moderationStatus === 'pending' ? "Deletion disabled while pending review" : item.moderationStatus === 'rejected' ? "Deletion disabled for rejected posts" : "Delete post"}
+                                disabled={item.moderationStatus === 'pending' || item.moderationStatus === 'rejected' || deletePost.isPending}
                               >
                                 {deletePost.isPending && deletePost.variables === item._id ? '⏳' : '✕'}
                               </button>
@@ -402,10 +447,78 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                       </div>
                     </div>
 
+                    {/* Moderation Pending Banner - Only visible to the post author */}
+                    {item.moderationStatus === 'pending' && isOwner(item.author, user) && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 flex items-start gap-3">
+                        <span className="text-amber-500 text-xl flex-shrink-0">⏳</span>
+                        <div>
+                          <p className="text-amber-800 font-medium text-sm">Your post is under review</p>
+                          <p className="text-amber-700 text-xs mt-0.5">It will be visible to others after the moderation process is completed.</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Moderation Rejected Banner - Only visible to the post author */}
+                    {item.moderationStatus === 'rejected' && isOwner(item.author, user) && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4 flex items-start gap-3">
+                        <span className="text-red-500 text-xl flex-shrink-0">⛔</span>
+                        <div>
+                          <p className="text-red-800 font-medium text-sm">Your post has been rejected</p>
+                          <p className="text-red-700 text-xs mt-1">
+                            <strong>Reason:</strong> {item.rejectionReason || 'Content violated community guidelines'}
+                          </p>
+                          <p className="text-red-600 text-xs mt-2 font-medium">
+                            ⚠️ Repeated violations may result in account suspension. This post is only visible to you.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Approved with Warning Banner - Only visible to the post author */}
+                    {item.hasWarningLabel && isOwner(item.author, user) && item.moderationStatus !== 'rejected' && (
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 mb-4 flex items-start gap-3">
+                        <span className="text-orange-500 text-xl flex-shrink-0">⚠️</span>
+                        <div>
+                          <p className="text-orange-800 font-medium text-sm">Your post was approved with a warning</p>
+                          <p className="text-orange-700 text-xs mt-1">
+                            <strong>Warning:</strong> {item.warningText || 'Content may be sensitive to some community members'}
+                          </p>
+                          <p className="text-orange-600 text-xs mt-2">
+                            Your post is visible to others but marked as potentially sensitive content.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Card Body */}
-                    <div className="p-0 flex flex-col flex-1">
+                    <div className="p-0 flex flex-col flex-1 relative">
+                      {/* Blur Overlay for Warned Content - Only for non-authors */}
+                      {/* TODO: Add age verification or "Show sensitive content" preference toggle
+                          Options: A) Add birthDate to registration, B) User preference in settings, C) Skip for now
+                          See: https://github.com/your-repo/issues/XXX */}
+                      {item.hasWarningLabel && !isOwner(item.author, user) && !revealedWarnings.has(item._id) && (
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/60 backdrop-blur-sm rounded-lg">
+                          <div className="bg-orange-100 border border-orange-300 rounded-lg px-6 py-4 text-center max-w-sm mx-4">
+                            <span className="text-3xl mb-2 block">⚠️</span>
+                            <p className="text-orange-800 font-semibold mb-1">Sensitive Content</p>
+                            <p className="text-orange-700 text-sm mb-3">
+                              This post may contain content that some users find sensitive.
+                            </p>
+                            <button
+                              onClick={() => revealWarning(item._id)}
+                              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md text-sm font-medium transition-colors"
+                            >
+                              Click to reveal
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
                       {currentTab === 'posts' ? (
-                        <div className="flex flex-col flex-1">
+                        <div className={cn(
+                          "flex flex-col flex-1",
+                          item.hasWarningLabel && !isOwner(item.author, user) && !revealedWarnings.has(item._id) && "blur-sm pointer-events-none select-none"
+                        )}>
                           {/* Author Info Header */}
                           <div className="bg-[#4b9aaa] text-white px-2 md:px-3 py-1 md:py-2 rounded-md mt-0 mb-3 md:mb-4 flex items-center gap-2 md:gap-3 text-xs md:text-sm">
                             <div className="w-7 h-7 md:w-8 md:h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0">
@@ -430,7 +543,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                                 isLiked={user ? item.likedBy?.includes(user.id) || false : false}
                                 likeCount={item.likes || 0}
                                 onToggle={() => handleLikeToggle(item._id, item.likedBy?.includes(user?.id))}
-                                disabled={!user}
+                                disabled={!user || item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
                               />
                             </div>
                           </div>

@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import type { Topic } from '../../../types';
@@ -10,14 +11,43 @@ import {
   buildPaginationMeta
 } from '../../../lib/queryUtils';
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, request }) => {
   try {
+    // Get current user (optional - for showing their pending content)
+    const session = await getSession(request);
+    const currentUserId = session?.user?.id;
+
     const db = await connectDB();
     const topicsCollection = db.collection<Topic>('topics');
 
     // Parse query parameters
     const options = parseQueryParams(url);
     const filter = buildFilter(options);
+
+    // Add moderation filter: show approved content OR user's own pending/rejected content
+    // Also show content without moderationStatus (legacy content)
+    // Authors can see their own pending and rejected posts (with notices)
+    const moderationFilter = {
+      $or: [
+        { moderationStatus: 'approved' },
+        { moderationStatus: { $exists: false } }, // Legacy content without moderation
+        ...(currentUserId ? [
+          { author: currentUserId, moderationStatus: 'pending' },
+          { author: currentUserId, moderationStatus: 'rejected' }
+        ] : [])
+      ]
+    };
+
+    // Merge with existing filter
+    if (filter.$and) {
+      filter.$and.push(moderationFilter);
+    } else if (Object.keys(filter).length > 0) {
+      const existingFilter = { ...filter };
+      Object.keys(existingFilter).forEach(key => delete filter[key]);
+      filter.$and = [existingFilter, moderationFilter];
+    } else {
+      Object.assign(filter, moderationFilter);
+    }
 
     // Get topics with query options
     const topics = await applyQueryOptions<Topic>(

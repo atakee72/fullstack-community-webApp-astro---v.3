@@ -15,6 +15,18 @@ export interface User {
   topics?: string[];
   comments?: string[];
   likes?: string[];
+  // Moderation strike system
+  moderationStrikes?: number; // Current strike count (max 3 before ban)
+  strikeHistory?: {
+    date: Date;
+    reason: string;
+    contentType: string;
+    contentId: string;
+    reviewedBy: string;
+  }[];
+  isBanned?: boolean;
+  bannedAt?: Date;
+  bannedReason?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -43,6 +55,12 @@ export interface Topic {
   editHistory?: EditHistory[]; // Track all edits
   isEdited?: boolean; // Quick flag to check if post was edited
   lastEditedAt?: Date; // When was it last edited
+  // Moderation fields
+  moderationStatus?: 'approved' | 'pending' | 'rejected';
+  rejectionReason?: string; // Why the post was rejected (shown to author)
+  hasWarningLabel?: boolean;
+  warningText?: string;
+  // Timestamps
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -57,6 +75,9 @@ export interface Comment {
   upvotes: number;
   user?: User[]; // Denormalized user data
   userName?: string[];
+  // Moderation fields
+  moderationStatus?: 'approved' | 'pending' | 'rejected';
+  // Timestamps
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -78,6 +99,11 @@ export interface Announcement {
   editHistory?: EditHistory[];
   isEdited?: boolean;
   lastEditedAt?: Date;
+  // Moderation fields
+  moderationStatus?: 'approved' | 'pending' | 'rejected';
+  hasWarningLabel?: boolean;
+  warningText?: string;
+  // Timestamps
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -100,6 +126,11 @@ export interface Recommendation {
   editHistory?: EditHistory[];
   isEdited?: boolean;
   lastEditedAt?: Date;
+  // Moderation fields
+  moderationStatus?: 'approved' | 'pending' | 'rejected';
+  hasWarningLabel?: boolean;
+  warningText?: string;
+  // Timestamps
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -123,6 +154,11 @@ export interface Event {
   editHistory?: EditHistory[];
   isEdited?: boolean;
   lastEditedAt?: Date;
+  // Moderation fields
+  moderationStatus?: 'approved' | 'pending' | 'rejected';
+  hasWarningLabel?: boolean;
+  warningText?: string;
+  // Timestamps
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -150,4 +186,52 @@ export interface JWTPayload {
   email: string;
   iat?: number;
   exp?: number;
+}
+
+// ============================================================================
+// MODERATION TYPES
+// ============================================================================
+
+export type ModerationDecision = 'approved' | 'pending_review' | 'urgent_review';
+export type ModerationReviewStatus = 'pending' | 'approved' | 'rejected';
+export type ModeratedContentType = 'topic' | 'announcement' | 'recommendation' | 'comment' | 'event' | 'marketplace';
+
+export interface FlaggedContent {
+  _id?: ObjectId | string;
+
+  // Reference to original content
+  contentType: ModeratedContentType;
+  contentId?: string;
+
+  // The content itself (stored for review)
+  title?: string;
+  body?: string;
+  tags?: string[];
+  imageUrls?: string[];
+
+  // Author info
+  authorId: string;
+  authorName?: string;
+  authorEmail?: string;
+
+  // Moderation details
+  decision: ModerationDecision;
+  flaggedCategories: string[];
+  scores: Record<string, number>;
+  highestCategory: string;
+  maxScore: number;
+
+  // Review status
+  reviewStatus: ModerationReviewStatus;
+  reviewedBy?: string;
+  reviewedAt?: Date;
+  reviewNotes?: string;
+
+  // If approved, should it have a warning label?
+  hasWarningLabel?: boolean;
+  warningText?: string;
+
+  // Timestamps
+  createdAt: Date;
+  updatedAt: Date;
 }
