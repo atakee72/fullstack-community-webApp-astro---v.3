@@ -58,7 +58,12 @@ export const GET: APIRoute = async ({ request, url }) => {
 
     // Build filter
     const filter: Record<string, any> = {};
-    if (reviewStatus) filter.reviewStatus = reviewStatus;
+    if (reviewStatus === 'reviewed') {
+      // Special filter: show only reviewed items (approved OR rejected, NOT pending)
+      filter.reviewStatus = { $in: ['approved', 'rejected'] };
+    } else if (reviewStatus) {
+      filter.reviewStatus = reviewStatus;
+    }
     if (contentType) filter.contentType = contentType;
     if (decision) filter.decision = decision;
     if (authorId) filter.authorId = authorId;

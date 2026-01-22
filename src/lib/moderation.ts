@@ -66,41 +66,8 @@ export interface ModerationResult {
   adminReason: string;
 }
 
-export interface FlaggedContent {
-  _id?: string;
-
-  // Reference to original content
-  contentType: 'topic' | 'announcement' | 'recommendation' | 'comment' | 'event' | 'marketplace';
-  contentId?: string; // Set after content is created
-
-  // The content itself (stored for review even if original is hidden)
-  title?: string;
-  body?: string;
-  tags?: string[];
-  imageUrls?: string[];
-
-  // Author info
-  authorId: string;
-  authorName?: string;
-  authorEmail?: string;
-
-  // Moderation details
-  decision: ModerationDecision;
-  flaggedCategories: string[];
-  scores: Partial<ModerationScores>;
-  highestCategory: string;
-  maxScore: number;
-
-  // Review status
-  reviewStatus: 'pending' | 'approved' | 'rejected';
-  reviewedBy?: string;
-  reviewedAt?: Date;
-  reviewNotes?: string;
-
-  // Timestamps
-  createdAt: Date;
-  updatedAt: Date;
-}
+// FlaggedContent type is imported from types/index.ts
+import type { FlaggedContent, ModeratedContentType } from '../types';
 
 // ============================================================================
 // THRESHOLDS
@@ -383,15 +350,16 @@ export async function moderatePost(
 }
 
 /**
- * Create a FlaggedContent record for the database
+ * Create a FlaggedContent record for the database (AI moderation)
  */
 export function createFlaggedContentRecord(
-  contentType: FlaggedContent['contentType'],
+  contentType: ModeratedContentType,
   content: { title?: string; body?: string; tags?: string[]; imageUrls?: string[] },
   author: { id: string; name?: string; email?: string },
   moderationResult: ModerationResult
 ): Omit<FlaggedContent, '_id'> {
   return {
+    source: 'ai_moderation',
     contentType,
     title: content.title,
     body: content.body,

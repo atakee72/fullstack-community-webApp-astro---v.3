@@ -27,10 +27,12 @@ export const GET: APIRoute = async ({ url, request }) => {
     // Add moderation filter: show approved content OR user's own pending/rejected content
     // Also show content without moderationStatus (legacy content)
     // Authors can see their own pending and rejected posts (with notices)
+    // User-reported content stays visible to everyone (unlike AI-flagged which hides until approved)
     const moderationFilter = {
       $or: [
         { moderationStatus: 'approved' },
         { moderationStatus: { $exists: false } }, // Legacy content without moderation
+        { moderationStatus: 'pending', isUserReported: true }, // User-reported content stays visible
         ...(currentUserId ? [
           { author: currentUserId, moderationStatus: 'pending' },
           { author: currentUserId, moderationStatus: 'rejected' }

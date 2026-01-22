@@ -31,9 +31,20 @@ export const POST: APIRoute = async ({ request }) => {
     const { title, body, tags } = validation.data;
 
     // Run content moderation (FAIL-SAFE: queues for review on any error)
-    // Include title, body, AND tags to catch inappropriate content in all fields
-    const tagsText = tags?.length ? `\nTags: ${tags.join(', ')}` : '';
-    const moderationResult = await moderateText(`${title}\n\n${body}${tagsText}`);
+    // Moderate main content (title + body)
+    const mainModerationResult = await moderateText(`${title}\n\n${body}`);
+
+    // Moderate tags SEPARATELY to catch profanity that might get diluted in main content
+    let tagsModerationResult = null;
+    if (tags?.length) {
+      tagsModerationResult = await moderateText(tags.join(' '));
+    }
+
+    // Combine results: flag if EITHER main content OR tags need review
+    const needsReview = mainModerationResult.needsReview || (tagsModerationResult?.needsReview ?? false);
+    const moderationResult = needsReview
+      ? (tagsModerationResult?.needsReview ? tagsModerationResult : mainModerationResult)
+      : mainModerationResult;
 
     // Connect to database
     const db = await connectDB();

@@ -57,6 +57,7 @@ export interface Topic {
   lastEditedAt?: Date; // When was it last edited
   // Moderation fields
   moderationStatus?: 'approved' | 'pending' | 'rejected';
+  isUserReported?: boolean; // True if reported by community (vs AI flagged)
   rejectionReason?: string; // Why the post was rejected (shown to author)
   hasWarningLabel?: boolean;
   warningText?: string;
@@ -77,6 +78,7 @@ export interface Comment {
   userName?: string[];
   // Moderation fields
   moderationStatus?: 'approved' | 'pending' | 'rejected';
+  isUserReported?: boolean; // True if reported by community
   // Timestamps
   createdAt?: Date;
   updatedAt?: Date;
@@ -195,9 +197,14 @@ export interface JWTPayload {
 export type ModerationDecision = 'approved' | 'pending_review' | 'urgent_review';
 export type ModerationReviewStatus = 'pending' | 'approved' | 'rejected';
 export type ModeratedContentType = 'topic' | 'announcement' | 'recommendation' | 'comment' | 'event' | 'marketplace';
+export type FlaggedContentSource = 'ai_moderation' | 'user_report';
+export type ReportReason = 'spam' | 'harassment' | 'hate_speech' | 'violence' | 'inappropriate' | 'misinformation' | 'other';
 
 export interface FlaggedContent {
   _id?: ObjectId | string;
+
+  // Source: AI moderation vs user report
+  source: FlaggedContentSource;
 
   // Reference to original content
   contentType: ModeratedContentType;
@@ -209,17 +216,25 @@ export interface FlaggedContent {
   tags?: string[];
   imageUrls?: string[];
 
-  // Author info
+  // Author info (content author)
   authorId: string;
   authorName?: string;
   authorEmail?: string;
 
-  // Moderation details
+  // AI Moderation details (only for source: 'ai_moderation')
   decision: ModerationDecision;
   flaggedCategories: string[];
   scores: Record<string, number>;
   highestCategory: string;
   maxScore: number;
+
+  // User Report details (only for source: 'user_report')
+  reporterUserId?: string;
+  reporterUserIds?: string[];  // All users who reported (for duplicate check)
+  reporterName?: string;
+  reportReason?: ReportReason;
+  reportDetails?: string;
+  reportCount?: number; // Track multiple reports on same content
 
   // Review status
   reviewStatus: ModerationReviewStatus;

@@ -7,6 +7,7 @@ import PostModal from './PostModal';
 import CommentModal from './CommentModal';
 import CommentsList from './CommentsList';
 import ReadMoreModal from './ReadMoreModal';
+import ReportModal from './ReportModal';
 import HeartBtn from './HeartBtn';
 import EyeIcon from './EyeIcon';
 import { cn } from '../lib/utils';
@@ -30,13 +31,18 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   const [activeCardTabs, setActiveCardTabs] = useState<{ [key: string]: 'posts' | 'comments' | 'newComment' }>({});
   const [editingPost, setEditingPost] = useState<any>(null);
   const [revealedWarnings, setRevealedWarnings] = useState<Set<string>>(new Set());
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportingItem, setReportingItem] = useState<{ id: string; type: 'topic' | 'comment'; preview?: string } | null>(null);
+  const [reportedItems, setReportedItems] = useState<Set<string>>(new Set());
+  const [reportCheckLoading, setReportCheckLoading] = useState<string | null>(null);
+  const [reportToastItemId, setReportToastItemId] = useState<string | null>(null);
 
   // localStorage key for persisting revealed warnings
   const REVEALED_WARNINGS_KEY = 'mahalle_revealed_warnings';
 
   // Use React Query for data fetching with field selection
   const { data: items = [], isLoading, error, refetch } = useTopicsQuery(collectionType, {
-    fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'comments', 'date', 'likes', 'likedBy', 'views', 'moderationStatus', 'rejectionReason', 'hasWarningLabel', 'warningText'],
+    fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'comments', 'date', 'likes', 'likedBy', 'views', 'moderationStatus', 'isUserReported', 'rejectionReason', 'hasWarningLabel', 'warningText'],
     sortBy: 'date',
     sortOrder: 'desc',
   });
@@ -83,7 +89,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   // Prefetch other collections on mount for instant tab switching
   useEffect(() => {
     const queryOptions = {
-      fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'comments', 'date', 'likes', 'likedBy', 'views', 'moderationStatus', 'rejectionReason', 'hasWarningLabel', 'warningText'],
+      fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'comments', 'date', 'likes', 'likedBy', 'views', 'moderationStatus', 'isUserReported', 'rejectionReason', 'hasWarningLabel', 'warningText'],
       sortBy: 'date' as const,
       sortOrder: 'desc' as const,
     };
@@ -237,6 +243,74 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     }
   };
 
+  // Handle report submission
+  const handleReportSubmit = async (data: { contentId: string; contentType: 'topic' | 'comment'; reason: string; details?: string }) => {
+    try {
+      const response = await fetch('/api/reports/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Mark item as reported locally
+        setReportedItems(prev => new Set([...prev, data.contentId]));
+        return { success: true };
+      } else {
+        return { success: false, error: result.error, alreadyReported: result.alreadyReported };
+      }
+    } catch (error) {
+      console.error('Failed to submit report:', error);
+      return { success: false, error: 'Failed to submit report' };
+    }
+  };
+
+  // Check if already reported, then open modal
+  const checkAndOpenReportModal = async (contentId: string, contentType: 'topic' | 'comment', preview: string) => {
+    // If already known to be reported, show tooltip
+    if (reportedItems.has(contentId)) {
+      setReportToastItemId(contentId);
+      setTimeout(() => setReportToastItemId(null), 2000);
+      return;
+    }
+
+    setReportCheckLoading(contentId);
+    try {
+      const response = await fetch(`/api/reports/check?contentId=${contentId}&contentType=${contentType}`);
+      const result = await response.json();
+
+      if (result.alreadyReported) {
+        // Mark as reported locally and show tooltip
+        setReportedItems(prev => new Set([...prev, contentId]));
+        setReportToastItemId(contentId);
+        setTimeout(() => setReportToastItemId(null), 2000);
+      } else {
+        // Open the modal
+        setReportingItem({ id: contentId, type: contentType, preview });
+        setShowReportModal(true);
+      }
+    } catch (error) {
+      console.error('Failed to check report status:', error);
+      // On error, still open modal - server will handle duplicate check
+      setReportingItem({ id: contentId, type: contentType, preview });
+      setShowReportModal(true);
+    } finally {
+      setReportCheckLoading(null);
+    }
+  };
+
+  // Open report modal for a post
+  const openReportModal = (item: any) => {
+    checkAndOpenReportModal(item._id, 'topic', item.title);
+  };
+
+  // Open report modal for a comment
+  const openCommentReportModal = (commentId: string, preview: string) => {
+    checkAndOpenReportModal(commentId, 'comment', preview);
+  };
+
   // Show loading state during SSR or data fetching
   if (!isClient || isLoading) {
     return (
@@ -349,7 +423,8 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                     key={item._id}
                     className={cn(
                       "bg-[#c9c4b9] rounded-lg shadow-md overflow-hidden p-4 md:p-6 flex flex-col min-h-[300px] md:min-h-[400px] hover:shadow-lg transition-all duration-400 ease-out",
-                      item.moderationStatus === 'pending' && isOwner(item.author, user) && "ring-2 ring-amber-300",
+                      item.moderationStatus === 'pending' && !item.isUserReported && isOwner(item.author, user) && "ring-2 ring-amber-300",
+                      item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && "ring-2 ring-orange-300",
                       item.moderationStatus === 'rejected' && isOwner(item.author, user) && "ring-2 ring-red-400"
                     )}>
                     {/* Card Header with Tabs and Action Icons - Shared Gray Background Strip */}
@@ -447,13 +522,24 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                       </div>
                     </div>
 
-                    {/* Moderation Pending Banner - Only visible to the post author */}
-                    {item.moderationStatus === 'pending' && isOwner(item.author, user) && (
+                    {/* Moderation Pending Banner (AI flagged) - Only visible to the post author */}
+                    {item.moderationStatus === 'pending' && !item.isUserReported && isOwner(item.author, user) && (
                       <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 flex items-start gap-3">
                         <span className="text-amber-500 text-xl flex-shrink-0">⏳</span>
                         <div>
                           <p className="text-amber-800 font-medium text-sm">Your post is under review</p>
                           <p className="text-amber-700 text-xs mt-0.5">It will be visible to others after the moderation process is completed.</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* User Reported Banner - Only visible to the post author */}
+                    {item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && (
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 mb-4 flex items-start gap-3">
+                        <span className="text-orange-500 text-xl flex-shrink-0">🚩</span>
+                        <div>
+                          <p className="text-orange-800 font-medium text-sm">Your post has been reported by the community</p>
+                          <p className="text-orange-700 text-xs mt-0.5">It is currently under review. Editing and deletion are disabled until the review is complete.</p>
                         </div>
                       </div>
                     )}
@@ -545,6 +631,34 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                                 onToggle={() => handleLikeToggle(item._id, item.likedBy?.includes(user?.id))}
                                 disabled={!user || item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
                               />
+                              {/* Report Button - Hidden for own content */}
+                              {user && !isOwner(item.author, user) && (
+                                <div className="relative">
+                                  <button
+                                    onClick={() => openReportModal(item)}
+                                    disabled={reportedItems.has(item._id) || reportCheckLoading === item._id}
+                                    className={cn(
+                                      "flex items-center gap-1 transition-colors",
+                                      reportedItems.has(item._id)
+                                        ? "text-gray-500 cursor-not-allowed opacity-50"
+                                        : reportCheckLoading === item._id
+                                          ? "text-gray-300 cursor-wait"
+                                          : "text-gray-200 hover:text-red-300"
+                                    )}
+                                    title={reportedItems.has(item._id) ? "Already reported" : "Report this post"}
+                                  >
+                                    <span className="text-sm">{reportCheckLoading === item._id ? '⏳' : '🚩'}</span>
+                                  </button>
+                                  {/* Tooltip for already reported */}
+                                  {reportToastItemId === item._id && (
+                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 whitespace-nowrap z-50 animate-fade-in">
+                                      <div className="bg-gray-800 text-white text-xs px-2 py-1 rounded shadow-lg">
+                                        Already reported
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
 
@@ -590,6 +704,8 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                             setShowCommentModal(true);
                           }}
                           user={user}
+                          onReportComment={openCommentReportModal}
+                          reportedComments={reportedItems}
                         />
                       ) : null}
                     </div>
@@ -641,6 +757,19 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
         author={selectedPost?.author?.name || selectedPost?.author?.userName || 'Anonymous'}
         date={selectedPost?.date}
         tags={selectedPost?.tags}
+      />
+
+      {/* Report Modal */}
+      <ReportModal
+        show={showReportModal}
+        handleClose={() => {
+          setShowReportModal(false);
+          setReportingItem(null);
+        }}
+        contentType={reportingItem?.type || 'topic'}
+        contentId={reportingItem?.id || ''}
+        contentPreview={reportingItem?.preview}
+        onSubmit={handleReportSubmit}
       />
     </div>
   );

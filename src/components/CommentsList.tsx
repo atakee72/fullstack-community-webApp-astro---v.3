@@ -9,9 +9,11 @@ interface CommentsListProps {
   postTitle?: string;
   onAddComment?: () => void;
   user?: User | null;
+  onReportComment?: (commentId: string, preview: string) => void;
+  reportedComments?: Set<string>;
 }
 
-export default function CommentsList({ postId, collectionType, postTitle, onAddComment, user }: CommentsListProps) {
+export default function CommentsList({ postId, collectionType, postTitle, onAddComment, user, onReportComment, reportedComments = new Set() }: CommentsListProps) {
   // Use React Query for fetching comments
   const { data: comments = [], isLoading: loading } = useCommentsQuery(postId);
   const deleteCommentMutation = useDeleteComment(postId);
@@ -88,20 +90,37 @@ export default function CommentsList({ postId, collectionType, postTitle, onAddC
                       )}
                     </div>
 
-                    {/* Delete button - only shown for comment owner */}
-                    {isCommentOwner && (
-                      <button
-                        onClick={() => {
-                          if (window.confirm('Delete your comment irreversibly?')) {
-                            handleDeleteComment(comment._id as string);
-                          }
-                        }}
-                        className="bg-gray-300 hover:bg-red-400 text-gray-700 hover:text-white rounded px-1.5 py-0.5 md:px-2 md:py-1 text-xs transition-colors"
-                        title="Delete comment"
-                      >
-                        ✕
-                      </button>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {/* Report button - only shown for non-owners */}
+                      {user && !isCommentOwner && onReportComment && (
+                        <button
+                          onClick={() => onReportComment(comment._id as string, comment.body.substring(0, 50) + (comment.body.length > 50 ? '...' : ''))}
+                          disabled={reportedComments.has(comment._id as string)}
+                          className={`rounded px-1.5 py-0.5 md:px-2 md:py-1 text-xs transition-colors ${
+                            reportedComments.has(comment._id as string)
+                              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                              : 'bg-gray-300 hover:bg-orange-400 text-gray-700 hover:text-white'
+                          }`}
+                          title={reportedComments.has(comment._id as string) ? "Already reported" : "Report comment"}
+                        >
+                          🚩
+                        </button>
+                      )}
+                      {/* Delete button - only shown for comment owner */}
+                      {isCommentOwner && (
+                        <button
+                          onClick={() => {
+                            if (window.confirm('Delete your comment irreversibly?')) {
+                              handleDeleteComment(comment._id as string);
+                            }
+                          }}
+                          className="bg-gray-300 hover:bg-red-400 text-gray-700 hover:text-white rounded px-1.5 py-0.5 md:px-2 md:py-1 text-xs transition-colors"
+                          title="Delete comment"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Content - Hidden by default, shown on hover with transition */}

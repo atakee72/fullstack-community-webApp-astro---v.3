@@ -5,6 +5,7 @@
 
   interface FlaggedContent {
     _id: string;
+    source: 'ai_moderation' | 'user_report';
     contentType: string;
     contentId?: string;
     title?: string;
@@ -19,6 +20,13 @@
     scores: Record<string, number>;
     highestCategory: string;
     maxScore: number;
+    // User report specific fields
+    reporterUserId?: string;
+    reporterName?: string;
+    reportReason?: string;
+    reportDetails?: string;
+    reportCount?: number;
+    // Review fields
     reviewStatus: 'pending' | 'approved' | 'rejected';
     reviewedBy?: string;
     reviewedAt?: string;
@@ -49,7 +57,18 @@
 
     try {
       const params = new URLSearchParams();
-      if (filterStatus !== 'all') params.set('reviewStatus', filterStatus);
+
+      // For queue view, always show pending items
+      // For history view, never show pending items (even with "all" filter)
+      if (viewMode === 'queue') {
+        params.set('reviewStatus', 'pending');
+      } else if (filterStatus === 'all') {
+        // History "all" = approved + rejected (NOT pending)
+        params.set('reviewStatus', 'reviewed');
+      } else {
+        params.set('reviewStatus', filterStatus);
+      }
+
       if (filterType !== 'all') params.set('contentType', filterType);
 
       const response = await fetch(`/api/admin/moderation?${params}`, { credentials: 'include' });
@@ -119,16 +138,21 @@
 
   onMount(fetchQueue);
 
-  // Update filter when view mode changes and clear stale data
+  // Track previous viewMode to detect changes
+  let previousViewMode = viewMode;
+
+  // Update filter when view mode changes
   $: {
-    if (viewMode === 'queue') {
-      filterStatus = 'pending';
-      // Clear items to prevent flash of old history data
+    if (viewMode !== previousViewMode) {
+      // View mode actually changed - clear items and update filter
+      if (viewMode === 'queue') {
+        filterStatus = 'pending';
+      } else if (viewMode === 'history') {
+        filterStatus = 'all';
+      }
+      // Clear items only on actual view change to prevent flash of stale data
       if (data) data = { ...data, items: [] };
-    } else if (viewMode === 'history' && filterStatus === 'pending') {
-      filterStatus = 'all';
-      // Clear items to prevent flash of old queue data
-      if (data) data = { ...data, items: [] };
+      previousViewMode = viewMode;
     }
   }
 
@@ -218,6 +242,7 @@
   {:else if data?.items.length === 0}
     <div class="bg-white rounded-lg p-8 shadow-md text-center">
       <p class="text-gray-500 text-lg">{viewMode === 'queue' ? 'No items in the queue' : 'No moderation history found'}</p>
+      <p class="text-xs text-gray-400 mt-2">Debug: viewMode={viewMode}, filterStatus={filterStatus}</p>
     </div>
   {:else if viewMode === 'history'}
     <!-- History Table View -->
@@ -227,6 +252,7 @@
           <thead class="bg-gray-50 border-b">
             <tr>
               <th class="px-4 py-3 text-left font-medium text-gray-700">Date</th>
+              <th class="px-4 py-3 text-left font-medium text-gray-700">Source</th>
               <th class="px-4 py-3 text-left font-medium text-gray-700">Type</th>
               <th class="px-4 py-3 text-left font-medium text-gray-700">Content</th>
               <th class="px-4 py-3 text-left font-medium text-gray-700">Author</th>
@@ -242,6 +268,15 @@
                   <div>{formatDate(item.createdAt)}</div>
                   {#if item.reviewedAt}
                     <div class="text-xs text-gray-400">Reviewed: {formatDate(item.reviewedAt)}</div>
+                  {/if}
+                </td>
+                <td class="px-4 py-3">
+                  {#if item.source === 'user_report'}
+                    <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">
+                      🚩 Report{item.reportCount && item.reportCount > 1 ? ` (${item.reportCount})` : ''}
+                    </span>
+                  {:else}
+                    <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">🤖 AI</span>
                   {/if}
                 </td>
                 <td class="px-4 py-3">
@@ -269,14 +304,25 @@
                   <div class="text-xs text-gray-500">{item.authorEmail || ''}</div>
                 </td>
                 <td class="px-4 py-3">
-                  <div class="flex flex-wrap gap-1">
-                    {#each item.flaggedCategories.slice(0, 2) as cat}
-                      <span class="px-1.5 py-0.5 text-xs rounded text-white {getCategoryColor(cat)}">{cat}</span>
-                    {/each}
-                    {#if item.flaggedCategories.length > 2}
-                      <span class="text-xs text-gray-500">+{item.flaggedCategories.length - 2}</span>
-                    {/if}
-                  </div>
+                  {#if item.source === 'user_report'}
+                    <div class="space-y-1">
+                      <span class="px-1.5 py-0.5 text-xs rounded bg-orange-500 text-white">
+                        {item.reportReason?.replace('_', ' ') || 'Other'}
+                      </span>
+                      {#if item.reporterName}
+                        <div class="text-[10px] text-gray-400">by {item.reporterName}</div>
+                      {/if}
+                    </div>
+                  {:else}
+                    <div class="flex flex-wrap gap-1">
+                      {#each item.flaggedCategories.slice(0, 2) as cat}
+                        <span class="px-1.5 py-0.5 text-xs rounded text-white {getCategoryColor(cat)}">{cat}</span>
+                      {/each}
+                      {#if item.flaggedCategories.length > 2}
+                        <span class="text-xs text-gray-500">+{item.flaggedCategories.length - 2}</span>
+                      {/if}
+                    </div>
+                  {/if}
                 </td>
                 <td class="px-4 py-3">
                   {#if item.reviewStatus === 'approved'}
@@ -313,10 +359,14 @@
         <div class="bg-white rounded-lg shadow-md overflow-hidden {item.decision === 'urgent_review' ? 'ring-2 ring-red-500' : ''}">
           <!-- Header -->
           <div class="bg-gray-50 px-4 py-3 border-b flex flex-wrap items-center gap-2">
-            {#if item.decision === 'urgent_review'}
+            {#if item.source === 'user_report'}
+              <span class="px-2 py-1 text-xs font-bold bg-orange-500 text-white rounded-full">
+                🚩 User Report{item.reportCount && item.reportCount > 1 ? ` (${item.reportCount})` : ''}
+              </span>
+            {:else if item.decision === 'urgent_review'}
               <span class="px-2 py-1 text-xs font-bold bg-red-600 text-white rounded-full animate-pulse">URGENT</span>
             {:else}
-              <span class="px-2 py-1 text-xs font-medium bg-yellow-500 text-white rounded-full">Pending</span>
+              <span class="px-2 py-1 text-xs font-medium bg-yellow-500 text-white rounded-full">AI Flagged</span>
             {/if}
             <span class="px-2 py-1 text-xs font-medium bg-blue-500 text-white rounded-full">{item.contentType}</span>
             <span class="text-sm text-gray-500">by {item.authorName || item.authorEmail || 'Unknown'}</span>
@@ -348,50 +398,105 @@
             {/if}
           </div>
 
-          <!-- Flagged Categories -->
+          <!-- Flagged Categories / Report Reason -->
           <div class="px-4 pb-3">
-            <p class="text-sm text-gray-500 mb-2">Flagged for:</p>
-            <div class="flex flex-wrap gap-2">
-              {#each item.flaggedCategories as cat}
-                <span class="px-2 py-1 text-xs font-medium rounded-full text-white {getCategoryColor(cat)}">
-                  {cat} ({((item.scores[cat] ?? 0) * 100).toFixed(0)}%)
+            {#if item.source === 'user_report'}
+              <p class="text-sm text-gray-500 mb-2">Reported for:</p>
+              <div class="space-y-2">
+                <span class="px-2 py-1 text-xs font-medium rounded-full text-white bg-orange-500">
+                  {item.reportReason?.replace('_', ' ') || 'Other'}
                 </span>
-              {/each}
-            </div>
+                {#if item.reportDetails}
+                  <p class="text-xs text-gray-500 font-medium mt-1">Reporter's reasoning:</p>
+                  <p class="text-sm text-gray-600 italic bg-gray-100 p-2 rounded">"{item.reportDetails}"</p>
+                {/if}
+                <p class="text-xs text-gray-400">
+                  Reported by: {item.reporterName || 'Anonymous user'}
+                </p>
+              </div>
+            {:else}
+              <p class="text-sm text-gray-500 mb-2">Flagged for:</p>
+              <div class="flex flex-wrap gap-2">
+                {#each item.flaggedCategories as cat}
+                  <span class="px-2 py-1 text-xs font-medium rounded-full text-white {getCategoryColor(cat)}">
+                    {cat} ({((item.scores[cat] ?? 0) * 100).toFixed(0)}%)
+                  </span>
+                {/each}
+              </div>
+            {/if}
           </div>
 
           <!-- Actions -->
+          <!-- TODO: Notify reporter of outcome (future feature)
+               When a user report is reviewed, the reporter should be notified:
+               - If dismissed: "Your report was reviewed. The content was found to comply with guidelines."
+               - If removed: "Thank you, the reported content has been removed."
+               Options: Email notification, in-app notification badge, or notification center -->
           {#if item.reviewStatus === 'pending'}
             <div class="bg-gray-50 px-4 py-3 border-t flex flex-wrap gap-2">
-              <button
-                on:click={() => handleReview(item._id, 'approve')}
-                disabled={actionLoading === item._id}
-                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
-              >
-                {actionLoading === item._id ? '...' : '✓ Approve'}
-              </button>
-              <button
-                on:click={() => {
-                  const warning = prompt('Warning text (optional):');
-                  if (warning !== null) handleReview(item._id, 'approve_with_warning', warning || 'Sensitive content');
-                }}
-                disabled={actionLoading === item._id}
-                class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50 font-medium"
-              >
-                ⚠ With Warning
-              </button>
-              <button
-                on:click={() => {
-                  const reason = prompt('Rejection reason (shown to user):');
-                  if (reason !== null) {
-                    handleReview(item._id, 'reject', undefined, reason || 'Content violated community guidelines');
-                  }
-                }}
-                disabled={actionLoading === item._id}
-                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 font-medium"
-              >
-                ✕ Reject
-              </button>
+              {#if item.source === 'user_report'}
+                <!-- User Report Actions -->
+                <button
+                  on:click={() => handleReview(item._id, 'approve')}
+                  disabled={actionLoading === item._id}
+                  class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 font-medium"
+                >
+                  {actionLoading === item._id ? '...' : '✗ Dismiss User Report'}
+                </button>
+                <button
+                  on:click={() => {
+                    const warning = prompt('Warning text to show on content:');
+                    if (warning !== null) handleReview(item._id, 'approve_with_warning', warning || 'Sensitive content');
+                  }}
+                  disabled={actionLoading === item._id}
+                  class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50 font-medium"
+                >
+                  ⚠ Add Warning
+                </button>
+                <button
+                  on:click={() => {
+                    const reason = prompt('Reason for removal (shown to content author):');
+                    if (reason !== null) {
+                      handleReview(item._id, 'reject', undefined, reason || 'Content violated community guidelines');
+                    }
+                  }}
+                  disabled={actionLoading === item._id}
+                  class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 font-medium"
+                >
+                  🗑️ Remove Reported Content
+                </button>
+              {:else}
+                <!-- AI Moderation Actions -->
+                <button
+                  on:click={() => handleReview(item._id, 'approve')}
+                  disabled={actionLoading === item._id}
+                  class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
+                >
+                  {actionLoading === item._id ? '...' : '✓ Approve'}
+                </button>
+                <button
+                  on:click={() => {
+                    const warning = prompt('Warning text (optional):');
+                    if (warning !== null) handleReview(item._id, 'approve_with_warning', warning || 'Sensitive content');
+                  }}
+                  disabled={actionLoading === item._id}
+                  class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50 font-medium"
+                >
+                  ⚠ With Warning
+                </button>
+                <button
+                  on:click={() => {
+                    const reason = prompt('Rejection reason (shown to user):');
+                    if (reason !== null) {
+                      handleReview(item._id, 'reject', undefined, reason || 'Content violated community guidelines');
+                    }
+                  }}
+                  disabled={actionLoading === item._id}
+                  class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 font-medium"
+                >
+                  ✕ Reject
+                </button>
+              {/if}
             </div>
           {:else}
             <div class="bg-gray-50 px-4 py-3 border-t text-sm text-gray-500">

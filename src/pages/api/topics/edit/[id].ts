@@ -39,9 +39,6 @@ export const PUT: APIRoute = async ({ request, params }) => {
 
     const { title, body, tags } = validation.data;
 
-    // Build moderation text including title, body, and tags
-    const tagsText = tags?.length ? `\nTags: ${tags.join(', ')}` : '';
-
     // Connect to database
     const db = await connectDB();
     const topicsCollection = db.collection<Topic>('topics');
@@ -65,8 +62,20 @@ export const PUT: APIRoute = async ({ request, params }) => {
     }
 
     // Run content moderation on edited content (FAIL-SAFE: queues for review on any error)
-    // Include title, body, AND tags to catch inappropriate content in all fields
-    const moderationResult = await moderateText(`${title}\n\n${body}${tagsText}`);
+    // Moderate main content (title + body)
+    const mainModerationResult = await moderateText(`${title}\n\n${body}`);
+
+    // Moderate tags SEPARATELY to catch profanity that might get diluted in main content
+    let tagsModerationResult = null;
+    if (tags?.length) {
+      tagsModerationResult = await moderateText(tags.join(' '));
+    }
+
+    // Combine results: flag if EITHER main content OR tags need review
+    const needsReview = mainModerationResult.needsReview || (tagsModerationResult?.needsReview ?? false);
+    const moderationResult = needsReview
+      ? (tagsModerationResult?.needsReview ? tagsModerationResult : mainModerationResult)
+      : mainModerationResult;
 
     // Determine new moderation status
     // If content is flagged, it goes back to pending regardless of previous status

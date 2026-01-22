@@ -13,6 +13,13 @@ import { ReviewActionSchema } from '../../../../schemas/moderation.schema';
 
 const MAX_STRIKES = 3;
 
+// TODO: Implement ban enforcement (future feature)
+// When user is banned (isBanned: true), we need to:
+// 1. Check isBanned in auth callback → reject login with "Account suspended" message
+// 2. Add middleware/check to content creation APIs (topics, comments, etc.)
+// 3. Optionally force logout / invalidate existing sessions immediately
+// 4. Show "Your account has been suspended" banner to banned users
+
 // TODO: Add proper admin role check (same as index.ts)
 const isAdmin = (userId: string): boolean => {
   const ADMIN_USER_IDS: string[] = [];
@@ -128,7 +135,10 @@ export const POST: APIRoute = async ({ request }) => {
 
         await contentCollection.updateOne(
           { _id: new ObjectId(flaggedContent.contentId) },
-          { $set: updateData }
+          {
+            $set: updateData,
+            $unset: { isUserReported: '' }  // Clear user reported flag after review
+          }
         );
       }
 
