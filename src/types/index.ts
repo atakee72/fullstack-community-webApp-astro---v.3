@@ -79,6 +79,8 @@ export interface Comment {
   // Moderation fields
   moderationStatus?: 'approved' | 'pending' | 'rejected';
   isUserReported?: boolean; // True if reported by community
+  hasWarningLabel?: boolean; // Approved with content warning
+  warningText?: string; // Warning message to display
   // Timestamps
   createdAt?: Date;
   updatedAt?: Date;

@@ -84,9 +84,10 @@ export const GET: APIRoute = async ({ request, url }) => {
     ]);
 
     // Get counts by status for dashboard
-    const [pendingCount, approvedCount, rejectedCount, urgentCount] = await Promise.all([
+    const [pendingCount, approvedCount, approvedWithWarningCount, rejectedCount, urgentCount] = await Promise.all([
       flaggedCollection.countDocuments({ reviewStatus: 'pending' }),
       flaggedCollection.countDocuments({ reviewStatus: 'approved' }),
+      flaggedCollection.countDocuments({ reviewStatus: 'approved', hasWarningLabel: true }),
       flaggedCollection.countDocuments({ reviewStatus: 'rejected' }),
       flaggedCollection.countDocuments({ reviewStatus: 'pending', decision: 'urgent_review' })
     ]);
@@ -102,6 +103,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       counts: {
         pending: pendingCount,
         approved: approvedCount,
+        approvedWithWarning: approvedWithWarningCount,
         rejected: rejectedCount,
         urgent: urgentCount
       }

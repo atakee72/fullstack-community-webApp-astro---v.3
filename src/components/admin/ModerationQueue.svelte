@@ -159,9 +159,9 @@
   $: if (filterStatus || filterType) fetchQueue();
 </script>
 
-<div class="space-y-6">
+<div class="space-y-6 max-w-6xl mx-auto">
   <!-- Stats Cards -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
     <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-red-500">
       <p class="text-sm text-gray-500">Urgent</p>
       <p class="text-2xl font-bold text-red-600">{data?.counts.urgent ?? 0}</p>
@@ -173,6 +173,10 @@
     <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-green-500">
       <p class="text-sm text-gray-500">Approved</p>
       <p class="text-2xl font-bold text-green-600">{data?.counts.approved ?? 0}</p>
+    </div>
+    <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-yellow-500">
+      <p class="text-sm text-gray-500">With Warning</p>
+      <p class="text-2xl font-bold text-yellow-600">{data?.counts.approvedWithWarning ?? 0}</p>
     </div>
     <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-gray-500">
       <p class="text-sm text-gray-500">Rejected</p>
@@ -209,17 +213,47 @@
           </select>
         </div>
       {/if}
+      <!-- Content Type Filter Tabs -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Content Type</label>
-        <select bind:value={filterType} class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#814256]">
-          <option value="all">All Types</option>
-          <option value="topic">Topics</option>
-          <option value="announcement">Announcements</option>
-          <option value="recommendation">Recommendations</option>
-          <option value="comment">Comments</option>
-          <option value="event">Events</option>
-          <option value="marketplace">Marketplace</option>
-        </select>
+        <div class="flex flex-wrap gap-1">
+          <button
+            on:click={() => filterType = 'all'}
+            class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {filterType === 'all' ? 'bg-[#4b9aaa] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+          >
+            All
+          </button>
+          <button
+            on:click={() => filterType = 'topic'}
+            class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {filterType === 'topic' ? 'bg-[#4b9aaa] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+          >
+            Discussions
+          </button>
+          <button
+            on:click={() => filterType = 'comment'}
+            class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {filterType === 'comment' ? 'bg-[#4b9aaa] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+          >
+            Comments
+          </button>
+          <button
+            on:click={() => filterType = 'announcement'}
+            class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {filterType === 'announcement' ? 'bg-[#4b9aaa] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+          >
+            Announcements
+          </button>
+          <button
+            on:click={() => filterType = 'event'}
+            class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {filterType === 'event' ? 'bg-[#4b9aaa] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+          >
+            Events
+          </button>
+          <button
+            on:click={() => filterType = 'recommendation'}
+            class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {filterType === 'recommendation' ? 'bg-[#4b9aaa] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+          >
+            Recommendations
+          </button>
+        </div>
       </div>
       <div class="flex items-end">
         <button on:click={fetchQueue} disabled={loading} class="px-4 py-2 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a8999] disabled:opacity-50">

@@ -140,6 +140,52 @@ export const POST: APIRoute = async ({ request }) => {
             $unset: { isUserReported: '' }  // Clear user reported flag after review
           }
         );
+
+        // Handle comment array updates for parent posts
+        if (flaggedContent.contentType === 'comment') {
+          const flaggedAny = flaggedContent as any;
+
+          if (!isRejection) {
+            // APPROVED: Add comment to parent's comments array (if not already there)
+            // Use stored parent info from AI flagging, or fetch from comment itself
+            let parentPostId = flaggedAny.parentPostId;
+            let parentCollection = flaggedAny.parentCollection;
+
+            if (!parentPostId) {
+              // User-reported comment - get parent info from the comment document
+              const comment = await contentCollection.findOne({ _id: new ObjectId(flaggedContent.contentId) });
+              if (comment && comment.relevantPostId) {
+                parentPostId = comment.relevantPostId.toString();
+                // Determine collection from context (default to topics)
+                parentCollection = 'topics';
+              }
+            }
+
+            if (parentPostId && parentCollection) {
+              const parentCollectionRef = db.collection(parentCollection);
+              await parentCollectionRef.updateOne(
+                { _id: new ObjectId(parentPostId) },
+                {
+                  $addToSet: { comments: new ObjectId(flaggedContent.contentId) },
+                  $set: { updatedAt: new Date() }
+                }
+              );
+            }
+          } else {
+            // REJECTED: Remove comment from parent's comments array
+            const comment = await contentCollection.findOne({ _id: new ObjectId(flaggedContent.contentId) });
+            if (comment && comment.relevantPostId) {
+              // Try to remove from all possible parent collections
+              const parentCollections = ['topics', 'announcements', 'recommendations', 'events'];
+              for (const pc of parentCollections) {
+                await db.collection(pc).updateOne(
+                  { _id: comment.relevantPostId },
+                  { $pull: { comments: new ObjectId(flaggedContent.contentId) } }
+                );
+              }
+            }
+          }
+        }
       }
 
       // Handle strike system on rejection

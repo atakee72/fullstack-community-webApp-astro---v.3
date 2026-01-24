@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
-import type { FlaggedContent, Topic, Comment } from '../../../types';
+import type { FlaggedContent, Topic, Comment, Announcement, Recommendation, Event } from '../../../types';
 import { ReportContentSchema, REPORT_REASON_LABELS } from '../../../schemas/moderation.schema';
 import { parseRequestBody } from '../../../schemas/validation.utils';
 
@@ -33,9 +33,12 @@ export const POST: APIRoute = async ({ request }) => {
     const db = await connectDB();
     const topicsCollection = db.collection<Topic>('topics');
     const commentsCollection = db.collection<Comment>('comments');
+    const announcementsCollection = db.collection<Announcement>('announcements');
+    const recommendationsCollection = db.collection<Recommendation>('recommendations');
+    const eventsCollection = db.collection<Event>('events');
 
     // Get the original content to check author and capture snapshot
-    let originalContent: Topic | Comment | null = null;
+    let originalContent: Topic | Comment | Announcement | Recommendation | null = null;
     let authorId: string | null = null;
     let contentSnapshot: { title?: string; body?: string; tags?: string[] } = {};
 
@@ -63,6 +66,47 @@ export const POST: APIRoute = async ({ request }) => {
           ? String(author._id)
           : String(author);
         contentSnapshot = {
+          body: originalContent.body
+        };
+      }
+    } else if (contentType === 'announcement') {
+      originalContent = await announcementsCollection.findOne({ _id: new ObjectId(contentId) });
+
+      if (originalContent) {
+        const author = originalContent.author;
+        authorId = typeof author === 'object' && author !== null && '_id' in author
+          ? String(author._id)
+          : String(author);
+        contentSnapshot = {
+          title: originalContent.title,
+          body: originalContent.body,
+          tags: originalContent.tags
+        };
+      }
+    } else if (contentType === 'recommendation') {
+      originalContent = await recommendationsCollection.findOne({ _id: new ObjectId(contentId) });
+
+      if (originalContent) {
+        const author = originalContent.author;
+        authorId = typeof author === 'object' && author !== null && '_id' in author
+          ? String(author._id)
+          : String(author);
+        contentSnapshot = {
+          title: originalContent.title,
+          body: originalContent.body,
+          tags: originalContent.tags
+        };
+      }
+    } else if (contentType === 'event') {
+      originalContent = await eventsCollection.findOne({ _id: new ObjectId(contentId) });
+
+      if (originalContent) {
+        const author = originalContent.author;
+        authorId = typeof author === 'object' && author !== null && '_id' in author
+          ? String(author._id)
+          : String(author);
+        contentSnapshot = {
+          title: originalContent.title,
           body: originalContent.body
         };
       }
@@ -166,18 +210,17 @@ export const POST: APIRoute = async ({ request }) => {
     await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
 
     // Mark the original content as pending review
-    if (contentType === 'topic') {
-      await topicsCollection.updateOne(
-        { _id: new ObjectId(contentId) },
-        {
-          $set: {
-            moderationStatus: 'pending',
-            isUserReported: true
-          }
-        }
-      );
-    } else if (contentType === 'comment') {
-      await commentsCollection.updateOne(
+    const collectionMap: Record<string, any> = {
+      topic: topicsCollection,
+      comment: commentsCollection,
+      announcement: announcementsCollection,
+      recommendation: recommendationsCollection,
+      event: eventsCollection
+    };
+
+    const targetCollection = collectionMap[contentType];
+    if (targetCollection) {
+      await targetCollection.updateOne(
         { _id: new ObjectId(contentId) },
         {
           $set: {

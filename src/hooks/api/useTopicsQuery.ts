@@ -68,8 +68,8 @@ export function useTopicsQuery(
   return useQuery({
     queryKey: [type, options],
     queryFn: () => fetchTopics(type, options),
-    // Keep data cached for 5 minutes - enables instant tab switching
-    staleTime: 5 * 60 * 1000,
+    // Keep data cached for 1 minute - balances freshness with API efficiency
+    staleTime: 60 * 1000,
     // Refetch when window regains focus
     refetchOnWindowFocus: true,
   });

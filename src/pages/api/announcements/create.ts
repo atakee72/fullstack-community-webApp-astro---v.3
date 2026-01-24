@@ -2,9 +2,10 @@ import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
-import type { Announcement } from '../../../types';
+import type { Announcement, FlaggedContent } from '../../../types';
 import { AnnouncementCreateSchema } from '../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../schemas/validation.utils';
+import { moderateText, createFlaggedContentRecord } from '../../../lib/moderation';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -29,26 +30,63 @@ export const POST: APIRoute = async ({ request }) => {
 
     const { title, body, tags } = validation.data;
 
+    // Run content moderation (FAIL-SAFE: queues for review on any error)
+    // Moderate main content (title + body)
+    const mainModerationResult = await moderateText(`${title}\n\n${body}`);
+
+    // Moderate tags SEPARATELY to catch profanity that might get diluted in main content
+    let tagsModerationResult = null;
+    if (tags?.length) {
+      tagsModerationResult = await moderateText(tags.join(' '));
+    }
+
+    // Combine results: flag if EITHER main content OR tags need review
+    const needsReview = mainModerationResult.needsReview || (tagsModerationResult?.needsReview ?? false);
+    const moderationResult = needsReview
+      ? (tagsModerationResult?.needsReview ? tagsModerationResult : mainModerationResult)
+      : mainModerationResult;
+
     // Connect to database
     const db = await connectDB();
-    const announcementsCollection = db.collection<any>('announcements');
+    const announcementsCollection = db.collection<Announcement>('announcements');
+
+    // Determine moderation status
+    const moderationStatus = moderationResult.canPublish ? 'approved' : 'pending';
 
     // Create new announcement
-    const newAnnouncement = {
+    const newAnnouncement: Announcement = {
       title,
       body,
-      author: userId, // Save author as ID string
+      author: userId as any, // Save author as ID string
       tags: tags || [],
       comments: [],
       views: 0,
       likes: 0,
       likedBy: [],
       date: Date.now(),
+      moderationStatus,
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
     const result = await announcementsCollection.insertOne(newAnnouncement);
+
+    // If content needs review, create a flagged content record
+    if (moderationResult.needsReview) {
+      const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
+      const flaggedRecord = createFlaggedContentRecord(
+        'announcement',
+        { title, body, tags },
+        {
+          id: userId,
+          name: session.user.name || undefined,
+          email: session.user.email || undefined
+        },
+        moderationResult
+      );
+      flaggedRecord.contentId = result.insertedId.toString();
+      await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
+    }
 
     // Fetch author info to return with the created announcement
     const usersCollection = db.collection('users');
@@ -62,6 +100,21 @@ export const POST: APIRoute = async ({ request }) => {
       _id: result.insertedId,
       author: author || userId // Return populated author or fallback to ID
     };
+
+    // Return appropriate response based on moderation result
+    if (moderationResult.needsReview) {
+      return new Response(
+        JSON.stringify({
+          announcement: createdAnnouncement,
+          message: moderationResult.userMessage,
+          moderationStatus: 'pending'
+        }),
+        {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     return new Response(
       JSON.stringify({

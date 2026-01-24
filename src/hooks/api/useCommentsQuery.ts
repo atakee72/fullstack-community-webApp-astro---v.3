@@ -26,12 +26,19 @@ export function useCommentsQuery(postId: string) {
   });
 }
 
+// Response type for creating a comment
+export interface CreateCommentResponse {
+  comment: Comment;
+  message?: string;
+  moderationStatus?: 'pending' | 'approved';
+}
+
 // Create a new comment
 async function createComment(data: {
   body: string;
   topicId: string;
   collectionType: 'topics' | 'announcements' | 'recommendations' | 'events';
-}) {
+}): Promise<CreateCommentResponse> {
   const response = await fetch(`${API_URL}/comments/create`, {
     method: 'POST',
     headers: {
@@ -47,7 +54,12 @@ async function createComment(data: {
   }
 
   const result = await response.json();
-  return result.comment;
+  // Return full response including moderation info
+  return {
+    comment: result.comment,
+    message: result.message,
+    moderationStatus: result.moderationStatus
+  };
 }
 
 // Hook for creating comments
@@ -56,13 +68,13 @@ export function useCreateComment() {
 
   return useMutation({
     mutationFn: createComment,
-    onSuccess: (newComment, variables) => {
-      // Add the new comment to the cache
+    onSuccess: (response, variables) => {
+      // Add the new comment to the cache (user's own pending comments are visible to them)
       queryClient.setQueryData(
         ['comments', variables.topicId],
         (old: Comment[] | undefined) => {
-          if (!old) return [newComment];
-          return [...old, newComment];
+          if (!old) return [response.comment];
+          return [...old, response.comment];
         }
       );
 

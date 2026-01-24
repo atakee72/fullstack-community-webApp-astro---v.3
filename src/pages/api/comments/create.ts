@@ -2,9 +2,10 @@ import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
-import type { Comment } from '../../../types';
+import type { Comment, FlaggedContent } from '../../../types';
 import { CommentCreateSchema } from '../../../schemas/comment.schema';
 import { parseRequestBody } from '../../../schemas/validation.utils';
+import { moderateText, createFlaggedContentRecord } from '../../../lib/moderation';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -28,6 +29,10 @@ export const POST: APIRoute = async ({ request }) => {
 
     const { body, topicId, collectionType } = validation.data;
 
+    // Run AI content moderation
+    const moderationResult = await moderateText(body);
+    const moderationStatus = moderationResult.canPublish ? 'approved' : 'pending';
+
     // Connect to database
     const db = await connectDB();
     const commentsCollection = db.collection<Comment>('comments');
@@ -39,14 +44,15 @@ export const POST: APIRoute = async ({ request }) => {
       relevantPostId: new ObjectId(topicId),
       date: Date.now(),
       upvotes: 0,
+      moderationStatus,
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
     const result = await commentsCollection.insertOne(newComment);
 
-    // Update the parent post's comments array
-    const collection = collectionType === 'announcements'
+    // Determine parent collection name
+    const parentCollection = collectionType === 'announcements'
       ? 'announcements'
       : collectionType === 'recommendations'
         ? 'recommendations'
@@ -54,14 +60,36 @@ export const POST: APIRoute = async ({ request }) => {
           ? 'events'
           : 'topics';
 
-    const postsCollection = db.collection(collection);
-    await postsCollection.updateOne(
-      { _id: new ObjectId(topicId) },
-      {
-        $push: { comments: result.insertedId },
-        $set: { updatedAt: new Date() }
-      }
-    );
+    // If content needs review, create a flagged content record
+    // Don't add to parent's comments array yet - will be added when approved
+    if (moderationResult.needsReview) {
+      const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
+      const flaggedRecord = createFlaggedContentRecord(
+        'comment',
+        { body },
+        {
+          id: userId,
+          name: session.user.name || undefined,
+          email: session.user.email || undefined
+        },
+        moderationResult
+      );
+      flaggedRecord.contentId = result.insertedId.toString();
+      // Store parent info so we can add to comments array when approved
+      (flaggedRecord as any).parentPostId = topicId;
+      (flaggedRecord as any).parentCollection = parentCollection;
+      await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
+    } else {
+      // Only add to parent's comments array if approved immediately
+      const postsCollection = db.collection(parentCollection);
+      await postsCollection.updateOne(
+        { _id: new ObjectId(topicId) },
+        {
+          $push: { comments: result.insertedId },
+          $set: { updatedAt: new Date() }
+        }
+      );
+    }
 
     // Fetch author info to return with the created comment
     const usersCollection = db.collection('users');
@@ -75,6 +103,21 @@ export const POST: APIRoute = async ({ request }) => {
       _id: result.insertedId,
       author: author || userId // Return populated author or fallback to ID
     };
+
+    // Return appropriate response based on moderation result
+    if (moderationResult.needsReview) {
+      return new Response(
+        JSON.stringify({
+          comment: createdComment,
+          message: moderationResult.userMessage,
+          moderationStatus: 'pending'
+        }),
+        {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     return new Response(
       JSON.stringify({

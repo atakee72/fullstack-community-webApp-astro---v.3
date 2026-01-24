@@ -107,6 +107,87 @@ const URGENT_CATEGORIES = [
 ];
 
 // ============================================================================
+// TURKISH PROFANITY FILTER
+// ============================================================================
+
+// Turkish swear words and offensive terms (expand as needed)
+// Note: OpenAI's moderation is English-focused, so we need this for Turkish content
+const TURKISH_BLOCKLIST = [
+  // Common Turkish swear words (add more as needed)
+  'amk', 'aq', 'amına', 'amina', 'amını', 'amini',
+  'orospu', 'oç', 'oc', 'oçlar',
+  'siktir', 'sikeyim', 'sikerim', 'siktirgit', 'sik',
+  'piç', 'pic', 'piçlik',
+  'göt', 'got', 'götün', 'gotun',
+  'yarak', 'yarrak', 'yarrağ',
+  'taşak', 'tasak', 'taşşak',
+  'meme', // context-dependent but often offensive
+  'ibne', 'ibné',
+  'kahpe', 'kaltak',
+  'bok', 'boktan',
+  'mal', 'gerizekalı', 'gerizekali', 'salak', 'aptal', 'dangalak',
+  'haysiyetsiz', 'şerefsiz', 'serefsiz', 'namussuz',
+  'gavat', 'pezevenk',
+  'lan', // context-dependent, can be rude
+];
+
+/**
+ * Check text for Turkish profanity
+ * Returns matched words if found, empty array if clean
+ */
+function checkTurkishProfanity(text: string): string[] {
+  if (!text) return [];
+
+  const normalizedText = text
+    .toLowerCase()
+    .replace(/[ıİ]/g, 'i')
+    .replace(/[şŞ]/g, 's')
+    .replace(/[ğĞ]/g, 'g')
+    .replace(/[üÜ]/g, 'u')
+    .replace(/[öÖ]/g, 'o')
+    .replace(/[çÇ]/g, 'c');
+
+  const foundWords: string[] = [];
+
+  for (const word of TURKISH_BLOCKLIST) {
+    const normalizedWord = word
+      .toLowerCase()
+      .replace(/[ıİ]/g, 'i')
+      .replace(/[şŞ]/g, 's')
+      .replace(/[ğĞ]/g, 'g')
+      .replace(/[üÜ]/g, 'u')
+      .replace(/[öÖ]/g, 'o')
+      .replace(/[çÇ]/g, 'c');
+
+    // Check for word boundary match (not just substring)
+    const regex = new RegExp(`\\b${normalizedWord}\\b`, 'gi');
+    if (regex.test(normalizedText)) {
+      foundWords.push(word);
+    }
+  }
+
+  return foundWords;
+}
+
+/**
+ * Create a moderation result for Turkish profanity detection
+ */
+function createTurkishProfanityResult(foundWords: string[]): ModerationResult {
+  return {
+    decision: 'pending_review',
+    canPublish: false,
+    needsReview: true,
+    isUrgent: false,
+    flaggedCategories: ['turkish_profanity'],
+    scores: { harassment: 0.8 }, // Map to harassment category
+    highestCategory: 'turkish_profanity',
+    maxScore: 0.8,
+    userMessage: 'Your submission is under review for potentially inappropriate language.',
+    adminReason: `Turkish profanity detected: ${foundWords.join(', ')}`,
+  };
+}
+
+// ============================================================================
 // MAIN MODERATION FUNCTION
 // ============================================================================
 
@@ -120,6 +201,15 @@ export async function moderateContent(input: ModerationInput): Promise<Moderatio
   if (!apiKey) {
     console.error('[Moderation] OPENAI_API_KEY not set - FAIL-SAFE: queuing for manual review');
     return createFailSafeResult('API key not configured');
+  }
+
+  // Check for Turkish profanity FIRST (before OpenAI API call)
+  if (input.text) {
+    const turkishProfanity = checkTurkishProfanity(input.text);
+    if (turkishProfanity.length > 0) {
+      console.log('[Moderation] Turkish profanity detected:', turkishProfanity);
+      return createTurkishProfanityResult(turkishProfanity);
+    }
   }
 
   // Build input array for OpenAI
@@ -286,7 +376,7 @@ function createFailSafeResult(reason: string): ModerationResult {
     scores: {},
     highestCategory: 'moderation_error',
     maxScore: 0,
-    userMessage: 'Your content is being reviewed and will be published shortly. Thank you for your patience!',
+    userMessage: 'Your submission is under review by our moderation team.',
     adminReason: `FAIL-SAFE: ${reason} - Requires manual review`,
   };
 }
@@ -300,9 +390,9 @@ function getUserMessage(decision: ModerationDecision): string {
     case 'approved':
       return '';
     case 'pending_review':
-      return 'Your content is being reviewed and will be published shortly. Thank you for your patience!';
+      return 'Your submission is under review by our moderation team.';
     case 'urgent_review':
-      return 'Your content is being reviewed. A moderator will check it soon.';
+      return 'Your submission is under review. A moderator will check it soon.';
     default:
       return '';
   }

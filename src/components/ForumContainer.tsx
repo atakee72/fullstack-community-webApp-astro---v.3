@@ -244,7 +244,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   };
 
   // Handle report submission
-  const handleReportSubmit = async (data: { contentId: string; contentType: 'topic' | 'comment'; reason: string; details?: string }) => {
+  const handleReportSubmit = async (data: { contentId: string; contentType: 'topic' | 'comment' | 'announcement' | 'recommendation'; reason: string; details?: string }) => {
     try {
       const response = await fetch('/api/reports/submit', {
         method: 'POST',
@@ -301,9 +301,11 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     }
   };
 
-  // Open report modal for a post
+  // Open report modal for a post (use correct contentType based on current collection)
   const openReportModal = (item: any) => {
-    checkAndOpenReportModal(item._id, 'topic', item.title);
+    // Map collection name to singular content type: topics -> topic, announcements -> announcement, etc.
+    const contentType = collectionType.slice(0, -1) as 'topic' | 'announcement' | 'recommendation';
+    checkAndOpenReportModal(item._id, contentType, item.title);
   };
 
   // Open report modal for a comment

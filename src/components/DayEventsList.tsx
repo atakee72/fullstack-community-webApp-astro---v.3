@@ -207,15 +207,44 @@ export default function DayEventsList({
               'other': '#6c757d'
             };
 
+            // Moderation status checks
+            const isPending = event.moderationStatus === 'pending' && !event.isUserReported;
+            const isReported = event.moderationStatus === 'pending' && event.isUserReported;
+            const isRejected = event.moderationStatus === 'rejected';
+            const showModerationBanner = isAuthor && (isPending || isReported || isRejected);
+
+            // Determine border color based on moderation status
+            const getBorderClass = () => {
+              if (!isAuthor) return 'border-gray-200';
+              if (isRejected) return 'border-red-300 bg-red-50/50';
+              if (isPending) return 'border-amber-300 bg-amber-50/50';
+              if (isReported) return 'border-orange-300 bg-orange-50/50';
+              return 'border-gray-200';
+            };
+
             return (
               <div
                 key={event._id as string}
                 className={`
                   group relative border-2 rounded-md md:rounded-lg p-1.5 md:p-2 transition-all
                   ${isDeleting ? 'opacity-50 pointer-events-none' : 'hover:border-[#4b9aaa] hover:shadow-md cursor-pointer'}
-                  border-gray-200
+                  ${getBorderClass()}
                 `}
               >
+                {/* Moderation Status Banner - Only visible to author */}
+                {showModerationBanner && (
+                  <div className={`
+                    mb-1.5 px-2 py-1 rounded text-[10px] md:text-xs flex items-center gap-1.5
+                    ${isRejected ? 'bg-red-100 text-red-700' : ''}
+                    ${isPending ? 'bg-amber-100 text-amber-700' : ''}
+                    ${isReported ? 'bg-orange-100 text-orange-700' : ''}
+                  `}>
+                    {isPending && <><span>⏳</span><span className="font-medium">Under review</span></>}
+                    {isReported && <><span>🚩</span><span className="font-medium">Reported - under review</span></>}
+                    {isRejected && <><span>✕</span><span className="font-medium">Removed by moderation</span></>}
+                  </div>
+                )}
+
                 {/* Event Content - Clickable */}
                 <button
                   onClick={() => onEventClick(event)}
@@ -243,9 +272,16 @@ export default function DayEventsList({
                   </div>
 
                   {/* Title */}
-                  <h4 className="font-semibold text-xs md:text-sm text-gray-800 mb-0.5 md:mb-1 line-clamp-2">
+                  <h4 className="font-semibold text-xs md:text-sm text-gray-800 mb-0.5 line-clamp-2">
                     {event.title}
                   </h4>
+
+                  {/* Author */}
+                  <p className="text-[10px] md:text-xs text-gray-500 mb-0.5 md:mb-1">
+                    by {typeof event.author === 'object'
+                      ? (event.author?.userName || event.author?.name || 'Unknown')
+                      : 'Unknown'}
+                  </p>
 
                   {/* Category Badge */}
                   <div className="flex items-center gap-1.5 md:gap-2">
@@ -258,13 +294,13 @@ export default function DayEventsList({
 
                     {/* Stats */}
                     <div className="flex items-center gap-1.5 md:gap-2 text-[8px] md:text-[10px] text-gray-500">
-                      <span>💬 {event.comments?.length || 0} comments</span>
+                      <span>💬 {event.comments?.length || 0}</span>
                     </div>
                   </div>
                 </button>
 
-                {/* Action Icons - Only for author */}
-                {isAuthor && (
+                {/* Action Icons - Only for author, disabled when under moderation */}
+                {isAuthor && !showModerationBanner && (
                   <div className="absolute top-1 md:top-1.5 right-1 md:right-1.5 flex gap-0.5 z-10">
                     <button
                       onClick={(e) => {

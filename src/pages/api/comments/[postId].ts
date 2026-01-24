@@ -1,8 +1,9 @@
 import type { APIRoute } from 'astro';
+import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, request }) => {
   try {
     const { postId } = params;
 
@@ -13,14 +14,36 @@ export const GET: APIRoute = async ({ params }) => {
       });
     }
 
+    // Get current user for moderation filtering
+    const session = await getSession(request);
+    const currentUserId = session?.user?.id;
+
     // Connect to database
     const db = await connectDB();
     const commentsCollection = db.collection('comments');
     const usersCollection = db.collection('users');
 
-    // Fetch comments for this post
+    // Build moderation filter:
+    // - Show approved comments to everyone
+    // - Show comments without moderationStatus (legacy) to everyone
+    // - Show user-reported comments (pending + isUserReported) to everyone
+    // - Show author's own pending/rejected comments only to them
+    const moderationFilter = {
+      relevantPostId: new ObjectId(postId),
+      $or: [
+        { moderationStatus: 'approved' },
+        { moderationStatus: { $exists: false } },
+        { moderationStatus: 'pending', isUserReported: true },
+        ...(currentUserId ? [
+          { author: currentUserId, moderationStatus: 'pending' },
+          { author: currentUserId, moderationStatus: 'rejected' }
+        ] : [])
+      ]
+    };
+
+    // Fetch comments for this post with moderation filter
     const comments = await commentsCollection
-      .find({ relevantPostId: new ObjectId(postId) })
+      .find(moderationFilter)
       .sort({ date: -1 })
       .toArray();
 

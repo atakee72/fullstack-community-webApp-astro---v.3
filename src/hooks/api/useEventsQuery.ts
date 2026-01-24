@@ -59,7 +59,9 @@ function buildQueryString(options: QueryOptions = {}): string {
 // Fetch events with options
 async function fetchEvents(options: QueryOptions = {}): Promise<Event[]> {
   const queryString = buildQueryString(options);
-  const response = await fetch(`${API_URL}/events${queryString}`);
+  const response = await fetch(`${API_URL}/events${queryString}`, {
+    credentials: 'include', // Include cookies for NextAuth session - needed for moderation filtering
+  });
 
   if (!response.ok) {
     throw new Error('Failed to fetch events');
@@ -110,7 +112,8 @@ async function createEvent(data: {
   }
 
   const result = await response.json();
-  return result.event || result;
+  // Return full response to include moderationStatus and message
+  return result;
 }
 
 // Hook for creating events
@@ -139,7 +142,9 @@ export function useCreateEvent() {
 
 // Fetch a single event by ID
 async function fetchEventById(id: string): Promise<Event> {
-  const response = await fetch(`${API_URL}/events/${id}`);
+  const response = await fetch(`${API_URL}/events/${id}`, {
+    credentials: 'include', // Include cookies for NextAuth session
+  });
 
   if (!response.ok) {
     throw new Error('Failed to fetch event');

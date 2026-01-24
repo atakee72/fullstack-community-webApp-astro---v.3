@@ -2,9 +2,10 @@ import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
-import type { Event } from '../../../types';
+import type { Event, FlaggedContent } from '../../../types';
 import { EventCreateSchema } from '../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../schemas/validation.utils';
+import { moderateText, createFlaggedContentRecord } from '../../../lib/moderation';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -29,9 +30,15 @@ export const POST: APIRoute = async ({ request }) => {
 
     const { title, body, startDate, endDate, location, category, tags } = validation.data;
 
+    // Run content moderation (FAIL-SAFE: queues for review on any error)
+    const moderationResult = await moderateText(`${title}\n\n${body || ''}`);
+
     // Connect to database
     const db = await connectDB();
     const eventsCollection = db.collection<any>('events');
+
+    // Determine moderation status
+    const moderationStatus = moderationResult.canPublish ? 'approved' : 'pending';
 
     // Create new event
     const newEvent = {
@@ -48,11 +55,29 @@ export const POST: APIRoute = async ({ request }) => {
       likes: 0,
       likedBy: [],
       date: Date.now(),
+      moderationStatus,
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
     const result = await eventsCollection.insertOne(newEvent);
+
+    // If content needs review, create a flagged content record
+    if (moderationResult.needsReview) {
+      const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
+      const flaggedRecord = createFlaggedContentRecord(
+        'event',
+        { title, body },
+        {
+          id: userId,
+          name: session.user.name || undefined,
+          email: session.user.email || undefined
+        },
+        moderationResult
+      );
+      flaggedRecord.contentId = result.insertedId.toString();
+      await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
+    }
 
     // Fetch author info to return with the created event
     const usersCollection = db.collection('users');
@@ -66,6 +91,21 @@ export const POST: APIRoute = async ({ request }) => {
       _id: result.insertedId,
       author: author || userId // Return populated author or fallback to ID
     };
+
+    // Return appropriate response based on moderation result
+    if (moderationResult.needsReview) {
+      return new Response(
+        JSON.stringify({
+          event: createdEvent,
+          message: moderationResult.userMessage,
+          moderationStatus: 'pending'
+        }),
+        {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     return new Response(
       JSON.stringify({

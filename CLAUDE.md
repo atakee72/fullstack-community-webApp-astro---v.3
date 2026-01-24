@@ -39,7 +39,9 @@ src/
 │   │   ├── recommendations/
 │   │   ├── comments/
 │   │   ├── likes/
-│   │   └── views/
+│   │   ├── views/
+│   │   ├── reports/       # User report submission
+│   │   └── admin/         # Admin moderation APIs
 │   └── *.astro       # Page components
 ├── hooks/
 │   └── api/          # TanStack Query hooks
@@ -88,13 +90,24 @@ export const POST: APIRoute = async ({ request }) => {
 - Zustand for UI state (forumStore.ts)
 - React Query for server state
 
+### Content Moderation
+- **AI moderation**: OpenAI `omni-moderation-latest` scans topics AND comments on submission
+- **Turkish filter**: Custom blocklist in `lib/moderation.ts` for Turkish profanity (OpenAI is English-focused)
+- **User reports**: Community can flag content via report button
+- **Admin queue**: `/admin/moderation` page (Svelte: `ModerationQueue.svelte`) with filter tabs (All/Posts/Comments)
+- **Warning labels**: Approved-with-warning content shows blur overlay until user clicks "Show content anyway" (persisted to localStorage)
+- **Strike system**: 3 strikes = automatic user ban
+- **Status flow**: `pending` → `approved`/`rejected` (with optional warning label)
+- Key fields: `moderationStatus`, `isUserReported`, `hasWarningLabel`, `warningText` on content
+
 ## Database Collections
-- `users` - User accounts
-- `topics` - Forum posts
+- `users` - User accounts (includes `moderationStrikes`, `isBanned` fields)
+- `topics` - Forum posts (includes `moderationStatus`, `isUserReported` fields)
 - `events` - Calendar events
 - `announcements` - Community announcements
 - `recommendations` - User recommendations
 - `comments` - Comments on posts
+- `flaggedContent` - Content flagged by AI or user reports (for admin review queue)
 
 ## Environment Variables
 
@@ -106,6 +119,7 @@ MONGODB_URI=            # MongoDB connection string
 CLOUDINARY_CLOUD_NAME=  # Image upload
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
+OPENAI_API_KEY=         # Content moderation API
 ```
 
 ## Component Patterns
@@ -135,3 +149,6 @@ When I say yellow, red, green, I always mean the default variants of the project
 
 ### SSR Compatibility
 - `typewriter-editor` requires dynamic import inside `onMount()` to avoid SSR errors - it accesses browser globals (KeyboardEvent) at module load time
+
+## TODO / Reminders
+- [ ] Create a pre-commit hook for automatic credentials/secrets check before git add (husky + custom grep script)

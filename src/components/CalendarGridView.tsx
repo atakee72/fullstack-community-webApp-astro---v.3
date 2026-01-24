@@ -347,27 +347,6 @@ export default function CalendarGridView({
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="mt-2 md:mt-3 lg:mt-4 pt-2 md:pt-3 lg:pt-4 border-t border-gray-200">
-        <div className="flex flex-wrap gap-2 md:gap-3 text-[8px] md:text-[10px] lg:text-xs">
-          <div className="flex items-center gap-1 md:gap-1.5">
-            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#4b9aaa]"></div>
-            <span className="text-gray-600">Community</span>
-          </div>
-          <div className="flex items-center gap-1 md:gap-1.5">
-            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#28a745]"></div>
-            <span className="text-gray-600">Sports & Health</span>
-          </div>
-          <div className="flex items-center gap-1 md:gap-1.5">
-            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#6f42c1]"></div>
-            <span className="text-gray-600">Culture & Education</span>
-          </div>
-          <div className="flex items-center gap-1 md:gap-1.5">
-            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#6c757d]"></div>
-            <span className="text-gray-600">Other</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

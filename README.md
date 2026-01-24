@@ -104,6 +104,46 @@ Netlify will automatically:
 - **JWT Authentication**: Secure user authentication
 - **Responsive Design**: Mobile-first approach
 - **Performance**: Optimized with Astro's island architecture
+- **Content Moderation**: AI-powered + community reporting system
+
+## 🛡️ Content Moderation
+
+The app includes a comprehensive content moderation system:
+
+### AI Moderation
+- Uses OpenAI's `omni-moderation-latest` model
+- Automatically scans content on submission (topics, comments)
+- Flags content for categories: harassment, hate speech, violence, sexual content, etc.
+- **Turkish profanity filter**: Custom blocklist for Turkish swear words (OpenAI is English-focused)
+- Content exceeding thresholds is queued for admin review
+- Fail-safe: If API fails, content is queued for manual review
+
+### User Reporting
+- Users can report posts and comments via 🚩 flag button
+- Report reasons: spam, harassment, hate speech, violence, inappropriate, misinformation
+- Duplicate reports tracked per user (prevents spam reporting)
+- Reported content stays visible but locked from editing/deleting
+- Author sees orange banner: "Your post has been reported by the community"
+
+### Admin Dashboard (`/admin/moderation`)
+- **Queue view**: Review pending flagged content
+- **History view**: See approved/rejected items
+- **Filter tabs**: All, Discussions, Comments, Announcements, Events
+- **Stats counters**: Urgent, Pending, Approved, With Warning, Rejected
+- **Actions**:
+  - ✓ Approve (publish content)
+  - ⚠ Approve with Warning (add content warning label)
+  - ✕ Reject (remove content, add strike to author)
+- **Strike system**: 3 strikes = automatic user ban
+
+### Moderation Status Flow
+| Status | Visible to Others | Author Sees | Edit/Delete |
+|--------|-------------------|-------------|-------------|
+| AI flagged (pending) | ❌ | Amber "under review" banner | ❌ Disabled |
+| User reported (pending) | ✅ | Orange "reported" banner | ❌ Disabled |
+| Approved | ✅ | Normal | ✅ Enabled |
+| Approved with Warning | ✅ (blurred until revealed) | Warning badge | ✅ Enabled |
+| Rejected | ❌ | Red "rejected" banner | ❌ Disabled |
 
 ## 📚 API Endpoints
 
@@ -113,6 +153,10 @@ Netlify will automatically:
 - `/api/auth/me` - Get current user
 - `/api/topics` - Topic CRUD operations
 - `/api/comments` - Comment operations
+- `/api/reports/submit` - Submit user report
+- `/api/reports/check` - Check if user already reported content
+- `/api/admin/moderation` - List flagged content (admin)
+- `/api/admin/moderation/review` - Approve/reject flagged content (admin)
 
 ## 🔒 Environment Variables
 
@@ -125,6 +169,7 @@ Required environment variables:
 - `CLOUDINARY_API_SECRET` - Cloudinary API secret
 - `PUBLIC_API_URL` - Public API URL
 - `NODE_ENV` - Environment (development/production)
+- `OPENAI_API_KEY` - OpenAI API key (for content moderation)
 
 ## 🐛 Debugging
 
