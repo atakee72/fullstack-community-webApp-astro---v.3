@@ -91,10 +91,10 @@ export const POST: APIRoute = async ({ request }) => {
 - React Query for server state
 
 ### Content Moderation
-- **AI moderation**: OpenAI `omni-moderation-latest` scans topics AND comments on submission
+- **AI moderation**: OpenAI `omni-moderation-latest` scans all content types (topics, comments, events, announcements, recommendations) on submission
 - **Turkish filter**: Custom blocklist in `lib/moderation.ts` for Turkish profanity (OpenAI is English-focused)
-- **User reports**: Community can flag content via report button
-- **Admin queue**: `/admin/moderation` page (Svelte: `ModerationQueue.svelte`) with filter tabs (All/Posts/Comments)
+- **User reports**: Community can flag content via report button (all content types)
+- **Admin queue**: `/admin/moderation` page (Svelte: `ModerationQueue.svelte`) with filter tabs (All/Posts/Comments/Events/Announcements/Recommendations)
 - **Warning labels**: Approved-with-warning content shows blur overlay until user clicks "Show content anyway" (persisted to localStorage)
 - **Strike system**: 3 strikes = automatic user ban
 - **Status flow**: `pending` → `approved`/`rejected` (with optional warning label)
@@ -103,9 +103,9 @@ export const POST: APIRoute = async ({ request }) => {
 ## Database Collections
 - `users` - User accounts (includes `moderationStrikes`, `isBanned` fields)
 - `topics` - Forum posts (includes `moderationStatus`, `isUserReported` fields)
-- `events` - Calendar events
-- `announcements` - Community announcements
-- `recommendations` - User recommendations
+- `events` - Calendar events (includes `moderationStatus`, `isUserReported` fields)
+- `announcements` - Community announcements (includes `moderationStatus`, `isUserReported` fields)
+- `recommendations` - User recommendations (includes `moderationStatus`, `isUserReported` fields)
 - `comments` - Comments on posts
 - `flaggedContent` - Content flagged by AI or user reports (for admin review queue)
 
