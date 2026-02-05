@@ -54,7 +54,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       });
     }
 
-    const { reviewStatus, contentType, decision, authorId, sortBy, sortOrder, limit, offset } = validation.data;
+    const { reviewStatus, contentType, decision, source, authorId, sortBy, sortOrder, limit, offset } = validation.data;
 
     // Build filter
     const filter: Record<string, any> = {};
@@ -66,6 +66,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     }
     if (contentType) filter.contentType = contentType;
     if (decision) filter.decision = decision;
+    if (source) filter.source = source;
     if (authorId) filter.authorId = authorId;
 
     // Connect to database

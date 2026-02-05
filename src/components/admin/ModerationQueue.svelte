@@ -69,7 +69,11 @@
         params.set('reviewStatus', filterStatus);
       }
 
-      if (filterType !== 'all') params.set('contentType', filterType);
+      if (filterType === 'user_reported') {
+        params.set('source', 'user_report');
+      } else if (filterType !== 'all') {
+        params.set('contentType', filterType);
+      }
 
       const response = await fetch(`/api/admin/moderation?${params}`, { credentials: 'include' });
 
@@ -242,21 +246,30 @@
             Announcements
           </button>
           <button
+            on:click={() => filterType = 'recommendation'}
+            class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {filterType === 'recommendation' ? 'bg-[#4b9aaa] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+          >
+            Recommendations
+          </button>
+          <button
             on:click={() => filterType = 'event'}
             class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {filterType === 'event' ? 'bg-[#4b9aaa] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
           >
             Events
           </button>
           <button
-            on:click={() => filterType = 'recommendation'}
-            class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {filterType === 'recommendation' ? 'bg-[#4b9aaa] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+            on:click={() => filterType = 'user_reported'}
+            class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {filterType === 'user_reported' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
           >
-            Recommendations
+            User Reported
           </button>
         </div>
       </div>
       <div class="flex items-end">
-        <button on:click={fetchQueue} disabled={loading} class="px-4 py-2 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a8999] disabled:opacity-50">
+        <button on:click={fetchQueue} disabled={loading} class="px-4 py-2 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a8999] disabled:opacity-50 flex items-center gap-2">
+          <svg class="w-4 h-4 {loading ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
           {loading ? 'Loading...' : 'Refresh'}
         </button>
       </div>
