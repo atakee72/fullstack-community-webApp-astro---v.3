@@ -31,7 +31,20 @@ export const POST: APIRoute = async ({ request }) => {
     const { title, body, startDate, endDate, location, category, tags } = validation.data;
 
     // Run content moderation (FAIL-SAFE: queues for review on any error)
-    const moderationResult = await moderateText(`${title}\n\n${body || ''}`);
+    // Moderate main content (title + body + location)
+    const mainModerationResult = await moderateText(`${title}\n\n${body || ''}\n\n${location || ''}`);
+
+    // Moderate tags SEPARATELY to catch profanity that might get diluted in main content
+    let tagsModerationResult = null;
+    if (tags?.length) {
+      tagsModerationResult = await moderateText(tags.join(' '));
+    }
+
+    // Combine results: flag if EITHER main content OR tags need review
+    const needsReview = mainModerationResult.needsReview || (tagsModerationResult?.needsReview ?? false);
+    const moderationResult = needsReview
+      ? (tagsModerationResult?.needsReview ? tagsModerationResult : mainModerationResult)
+      : mainModerationResult;
 
     // Connect to database
     const db = await connectDB();
@@ -67,7 +80,7 @@ export const POST: APIRoute = async ({ request }) => {
       const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
       const flaggedRecord = createFlaggedContentRecord(
         'event',
-        { title, body },
+        { title, body, tags },
         {
           id: userId,
           name: session.user.name || undefined,
