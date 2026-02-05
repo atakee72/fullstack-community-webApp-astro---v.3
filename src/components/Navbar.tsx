@@ -62,12 +62,14 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
   const publicNavItems = [
     { href: '/', label: 'Home', icon: '🏘️' },
     { href: '/blog', label: 'Blog', icon: '📝' },
+    { href: '/newsboard', label: 'Newsboard', icon: '📰' },
     { href: '/marketplace', label: 'Marketplace', icon: '🛒' },
   ];
 
   const authNavItems = [
     { href: '/', label: 'Home', icon: '🏘️' },
     { href: '/blog', label: 'Blog', icon: '📝' },
+    { href: '/newsboard', label: 'Newsboard', icon: '📰' },
     { href: '/calendar', label: 'Calendar', icon: '📅' },
     { href: '/marketplace', label: 'Marketplace', icon: '🛒' },
     { href: '/profile', label: 'Profile', icon: '👤' },

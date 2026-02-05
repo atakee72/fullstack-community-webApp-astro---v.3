@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
+import NewsCardsWrapper from '../components/NewsCardsWrapper';
+
+const session = await getSession(Astro.request);
+---
+
+<BaseLayout title="Newsboard - Mahalle">
+  <main class="min-h-[calc(100vh-60px)] py-2 md:py-3">
+    <div class="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
+      <NewsCardsWrapper client:load session={session} />
+    </div>
+  </main>
+</BaseLayout>
