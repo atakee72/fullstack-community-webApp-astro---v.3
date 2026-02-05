@@ -47,6 +47,7 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
     contentType: 'event' | 'comment';
     preview: string;
   } | null>(null);
+  const [showReportToast, setShowReportToast] = useState(false);
 
   // Filter state
   const [searchValue, setSearchValue] = useState('');
@@ -79,10 +80,19 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
     setIsClient(true);
   }, []);
 
-  // Prefetch adjacent months for smooth swipe navigation
+  // Auto-dismiss report toast after 3 seconds
   useEffect(() => {
-    const nextMonth = addMonths(currentMonth, 1);
-    const prevMonth = subMonths(currentMonth, 1);
+    if (showReportToast) {
+      const timer = setTimeout(() => setShowReportToast(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showReportToast]);
+
+  // Prefetch adjacent months for smooth swipe navigation (delayed to prioritize main content)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const nextMonth = addMonths(currentMonth, 1);
+      const prevMonth = subMonths(currentMonth, 1);
 
       // Build query options for adjacent months
       const buildAdjacentQuery = (month: Date) => ({
@@ -121,6 +131,9 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
           return data.events || [];
         },
       });
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [currentMonth, queryOptions.sortBy, queryOptions.sortOrder, queryOptions.category, queryClient]);
 
   // Handle event creation/editing
@@ -263,6 +276,9 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
 
       setShowReportModal(false);
       setReportContent(null);
+
+      // Show success toast
+      setShowReportToast(true);
 
       // Refetch events to update moderation status
       await refetch();
@@ -455,6 +471,22 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
         contentPreview={reportContent?.preview || ''}
         onSubmit={handleReportSubmit}
       />
+
+      {/* Report Success Toast */}
+      {showReportToast && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 animate-slideUp">
+          <div className="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3">
+            <span className="text-xl">✓</span>
+            <span className="font-medium">Report submitted. Thank you!</span>
+            <button
+              onClick={() => setShowReportToast(false)}
+              className="ml-2 text-white/80 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
