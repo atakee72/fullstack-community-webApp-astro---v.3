@@ -90,3 +90,6 @@ public/7-*.png
 # Claude Code
 .claude/
 conversation-summary.md
+
+# project docs (local only)
+docs/
