@@ -1,4 +1,5 @@
 import React from 'react';
+import { QueryProvider } from '../providers/QueryProvider';
 import { NewsCards } from './ui/NewsCards';
 
 interface NewsCardsWrapperProps {
@@ -6,5 +7,9 @@ interface NewsCardsWrapperProps {
 }
 
 export default function NewsCardsWrapper({ session }: NewsCardsWrapperProps) {
-  return <NewsCards />;
+  return (
+    <QueryProvider>
+      <NewsCards user={session?.user} />
+    </QueryProvider>
+  );
 }

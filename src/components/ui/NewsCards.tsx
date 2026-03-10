@@ -1,25 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookmarkIcon, X } from "lucide-react";
+import { BookmarkIcon, X, ExternalLink, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface NewsCard {
-  id: string;
-  title: string;
-  category: string;
-  subcategory: string;
-  timeAgo: string;
-  location: string;
-  image: string;
-  gradientColors?: string[];
-  content?: string[];
-}
+import { useNewsQuery, useSubmitNews, useSaveNewsMutation } from "../../hooks/api/useNewsQuery";
+import type { NewsItem } from "../../types";
 
 interface StatusBar {
   id: string;
-  category: string;
-  subcategory: string;
   length: number;
   opacity: number;
 }
@@ -27,147 +15,224 @@ interface StatusBar {
 interface NewsCardsProps {
   title?: string;
   subtitle?: string;
-  statusBars?: StatusBar[];
-  newsCards?: NewsCard[];
+  user?: any;
   enableAnimations?: boolean;
 }
 
-const defaultStatusBars: StatusBar[] = [
-  {
-    id: "1",
-    category: "Community",
-    subcategory: "Local News",
-    length: 3,
-    opacity: 1,
-  },
-  {
-    id: "2",
-    category: "Events",
-    subcategory: "Upcoming",
-    length: 2,
-    opacity: 0.7,
-  },
-  {
-    id: "3",
-    category: "Announcements",
-    subcategory: "Important",
-    length: 1,
-    opacity: 0.4,
-  }
+const statusBars: StatusBar[] = [
+  { id: "1", length: 3, opacity: 1 },
+  { id: "2", length: 2, opacity: 0.7 },
+  { id: "3", length: 1, opacity: 0.4 },
 ];
 
-const defaultNewsCards: NewsCard[] = [
-  {
-    id: "1",
-    title: "Community Garden Project Launches This Weekend",
-    category: "Community",
-    subcategory: "Local Initiative",
-    timeAgo: "15 min ago",
-    location: "Mahalle Park",
-    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1600&h=900&fit=crop&q=80",
-    gradientColors: ["from-[#4b9aaa]/30", "to-[#3a7a8a]/30"],
-    content: [
-      "The long-awaited community garden project is finally launching this weekend at Mahalle Park. Residents have been planning this initiative for over six months, and the first planting day is scheduled for Saturday morning.",
-      "Local volunteers will be on hand to help newcomers learn the basics of urban gardening. The project aims to bring neighbors together while providing fresh produce for the community.",
-      "Registration is open for anyone interested in claiming a plot. Families, individuals, and local organizations are all welcome to participate in this green initiative.",
-    ]
-  },
-  {
-    id: "2",
-    title: "New Recycling Program Starts Next Month",
-    category: "Environment",
-    subcategory: "Sustainability",
-    timeAgo: "41 min ago",
-    location: "District-wide",
-    image: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=1600&h=900&fit=crop&q=80",
-    gradientColors: ["from-[#eccc6e]/30", "to-[#d4b85e]/30"],
-    content: [
-      "A new comprehensive recycling program will be implemented across our district starting next month. The initiative includes separate collection for plastics, paper, glass, and organic waste.",
-      "Residents will receive new color-coded bins and a detailed guide on proper waste separation. Educational workshops will be held at the community center to help everyone adapt to the new system.",
-      "This program is part of the city's commitment to reduce landfill waste by 50% over the next five years.",
-    ]
-  },
-  {
-    id: "3",
-    title: "Local Artist Exhibition Opens at Cultural Center",
-    category: "Culture",
-    subcategory: "Arts",
-    timeAgo: "1 hour ago",
-    location: "Cultural Center",
-    image: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=1600&h=900&fit=crop&q=80",
-    gradientColors: ["from-[#814256]/30", "to-[#6a3646]/30"],
-    content: [
-      "The Mahalle Cultural Center is proud to present a new exhibition featuring works by local artists. The show includes paintings, sculptures, and mixed media pieces from over 20 neighborhood creators.",
-      "Opening night will feature live music and refreshments, with artists available to discuss their work. The exhibition runs for three weeks and admission is free for all residents.",
-      "This is the first of what organizers hope will become an annual tradition celebrating local artistic talent.",
-    ]
-  }
-];
+function formatTimeAgo(date: Date | string): string {
+  const now = new Date();
+  const then = new Date(date);
+  const diffMs = now.getTime() - then.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMin / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMin < 1) return 'Just now';
+  if (diffMin < 60) return `${diffMin} min ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return then.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
 
 export function NewsCards({
   title = "Neighbourhood News",
   subtitle = "Stories from your community",
-  statusBars = defaultStatusBars,
-  newsCards = defaultNewsCards,
+  user,
   enableAnimations = true,
 }: NewsCardsProps) {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<NewsCard | null>(null);
-  const [bookmarkedCards, setBookmarkedCards] = useState<Set<string>>(new Set());
+  const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
+  const [savedItems, setSavedItems] = useState<Set<string>>(new Set());
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [showSubmitForm, setShowSubmitForm] = useState(false);
+  const [page, setPage] = useState(0);
+  const [showSubmitToast, setShowSubmitToast] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState('');
+  const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
+  const [formData, setFormData] = useState({
+    title: '', description: '', sourceUrl: '', sourceName: '', imageUrl: '', submitterComment: ''
+  });
 
+  const PAGE_SIZE = 12;
   const shouldAnimate = enableAnimations && !prefersReducedMotion;
 
+  // Data fetching
+  const { data, isLoading, error } = useNewsQuery({
+    limit: PAGE_SIZE,
+    offset: page * PAGE_SIZE,
+    sortBy: 'approvedAt',
+    sortOrder: 'desc',
+  });
+
+  const submitMutation = useSubmitNews();
+  const saveMutation = useSaveNewsMutation();
+
   useEffect(() => {
-    // Check for reduced motion preference
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     setPrefersReducedMotion(mediaQuery.matches);
-
     const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
     mediaQuery.addEventListener('change', handler);
-
-    // Trigger load animation
     const timer = setTimeout(() => setIsLoaded(true), 100);
-
     return () => {
       mediaQuery.removeEventListener('change', handler);
       clearTimeout(timer);
     };
   }, []);
 
-  const toggleBookmark = (cardId: string, e: React.MouseEvent) => {
+  // Load saved items and dismissed warnings from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('savedNews');
+    if (saved) {
+      try {
+        setSavedItems(new Set(JSON.parse(saved)));
+      } catch {}
+    }
+    const dismissed = localStorage.getItem('dismissedNewsWarnings');
+    if (dismissed) {
+      try {
+        setDismissedWarnings(new Set(JSON.parse(dismissed)));
+      } catch {}
+    }
+  }, []);
+
+  // Auto-dismiss submit toast
+  useEffect(() => {
+    if (showSubmitToast) {
+      const timer = setTimeout(() => setShowSubmitToast(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSubmitToast]);
+
+  const toggleSave = (itemId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setBookmarkedCards(prev => {
+    setSavedItems(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(cardId)) {
-        newSet.delete(cardId);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
       } else {
-        newSet.add(cardId);
+        newSet.add(itemId);
       }
+      localStorage.setItem('savedNews', JSON.stringify([...newSet]));
+      return newSet;
+    });
+
+    // Also persist to backend if user is logged in
+    if (user) {
+      const action = savedItems.has(itemId) ? 'unsave' : 'save';
+      saveMutation.mutate({ newsId: itemId, action });
+    }
+  };
+
+  const dismissWarning = (itemId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDismissedWarnings(prev => {
+      const newSet = new Set(prev);
+      newSet.add(itemId);
+      localStorage.setItem('dismissedNewsWarnings', JSON.stringify([...newSet]));
       return newSet;
     });
   };
 
-  const openCard = (card: NewsCard) => {
-    setSelectedCard(card);
+  const openItem = (item: NewsItem) => {
+    setSelectedItem(item);
     document.body.style.overflow = 'hidden';
   };
 
-  const closeCard = () => {
-    setSelectedCard(null);
+  const closeItem = () => {
+    setSelectedItem(null);
     document.body.style.overflow = '';
   };
 
-  // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && selectedCard) {
-        closeCard();
+      if (e.key === 'Escape') {
+        if (showSubmitForm) setShowSubmitForm(false);
+        else if (selectedItem) closeItem();
       }
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [selectedCard]);
+  }, [selectedItem, showSubmitForm]);
+
+  const fetchPreview = async (url: string) => {
+    if (!url) return;
+    try {
+      new URL(url);
+    } catch {
+      return; // Not a valid URL yet
+    }
+
+    setPreviewLoading(true);
+    setPreviewError('');
+
+    try {
+      const response = await fetch(`/api/news/preview?url=${encodeURIComponent(url)}`, {
+        credentials: 'include',
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setPreviewError(data.error || 'Could not fetch preview');
+        return;
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        sourceUrl: url,
+        title: data.title || prev.title,
+        description: data.description || prev.description,
+        sourceName: data.siteName || prev.sourceName,
+        imageUrl: data.image || prev.imageUrl,
+      }));
+    } catch {
+      setPreviewError('Failed to fetch article preview');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      await submitMutation.mutateAsync({
+        title: formData.title,
+        description: formData.description,
+        sourceUrl: formData.sourceUrl,
+        sourceName: formData.sourceName,
+        imageUrl: formData.imageUrl || undefined,
+        submitterComment: formData.submitterComment || undefined,
+      });
+      setShowSubmitForm(false);
+      setFormData({ title: '', description: '', sourceUrl: '', sourceName: '', imageUrl: '', submitterComment: '' });
+      setShowSubmitToast(true);
+    } catch (err) {
+      // Error is handled by mutation state
+    }
+  };
+
+  const newsItems = data?.news || [];
+  const pagination = data?.pagination;
+
+  // Check if current user is the author of a news item
+  const isAuthor = (item: NewsItem): boolean => {
+    if (!user) return false;
+    if (typeof item.submittedBy === 'string') return item.submittedBy === user.id;
+    if (item.submittedBy && typeof item.submittedBy === 'object') {
+      const sub = item.submittedBy as any;
+      return sub._id?.toString() === user.id || sub.id === user.id;
+    }
+    return false;
+  };
+
+  const GENERIC_WARNING = 'This content may contain sensitive material.';
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4 md:p-6 text-gray-800">
@@ -178,8 +243,23 @@ export function NewsCards({
           shouldAnimate && !isLoaded ? "opacity-0 -translate-y-5" : "opacity-100 translate-y-0"
         )}
       >
-        <h1 className="text-3xl md:text-4xl font-bold mb-2 text-[#814256]">{title}</h1>
-        <p className="text-gray-600 text-lg">{subtitle}</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-[#814256]">{title}</h1>
+            <p className="text-gray-600 text-lg">{subtitle}</p>
+          </div>
+
+          {/* Submit News Button */}
+          {user && (
+            <button
+              onClick={() => setShowSubmitForm(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors font-medium shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Submit News</span>
+            </button>
+          )}
+        </div>
 
         {/* Status Bars */}
         <div className="mt-6 space-y-1">
@@ -200,135 +280,440 @@ export function NewsCards({
         </div>
       </div>
 
+      {/* Loading State */}
+      {isLoading && newsItems.length === 0 && (
+        <div className="flex justify-center py-16">
+          <Loader2 className="w-8 h-8 text-[#4b9aaa] animate-spin" />
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-center">
+          Failed to load news. Please try again later.
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!isLoading && !error && newsItems.length === 0 && (
+        <div className="text-center py-16">
+          <p className="text-gray-500 text-lg mb-2">No news yet</p>
+          <p className="text-gray-400">
+            {user ? 'Be the first to submit a news story!' : 'Check back later for community news.'}
+          </p>
+        </div>
+      )}
+
       {/* News Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-        {newsCards.map((card, index) => (
-          <article
-            key={card.id}
-            className={cn(
-              "bg-white border border-gray-200 rounded-lg overflow-hidden cursor-pointer group",
-              "transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-lg",
-              shouldAnimate && !isLoaded ? "opacity-0 translate-y-8" : "opacity-100 translate-y-0"
-            )}
-            style={{
-              transitionDelay: shouldAnimate ? `${500 + index * 120}ms` : '0ms'
-            }}
-            onClick={() => openCard(card)}
-          >
-            {/* Image with gradient overlay */}
-            <div className="relative h-56 overflow-hidden bg-gray-100">
-              <img
-                src={card.image}
-                alt={card.title}
-                className="w-full h-full object-cover transform-gpu group-hover:scale-105 transition-transform duration-700 ease-out"
-              />
-              <div className="absolute inset-x-0 bottom-0 h-1/5 bg-gradient-to-t from-black/50 to-transparent" />
-              {card.gradientColors && (
-                <div className={`absolute inset-x-0 bottom-0 h-1/5 bg-gradient-to-t ${card.gradientColors[0]} ${card.gradientColors[1]} to-transparent`} />
-              )}
+      {newsItems.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+          {newsItems.map((item, index) => {
+            const itemId = (item._id || '').toString();
+            const isRejected = item.moderationStatus === 'rejected';
+            const isPending = item.moderationStatus === 'pending';
+            const hasWarning = item.hasWarningLabel && !isRejected;
+            const isItemAuthor = isAuthor(item);
+            const warningDismissed = dismissedWarnings.has(itemId);
+            const showWarningOverlay = hasWarning && !warningDismissed && !isItemAuthor;
 
-              {/* Bookmark icon */}
-              <button
-                className="absolute top-3 right-3 p-1 transition-transform duration-200 hover:scale-110 active:scale-90"
-                onClick={(e) => toggleBookmark(card.id, e)}
+            return (
+              <article
+                key={itemId}
+                className={cn(
+                  "bg-white border border-gray-200 rounded-lg overflow-hidden group relative",
+                  "transition-all duration-300",
+                  !isRejected && "cursor-pointer hover:-translate-y-1 hover:scale-[1.01] hover:shadow-lg",
+                  shouldAnimate && !isLoaded ? "opacity-0 translate-y-8" : "opacity-100 translate-y-0",
+                  isPending && "opacity-60 border-amber-300",
+                  isRejected && "opacity-50 border-red-300 grayscale"
+                )}
+                style={{
+                  transitionDelay: shouldAnimate ? `${500 + index * 120}ms` : '0ms'
+                }}
+                onClick={() => !isRejected && !showWarningOverlay && openItem(item)}
               >
-                <BookmarkIcon
-                  className={cn(
-                    "w-5 h-5 transition-colors cursor-pointer",
-                    bookmarkedCards.has(card.id)
-                      ? "text-[#eccc6e] fill-[#eccc6e]"
-                      : "text-white/80 hover:text-white"
+                {/* Warning overlay (blur until dismissed) */}
+                {showWarningOverlay && (
+                  <div className="absolute inset-0 z-10 backdrop-blur-md bg-white/60 flex flex-col items-center justify-center p-4 text-center">
+                    <span className="text-2xl mb-2">⚠️</span>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Content Warning</p>
+                    <p className="text-xs text-gray-500 mb-3">
+                      {isAuthor(item)
+                        ? (item.warningText || 'Your submission was approved with a warning.')
+                        : GENERIC_WARNING}
+                    </p>
+                    <button
+                      onClick={(e) => dismissWarning(itemId, e)}
+                      className="px-3 py-1.5 text-xs bg-[#814256] text-white rounded hover:bg-[#6a3547] transition-colors"
+                    >
+                      Show content anyway
+                    </button>
+                  </div>
+                )}
+
+                {/* Image */}
+                <div className="relative h-48 md:h-56 overflow-hidden bg-gray-100">
+                  {item.imageUrl ? (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="w-full h-full object-cover transform-gpu group-hover:scale-105 transition-transform duration-700 ease-out"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#4b9aaa]/20 to-[#814256]/20 flex items-center justify-center">
+                      <span className="text-4xl">📰</span>
+                    </div>
                   )}
-                />
-              </button>
+                  <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-black/50 to-transparent" />
 
-              {/* Category and time info */}
-              <div className="absolute bottom-3 left-3 text-white">
-                <div className="text-xs mb-1 opacity-90">
-                  {card.category}, {card.subcategory}
-                </div>
-                <div className="text-xs opacity-75">
-                  {card.timeAgo}, {card.location}
-                </div>
-              </div>
-            </div>
+                  {/* Save icon */}
+                  {!isRejected && (
+                    <button
+                      className="absolute top-3 right-3 p-1 transition-transform duration-200 hover:scale-110 active:scale-90"
+                      onClick={(e) => toggleSave(itemId, e)}
+                    >
+                      <BookmarkIcon
+                        className={cn(
+                          "w-5 h-5 transition-colors",
+                          savedItems.has(itemId)
+                            ? "text-[#eccc6e] fill-[#eccc6e]"
+                            : "text-white/80 hover:text-white"
+                        )}
+                      />
+                    </button>
+                  )}
 
-            {/* Content */}
-            <div className="p-5">
-              <h3 className="font-semibold text-lg leading-tight line-clamp-3 text-gray-800 group-hover:text-[#4b9aaa] transition-colors">
-                {card.title}
-              </h3>
-            </div>
-          </article>
-        ))}
-      </div>
+                  {/* Status badges */}
+                  {isPending && (
+                    <span className="absolute top-3 left-3 px-2 py-1 text-xs font-medium bg-amber-500 text-white rounded">
+                      Pending approval
+                    </span>
+                  )}
+                  {isRejected && (
+                    <span className="absolute top-3 left-3 px-2 py-1 text-xs font-medium bg-red-600 text-white rounded">
+                      Rejected
+                    </span>
+                  )}
+                  {hasWarning && (warningDismissed || isItemAuthor) && (
+                    <span className="absolute top-3 left-3 px-2 py-1 text-xs font-medium bg-amber-600 text-white rounded">
+                      {isItemAuthor ? '⚠️ Sensitive for others' : '⚠️ Warning'}
+                    </span>
+                  )}
+
+                  {/* Source and time */}
+                  <div className="absolute bottom-3 left-3 text-white">
+                    <div className="text-xs mb-1 opacity-90">{item.sourceName}</div>
+                    <div className="text-xs opacity-75">{formatTimeAgo(item.publishedAt)}</div>
+                  </div>
+                </div>
+
+                {/* Title */}
+                <div className="p-4 md:p-5">
+                  <h3 className="font-semibold text-base md:text-lg leading-tight line-clamp-3 text-gray-800 group-hover:text-[#4b9aaa] transition-colors">
+                    {item.title}
+                  </h3>
+                  {item.source === 'user_submitted' && item.submittedBy && typeof item.submittedBy === 'object' && (
+                    <p className="text-xs text-gray-400 mt-2">
+                      Submitted by {(item.submittedBy as any).userName || (item.submittedBy as any).name || 'Member'}
+                    </p>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pagination && (pagination.hasMore || page > 0) && (
+        <div className="flex justify-center gap-4 mt-8">
+          {page > 0 && (
+            <button
+              onClick={() => setPage(p => p - 1)}
+              className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+            >
+              Previous
+            </button>
+          )}
+          {pagination.hasMore && (
+            <button
+              onClick={() => setPage(p => p + 1)}
+              className="px-6 py-2.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors font-medium"
+            >
+              Load More
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Expanded Card Modal */}
-      {selectedCard && (
+      {selectedItem && (
         <>
-          {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fade-in-simple"
-            onClick={closeCard}
+            onClick={closeItem}
           />
 
-          {/* Modal */}
           <div className="fixed inset-4 md:inset-8 lg:inset-16 bg-white border border-gray-200 rounded-xl overflow-hidden z-50 animate-slideUp">
-            {/* Close Button */}
             <button
               className="absolute top-4 right-4 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center z-10 shadow-md transition-transform duration-200 hover:scale-110 active:scale-90"
-              onClick={closeCard}
+              onClick={closeItem}
             >
               <X className="w-4 h-4 text-gray-700" />
             </button>
 
             <div className="h-full overflow-y-auto">
               {/* Header Image */}
-              <div className="relative h-64 md:h-80">
-                <img
-                  src={selectedCard.image}
-                  alt={selectedCard.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/70 to-transparent" />
-                {selectedCard.gradientColors && (
-                  <div className={`absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t ${selectedCard.gradientColors[0]} ${selectedCard.gradientColors[1]} to-transparent`} />
+              <div className="relative h-48 md:h-72">
+                {selectedItem.imageUrl ? (
+                  <img
+                    src={selectedItem.imageUrl}
+                    alt={selectedItem.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-[#4b9aaa]/20 to-[#814256]/20 flex items-center justify-center">
+                    <span className="text-6xl">📰</span>
+                  </div>
                 )}
+                <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/70 to-transparent" />
 
-                {/* Image overlay info */}
                 <div className="absolute bottom-4 left-4 text-white">
-                  <div className="text-sm mb-1 opacity-90">
-                    {selectedCard.category}, {selectedCard.subcategory}
-                  </div>
-                  <div className="text-sm opacity-75">
-                    {selectedCard.timeAgo}, {selectedCard.location}
-                  </div>
+                  <div className="text-sm mb-1 opacity-90">{selectedItem.sourceName}</div>
+                  <div className="text-sm opacity-75">{formatTimeAgo(selectedItem.publishedAt)}</div>
                 </div>
               </div>
 
               {/* Content */}
               <div className="p-6 md:p-8">
-                <h1 className="text-2xl md:text-3xl font-bold mb-6 text-[#814256]">
-                  {selectedCard.title}
+                {/* Warning banner in modal */}
+                {selectedItem.hasWarningLabel && (
+                  <div className={cn(
+                    "rounded-lg p-3 mb-4 flex items-center gap-2",
+                    isAuthor(selectedItem)
+                      ? "bg-blue-50 border border-blue-200"
+                      : "bg-amber-50 border border-amber-300"
+                  )}>
+                    <span className="text-lg">{isAuthor(selectedItem) ? 'ℹ️' : '⚠️'}</span>
+                    <p className={cn("text-sm", isAuthor(selectedItem) ? "text-blue-800" : "text-amber-800")}>
+                      {isAuthor(selectedItem)
+                        ? 'Other users see this content behind a warning overlay.'
+                        : GENERIC_WARNING}
+                    </p>
+                  </div>
+                )}
+
+                <h1 className="text-2xl md:text-3xl font-bold mb-4 text-[#814256]">
+                  {selectedItem.title}
                 </h1>
 
-                <div className="prose prose-lg max-w-none text-gray-600">
-                  {selectedCard.content ? (
-                    selectedCard.content.map((paragraph, index) => (
-                      <p key={index} className="mb-4">
-                        {paragraph}
-                      </p>
-                    ))
-                  ) : (
-                    <p className="mb-4">
-                      No additional content available for this news item.
-                    </p>
-                  )}
-                </div>
+                <p className="text-gray-600 text-lg mb-6 leading-relaxed">
+                  {selectedItem.description}
+                </p>
+
+                {/* Submitter comment */}
+                {selectedItem.submitterComment && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                    <p className="text-sm text-gray-500 font-medium mb-1">Community note:</p>
+                    <p className="text-gray-700 italic">"{selectedItem.submitterComment}"</p>
+                  </div>
+                )}
+
+                {/* Read full article link */}
+                <a
+                  href={selectedItem.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors font-medium"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Read full article at {selectedItem.sourceName}
+                </a>
               </div>
             </div>
           </div>
         </>
+      )}
+
+      {/* Submit News Modal */}
+      {showSubmitForm && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fade-in-simple"
+            onClick={() => setShowSubmitForm(false)}
+          />
+
+          <div className="fixed inset-4 md:inset-x-auto md:inset-y-8 md:max-w-lg md:mx-auto bg-white border border-gray-200 rounded-xl overflow-hidden z-50 animate-slideUp">
+            <div className="bg-[#4b9aaa] px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">Submit News</h2>
+              <button
+                onClick={() => setShowSubmitForm(false)}
+                className="p-1 hover:bg-white/20 rounded transition-colors"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[calc(100vh-12rem)]">
+              {/* URL Input — primary field */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Article URL *</label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    required
+                    value={formData.sourceUrl}
+                    onChange={(e) => setFormData(prev => ({ ...prev, sourceUrl: e.target.value }))}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+                    placeholder="Paste article link here..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fetchPreview(formData.sourceUrl)}
+                    disabled={previewLoading || !formData.sourceUrl}
+                    className="px-4 py-2 bg-[#eccc6e] text-gray-800 rounded-lg hover:bg-[#d4b85e] transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-2 shrink-0"
+                  >
+                    {previewLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Fetching...
+                      </>
+                    ) : (
+                      'Fetch Info'
+                    )}
+                  </button>
+                </div>
+                {previewError && (
+                  <p className="text-amber-600 text-xs mt-1">{previewError} — you can fill in the fields manually.</p>
+                )}
+              </div>
+
+              {/* Loading indicator for preview */}
+              {previewLoading && (
+                <div className="flex items-center gap-3 p-3 bg-[#4b9aaa]/10 rounded-lg">
+                  <Loader2 className="w-5 h-5 text-[#4b9aaa] animate-spin" />
+                  <span className="text-sm text-[#4b9aaa] font-medium">Fetching article info...</span>
+                </div>
+              )}
+
+              {/* Image preview */}
+              {formData.imageUrl && !previewLoading && (
+                <div className="relative h-32 rounded-lg overflow-hidden bg-gray-100">
+                  <img
+                    src={formData.imageUrl}
+                    alt="Article preview"
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
+                    className="absolute top-2 right-2 w-6 h-6 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center"
+                  >
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Article Title *</label>
+                <input
+                  required
+                  minLength={5}
+                  maxLength={200}
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+                  placeholder="Title of the news article"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Source Name *</label>
+                <input
+                  required
+                  maxLength={100}
+                  value={formData.sourceName}
+                  onChange={(e) => setFormData(prev => ({ ...prev, sourceName: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+                  placeholder="e.g. Tagesspiegel, Berliner Zeitung"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                <textarea
+                  required
+                  minLength={10}
+                  maxLength={1000}
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] resize-none"
+                  placeholder="Brief summary of the article"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL (optional)</label>
+                <input
+                  type="url"
+                  value={formData.imageUrl}
+                  onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+                  placeholder="https://... (auto-filled from article)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Your Comment (optional)</label>
+                <textarea
+                  maxLength={500}
+                  rows={2}
+                  value={formData.submitterComment}
+                  onChange={(e) => setFormData(prev => ({ ...prev, submitterComment: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] resize-none"
+                  placeholder="Why is this relevant to the community?"
+                />
+              </div>
+
+              {submitMutation.error && (
+                <p className="text-red-600 text-sm">{submitMutation.error.message}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={submitMutation.isPending || previewLoading}
+                className="w-full py-3 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {submitMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit for Review'
+                )}
+              </button>
+
+              <p className="text-xs text-gray-400 text-center">
+                Your submission will be reviewed by an admin before appearing on the newsboard.
+              </p>
+            </form>
+          </div>
+        </>
+      )}
+
+      {/* Submit Success Toast */}
+      {showSubmitToast && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 animate-slideUp">
+          <div className="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3">
+            <span className="text-xl">✓</span>
+            <span className="font-medium">News submitted for review!</span>
+            <button onClick={() => setShowSubmitToast(false)} className="ml-2 text-white/80 hover:text-white">✕</button>
+          </div>
+        </div>
       )}
     </div>
   );

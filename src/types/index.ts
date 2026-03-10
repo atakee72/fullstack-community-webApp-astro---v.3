@@ -167,6 +167,46 @@ export interface Event {
   updatedAt?: Date;
 }
 
+// News Types (Newsboard)
+export interface NewsItem {
+  _id?: ObjectId | string;
+  source: 'ai_fetched' | 'user_submitted';
+  title: string;
+  description: string;
+  imageUrl?: string;
+  sourceUrl: string;
+  sourceName: string;
+  // AI metadata (for ai_fetched items)
+  aiRelevanceScore?: number;
+  aiCategory?: string;
+  aiReason?: string;
+  // User submission
+  submittedBy?: ObjectId | string | User;
+  submitterComment?: string;
+  // Moderation fields
+  moderationStatus: 'approved' | 'pending' | 'rejected';
+  isUserReported?: boolean;
+  hasWarningLabel?: boolean;
+  warningText?: string;
+  // Engagement
+  viewCount: number;
+  // Timestamps
+  publishedAt: Date;
+  fetchedAt: Date;
+  approvedAt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Saved Items (cross-feature bookmarks)
+export interface SavedItem {
+  _id?: ObjectId | string;
+  userId: string;
+  itemId: string;
+  itemType: 'news' | 'listing' | 'topic' | 'event';
+  savedAt: Date;
+}
+
 // Auth Types
 export interface AuthState {
   user: User | null;
@@ -198,7 +238,7 @@ export interface JWTPayload {
 
 export type ModerationDecision = 'approved' | 'pending_review' | 'urgent_review';
 export type ModerationReviewStatus = 'pending' | 'approved' | 'rejected';
-export type ModeratedContentType = 'topic' | 'announcement' | 'recommendation' | 'comment' | 'event' | 'marketplace';
+export type ModeratedContentType = 'topic' | 'announcement' | 'recommendation' | 'comment' | 'event' | 'marketplace' | 'news';
 export type FlaggedContentSource = 'ai_moderation' | 'user_report';
 export type ReportReason = 'spam' | 'harassment' | 'hate_speech' | 'violence' | 'inappropriate' | 'misinformation' | 'other';
 
