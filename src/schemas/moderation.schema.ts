@@ -21,7 +21,8 @@ export const ModeratedContentTypeSchema = z.enum([
   'recommendation',
   'comment',
   'event',
-  'marketplace'
+  'marketplace',
+  'news'
 ]);
 
 // Source of flagged content (AI moderation vs user report)
@@ -130,7 +131,7 @@ export const FlaggedContentQuerySchema = z.object({
 // Schema for user report submission (API request)
 export const ReportContentSchema = z.object({
   contentId: ObjectIdSchema,
-  contentType: z.enum(['topic', 'comment', 'announcement', 'recommendation', 'event']),
+  contentType: z.enum(['topic', 'comment', 'announcement', 'recommendation', 'event', 'news']),
   reason: ReportReasonSchema,
   details: z.string().min(10, 'Please provide at least 10 characters explaining the issue').max(500)
 });

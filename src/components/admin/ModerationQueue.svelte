@@ -258,6 +258,12 @@
             Events
           </button>
           <button
+            on:click={() => filterType = 'news'}
+            class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {filterType === 'news' ? 'bg-[#4b9aaa] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+          >
+            News
+          </button>
+          <button
             on:click={() => filterType = 'user_reported'}
             class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {filterType === 'user_reported' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
           >

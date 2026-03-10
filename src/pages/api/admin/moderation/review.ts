@@ -112,7 +112,8 @@ export const POST: APIRoute = async ({ request }) => {
         recommendation: 'recommendations',
         comment: 'comments',
         event: 'events',
-        marketplace: 'marketplace'
+        marketplace: 'marketplace',
+        news: 'news'
       };
 
       const collectionName = collectionMap[flaggedContent.contentType];
@@ -123,6 +124,11 @@ export const POST: APIRoute = async ({ request }) => {
           moderationStatus: isRejection ? 'rejected' : 'approved',
           updatedAt: new Date()
         };
+
+        // Set approvedAt timestamp for news items
+        if (!isRejection && flaggedContent.contentType === 'news') {
+          updateData.approvedAt = new Date();
+        }
 
         if (isRejection && rejectionReason) {
           updateData.rejectionReason = rejectionReason;
