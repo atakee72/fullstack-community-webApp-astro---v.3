@@ -19,6 +19,7 @@ export const NewsQuerySchema = z.object({
   source: z.enum(['ai_fetched', 'user_submitted']).optional(),
   search: z.string().max(100).optional(),
   dateFrom: z.string().optional(), // ISO date string, e.g. '2026-03-01'
+  dateTo: z.string().optional(), // ISO date string, e.g. '2025-03-01' (for archive: older than)
 });
 
 // Type exports

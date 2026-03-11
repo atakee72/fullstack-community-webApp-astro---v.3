@@ -11,6 +11,7 @@ interface NewsQueryOptions {
   source?: 'ai_fetched' | 'user_submitted';
   search?: string;
   dateFrom?: string;
+  dateTo?: string;
 }
 
 interface NewsResponse {
@@ -33,6 +34,7 @@ function buildQueryString(options: NewsQueryOptions = {}): string {
   if (options.source) params.set('source', options.source);
   if (options.search) params.set('search', options.search);
   if (options.dateFrom) params.set('dateFrom', options.dateFrom);
+  if (options.dateTo) params.set('dateTo', options.dateTo);
 
   const queryString = params.toString();
   return queryString ? `?${queryString}` : '';

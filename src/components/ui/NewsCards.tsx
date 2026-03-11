@@ -66,24 +66,34 @@ export function NewsCards({
   const PAGE_SIZE = 12;
   const shouldAnimate = enableAnimations && !prefersReducedMotion;
 
-  // Compute dateFrom based on filter selection
-  const getDateFrom = (): string | undefined => {
-    if (dateFilter === 'all') return undefined;
+  // Compute date range based on filter selection
+  const getDateRange = (): { dateFrom?: string; dateTo?: string } => {
+    if (dateFilter === 'all') return {};
+    if (dateFilter === 'archive') {
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      return { dateTo: oneYearAgo.toISOString().split('T')[0] };
+    }
     const now = new Date();
     if (dateFilter === '7d') now.setDate(now.getDate() - 7);
     else if (dateFilter === '30d') now.setDate(now.getDate() - 30);
     else if (dateFilter === '90d') now.setDate(now.getDate() - 90);
-    return now.toISOString().split('T')[0];
+    else if (dateFilter === '6m') now.setMonth(now.getMonth() - 6);
+    else if (dateFilter === '1y') now.setFullYear(now.getFullYear() - 1);
+    return { dateFrom: now.toISOString().split('T')[0] };
   };
+
+  const dateRange = getDateRange();
 
   // Data fetching
   const { data, isLoading, error } = useNewsQuery({
     limit: PAGE_SIZE,
     offset: page * PAGE_SIZE,
-    sortBy: 'approvedAt',
+    sortBy: dateFilter === 'archive' ? 'publishedAt' : 'approvedAt',
     sortOrder: 'desc',
     search: debouncedSearch || undefined,
-    dateFrom: getDateFrom(),
+    dateFrom: dateRange.dateFrom,
+    dateTo: dateRange.dateTo,
   });
 
   const submitMutation = useSubmitNews();
@@ -381,9 +391,12 @@ export function NewsCards({
         <div className="flex flex-wrap gap-2">
           {[
             { value: 'all', label: 'All Time' },
-            { value: '7d', label: 'Last 7 Days' },
-            { value: '30d', label: 'Last 30 Days' },
-            { value: '90d', label: 'Last 3 Months' },
+            { value: '7d', label: '7 Days' },
+            { value: '30d', label: '30 Days' },
+            { value: '90d', label: '3 Months' },
+            { value: '6m', label: '6 Months' },
+            { value: '1y', label: '1 Year' },
+            { value: 'archive', label: 'Archive' },
           ].map((opt) => (
             <button
               key={opt.value}
@@ -525,6 +538,11 @@ export function NewsCards({
                   {hasWarning && (warningDismissed || isItemAuthor) && (
                     <span className="absolute top-3 left-3 px-2 py-1 text-xs font-medium bg-amber-600 text-white rounded">
                       {isItemAuthor ? '⚠️ Sensitive for others' : '⚠️ Warning'}
+                    </span>
+                  )}
+                  {dateFilter === 'archive' && (
+                    <span className="absolute top-3 right-12 px-2 py-1 text-xs font-medium bg-gray-500/80 text-white rounded">
+                      Archived
                     </span>
                   )}
 

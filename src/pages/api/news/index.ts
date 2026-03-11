@@ -24,7 +24,7 @@ export const GET: APIRoute = async ({ url, request }) => {
       });
     }
 
-    const { limit, offset, sortBy, sortOrder, source, search, dateFrom } = validation.data;
+    const { limit, offset, sortBy, sortOrder, source, search, dateFrom, dateTo } = validation.data;
 
     // Build filter: only show approved news (+ user's own pending submissions)
     const filter: Record<string, any> = {
@@ -39,8 +39,10 @@ export const GET: APIRoute = async ({ url, request }) => {
 
     if (source) filter.source = source;
 
-    if (dateFrom) {
-      filter.publishedAt = { $gte: new Date(dateFrom) };
+    if (dateFrom || dateTo) {
+      filter.publishedAt = {};
+      if (dateFrom) filter.publishedAt.$gte = new Date(dateFrom);
+      if (dateTo) filter.publishedAt.$lt = new Date(dateTo);
     }
 
     if (search) {
