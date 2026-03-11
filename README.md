@@ -31,6 +31,7 @@ src/
 │   │   ├── comments/
 │   │   ├── likes/
 │   │   ├── views/
+│   │   ├── news/          # Newsboard CRUD, daily fetch, save/unsave
 │   │   ├── reports/       # User report submission
 │   │   └── admin/         # Admin moderation APIs
 │   └── *.astro       # Page components
@@ -107,6 +108,7 @@ Vercel will automatically:
 - Build the Astro app
 - Deploy serverless functions (API routes)
 - Handle SSR pages
+- Run cron jobs defined in `vercel.json` (daily news fetch at 6 AM UTC)
 
 ## 🔑 Key Features
 
@@ -118,6 +120,7 @@ Vercel will automatically:
 - **Responsive Design**: Mobile-first approach
 - **Performance**: Optimized with Astro's island architecture
 - **Content Moderation**: AI-powered + community reporting system
+- **Newsboard**: AI-curated local news from 9 RSS feeds + NewsData.io, with GPT-4o relevance scoring
 - **Marketplace**: Buy/sell listings with image gallery
 
 ## 🛡️ Content Moderation
@@ -159,6 +162,29 @@ The app includes a comprehensive content moderation system:
 | Approved with Warning | ✅ (blurred until revealed) | Warning badge | ✅ Enabled |
 | Rejected | ❌ | Red "rejected" banner | ❌ Disabled |
 
+## 📰 Newsboard
+
+The app includes an AI-powered local news aggregation system:
+
+### Daily News Fetch
+- **Vercel cron job** runs daily at 6 AM UTC, triggering `/api/news/fetch-daily`
+- Fetches from **9 RSS feeds** (Tagesspiegel, Berliner Zeitung, Berliner Kurier, nd-aktuell, taz, Kiez und Kneipe, Schillerpromenade, Facetten Neukölln, Pro Schillerkiez) + **NewsData.io API**
+- **GPT-4o relevance scoring**: Each article scored 0-100 for Berlin/Neukölln relevance
+- Only articles scoring ≥70 are saved (max 20/day)
+- GPT also generates 2-3 sentence German summaries for paywalled articles
+
+### News Sources
+- **AI-fetched articles**: Auto-approved, no moderation needed
+- **User-submitted articles**: Go through the standard moderation pipeline
+- Articles without images use `og:image` scraping as fallback, then a local placeholder
+
+### Newsboard UI
+- Date filter tabs: 7 Days, 30 Days, 3 Months, 6 Months, 1 Year, Archive
+- Live search with 300ms debounce
+- Numbered pagination
+- Modal view with keyboard navigation (← →)
+- Server-side bookmark persistence for logged-in users
+
 ## 📚 API Endpoints
 
 ### Authentication
@@ -197,6 +223,14 @@ The app includes a comprehensive content moderation system:
 - `POST /api/likes/toggle` - Toggle like on content
 - `POST /api/views/increment` - Increment view count
 
+### News
+- `GET /api/news` - List news (with pagination, search, date filters)
+- `POST /api/news/submit` - Submit user news article
+- `GET /api/news/fetch-daily` - Trigger daily AI news fetch (cron, requires CRON_SECRET)
+- `POST /api/news/save` - Save/unsave a news article (bookmark)
+- `GET /api/news/save` - Get user's saved news IDs
+- `GET /api/news/preview` - Preview metadata from a URL
+
 ### Moderation
 - `POST /api/reports/submit` - Submit user report
 - `GET /api/admin/moderation` - List flagged content (admin)
@@ -216,7 +250,9 @@ Required environment variables:
 - `CLOUDINARY_CLOUD_NAME` - Cloudinary cloud name
 - `CLOUDINARY_API_KEY` - Cloudinary API key
 - `CLOUDINARY_API_SECRET` - Cloudinary API secret
-- `OPENAI_API_KEY` - OpenAI API key (for content moderation)
+- `OPENAI_API_KEY` - OpenAI API key (content moderation + news relevance scoring)
+- `CRON_SECRET` - Vercel cron job authentication secret
+- `NEWSDATA_API_KEY` - NewsData.io API key (optional, for additional news sources)
 
 ## 🐛 Debugging
 

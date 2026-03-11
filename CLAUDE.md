@@ -40,6 +40,7 @@ src/
 │   │   ├── comments/
 │   │   ├── likes/
 │   │   ├── views/
+│   │   ├── news/          # Newsboard CRUD, daily fetch, save/unsave
 │   │   ├── reports/       # User report submission
 │   │   └── admin/         # Admin moderation APIs
 │   └── *.astro       # Page components
@@ -100,6 +101,18 @@ export const POST: APIRoute = async ({ request }) => {
 - **Status flow**: `pending` → `approved`/`rejected` (with optional warning label)
 - Key fields: `moderationStatus`, `isUserReported`, `hasWarningLabel`, `warningText` on content
 
+### Newsboard
+- **Daily AI fetch**: Vercel cron (6 AM daily) triggers `/api/news/fetch-daily` which fetches from 9 RSS feeds + NewsData.io API
+- **RSS feeds**: Tagesspiegel, Berliner Zeitung, Berliner Kurier, nd-aktuell, taz, Kiez und Kneipe, Schillerpromenade, Facetten Neukölln, Pro Schillerkiez
+- **GPT-4o scoring**: All articles scored for Berlin/Neukölln relevance (threshold 70/100, max 20/day)
+- **Auto-approve**: AI-fetched articles are auto-approved (no moderation needed); only user-submitted news goes through moderation
+- **Image pipeline**: RSS media:content → enclosure → description `<img>` → og:image scrape → placeholder fallback
+- **Dedup**: By sourceUrl + title, with unique index on title
+- **Bookmarks**: Server-side persistence via `savedNews` collection (localStorage fallback for logged-out users)
+- **Filters**: Date range tabs (7d, 30d, 3m, 6m, 1y, Archive), live search with 300ms debounce
+- **Archive**: Articles older than 1 year shown in Archive tab with "Archived" badge
+- Key config: `vercel.json` (cron schedule), `src/pages/api/news/fetch-daily.ts` (RSS feeds, thresholds)
+
 ## Database Collections
 - `users` - User accounts (includes `moderationStrikes`, `isBanned` fields)
 - `topics` - Forum posts (includes `moderationStatus`, `isUserReported` fields)
@@ -107,6 +120,8 @@ export const POST: APIRoute = async ({ request }) => {
 - `announcements` - Community announcements (includes `moderationStatus`, `isUserReported` fields)
 - `recommendations` - User recommendations (includes `moderationStatus`, `isUserReported` fields)
 - `comments` - Comments on posts
+- `news` - Newsboard articles (AI-fetched and user-submitted, includes `moderationStatus`, `aiRelevanceScore`, `sourceName`, `sourceUrl` fields)
+- `savedNews` - User bookmarks (userId + newsId pairs, server-side persistence)
 - `flaggedContent` - Content flagged by AI or user reports (for admin review queue)
 
 ## Environment Variables
@@ -119,7 +134,9 @@ MONGODB_URI=            # MongoDB connection string
 CLOUDINARY_CLOUD_NAME=  # Image upload
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
-OPENAI_API_KEY=         # Content moderation API
+OPENAI_API_KEY=         # Content moderation API + news relevance scoring
+CRON_SECRET=            # Vercel cron job authentication
+NEWSDATA_API_KEY=       # NewsData.io API (optional, for additional news sources)
 ```
 
 ## Component Patterns
