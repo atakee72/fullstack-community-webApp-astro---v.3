@@ -128,7 +128,29 @@ export function useSaveNewsMutation() {
       toggleSaveNews(newsId, action),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['news'] });
-      queryClient.invalidateQueries({ queryKey: ['savedItems'] });
+      queryClient.invalidateQueries({ queryKey: ['savedNews'] });
     },
+  });
+}
+
+// Fetch saved news IDs from server
+async function fetchSavedNewsIds(): Promise<string[]> {
+  const response = await fetch(`${API_URL}/news/save`, {
+    credentials: 'include',
+  });
+
+  if (!response.ok) return [];
+
+  const data = await response.json();
+  return data.savedIds || [];
+}
+
+// Hook for loading saved news IDs
+export function useSavedNewsQuery(enabled: boolean) {
+  return useQuery({
+    queryKey: ['savedNews'],
+    queryFn: fetchSavedNewsIds,
+    enabled,
+    staleTime: 5 * 60 * 1000,
   });
 }
