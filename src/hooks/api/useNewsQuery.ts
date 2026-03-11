@@ -10,6 +10,7 @@ interface NewsQueryOptions {
   sortOrder?: 'asc' | 'desc';
   source?: 'ai_fetched' | 'user_submitted';
   search?: string;
+  dateFrom?: string;
 }
 
 interface NewsResponse {
@@ -31,6 +32,7 @@ function buildQueryString(options: NewsQueryOptions = {}): string {
   if (options.sortOrder) params.set('sortOrder', options.sortOrder);
   if (options.source) params.set('source', options.source);
   if (options.search) params.set('search', options.search);
+  if (options.dateFrom) params.set('dateFrom', options.dateFrom);
 
   const queryString = params.toString();
   return queryString ? `?${queryString}` : '';

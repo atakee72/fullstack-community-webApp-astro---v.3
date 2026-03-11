@@ -18,6 +18,7 @@ export const NewsQuerySchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
   source: z.enum(['ai_fetched', 'user_submitted']).optional(),
   search: z.string().max(100).optional(),
+  dateFrom: z.string().optional(), // ISO date string, e.g. '2026-03-01'
 });
 
 // Type exports

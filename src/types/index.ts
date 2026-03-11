@@ -257,6 +257,7 @@ export interface FlaggedContent {
   body?: string;
   tags?: string[];
   imageUrls?: string[];
+  sourceUrl?: string; // For news items: link to original article
 
   // Author info (content author)
   authorId: string;

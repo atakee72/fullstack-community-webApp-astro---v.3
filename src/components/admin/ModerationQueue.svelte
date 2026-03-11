@@ -26,6 +26,7 @@
     reportReason?: string;
     reportDetails?: string;
     reportCount?: number;
+    sourceUrl?: string;
     // Review fields
     reviewStatus: 'pending' | 'approved' | 'rejected';
     reviewedBy?: string;
@@ -50,6 +51,8 @@
   let filterStatus: 'pending' | 'approved' | 'rejected' | 'all' = 'pending';
   let filterType = 'all';
   let actionLoading: string | null = null;
+  let currentPage = 0;
+  const PAGE_SIZE = 10;
 
   async function fetchQueue() {
     loading = true;
@@ -74,6 +77,9 @@
       } else if (filterType !== 'all') {
         params.set('contentType', filterType);
       }
+
+      params.set('limit', PAGE_SIZE.toString());
+      params.set('offset', (currentPage * PAGE_SIZE).toString());
 
       const response = await fetch(`/api/admin/moderation?${params}`, { credentials: 'include' });
 
@@ -160,7 +166,17 @@
     }
   }
 
-  $: if (filterStatus || filterType) fetchQueue();
+  // Reset page and refetch when filters change
+  $: if (filterStatus || filterType) {
+    currentPage = 0;
+    fetchQueue();
+  }
+
+  // Refetch when page changes (but not on initial load — onMount handles that)
+  function goToPage(page: number) {
+    currentPage = page;
+    fetchQueue();
+  }
 </script>
 
 <div class="space-y-6 max-w-6xl mx-auto">
@@ -328,6 +344,10 @@
                     <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">
                       🚩 Report{item.reportCount && item.reportCount > 1 ? ` (${item.reportCount})` : ''}
                     </span>
+                  {:else if item.contentType === 'news' && item.authorId === 'system'}
+                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">🤖 AI Found</span>
+                  {:else if item.contentType === 'news'}
+                    <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">👤 User News</span>
                   {:else}
                     <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">🤖 AI</span>
                   {/if}
@@ -342,6 +362,11 @@
                     {/if}
                     {#if item.body}
                       <p class="text-gray-500 text-xs break-words whitespace-pre-wrap">{item.body}</p>
+                    {/if}
+                    {#if item.sourceUrl}
+                      <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs text-[#4b9aaa] hover:underline mt-1">
+                        🔗 Source
+                      </a>
                     {/if}
                     {#if item.tags?.length}
                       <div class="mt-1 flex flex-wrap gap-1">
@@ -418,6 +443,10 @@
               </span>
             {:else if item.decision === 'urgent_review'}
               <span class="px-2 py-1 text-xs font-bold bg-red-600 text-white rounded-full animate-pulse">URGENT</span>
+            {:else if item.contentType === 'news' && item.authorId === 'system'}
+              <span class="px-2 py-1 text-xs font-medium bg-[#4b9aaa] text-white rounded-full">🤖 AI Found</span>
+            {:else if item.contentType === 'news'}
+              <span class="px-2 py-1 text-xs font-medium bg-[#814256] text-white rounded-full">👤 User Submitted</span>
             {:else}
               <span class="px-2 py-1 text-xs font-medium bg-yellow-500 text-white rounded-full">AI Flagged</span>
             {/if}
@@ -441,6 +470,11 @@
                   <span class="px-2 py-0.5 text-xs bg-amber-100 text-amber-800 border border-amber-300 rounded font-medium">{tag}</span>
                 {/each}
               </div>
+            {/if}
+            {#if item.sourceUrl}
+              <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 mt-2 text-sm text-[#4b9aaa] hover:underline">
+                🔗 View original article
+              </a>
             {/if}
             {#if item.imageUrls?.length}
               <div class="mt-3 flex gap-2 flex-wrap">
@@ -466,6 +500,13 @@
                 <p class="text-xs text-gray-400">
                   Reported by: {item.reporterName || 'Anonymous user'}
                 </p>
+              </div>
+            {:else if item.contentType === 'news' && item.scores?.relevance}
+              <p class="text-sm text-gray-500 mb-2">AI Relevance:</p>
+              <div class="flex flex-wrap gap-2 items-center">
+                <span class="px-2 py-1 text-xs font-medium rounded-full text-white {item.scores.relevance >= 90 ? 'bg-green-600' : item.scores.relevance >= 80 ? 'bg-blue-600' : 'bg-[#4b9aaa]'}">
+                  {item.highestCategory} — {item.scores.relevance}/100
+                </span>
               </div>
             {:else}
               <p class="text-sm text-gray-500 mb-2">Flagged for:</p>
@@ -561,6 +602,29 @@
           {/if}
         </div>
       {/each}
+    </div>
+  {/if}
+
+  <!-- Pagination -->
+  {#if data?.pagination && (data.pagination.hasMore || currentPage > 0)}
+    <div class="flex justify-center items-center gap-4 mt-6">
+      <button
+        on:click={() => goToPage(currentPage - 1)}
+        disabled={currentPage === 0 || loading}
+        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed font-medium"
+      >
+        ← Previous
+      </button>
+      <span class="text-sm text-gray-500">
+        Page {currentPage + 1} · {data.pagination.total} items total
+      </span>
+      <button
+        on:click={() => goToPage(currentPage + 1)}
+        disabled={!data.pagination.hasMore || loading}
+        class="px-4 py-2 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a8999] disabled:opacity-40 disabled:cursor-not-allowed font-medium"
+      >
+        Next →
+      </button>
     </div>
   {/if}
 </div>

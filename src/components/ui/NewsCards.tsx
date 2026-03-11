@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookmarkIcon, X, ExternalLink, Plus, Loader2 } from "lucide-react";
+import { BookmarkIcon, X, ExternalLink, Plus, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNewsQuery, useSubmitNews, useSaveNewsMutation } from "../../hooks/api/useNewsQuery";
 import type { NewsItem } from "../../types";
@@ -56,6 +56,9 @@ export function NewsCards({
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState('');
   const [dismissedWarnings, setDismissedWarnings] = useState<Set<string>>(new Set());
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [dateFilter, setDateFilter] = useState('all');
   const [formData, setFormData] = useState({
     title: '', description: '', sourceUrl: '', sourceName: '', imageUrl: '', submitterComment: ''
   });
@@ -63,12 +66,24 @@ export function NewsCards({
   const PAGE_SIZE = 12;
   const shouldAnimate = enableAnimations && !prefersReducedMotion;
 
+  // Compute dateFrom based on filter selection
+  const getDateFrom = (): string | undefined => {
+    if (dateFilter === 'all') return undefined;
+    const now = new Date();
+    if (dateFilter === '7d') now.setDate(now.getDate() - 7);
+    else if (dateFilter === '30d') now.setDate(now.getDate() - 30);
+    else if (dateFilter === '90d') now.setDate(now.getDate() - 90);
+    return now.toISOString().split('T')[0];
+  };
+
   // Data fetching
   const { data, isLoading, error } = useNewsQuery({
     limit: PAGE_SIZE,
     offset: page * PAGE_SIZE,
     sortBy: 'approvedAt',
     sortOrder: 'desc',
+    search: debouncedSearch || undefined,
+    dateFrom: getDateFrom(),
   });
 
   const submitMutation = useSubmitNews();
@@ -101,6 +116,15 @@ export function NewsCards({
       } catch {}
     }
   }, []);
+
+  // Debounced search — 300ms delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+      setPage(0);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   // Auto-dismiss submit toast
   useEffect(() => {
@@ -140,26 +164,47 @@ export function NewsCards({
     });
   };
 
-  const openItem = (item: NewsItem) => {
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+
+  const newsItems = data?.news || [];
+  const pagination = data?.pagination;
+
+  const openItem = (item: NewsItem, index: number) => {
     setSelectedItem(item);
+    setSelectedIndex(index);
     document.body.style.overflow = 'hidden';
   };
 
   const closeItem = () => {
     setSelectedItem(null);
+    setSelectedIndex(-1);
     document.body.style.overflow = '';
   };
 
+  const navigateItem = (direction: 'prev' | 'next') => {
+    const newIndex = direction === 'prev' ? selectedIndex - 1 : selectedIndex + 1;
+    if (newIndex >= 0 && newIndex < newsItems.length) {
+      setSelectedItem(newsItems[newIndex]);
+      setSelectedIndex(newIndex);
+    }
+  };
+
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (showSubmitForm) setShowSubmitForm(false);
         else if (selectedItem) closeItem();
+      } else if (selectedItem && !showSubmitForm) {
+        if (e.key === 'ArrowLeft' && selectedIndex > 0) {
+          navigateItem('prev');
+        } else if (e.key === 'ArrowRight' && selectedIndex < newsItems.length - 1) {
+          navigateItem('next');
+        }
       }
     };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [selectedItem, showSubmitForm]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedItem, showSubmitForm, selectedIndex, newsItems]);
 
   const fetchPreview = async (url: string) => {
     if (!url) return;
@@ -218,9 +263,6 @@ export function NewsCards({
     }
   };
 
-  const newsItems = data?.news || [];
-  const pagination = data?.pagination;
-
   // Check if current user is the author of a news item
   const isAuthor = (item: NewsItem): boolean => {
     if (!user) return false;
@@ -233,6 +275,33 @@ export function NewsCards({
   };
 
   const GENERIC_WARNING = 'This content may contain sensitive material.';
+
+  const totalPages = pagination ? Math.ceil(pagination.total / PAGE_SIZE) : 0;
+
+  const clearSearch = () => {
+    setSearchInput('');
+    setDebouncedSearch('');
+    setPage(0);
+  };
+
+  const handleDateFilter = (filter: string) => {
+    setDateFilter(filter);
+    setPage(0);
+  };
+
+  // Generate page numbers with ellipsis
+  const getPageNumbers = (): (number | 'ellipsis')[] => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i);
+    const pages: (number | 'ellipsis')[] = [];
+    pages.push(0); // Always show first page
+    if (page > 2) pages.push('ellipsis');
+    for (let i = Math.max(1, page - 1); i <= Math.min(totalPages - 2, page + 1); i++) {
+      pages.push(i);
+    }
+    if (page < totalPages - 3) pages.push('ellipsis');
+    pages.push(totalPages - 1); // Always show last page
+    return pages;
+  };
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4 md:p-6 text-gray-800">
@@ -277,6 +346,58 @@ export function NewsCards({
               }}
             />
           ))}
+        </div>
+      </div>
+
+      {/* Search & Filter Bar */}
+      <div className="mb-6 space-y-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search news..."
+            className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] focus:border-transparent"
+          />
+          {searchInput && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+          {isLoading && debouncedSearch && (
+            <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4b9aaa] animate-spin" />
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {[
+            { value: 'all', label: 'All Time' },
+            { value: '7d', label: 'Last 7 Days' },
+            { value: '30d', label: 'Last 30 Days' },
+            { value: '90d', label: 'Last 3 Months' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => handleDateFilter(opt.value)}
+              className={cn(
+                "px-3 py-1.5 text-sm font-medium rounded-lg transition-colors",
+                dateFilter === opt.value
+                  ? "bg-[#814256] text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+          {pagination && (
+            <span className="flex items-center text-sm text-gray-400 ml-auto">
+              {pagination.total} {pagination.total === 1 ? 'article' : 'articles'}
+            </span>
+          )}
         </div>
       </div>
 
@@ -330,7 +451,7 @@ export function NewsCards({
                 style={{
                   transitionDelay: shouldAnimate ? `${500 + index * 120}ms` : '0ms'
                 }}
-                onClick={() => !isRejected && !showWarningOverlay && openItem(item)}
+                onClick={() => !isRejected && !showWarningOverlay && openItem(item, index)}
               >
                 {/* Warning overlay (blur until dismissed) */}
                 {showWarningOverlay && (
@@ -360,9 +481,11 @@ export function NewsCards({
                       className="w-full h-full object-cover transform-gpu group-hover:scale-105 transition-transform duration-700 ease-out"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#4b9aaa]/20 to-[#814256]/20 flex items-center justify-center">
-                      <span className="text-4xl">📰</span>
-                    </div>
+                    <img
+                      src="/schillerpro-schilder.jpeg"
+                      alt="Schillerkiez"
+                      className="w-full h-full object-cover opacity-60"
+                    />
                   )}
                   <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-black/50 to-transparent" />
 
@@ -425,24 +548,40 @@ export function NewsCards({
       )}
 
       {/* Pagination */}
-      {pagination && (pagination.hasMore || page > 0) && (
-        <div className="flex justify-center gap-4 mt-8">
-          {page > 0 && (
-            <button
-              onClick={() => setPage(p => p - 1)}
-              className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-            >
-              Previous
-            </button>
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-1 mt-8">
+          <button
+            onClick={() => setPage(p => p - 1)}
+            disabled={page === 0}
+            className="px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            ←
+          </button>
+          {getPageNumbers().map((p, i) =>
+            p === 'ellipsis' ? (
+              <span key={`ellipsis-${i}`} className="px-2 py-2 text-gray-400 text-sm">…</span>
+            ) : (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={cn(
+                  "w-9 h-9 text-sm font-medium rounded-lg transition-colors",
+                  page === p
+                    ? "bg-[#814256] text-white"
+                    : "text-gray-600 hover:bg-gray-100"
+                )}
+              >
+                {p + 1}
+              </button>
+            )
           )}
-          {pagination.hasMore && (
-            <button
-              onClick={() => setPage(p => p + 1)}
-              className="px-6 py-2.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors font-medium"
-            >
-              Load More
-            </button>
-          )}
+          <button
+            onClick={() => setPage(p => p + 1)}
+            disabled={page >= totalPages - 1}
+            className="px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            →
+          </button>
         </div>
       )}
 
@@ -462,6 +601,29 @@ export function NewsCards({
               <X className="w-4 h-4 text-gray-700" />
             </button>
 
+            {/* Navigation Arrows */}
+            {selectedIndex > 0 && (
+              <button
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center z-10 shadow-md transition-all duration-200 hover:scale-110 active:scale-90"
+                onClick={(e) => { e.stopPropagation(); navigateItem('prev'); }}
+              >
+                <span className="text-gray-700 text-lg">←</span>
+              </button>
+            )}
+            {selectedIndex < newsItems.length - 1 && (
+              <button
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center z-10 shadow-md transition-all duration-200 hover:scale-110 active:scale-90"
+                onClick={(e) => { e.stopPropagation(); navigateItem('next'); }}
+              >
+                <span className="text-gray-700 text-lg">→</span>
+              </button>
+            )}
+
+            {/* Article counter */}
+            <div className="absolute top-4 left-4 z-10 px-2 py-1 bg-white/90 rounded text-xs text-gray-500 shadow-sm">
+              {selectedIndex + 1} / {newsItems.length}
+            </div>
+
             <div className="h-full overflow-y-auto">
               {/* Header Image */}
               <div className="relative h-48 md:h-72">
@@ -472,9 +634,11 @@ export function NewsCards({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[#4b9aaa]/20 to-[#814256]/20 flex items-center justify-center">
-                    <span className="text-6xl">📰</span>
-                  </div>
+                  <img
+                    src="/schillerpro-schilder.jpeg"
+                    alt="Schillerkiez"
+                    className="w-full h-full object-cover opacity-60"
+                  />
                 )}
                 <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/70 to-transparent" />
 

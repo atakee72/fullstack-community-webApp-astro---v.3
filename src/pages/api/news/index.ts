@@ -24,7 +24,7 @@ export const GET: APIRoute = async ({ url, request }) => {
       });
     }
 
-    const { limit, offset, sortBy, sortOrder, source, search } = validation.data;
+    const { limit, offset, sortBy, sortOrder, source, search, dateFrom } = validation.data;
 
     // Build filter: only show approved news (+ user's own pending submissions)
     const filter: Record<string, any> = {
@@ -38,6 +38,10 @@ export const GET: APIRoute = async ({ url, request }) => {
     };
 
     if (source) filter.source = source;
+
+    if (dateFrom) {
+      filter.publishedAt = { $gte: new Date(dateFrom) };
+    }
 
     if (search) {
       filter.$and = [
@@ -57,7 +61,7 @@ export const GET: APIRoute = async ({ url, request }) => {
     const [items, total] = await Promise.all([
       newsCollection
         .find(filter)
-        .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
+        .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1, _id: -1 })
         .skip(offset)
         .limit(limit)
         .toArray(),
