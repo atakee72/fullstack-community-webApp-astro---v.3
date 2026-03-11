@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { BookmarkIcon, X, ExternalLink, Plus, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useNewsQuery, useSubmitNews, useSaveNewsMutation } from "../../hooks/api/useNewsQuery";
+import { useNewsQuery, useSubmitNews, useSaveNewsMutation, useSavedNewsQuery } from "../../hooks/api/useNewsQuery";
 import type { NewsItem } from "../../types";
 
 interface StatusBar {
@@ -88,6 +88,7 @@ export function NewsCards({
 
   const submitMutation = useSubmitNews();
   const saveMutation = useSaveNewsMutation();
+  const { data: serverSavedIds } = useSavedNewsQuery(!!user);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -101,13 +102,17 @@ export function NewsCards({
     };
   }, []);
 
-  // Load saved items and dismissed warnings from localStorage
+  // Load saved items: server data for logged-in users, localStorage as fallback
   useEffect(() => {
-    const saved = localStorage.getItem('savedNews');
-    if (saved) {
-      try {
-        setSavedItems(new Set(JSON.parse(saved)));
-      } catch {}
+    if (serverSavedIds && serverSavedIds.length > 0) {
+      setSavedItems(new Set(serverSavedIds));
+    } else if (!user) {
+      const saved = localStorage.getItem('savedNews');
+      if (saved) {
+        try {
+          setSavedItems(new Set(JSON.parse(saved)));
+        } catch {}
+      }
     }
     const dismissed = localStorage.getItem('dismissedNewsWarnings');
     if (dismissed) {
@@ -115,7 +120,7 @@ export function NewsCards({
         setDismissedWarnings(new Set(JSON.parse(dismissed)));
       } catch {}
     }
-  }, []);
+  }, [serverSavedIds, user]);
 
   // Debounced search — 300ms delay
   useEffect(() => {
