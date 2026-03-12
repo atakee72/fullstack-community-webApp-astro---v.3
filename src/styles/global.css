@@ -147,3 +147,37 @@ body {
 .accordion-item:hover .content {
   max-height: 500px;
 }
+
+/* ─── Splash Screen ─── */
+/* Hidden by default — JS shows it only on first visit.
+   This prevents flash-of-overlay on ViewTransitions navigation. */
+#splash-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+#splash-video {
+  width: 70vmin;
+  max-width: 500px;
+  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  transform: perspective(500px) rotateY(-10deg) rotateX(4deg);
+  box-shadow: 18px 24px 40px rgba(0, 0, 0, 0.45), 0 0 80px rgba(75, 154, 170, 0.25);
+}
+
+@media (max-width: 640px) {
+  #splash-video {
+    width: 85vmin;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #splash-overlay {
+    display: none !important;
+  }
+}

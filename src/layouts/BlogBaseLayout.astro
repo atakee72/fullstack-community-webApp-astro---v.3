@@ -1,6 +1,7 @@
 ---
 import { getSession } from 'auth-astro/server';
 import Navbar from '../components/Navbar';
+import SplashScreen from '../components/SplashScreen.astro';
 import { ViewTransitions } from 'astro:transitions';
 
 const session = await getSession(Astro.request);
@@ -40,6 +41,7 @@ const { title, description = 'Mahalle Blog - Community stories and updates', ima
     <ViewTransitions />
   </head>
   <body class="min-h-screen bg-[#4b9aaa]">
+    <SplashScreen />
     <Navbar client:load user={session?.user} />
     <slot />
   </body>
