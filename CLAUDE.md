@@ -8,6 +8,7 @@ Mahalle - A Fullstack Community Web App for Local Neighborhoods. The name means 
 ## Tech Stack
 - **Framework**: Astro 5.x with React 18.2 (hybrid SSR/SSG)
 - **Styling**: Tailwind CSS 3.4
+- **Animation**: Motion 12.x (`motion/react` for React, Web Animations API for Astro inline scripts)
 - **State Management**: Zustand 4.4
 - **Data Fetching**: TanStack Query 5.17
 - **Authentication**: auth-astro with NextAuth (Credentials provider)
@@ -153,6 +154,20 @@ Complex React components use a wrapper pattern:
 - `CalendarWrapper.tsx` → `CalendarContainer.tsx`
 - `ForumWrapper.tsx` → `ForumContainer.tsx`
 
+### Splash Screen
+- `SplashScreen.astro` — plays logo video once per session with fade-in/out and 3D CSS effect
+- Included in both `BaseLayout.astro` and `BlogBaseLayout.astro`
+- Uses `<script is:inline data-astro-rerun>` for synchronous execution and ViewTransitions compatibility
+- Hidden by default (`display: none` in CSS) — JS shows it only on first visit to prevent flash-of-overlay
+- Dual-gate dismiss: waits for both video end AND `window.load` before fading out
+- Uses native Web Animations API (not Motion) because `is:inline` scripts can't use ES imports
+- `astro:before-swap` listener (commented out, available if needed) strips overlay from incoming pages
+
+### Animation (Motion Library)
+- **Navbar**: `motion/react` — spring-based menu slide (`AnimatePresence`), staggered nav item entrance
+- **Splash screen**: Native Web Animations API (fade-in/out) — `is:inline` context, no imports
+- Motion is available for future use: scroll reveals (`inView`), micro-interactions, spring physics
+
 ## Color Palette
 The project uses these CSS variables (defined in `global.css`):
 - `--color-primary`: #4b9aaa (Teal)
@@ -166,6 +181,12 @@ When I say yellow, red, green, I always mean the default variants of the project
 
 ### SSR Compatibility
 - `typewriter-editor` requires dynamic import inside `onMount()` to avoid SSR errors - it accesses browser globals (KeyboardEvent) at module load time
+
+### Astro Script + ViewTransitions
+- Module `<script>` tags are deferred and only execute once — they do NOT re-run on ViewTransitions navigation
+- `<script is:inline>` may or may not re-run — use `data-astro-rerun` to force re-execution on every navigation
+- For critical synchronous code (e.g. splash screen), always use `is:inline` — module scripts load too late for timing-sensitive DOM manipulation
+- `astro:before-swap` event can modify `e.newDocument` before it enters the live DOM — useful for stripping elements from incoming pages
 
 ## TODO / Reminders
 - [ ] Create a pre-commit hook for automatic credentials/secrets check before git add (husky + custom grep script)
