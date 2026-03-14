@@ -1,15 +1,16 @@
 ---
-import { getSession } from 'auth-astro/server';
 import Navbar from '../components/Navbar';
 import SplashScreen from '../components/SplashScreen.astro';
 import { ViewTransitions } from 'astro:transitions';
 
-const session = await getSession(Astro.request);
+// Session is populated by middleware (Astro.locals)
+const session = Astro.locals.session;
 
 export interface Props {
   title: string;
   description?: string;
   image?: string;
+
 }
 
 const { title, description = 'Mahalle Blog - Community stories and updates', image = '/og-image.png' } = Astro.props;

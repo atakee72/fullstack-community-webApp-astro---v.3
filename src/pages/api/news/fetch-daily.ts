@@ -449,6 +449,7 @@ export const GET: APIRoute = async ({ request }) => {
           viewCount: 0,
           publishedAt: new Date(article.publishedAt),
           fetchedAt: now,
+          fetchDate: now.toISOString().split('T')[0],
           approvedAt: now,
           createdAt: now,
           updatedAt: now,

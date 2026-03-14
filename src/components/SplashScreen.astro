@@ -15,6 +15,14 @@
     var overlay = document.getElementById('splash-overlay');
     if (!overlay) return;
 
+    // Main navigation pages — update this list if main pages change
+    var splashPages = ['/', '/blog', '/newsboard', '/calendar', '/marketplace', '/profile'];
+    var path = window.location.pathname.replace(/\/+$/, '') || '/';
+    if (splashPages.indexOf(path) === -1) {
+      overlay.remove();
+      return;
+    }
+
     // // Already shown this session or reduced motion — remove, stay hidden
     // if (
     //   sessionStorage.getItem('mahalle-splash-shown') ||

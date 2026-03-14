@@ -2,13 +2,20 @@ import { getSession } from 'auth-astro/server';
 import { defineMiddleware } from "astro:middleware";
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  // Skip middleware for static assets
+  // Skip middleware for static assets and prerendered routes
   const pathname = context.url.pathname;
   if (
     pathname.startsWith("/_image") ||
     pathname.startsWith("/favicon") ||
     pathname.includes(".") // Skip for files with extensions
   ) {
+    return next();
+  }
+
+  // Skip session fetching for prerendered routes (no request headers available)
+  if (context.isPrerendered) {
+    context.locals.user = null;
+    context.locals.session = null;
     return next();
   }
 

@@ -125,9 +125,10 @@ export const POST: APIRoute = async ({ request }) => {
           updatedAt: new Date()
         };
 
-        // Set approvedAt timestamp for news items
+        // Set approvedAt timestamp and fetchDate for news items
         if (!isRejection && flaggedContent.contentType === 'news') {
           updateData.approvedAt = new Date();
+          updateData.fetchDate = new Date().toISOString().split('T')[0];
         }
 
         if (isRejection && rejectionReason) {

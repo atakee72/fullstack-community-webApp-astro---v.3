@@ -178,6 +178,7 @@ export interface NewsItem {
   sourceName: string;
   // AI metadata (for ai_fetched items)
   aiRelevanceScore?: number;
+  fetchDate?: string; // YYYY-MM-DD, for day-grouped sorting by relevance
   aiCategory?: string;
   aiReason?: string;
   // User submission

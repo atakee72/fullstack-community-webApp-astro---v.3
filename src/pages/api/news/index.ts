@@ -63,7 +63,7 @@ export const GET: APIRoute = async ({ url, request }) => {
     const [items, total] = await Promise.all([
       newsCollection
         .find(filter)
-        .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1, _id: -1 })
+        .sort({ fetchDate: -1, source: -1, aiRelevanceScore: -1, [sortBy]: sortOrder === 'asc' ? 1 : -1, _id: -1 })
         .skip(offset)
         .limit(limit)
         .toArray(),

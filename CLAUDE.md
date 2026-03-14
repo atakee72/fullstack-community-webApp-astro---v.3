@@ -106,6 +106,7 @@ export const POST: APIRoute = async ({ request }) => {
 - **Daily AI fetch**: Vercel cron (6 AM daily) triggers `/api/news/fetch-daily` which fetches from 9 RSS feeds + NewsData.io API
 - **RSS feeds**: Tagesspiegel, Berliner Zeitung, Berliner Kurier, nd-aktuell, taz, Kiez und Kneipe, Schillerpromenade, Facetten Neukölln, Pro Schillerkiez
 - **GPT-4o scoring**: All articles scored for Berlin/Neukölln relevance (threshold 70/100, max 20/day)
+- **Relevance sorting**: Articles sorted by day (`fetchDate`), then user-submitted first, then by `aiRelevanceScore` descending (most hyperlocal on top). User-submitted articles get `fetchDate` set at admin approval time, not submission time.
 - **Auto-approve**: AI-fetched articles are auto-approved (no moderation needed); only user-submitted news goes through moderation
 - **Image pipeline**: RSS media:content → enclosure → description `<img>` → og:image scrape → placeholder fallback
 - **Dedup**: By sourceUrl + title, with unique index on title
@@ -121,7 +122,7 @@ export const POST: APIRoute = async ({ request }) => {
 - `announcements` - Community announcements (includes `moderationStatus`, `isUserReported` fields)
 - `recommendations` - User recommendations (includes `moderationStatus`, `isUserReported` fields)
 - `comments` - Comments on posts
-- `news` - Newsboard articles (AI-fetched and user-submitted, includes `moderationStatus`, `aiRelevanceScore`, `sourceName`, `sourceUrl` fields)
+- `news` - Newsboard articles (AI-fetched and user-submitted, includes `moderationStatus`, `aiRelevanceScore`, `fetchDate`, `sourceName`, `sourceUrl` fields)
 - `savedNews` - User bookmarks (userId + newsId pairs, server-side persistence)
 - `flaggedContent` - Content flagged by AI or user reports (for admin review queue)
 
@@ -155,10 +156,12 @@ Complex React components use a wrapper pattern:
 - `ForumWrapper.tsx` → `ForumContainer.tsx`
 
 ### Splash Screen
-- `SplashScreen.astro` — plays logo video once per session with fade-in/out and 3D CSS effect
+- `SplashScreen.astro` — plays logo video with fade-in/out and 3D CSS effect
+- **Page allowlist**: Only shows on main nav pages (`/`, `/blog`, `/newsboard`, `/calendar`, `/marketplace`, `/profile`). Sub-pages (e.g. `/blog/my-post`, `/login`) skip it entirely via pathname check.
+- No session gating — splash shows on every visit/reload of a main page
 - Included in both `BaseLayout.astro` and `BlogBaseLayout.astro`
 - Uses `<script is:inline data-astro-rerun>` for synchronous execution and ViewTransitions compatibility
-- Hidden by default (`display: none` in CSS) — JS shows it only on first visit to prevent flash-of-overlay
+- Hidden by default (`display: none` in CSS) — JS shows it only on allowed pages to prevent flash-of-overlay
 - Dual-gate dismiss: waits for both video end AND `window.load` before fading out
 - Uses native Web Animations API (not Motion) because `is:inline` scripts can't use ES imports
 - `astro:before-swap` listener (commented out, available if needed) strips overlay from incoming pages
@@ -181,6 +184,7 @@ When I say yellow, red, green, I always mean the default variants of the project
 
 ### SSR Compatibility
 - `typewriter-editor` requires dynamic import inside `onMount()` to avoid SSR errors - it accesses browser globals (KeyboardEvent) at module load time
+- **Prerendered pages + auth**: Middleware uses `context.isPrerendered` to skip `getSession()` on prerendered routes (avoids `Astro.request.headers` warning). `BlogBaseLayout` reads session from `Astro.locals.session` (populated by middleware) instead of calling `getSession` directly.
 
 ### Astro Script + ViewTransitions
 - Module `<script>` tags are deferred and only execute once — they do NOT re-run on ViewTransitions navigation
