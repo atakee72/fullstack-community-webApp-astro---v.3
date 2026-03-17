@@ -27,6 +27,7 @@
       const params = new URLSearchParams();
       if (filters.category && filters.category !== 'all') params.set('category', filters.category);
       if (filters.condition && filters.condition !== 'all') params.set('condition', filters.condition);
+      if (filters.listingType && filters.listingType !== 'all') params.set('listingType', filters.listingType);
       if (filters.sortBy) params.set('sortBy', filters.sortBy);
       if (filters.search) params.set('search', filters.search);
       if (filters.priceMin !== undefined) params.set('priceMin', String(filters.priceMin));
@@ -144,7 +145,7 @@
   {:else}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {#each listings as listing (listing._id)}
-        <ProductCard {listing} />
+        <ProductCard {listing} {session} />
       {/each}
     </div>
   {/if}

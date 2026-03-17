@@ -2,6 +2,7 @@
   import type { Listing } from '../../types/listing';
   import { CONDITION_COLORS } from '../../types/listing';
   import RichTextDisplay from './RichTextDisplay.svelte';
+  import ReportListingModal from './ReportListingModal.svelte';
 
   let { listingId, session } = $props<{ listingId: string; session: any }>();
 
@@ -11,6 +12,9 @@
   let selectedImage = $state(0);
   let isSaved = $state(false);
   let savingInProgress = $state(false);
+  let showReportModal = $state(false);
+  let alreadyReported = $state(false);
+  let reportCheckDone = $state(false);
 
   $effect(() => {
     fetchListing();
@@ -35,6 +39,8 @@
       if (session?.user && listing?.savedBy) {
         isSaved = listing.savedBy.some((id: string) => id === session.user.id);
       }
+      // Check if user already reported this listing
+      checkReportStatus();
     } catch (e) {
       error = e instanceof Error ? e.message : 'An error occurred';
     } finally {
@@ -47,6 +53,33 @@
       await fetch(`/api/listings/${listingId}/view`, { method: 'POST' });
     } catch (e) {
       // Silent fail for view increment
+    }
+  }
+
+  async function checkReportStatus() {
+    if (!session?.user || !listing) return;
+    try {
+      const response = await fetch(`/api/reports/check?contentId=${listingId}&contentType=marketplace`);
+      if (response.ok) {
+        const data = await response.json();
+        alreadyReported = data.alreadyReported;
+      }
+    } catch (e) {
+      // Silent fail
+    } finally {
+      reportCheckDone = true;
+    }
+  }
+
+  function handleReportClick() {
+    if (alreadyReported) return;
+    if (!reportCheckDone) {
+      // Check first, then open
+      checkReportStatus().then(() => {
+        if (!alreadyReported) showReportModal = true;
+      });
+    } else {
+      showReportModal = true;
     }
   }
 
@@ -90,6 +123,9 @@
       day: 'numeric'
     }) : ''
   );
+
+  const isOwner = $derived(session?.user?.id === listing?.sellerId);
+  const hasWarning = $derived(listing?.hasWarningLabel === true);
 </script>
 
 <div>
@@ -124,6 +160,33 @@
       </a>
     </div>
   {:else if listing}
+    {#if hasWarning && isOwner}
+      <!-- Author: info banner about warning -->
+      <div class="bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 mb-6 flex items-start gap-3">
+        <span class="text-orange-500 text-xl flex-shrink-0">&#9888;&#65039;</span>
+        <div>
+          <p class="text-orange-800 font-medium text-sm">Your listing was approved with a warning</p>
+          <p class="text-orange-700 text-xs mt-1">
+            <strong>Warning:</strong> {listing.warningText || 'Content may be sensitive to some community members'}
+          </p>
+          <p class="text-orange-600 text-xs mt-2">
+            Your listing is visible to others but shown behind a warning overlay.
+          </p>
+        </div>
+      </div>
+    {:else if hasWarning && !isOwner}
+      <!-- Non-author: warning info bar with reason -->
+      <div class="bg-amber-50 border border-amber-300 rounded-lg px-4 py-3 mb-6 flex items-start gap-2">
+        <span class="text-lg flex-shrink-0">&#9888;&#65039;</span>
+        <div>
+          <p class="text-sm text-amber-800 font-medium">This listing was flagged as potentially sensitive content.</p>
+          {#if listing.warningText}
+            <p class="text-xs text-amber-700 mt-1">Reason: {listing.warningText}</p>
+          {/if}
+        </div>
+      </div>
+    {/if}
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <!-- Image Gallery -->
       <div class="space-y-4">
@@ -183,14 +246,28 @@
 
         <!-- Price -->
         <div class="bg-[#eccc6e]/20 rounded-xl p-4">
-          <div class="flex items-baseline gap-3">
-            <span class="text-3xl font-bold text-[#814256]">${listing.price.toFixed(2)}</span>
-            {#if listing.originalPrice && listing.originalPrice > listing.price}
-              <span class="text-lg text-gray-400 line-through">${listing.originalPrice.toFixed(2)}</span>
+          {#if listing.listingType === 'exchange'}
+            <div class="flex items-center gap-3">
+              <svg class="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              <span class="text-2xl font-bold text-purple-700">Available for Exchange</span>
+            </div>
+            {#if listing.exchangeFor}
+              <p class="text-sm text-purple-600 mt-2 font-medium">Looking for: {listing.exchangeFor}</p>
+            {:else}
+              <p class="text-sm text-gray-600 mt-1">Contact the owner to arrange a swap</p>
             {/if}
-          </div>
-          {#if savings}
-            <p class="text-green-600 font-medium mt-1">You save ${savings}!</p>
+          {:else}
+            <div class="flex items-baseline gap-3">
+              <span class="text-3xl font-bold text-[#814256]">${listing.price.toFixed(2)}</span>
+              {#if listing.originalPrice && listing.originalPrice > listing.price}
+                <span class="text-lg text-gray-400 line-through">${listing.originalPrice.toFixed(2)}</span>
+              {/if}
+            </div>
+            {#if savings}
+              <p class="text-green-600 font-medium mt-1">You save ${savings}!</p>
+            {/if}
           {/if}
         </div>
 
@@ -235,6 +312,23 @@
               Share
             </button>
           </div>
+
+          <!-- Report Button (not shown for own listings) -->
+          {#if session?.user && listing.sellerId?.toString() !== session.user.id}
+            <button
+              onclick={handleReportClick}
+              disabled={alreadyReported}
+              class="w-full flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm transition-colors
+                {alreadyReported
+                  ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
+                  : 'text-gray-500 hover:text-red-600 hover:bg-red-50 border border-[#aca89f]/30'}"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm0 0h9" />
+              </svg>
+              {alreadyReported ? 'Already Reported' : 'Report Listing'}
+            </button>
+          {/if}
         </div>
 
         {#if !session?.user}
@@ -246,3 +340,13 @@
     </div>
   {/if}
 </div>
+
+<!-- Report Modal -->
+{#if listing}
+  <ReportListingModal
+    listingId={listingId}
+    listingTitle={listing.title}
+    {session}
+    bind:show={showReportModal}
+  />
+{/if}

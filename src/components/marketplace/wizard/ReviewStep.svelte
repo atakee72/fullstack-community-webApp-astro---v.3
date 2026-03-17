@@ -6,6 +6,8 @@
     listing: {
       title: string;
       description: string | Delta;
+      listingType?: string;
+      exchangeFor?: string;
       category: string;
       condition: string;
       images: string[];
@@ -16,6 +18,8 @@
     onPrev: () => void;
     isSubmitting: boolean;
   }>();
+
+  const isExchange = $derived(listing.listingType === 'exchange');
 
   const conditionLabel = $derived(
     listing.condition.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
@@ -75,10 +79,17 @@
           </div>
 
           <div class="flex items-baseline gap-2">
-            <span class="text-2xl font-bold text-[#814256]">${listing.price.toFixed(2)}</span>
-            {#if listing.originalPrice && listing.originalPrice > listing.price}
-              <span class="text-gray-400 line-through">${listing.originalPrice.toFixed(2)}</span>
-              <span class="text-green-600 text-sm font-medium">-{discount}%</span>
+            {#if isExchange}
+              <span class="text-2xl font-bold text-purple-700">Exchange / Tausch</span>
+              {#if listing.exchangeFor}
+                <p class="text-sm text-purple-600 mt-1">Looking for: {listing.exchangeFor}</p>
+              {/if}
+            {:else}
+              <span class="text-2xl font-bold text-[#814256]">${listing.price.toFixed(2)}</span>
+              {#if listing.originalPrice && listing.originalPrice > listing.price}
+                <span class="text-gray-400 line-through">${listing.originalPrice.toFixed(2)}</span>
+                <span class="text-green-600 text-sm font-medium">-{discount}%</span>
+              {/if}
             {/if}
           </div>
 

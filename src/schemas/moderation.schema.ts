@@ -131,7 +131,7 @@ export const FlaggedContentQuerySchema = z.object({
 // Schema for user report submission (API request)
 export const ReportContentSchema = z.object({
   contentId: ObjectIdSchema,
-  contentType: z.enum(['topic', 'comment', 'announcement', 'recommendation', 'event', 'news']),
+  contentType: z.enum(['topic', 'comment', 'announcement', 'recommendation', 'event', 'news', 'marketplace']),
   reason: ReportReasonSchema,
   details: z.string().min(10, 'Please provide at least 10 characters explaining the issue').max(500)
 });

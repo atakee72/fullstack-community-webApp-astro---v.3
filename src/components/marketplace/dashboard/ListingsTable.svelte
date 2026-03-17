@@ -4,9 +4,16 @@
 
   let { listings, onStatusChange, onDelete } = $props<{
     listings: Listing[];
-    onStatusChange: (id: string, status: 'available' | 'reserved' | 'sold') => void;
+    onStatusChange: (id: string, status: 'available' | 'reserved' | 'sold' | 'exchanged') => void;
     onDelete: (id: string) => void;
   }>();
+
+  function getModerationBadge(listing: Listing) {
+    if (listing.moderationStatus === 'pending') return { label: 'Under Review', class: 'bg-yellow-100 text-yellow-800 border-yellow-200', tooltip: 'Your listing is being reviewed by our moderation team' };
+    if (listing.moderationStatus === 'rejected') return { label: 'Rejected', class: 'bg-red-100 text-red-800 border-red-200', tooltip: listing.rejectionReason || 'Your listing was rejected for violating community guidelines' };
+    if (listing.hasWarningLabel) return { label: '⚠️ Warning', class: 'bg-orange-100 text-orange-800 border-orange-200', tooltip: listing.warningText || 'Content may be sensitive to some community members' };
+    return null;
+  }
 
   function formatDate(date: Date | string) {
     return new Date(date).toLocaleDateString('en-US', {
@@ -44,7 +51,11 @@
           </div>
           <div class="flex-1 min-w-0">
             <h3 class="font-medium text-gray-800 truncate">{listing.title}</h3>
-            <p class="text-lg font-bold text-[#814256]">${listing.price.toFixed(2)}</p>
+            {#if listing.listingType === 'exchange'}
+              <span class="text-sm font-semibold text-purple-700">Tausch</span>
+            {:else}
+              <p class="text-lg font-bold text-[#814256]">${listing.price.toFixed(2)}</p>
+            {/if}
             <div class="flex flex-wrap gap-1 mt-1">
               <span class="text-xs px-2 py-0.5 rounded-full {STATUS_COLORS[listing.status]}">
                 {getStatusLabel(listing.status)}
@@ -52,6 +63,12 @@
               <span class="text-xs px-2 py-0.5 rounded-full {CONDITION_COLORS[listing.condition]}">
                 {getConditionLabel(listing.condition)}
               </span>
+              {#if getModerationBadge(listing)}
+                {@const badge = getModerationBadge(listing)}
+                <span class="text-xs px-2 py-0.5 rounded-full border {badge.class} cursor-help" title={badge.tooltip}>
+                  {badge.label}
+                </span>
+              {/if}
             </div>
           </div>
         </div>
@@ -94,22 +111,40 @@
             </div>
           </td>
           <td class="py-3 px-4">
-            <select
-              value={listing.status}
-              onchange={(e) => onStatusChange(listing._id as string, (e.target as HTMLSelectElement).value as 'available' | 'reserved' | 'sold')}
-              class="text-xs px-2 py-1 rounded-full border-0 cursor-pointer {STATUS_COLORS[listing.status]}"
-            >
-              <option value="available">Available</option>
-              <option value="reserved">Reserved</option>
-              <option value="sold">Sold</option>
-            </select>
+            <div class="flex flex-wrap items-center gap-1">
+              <select
+                value={listing.status}
+                onchange={(e) => onStatusChange(listing._id as string, (e.target as HTMLSelectElement).value as 'available' | 'reserved' | 'sold' | 'exchanged')}
+                class="text-xs px-2 py-1 rounded-full border-0 cursor-pointer {STATUS_COLORS[listing.status]}"
+              >
+                <option value="available">Available</option>
+                <option value="reserved">Reserved</option>
+                {#if listing.listingType === 'exchange'}
+                  <option value="exchanged">Exchanged</option>
+                {:else}
+                  <option value="sold">Sold</option>
+                {/if}
+              </select>
+              {#if getModerationBadge(listing)}
+                {@const badge = getModerationBadge(listing)}
+                <span class="text-xs px-2 py-0.5 rounded-full border {badge.class} cursor-help" title={badge.tooltip}>
+                  {badge.label}
+                </span>
+              {/if}
+            </div>
           </td>
           <td class="py-3 px-4">
             <span class="text-xs px-2 py-1 rounded-full {CONDITION_COLORS[listing.condition]}">
               {getConditionLabel(listing.condition)}
             </span>
           </td>
-          <td class="py-3 px-4 font-medium text-[#814256]">${listing.price.toFixed(2)}</td>
+          <td class="py-3 px-4 font-medium text-[#814256]">
+            {#if listing.listingType === 'exchange'}
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Tausch</span>
+            {:else}
+              ${listing.price.toFixed(2)}
+            {/if}
+          </td>
           <td class="py-3 px-4 text-sm text-gray-500">{formatDate(listing.createdAt)}</td>
           <td class="py-3 px-4 text-right">
             <div class="flex items-center justify-end gap-3">

@@ -112,7 +112,7 @@ export const POST: APIRoute = async ({ request }) => {
         recommendation: 'recommendations',
         comment: 'comments',
         event: 'events',
-        marketplace: 'marketplace',
+        marketplace: 'listings',
         news: 'news'
       };
 

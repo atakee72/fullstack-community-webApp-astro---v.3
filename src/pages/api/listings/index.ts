@@ -22,7 +22,14 @@ export const GET: APIRoute = async ({ url }) => {
     const filters = parseResult.data;
 
     // Build MongoDB filter
-    const filter: Record<string, unknown> = { status: 'available' };
+    const filter: Record<string, unknown> = {
+      status: 'available',
+      // Only show approved or legacy listings (backward compat)
+      $or: [
+        { moderationStatus: 'approved' },
+        { moderationStatus: { $exists: false } }
+      ]
+    };
 
     if (filters.category && filters.category !== 'all') {
       filter.category = filters.category;
@@ -30,18 +37,35 @@ export const GET: APIRoute = async ({ url }) => {
     if (filters.condition && filters.condition !== 'all') {
       filter.condition = filters.condition;
     }
+    // Filter by listing type (backward compat: missing = 'sell')
+    if (filters.listingType && filters.listingType !== 'all') {
+      if (filters.listingType === 'sell') {
+        filter.$and = [
+          { $or: [{ listingType: 'sell' }, { listingType: { $exists: false } }] }
+        ];
+      } else {
+        filter.listingType = filters.listingType;
+      }
+    }
     if (filters.priceMin !== undefined || filters.priceMax !== undefined) {
       filter.price = {};
       if (filters.priceMin) (filter.price as Record<string, number>).$gte = filters.priceMin;
       if (filters.priceMax) (filter.price as Record<string, number>).$lte = filters.priceMax;
     }
     if (filters.search) {
-      // Search in title and descriptionPlainText (new) or description (legacy plain text)
-      filter.$or = [
+      // Search needs to be combined with existing $or for moderation
+      const searchConditions = [
         { title: { $regex: filters.search, $options: 'i' } },
         { descriptionPlainText: { $regex: filters.search, $options: 'i' } },
-        // Fallback for legacy listings with plain text description
         { description: { $regex: filters.search, $options: 'i', $type: 'string' } }
+      ];
+      // Move moderation $or into $and to combine with search $or
+      const moderationOr = filter.$or;
+      delete filter.$or;
+      filter.$and = [
+        ...(filter.$and as any[] || []),
+        { $or: moderationOr as any },
+        { $or: searchConditions }
       ];
     }
 
@@ -62,8 +86,15 @@ export const GET: APIRoute = async ({ url }) => {
 
     const total = await listingsCollection.countDocuments(filter);
 
+    // Serialize ObjectIds to strings for client-side comparison
+    const serializedListings = listings.map(l => ({
+      ...l,
+      _id: l._id.toString(),
+      sellerId: l.sellerId.toString()
+    }));
+
     return new Response(JSON.stringify({
-      listings,
+      listings: serializedListings,
       pagination: {
         total,
         limit: filters.limit,

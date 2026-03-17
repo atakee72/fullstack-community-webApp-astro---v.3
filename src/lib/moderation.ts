@@ -87,8 +87,8 @@ const FLAG_THRESHOLDS: Record<string, number> = {
   'illicit/violent': 0.5,
   'violence/graphic': 0.5,
 
-  // NORMAL REVIEW: Context matters (art, news, etc.)
-  'sexual': 0.5,                // Art nudes, etc. - human decides
+  // NORMAL REVIEW
+  'sexual': 0.2,                // Low threshold - no legitimate nudity in a community platform
   'harassment': 0.5,
   'hate': 0.5,
   'violence': 0.5,
@@ -101,6 +101,7 @@ const FLAG_THRESHOLDS: Record<string, number> = {
 
 // Categories that trigger URGENT review (potential legal issues)
 const URGENT_CATEGORIES = [
+  'sexual',
   'sexual/minors',
   'self-harm/intent',
   'self-harm/instructions',
@@ -220,11 +221,34 @@ export async function moderateContent(input: ModerationInput): Promise<Moderatio
   }
 
   if (input.imageUrls && input.imageUrls.length > 0) {
-    for (const url of input.imageUrls) {
-      moderationInput.push({
-        type: 'image_url',
-        image_url: { url }
-      });
+    // Convert image URLs to base64 data URIs so OpenAI definitely receives them
+    // (external URLs like Cloudinary can silently fail if OpenAI can't fetch them)
+    const imagePromises = input.imageUrls.map(async (imageUrl) => {
+      try {
+        const imgResponse = await fetch(imageUrl, { signal: AbortSignal.timeout(10000) });
+        if (!imgResponse.ok) {
+          console.error(`[Moderation] Failed to fetch image: ${imgResponse.status} — ${imageUrl}`);
+          return null;
+        }
+        const buffer = await imgResponse.arrayBuffer();
+        const base64 = Buffer.from(buffer).toString('base64');
+        const contentType = imgResponse.headers.get('content-type') || 'image/jpeg';
+        return `data:${contentType};base64,${base64}`;
+      } catch (err) {
+        console.error(`[Moderation] Error fetching image for moderation:`, err);
+        return null;
+      }
+    });
+
+    const base64Images = await Promise.all(imagePromises);
+
+    for (const dataUri of base64Images) {
+      if (dataUri) {
+        moderationInput.push({
+          type: 'image_url',
+          image_url: { url: dataUri }
+        });
+      }
     }
   }
 
@@ -467,6 +491,291 @@ export function createFlaggedContentRecord(
     createdAt: new Date(),
     updatedAt: new Date(),
   };
+}
+
+/**
+ * Merge multiple moderation results into a single combined result.
+ * Only includes results that need review. Used to create one flagged record
+ * instead of separate records per check.
+ */
+export function mergeModerationResults(...results: ModerationResult[]): ModerationResult | null {
+  const flagged = results.filter(r => r.needsReview);
+  if (flagged.length === 0) return null;
+
+  const allCategories = flagged.flatMap(r => r.flaggedCategories);
+  const allScores = Object.assign({}, ...flagged.map(r => r.scores));
+  const isUrgent = flagged.some(r => r.isUrgent);
+  const worst = flagged.reduce((a, b) => (a.maxScore >= b.maxScore ? a : b));
+
+  return {
+    decision: isUrgent ? 'urgent_review' : 'pending_review',
+    canPublish: false,
+    needsReview: true,
+    isUrgent,
+    flaggedCategories: allCategories,
+    scores: allScores,
+    highestCategory: worst.highestCategory,
+    maxScore: worst.maxScore,
+    userMessage: 'Your submission is under review by our moderation team.',
+    adminReason: flagged.map(r => r.adminReason).filter(Boolean).join(' | '),
+  };
+}
+
+// ============================================================================
+// GPT-4o SPAM / RELEVANCE CHECK
+// ============================================================================
+
+export type SpamClassification = 'legitimate' | 'spam' | 'ad_promotional' | 'scam' | 'irrelevant_nonsense';
+
+/**
+ * Check content for spam, ads, scams, or irrelevant nonsense using GPT-4o.
+ * Works with any content type — pass a context hint for better classification.
+ *
+ * This is a SEPARATE check from the safety moderation (moderateContent/moderatePost).
+ * Safety moderation catches harmful content; this catches low-quality/spammy content.
+ * Both should pass for content to auto-publish.
+ *
+ * @param text - The content text to check (title + body concatenated)
+ * @param contentContext - What kind of content this is, e.g. "neighborhood marketplace listing", "community forum post"
+ * @returns ModerationResult compatible with the existing moderation pipeline
+ */
+export async function checkSpamWithGPT(
+  text: string,
+  contentContext: string = 'neighborhood community content'
+): Promise<ModerationResult> {
+  const apiKey = import.meta.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    console.error('[SpamCheck] OPENAI_API_KEY not set - FAIL-SAFE: queuing for manual review');
+    return createFailSafeResult('Spam check: API key not configured');
+  }
+
+  if (!text || text.trim().length === 0) {
+    return createApprovedResult();
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        temperature: 0.3,
+        max_tokens: 300,
+        messages: [
+          {
+            role: 'system',
+            content: `You are a content moderator for a local neighborhood community platform (Mahalle). Your job is to classify ${contentContext} as one of: legitimate, spam, ad_promotional, scam, irrelevant_nonsense.
+
+Rules:
+- "legitimate": genuine content appropriate for a neighborhood community
+- "spam": repetitive, bulk, or unsolicited promotional content
+- "ad_promotional": commercial advertising, affiliate links, business promotions (not genuine peer-to-peer)
+- "scam": deceptive content, phishing, too-good-to-be-true offers, fake urgency
+- "irrelevant_nonsense": gibberish, random characters, completely off-topic, test posts
+
+Return JSON only: {"classification": "...", "confidence": 0.0-1.0, "reason": "brief reason"}`
+          },
+          {
+            role: 'user',
+            content: text
+          }
+        ]
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('[SpamCheck] OpenAI API error:', error);
+      return createFailSafeResult(`Spam check API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+
+    if (!content) {
+      console.error('[SpamCheck] Empty response from GPT');
+      return createFailSafeResult('Spam check: empty GPT response');
+    }
+
+    // Parse JSON (strip markdown fences if present)
+    const jsonStr = content.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+    const result = JSON.parse(jsonStr) as {
+      classification: SpamClassification;
+      confidence: number;
+      reason: string;
+    };
+
+    if (result.classification === 'legitimate') {
+      return createApprovedResult();
+    }
+
+    // Content flagged as spam/ad/scam/nonsense
+    return {
+      decision: 'pending_review',
+      canPublish: false,
+      needsReview: true,
+      isUrgent: result.classification === 'scam', // scams get higher priority
+      flaggedCategories: [`spam_check:${result.classification}`],
+      scores: { [result.classification]: result.confidence },
+      highestCategory: `spam_check:${result.classification}`,
+      maxScore: result.confidence,
+      userMessage: 'Your submission is under review by our moderation team.',
+      adminReason: `GPT spam check: ${result.classification} (${(result.confidence * 100).toFixed(0)}%) — ${result.reason}`,
+    };
+  } catch (error) {
+    // AbortError = timeout, otherwise unknown error
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[SpamCheck] Error:', errorMsg);
+    return createFailSafeResult(`Spam check error: ${errorMsg}`);
+  }
+}
+
+// ============================================================================
+// GPT-4o VISION IMAGE SAFETY CHECK
+// ============================================================================
+
+export type ImageSafetyClassification = 'safe' | 'sexual' | 'violence' | 'hate' | 'other_violation';
+
+/**
+ * Check images for unsafe content using GPT-4o vision.
+ * This supplements the Moderation API which has known issues with image detection
+ * (especially sexual/nudity content — see OpenAI GitHub issue #1497).
+ *
+ * Sends all images in a single request for efficiency.
+ * Fail-safe: any error queues for manual review (never auto-approves).
+ *
+ * @param imageUrls - Array of image URLs (Cloudinary or other public URLs)
+ * @returns ModerationResult compatible with the existing pipeline
+ */
+export async function checkImagesWithGPT(imageUrls: string[]): Promise<ModerationResult> {
+  const apiKey = import.meta.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    console.error('[ImageCheck] OPENAI_API_KEY not set - FAIL-SAFE: queuing for manual review');
+    return createFailSafeResult('Image check: API key not configured');
+  }
+
+  if (!imageUrls || imageUrls.length === 0) {
+    return createApprovedResult();
+  }
+
+  try {
+    // Fetch images and convert to base64 (OpenAI may not be able to access external URLs)
+    const imageContents: any[] = [];
+
+    for (const imageUrl of imageUrls) {
+      try {
+        const imgResponse = await fetch(imageUrl, { signal: AbortSignal.timeout(10000) });
+        if (!imgResponse.ok) {
+          console.error(`[ImageCheck] Failed to fetch image: ${imgResponse.status} — ${imageUrl}`);
+          continue;
+        }
+        const buffer = await imgResponse.arrayBuffer();
+        const base64 = Buffer.from(buffer).toString('base64');
+        const contentType = imgResponse.headers.get('content-type') || 'image/jpeg';
+
+        imageContents.push({
+          type: 'image_url',
+          image_url: { url: `data:${contentType};base64,${base64}`, detail: 'low' }
+        });
+      } catch (err) {
+        console.error(`[ImageCheck] Error fetching image:`, err);
+      }
+    }
+
+    if (imageContents.length === 0) {
+      console.error('[ImageCheck] No images could be fetched - FAIL-SAFE');
+      return createFailSafeResult('Image check: could not fetch any images');
+    }
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        temperature: 0.2,
+        max_tokens: 300,
+        messages: [
+          {
+            role: 'system',
+            content: `You are a content safety moderator for a local neighborhood community platform (Mahalle). Analyze the provided image(s) and classify the WORST violation found across ALL images.
+
+Classifications:
+- "safe": No policy violations, appropriate for a family-friendly community platform
+- "sexual": Nudity, sexual content, sexually suggestive imagery, revealing/provocative poses
+- "violence": Graphic violence, gore, weapons used threateningly, disturbing imagery
+- "hate": Hate symbols, extremist imagery, discriminatory visual content
+- "other_violation": Any other content inappropriate for a community platform (drugs, illegal items, etc.)
+
+Be strict — this is a neighborhood community platform used by families. When in doubt, flag it.
+
+Return JSON only: {"classification": "...", "confidence": 0.0-1.0, "reason": "brief description of what was detected"}`
+          },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: 'Check these images for content safety violations:' },
+              ...imageContents
+            ]
+          }
+        ]
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('[ImageCheck] OpenAI API error:', response.status, error);
+      return createFailSafeResult(`Image check API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+
+    if (!content) {
+      console.error('[ImageCheck] Empty response from GPT');
+      return createFailSafeResult('Image check: empty GPT response');
+    }
+
+    // Parse JSON (strip markdown fences if present)
+    const jsonStr = content.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+    const result = JSON.parse(jsonStr) as {
+      classification: ImageSafetyClassification;
+      confidence: number;
+      reason: string;
+    };
+
+    if (result.classification === 'safe') {
+      return createApprovedResult();
+    }
+
+    // Image flagged as unsafe
+    const isUrgent = result.classification === 'sexual' || result.classification === 'violence';
+    return {
+      decision: isUrgent ? 'urgent_review' : 'pending_review',
+      canPublish: false,
+      needsReview: true,
+      isUrgent,
+      flaggedCategories: [`image_safety:${result.classification}`],
+      scores: { [result.classification]: result.confidence },
+      highestCategory: `image_safety:${result.classification}`,
+      maxScore: result.confidence,
+      userMessage: 'Your submission is under review by our moderation team.',
+      adminReason: `GPT image check: ${result.classification} (${(result.confidence * 100).toFixed(0)}%) — ${result.reason}`,
+    };
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[ImageCheck] Error:', errorMsg);
+    return createFailSafeResult(`Image check error: ${errorMsg}`);
+  }
 }
 
 /**

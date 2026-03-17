@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ListingFilters, ListingCategory, ListingCondition } from '../../types/listing';
+  import type { ListingFilters, ListingCategory, ListingCondition, ListingType } from '../../types/listing';
   import { LISTING_CATEGORIES, LISTING_CONDITIONS } from '../../types/listing';
 
   let { filters, onChange } = $props<{
@@ -24,6 +24,11 @@
   ];
 
   let selectedPriceRange = $state('all');
+
+  function handleTypeChange(e: Event) {
+    const value = (e.target as HTMLSelectElement).value as ListingType | 'all';
+    onChange({ listingType: value });
+  }
 
   function handleCategoryChange(e: Event) {
     const value = (e.target as HTMLSelectElement).value as ListingCategory | 'all';
@@ -59,6 +64,7 @@
     onChange({
       category: 'all',
       condition: 'all',
+      listingType: 'all',
       priceMin: undefined,
       priceMax: undefined,
       search: '',
@@ -66,9 +72,12 @@
     });
   }
 
+  const isExchangeFilter = $derived(filters.listingType === 'exchange');
+
   const hasActiveFilters = $derived(
     (filters.category && filters.category !== 'all') ||
     (filters.condition && filters.condition !== 'all') ||
+    (filters.listingType && filters.listingType !== 'all') ||
     filters.priceMin !== undefined ||
     filters.priceMax !== undefined ||
     filters.search
@@ -76,6 +85,17 @@
 </script>
 
 <div class="flex flex-wrap items-center gap-3 py-4">
+  <!-- Type Filter -->
+  <select
+    value={filters.listingType || 'all'}
+    onchange={handleTypeChange}
+    class="px-4 py-2 rounded-lg border border-[#aca89f]/30 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+  >
+    <option value="all">All Types</option>
+    <option value="sell">Buy</option>
+    <option value="exchange">Exchange</option>
+  </select>
+
   <!-- Category Filter -->
   <select
     value={filters.category || 'all'}
@@ -100,16 +120,18 @@
     {/each}
   </select>
 
-  <!-- Price Filter -->
-  <select
-    value={selectedPriceRange}
-    onchange={handlePriceChange}
-    class="px-4 py-2 rounded-lg border border-[#aca89f]/30 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
-  >
-    {#each priceRanges as range}
-      <option value={range.value}>{range.label}</option>
-    {/each}
-  </select>
+  <!-- Price Filter (hidden for exchange) -->
+  {#if !isExchangeFilter}
+    <select
+      value={selectedPriceRange}
+      onchange={handlePriceChange}
+      class="px-4 py-2 rounded-lg border border-[#aca89f]/30 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+    >
+      {#each priceRanges as range}
+        <option value={range.value}>{range.label}</option>
+      {/each}
+    </select>
+  {/if}
 
   <!-- Sort -->
   <select

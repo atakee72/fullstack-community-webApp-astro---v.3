@@ -8,6 +8,8 @@
       title: string;
       description: Delta;
       descriptionPlainText: string;
+      listingType: string;
+      exchangeFor: string;
       category: string;
       condition: string;
     };
@@ -81,6 +83,66 @@
   <div>
     <h2 class="text-2xl font-bold text-[#814256] mb-2">Basic Details</h2>
     <p class="text-gray-600">Tell us about your item</p>
+  </div>
+
+  <!-- Listing Type Toggle -->
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-3">
+      What would you like to do? <span class="text-red-500">*</span>
+    </label>
+    <div class="grid grid-cols-2 gap-3">
+      <button
+        type="button"
+        onclick={() => updateListing('listingType', 'sell')}
+        class="flex items-center gap-3 p-4 rounded-xl border-2 transition-all
+          {listing.listingType === 'sell' || !listing.listingType
+            ? 'border-[#4b9aaa] bg-[#4b9aaa]/5'
+            : 'border-[#aca89f]/30 hover:border-[#4b9aaa]/50'}"
+      >
+        <svg class="w-6 h-6 {listing.listingType === 'sell' || !listing.listingType ? 'text-[#4b9aaa]' : 'text-gray-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div class="text-left">
+          <span class="font-medium text-gray-800">Sell</span>
+          <p class="text-xs text-gray-500">Set a price for your item</p>
+        </div>
+      </button>
+      <button
+        type="button"
+        onclick={() => updateListing('listingType', 'exchange')}
+        class="flex items-center gap-3 p-4 rounded-xl border-2 transition-all
+          {listing.listingType === 'exchange'
+            ? 'border-[#4b9aaa] bg-[#4b9aaa]/5'
+            : 'border-[#aca89f]/30 hover:border-[#4b9aaa]/50'}"
+      >
+        <svg class="w-6 h-6 {listing.listingType === 'exchange' ? 'text-[#4b9aaa]' : 'text-gray-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+        </svg>
+        <div class="text-left">
+          <span class="font-medium text-gray-800">Exchange</span>
+          <p class="text-xs text-gray-500">Swap / Tausch — no price</p>
+        </div>
+      </button>
+    </div>
+
+    <!-- Exchange For (only shown when exchange is selected) -->
+    {#if listing.listingType === 'exchange'}
+      <div class="mt-3 p-4 bg-purple-50 rounded-xl border border-purple-200">
+        <label for="exchangeFor" class="block text-sm font-medium text-purple-700 mb-2">
+          What would you like in exchange?
+        </label>
+        <input
+          id="exchangeFor"
+          type="text"
+          value={listing.exchangeFor}
+          oninput={(e) => updateListing('exchangeFor', (e.target as HTMLInputElement).value)}
+          placeholder="e.g., A bookshelf, kitchen appliances, or make an offer"
+          maxlength="150"
+          class="w-full px-4 py-2.5 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-sm"
+        />
+        <p class="text-xs text-purple-500 mt-1">Optional — leave blank if you're open to any offers</p>
+      </div>
+    {/if}
   </div>
 
   <!-- Title -->

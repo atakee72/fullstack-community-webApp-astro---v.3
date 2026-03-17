@@ -3,6 +3,7 @@ import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import type { FlaggedContent, Topic, Comment, Announcement, Recommendation, Event } from '../../../types';
+import type { Listing } from '../../../types/listing';
 import { ReportContentSchema, REPORT_REASON_LABELS } from '../../../schemas/moderation.schema';
 import { parseRequestBody } from '../../../schemas/validation.utils';
 
@@ -36,6 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
     const announcementsCollection = db.collection<Announcement>('announcements');
     const recommendationsCollection = db.collection<Recommendation>('recommendations');
     const eventsCollection = db.collection<Event>('events');
+    const listingsCollection = db.collection<Listing>('listings');
 
     // Get the original content to check author and capture snapshot
     let originalContent: Topic | Comment | Announcement | Recommendation | null = null;
@@ -108,6 +110,17 @@ export const POST: APIRoute = async ({ request }) => {
         contentSnapshot = {
           title: originalContent.title,
           body: originalContent.body
+        };
+      }
+    } else if (contentType === 'marketplace') {
+      const listing = await listingsCollection.findOne({ _id: new ObjectId(contentId) });
+
+      if (listing) {
+        originalContent = listing as any;
+        authorId = String(listing.sellerId);
+        contentSnapshot = {
+          title: listing.title,
+          body: listing.descriptionPlainText || ''
         };
       }
     }
@@ -215,7 +228,8 @@ export const POST: APIRoute = async ({ request }) => {
       comment: commentsCollection,
       announcement: announcementsCollection,
       recommendation: recommendationsCollection,
-      event: eventsCollection
+      event: eventsCollection,
+      marketplace: listingsCollection
     };
 
     const targetCollection = collectionMap[contentType];

@@ -17,14 +17,19 @@
 
   // Check for success message from redirect
   let showSuccess = $state(false);
+  let successMessage = $state('Your listing has been published successfully!');
 
   $effect(() => {
     fetchMyListings();
 
     // Check URL params for success message
     const params = new URLSearchParams(window.location.search);
-    if (params.get('success') === 'true') {
+    const successType = params.get('success');
+    if (successType === 'true' || successType === 'moderation') {
       showSuccess = true;
+      successMessage = successType === 'moderation'
+        ? 'Your listing has been submitted and is under review by our moderation team.'
+        : 'Your listing has been published successfully!';
       // Remove the param from URL
       window.history.replaceState({}, '', window.location.pathname);
       // Hide after 5 seconds
@@ -50,7 +55,7 @@
     }
   }
 
-  async function handleStatusChange(id: string, status: 'available' | 'reserved' | 'sold') {
+  async function handleStatusChange(id: string, status: 'available' | 'reserved' | 'sold' | 'exchanged') {
     try {
       const response = await fetch(`/api/listings/edit/${id}`, {
         method: 'PUT',
@@ -128,7 +133,7 @@
       <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <p class="text-green-700">Your listing has been published successfully!</p>
+      <p class="text-green-700">{successMessage}</p>
     </div>
   {/if}
 

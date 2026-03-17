@@ -10,11 +10,15 @@ export const DeltaSchema = z.object({
   ops: z.array(DeltaOpSchema)
 });
 
+export const ListingTypeSchema = z.enum(['sell', 'exchange']);
+
 export const ListingCategorySchema = z.enum([
   'furniture',
   'electronics',
   'clothing',
   'books',
+  'comics',
+  'toys',
   'handmade',
   'home-garden',
   'sports',
@@ -32,7 +36,8 @@ export const ListingConditionSchema = z.enum([
 export const ListingStatusSchema = z.enum([
   'available',
   'reserved',
-  'sold'
+  'sold',
+  'exchanged'
 ]);
 
 export const ListingCreateSchema = z.object({
@@ -49,11 +54,13 @@ export const ListingCreateSchema = z.object({
     .min(20, 'Description must be at least 20 characters')
     .max(2000, 'Description must be less than 2000 characters')
     .trim(),
+  listingType: ListingTypeSchema.optional().default('sell'),
+  exchangeFor: z.string().max(150, 'Exchange request must be less than 150 characters').optional(),
   category: ListingCategorySchema,
   condition: ListingConditionSchema,
   price: z
     .number()
-    .min(0.01, 'Price must be greater than 0')
+    .min(0)
     .max(100000, 'Price must be less than 100,000'),
   originalPrice: z
     .number()
@@ -65,7 +72,10 @@ export const ListingCreateSchema = z.object({
     .array(z.string().url('Each image must be a valid URL'))
     .min(1, 'At least one image is required')
     .max(5, 'Maximum 5 images allowed')
-});
+}).refine(
+  (data) => data.listingType === 'exchange' || data.price >= 0.01,
+  { message: 'Price must be greater than 0 for sell listings', path: ['price'] }
+);
 
 export const ListingUpdateSchema = z.object({
   title: z
@@ -83,11 +93,13 @@ export const ListingUpdateSchema = z.object({
     .max(2000, 'Description must be less than 2000 characters')
     .trim()
     .optional(),
+  listingType: ListingTypeSchema.optional(),
+  exchangeFor: z.string().max(150).optional().nullable(),
   category: ListingCategorySchema.optional(),
   condition: ListingConditionSchema.optional(),
   price: z
     .number()
-    .min(0.01, 'Price must be greater than 0')
+    .min(0)
     .max(100000, 'Price must be less than 100,000')
     .optional(),
   originalPrice: z
@@ -110,6 +122,7 @@ export const ListingUpdateSchema = z.object({
 export const ListingFilterSchema = z.object({
   category: ListingCategorySchema.or(z.literal('all')).optional(),
   condition: ListingConditionSchema.or(z.literal('all')).optional(),
+  listingType: ListingTypeSchema.or(z.literal('all')).optional(),
   priceMin: z.coerce.number().min(0).optional(),
   priceMax: z.coerce.number().max(100000).optional(),
   status: ListingStatusSchema.optional(),
@@ -131,6 +144,7 @@ export const ListingStep1Schema = z.object({
     .min(20, 'Description must be at least 20 characters')
     .max(2000, 'Description must be less than 2000 characters')
     .trim(),
+  listingType: ListingTypeSchema.optional().default('sell'),
   category: ListingCategorySchema,
   condition: ListingConditionSchema
 });

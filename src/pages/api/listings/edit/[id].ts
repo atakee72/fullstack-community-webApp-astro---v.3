@@ -3,8 +3,10 @@ import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import type { Listing } from '../../../../types/listing';
+import type { FlaggedContent } from '../../../../types';
 import { ListingUpdateSchema } from '../../../../schemas/listing.schema';
 import { parseRequestBody, isValidObjectId } from '../../../../schemas/validation.utils';
+import { moderatePost, checkSpamWithGPT, checkImagesWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../../lib/moderation';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
@@ -55,10 +57,53 @@ export const PUT: APIRoute = async ({ request, params }) => {
       return validation.response;
     }
 
-    const updateData = {
+    const updateData: Record<string, any> = {
       ...validation.data,
       updatedAt: new Date()
     };
+
+    // If changing to exchange, force price=0 and keep exchangeFor
+    if (updateData.listingType === 'exchange') {
+      updateData.price = 0;
+      updateData.originalPrice = undefined;
+    } else if (updateData.listingType === 'sell') {
+      updateData.exchangeFor = undefined;
+    }
+
+    // Re-run moderation if content or images changed
+    const contentChanged = updateData.title || updateData.description || updateData.descriptionPlainText || updateData.images;
+    if (contentChanged) {
+      const title = updateData.title || existingListing.title;
+      const plainText = updateData.descriptionPlainText || existingListing.descriptionPlainText || '';
+      const images = updateData.images || existingListing.images;
+      const contentText = `${title}\n\n${plainText}`;
+
+      // Run all moderation checks in parallel: text safety, spam check, and image safety
+      const [moderationResult, spamResult, imageResult] = await Promise.all([
+        moderatePost(contentText, images),
+        checkSpamWithGPT(contentText, 'neighborhood marketplace listing'),
+        checkImagesWithGPT(images)
+      ]);
+
+      const authorInfo = {
+        id: userId,
+        name: session.user.name || undefined,
+        email: session.user.email || undefined
+      };
+      const contentInfo = { title, body: plainText, imageUrls: images };
+
+      const mergedResult = mergeModerationResults(moderationResult, spamResult, imageResult);
+      if (mergedResult) {
+        updateData.moderationStatus = 'pending';
+
+        const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
+        const flaggedRecord = createFlaggedContentRecord('marketplace', contentInfo, authorInfo, mergedResult);
+        flaggedRecord.contentId = id;
+        await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
+      } else {
+        updateData.moderationStatus = 'approved';
+      }
+    }
 
     await listingsCollection.updateOne(
       { _id: new ObjectId(id) },

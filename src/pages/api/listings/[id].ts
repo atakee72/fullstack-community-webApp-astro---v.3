@@ -36,6 +36,8 @@ export const GET: APIRoute = async ({ params }) => {
 
     const listingWithSeller = {
       ...listing,
+      _id: listing._id.toString(),
+      sellerId: listing.sellerId.toString(),
       sellerName: seller?.name || 'Unknown',
       sellerEmail: seller?.email,
       sellerImage: seller?.userPicture || seller?.image

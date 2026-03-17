@@ -3,11 +3,13 @@
   import { ListingStep2Schema } from '../../../schemas/listing.schema';
 
   let { listing, updateListing, onNext, onPrev } = $props<{
-    listing: { images: string[] };
+    listing: { images: string[]; listingType?: string };
     updateListing: (field: string, value: any) => void;
     onNext: () => void;
     onPrev: () => void;
   }>();
+
+  const isExchange = $derived(listing.listingType === 'exchange');
 
   let uploading = $state(false);
   let dragOver = $state(false);
@@ -281,7 +283,7 @@
       disabled={!canProceed || uploading}
       class="bg-[#4b9aaa] text-white px-8 py-3 rounded-xl hover:bg-[#3a7a8a] transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      Next: Set Price
+      {isExchange ? 'Next: Review' : 'Next: Set Price'}
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
       </svg>

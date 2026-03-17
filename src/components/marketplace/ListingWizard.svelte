@@ -9,17 +9,40 @@
   let currentStep = $state(1);
   let isSubmitting = $state(false);
   let error = $state<string | null>(null);
+  let dailyLimitReached = $state(false);
+  let dailyRemaining = $state(5);
+
+  // Check daily listing limit on load
+  $effect(() => {
+    checkDailyLimit();
+  });
+
+  async function checkDailyLimit() {
+    try {
+      const res = await fetch('/api/listings/daily-count');
+      if (res.ok) {
+        const data = await res.json();
+        dailyLimitReached = !data.canCreate;
+        dailyRemaining = data.remaining;
+      }
+    } catch {}
+  }
 
   let listing = $state({
     title: '',
     description: { ops: [{ insert: '\n' }] }, // Delta format
     descriptionPlainText: '', // Plain text for validation/search
+    listingType: 'sell' as 'sell' | 'exchange',
+    exchangeFor: '',
     category: '',
     condition: '',
     images: [] as string[],
     price: 0,
     originalPrice: undefined as number | undefined
   });
+
+  // For exchange listings, we skip the pricing step (step 3)
+  const isExchange = $derived(listing.listingType === 'exchange');
 
   const steps = [
     { id: 1, title: 'Details', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
@@ -37,19 +60,34 @@
     error = null;
 
     try {
+      // For exchange listings, force price=0
+      const submitData = isExchange
+        ? { ...listing, price: 0, originalPrice: undefined }
+        : listing;
+
       const response = await fetch('/api/listings/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(listing)
+        body: JSON.stringify(submitData)
       });
 
       if (!response.ok) {
         const data = await response.json();
+        if (response.status === 429) {
+          dailyLimitReached = true;
+          return;
+        }
         throw new Error(data.error || 'Failed to create listing');
       }
 
-      // Redirect to dashboard on success
-      window.location.href = '/marketplace/my-listings?success=true';
+      const data = await response.json();
+
+      // Redirect with appropriate message
+      if (data.moderationStatus === 'pending') {
+        window.location.href = '/marketplace/my-listings?success=moderation';
+      } else {
+        window.location.href = '/marketplace/my-listings?success=true';
+      }
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to create listing';
       isSubmitting = false;
@@ -72,6 +110,23 @@
     <h1 class="text-3xl font-bold text-[#814256]">List Your Item</h1>
     <p class="text-gray-600">Share items with your Mahalle community</p>
   </div>
+
+  {#if dailyLimitReached}
+    <!-- Daily limit warning -->
+    <div class="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+      <svg class="w-12 h-12 text-red-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <h2 class="text-lg font-semibold text-red-800 mb-2">Daily Listing Limit Reached</h2>
+      <p class="text-red-700 text-sm mb-4">You've already created 5 listings in the last 24 hours. Please try again later.</p>
+      <a
+        href="/marketplace/my-listings"
+        class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors font-medium"
+      >
+        Back to My Listings
+      </a>
+    </div>
+  {:else}
 
   <!-- Progress Steps -->
   <div class="flex justify-between items-center bg-white rounded-xl p-4 border border-[#aca89f]/30">
@@ -120,11 +175,12 @@
     {#if currentStep === 1}
       <BasicDetailsStep {listing} {updateListing} onNext={() => currentStep = 2} />
     {:else if currentStep === 2}
-      <PhotoUploadStep {listing} {updateListing} onNext={() => currentStep = 3} onPrev={() => currentStep = 1} />
+      <PhotoUploadStep {listing} {updateListing} onNext={() => currentStep = isExchange ? 4 : 3} onPrev={() => currentStep = 1} />
     {:else if currentStep === 3}
       <PricingStep {listing} {updateListing} onNext={() => currentStep = 4} onPrev={() => currentStep = 2} />
     {:else}
-      <ReviewStep {listing} onSubmit={handleSubmit} onPrev={() => currentStep = 3} {isSubmitting} />
+      <ReviewStep {listing} onSubmit={handleSubmit} onPrev={() => currentStep = isExchange ? 2 : 3} {isSubmitting} />
     {/if}
   </div>
+  {/if}
 </div>

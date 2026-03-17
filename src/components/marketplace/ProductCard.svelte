@@ -2,7 +2,9 @@
   import type { Listing } from '../../types/listing';
   import { CONDITION_COLORS } from '../../types/listing';
 
-  let { listing } = $props<{ listing: Listing }>();
+  const REVEALED_WARNINGS_KEY = 'mahalle_revealed_listing_warnings';
+
+  let { listing, session } = $props<{ listing: Listing; session?: any }>();
 
   const discount = $derived(
     listing.originalPrice && listing.originalPrice > listing.price
@@ -13,10 +15,65 @@
   const conditionLabel = $derived(
     listing.condition.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   );
+
+  const isOwner = $derived(session?.user?.id === listing.sellerId);
+  const hasWarning = $derived(listing.hasWarningLabel === true);
+
+  let revealedWarnings = $state<Set<string>>(new Set());
+
+  $effect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(REVEALED_WARNINGS_KEY);
+        revealedWarnings = stored ? new Set(JSON.parse(stored)) : new Set();
+      } catch { revealedWarnings = new Set(); }
+    }
+  });
+
+  const showWarningOverlay = $derived(
+    hasWarning && !isOwner && !revealedWarnings.has(String(listing._id))
+  );
+
+  function revealWarning(e: Event) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = String(listing._id);
+    revealedWarnings = new Set([...revealedWarnings, id]);
+    try {
+      localStorage.setItem(REVEALED_WARNINGS_KEY, JSON.stringify([...revealedWarnings]));
+    } catch {}
+  }
 </script>
 
 <a href="/marketplace/{listing._id}" class="group block">
-  <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-[#aca89f]/30">
+  <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-[#aca89f]/30 relative">
+    {#if showWarningOverlay}
+      <!-- Warning overlay for non-owners -->
+      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+      <div class="absolute inset-0 z-10 backdrop-blur-md bg-white/60 flex flex-col items-center justify-center p-4 text-center" onclick={(e) => e.preventDefault()}>
+        <span class="text-2xl mb-2">&#9888;&#65039;</span>
+        <p class="text-sm font-medium text-gray-700 mb-1">Content Warning</p>
+        {#if listing.warningText}
+          <p class="text-xs font-medium text-orange-700 mb-1">{listing.warningText}</p>
+        {/if}
+        <p class="text-xs text-gray-500 mb-3">This listing contains content that some users may find sensitive.</p>
+        <button
+          onclick={revealWarning}
+          class="px-3 py-1.5 text-xs bg-[#814256] text-white rounded hover:bg-[#6a3547] transition-colors"
+        >
+          Show content anyway
+        </button>
+      </div>
+    {/if}
+
+    {#if hasWarning && isOwner}
+      <!-- Author warning badge -->
+      <div class="bg-orange-50 border-b border-orange-200 px-3 py-2 flex items-center gap-2">
+        <span class="text-sm">&#9888;&#65039;</span>
+        <span class="text-xs text-orange-700">Approved with warning — sensitive for others</span>
+      </div>
+    {/if}
+
     <!-- Image -->
     <div class="relative aspect-square overflow-hidden bg-[#aca89f]/10">
       {#if listing.images && listing.images.length > 0}
@@ -68,9 +125,16 @@
 
       <div class="flex items-center justify-between mt-3">
         <div class="flex items-center gap-2">
-          <span class="text-lg font-bold text-[#814256]">${listing.price.toFixed(2)}</span>
-          {#if listing.originalPrice && listing.originalPrice > listing.price}
-            <span class="text-sm text-gray-400 line-through">${listing.originalPrice.toFixed(2)}</span>
+          {#if listing.listingType === 'exchange'}
+            <span class="text-sm font-semibold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200">Tausch</span>
+            {#if listing.exchangeFor}
+              <span class="text-xs text-purple-600 truncate max-w-[120px]" title={listing.exchangeFor}>↔ {listing.exchangeFor}</span>
+            {/if}
+          {:else}
+            <span class="text-lg font-bold text-[#814256]">${listing.price.toFixed(2)}</span>
+            {#if listing.originalPrice && listing.originalPrice > listing.price}
+              <span class="text-sm text-gray-400 line-through">${listing.originalPrice.toFixed(2)}</span>
+            {/if}
           {/if}
         </div>
         <span class="text-xs text-gray-500 flex items-center gap-1">

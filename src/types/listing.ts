@@ -24,11 +24,15 @@ export function deltaToPlainText(delta: Delta): string {
     .trim();
 }
 
+export type ListingType = 'sell' | 'exchange';
+
 export type ListingCategory =
   | 'furniture'
   | 'electronics'
   | 'clothing'
   | 'books'
+  | 'comics'
+  | 'toys'
   | 'handmade'
   | 'home-garden'
   | 'sports'
@@ -41,13 +45,15 @@ export type ListingCondition =
   | 'good'
   | 'fair';
 
-export type ListingStatus = 'available' | 'reserved' | 'sold';
+export type ListingStatus = 'available' | 'reserved' | 'sold' | 'exchanged';
 
 export interface Listing {
   _id?: ObjectId | string;
   title: string;
   description: string | Delta; // Plain text (legacy) or Delta (rich text)
   descriptionPlainText?: string; // Plain text version for search (new listings only)
+  listingType?: ListingType; // 'sell' (default) or 'exchange'
+  exchangeFor?: string; // What the seller wants in return (exchange only)
   category: ListingCategory;
   condition: ListingCondition;
   price: number;
@@ -58,6 +64,11 @@ export interface Listing {
   sellerEmail?: string;
   sellerImage?: string;
   status: ListingStatus;
+  moderationStatus?: 'approved' | 'pending' | 'rejected';
+  isUserReported?: boolean;
+  hasWarningLabel?: boolean;
+  warningText?: string;
+  rejectionReason?: string;
   views: number;
   savedBy: (ObjectId | string)[];
   createdAt: Date;
@@ -67,6 +78,7 @@ export interface Listing {
 export interface ListingFilters {
   category?: ListingCategory | 'all';
   condition?: ListingCondition | 'all';
+  listingType?: ListingType | 'all';
   priceMin?: number;
   priceMax?: number;
   status?: ListingStatus;
@@ -88,6 +100,8 @@ export const LISTING_CATEGORIES: { value: ListingCategory; label: string }[] = [
   { value: 'electronics', label: 'Electronics' },
   { value: 'clothing', label: 'Clothing' },
   { value: 'books', label: 'Books' },
+  { value: 'comics', label: 'Comics & Manga' },
+  { value: 'toys', label: 'Toys & Games' },
   { value: 'handmade', label: 'Handmade' },
   { value: 'home-garden', label: 'Home & Garden' },
   { value: 'sports', label: 'Sports' },
@@ -113,5 +127,6 @@ export const CONDITION_COLORS: Record<ListingCondition, string> = {
 export const STATUS_COLORS: Record<ListingStatus, string> = {
   'available': 'bg-green-50 text-green-700 border-green-200',
   'reserved': 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  'sold': 'bg-gray-50 text-gray-700 border-gray-200'
+  'sold': 'bg-gray-50 text-gray-700 border-gray-200',
+  'exchanged': 'bg-purple-50 text-purple-700 border-purple-200'
 };
