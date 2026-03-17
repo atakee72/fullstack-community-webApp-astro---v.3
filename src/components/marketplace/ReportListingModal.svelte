@@ -81,6 +81,7 @@
   <div
     class="fixed inset-0 z-50 flex items-center justify-center p-4"
     role="dialog"
+    tabindex="-1"
     aria-modal="true"
     onkeydown={handleKeydown}
   >
@@ -97,7 +98,7 @@
       <div class="bg-[#814256] px-6 py-4">
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-semibold text-white">Report Listing</h3>
-          <button onclick={close} class="text-white/80 hover:text-white transition-colors">
+          <button onclick={close} aria-label="Close report dialog" class="text-white/80 hover:text-white transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -123,10 +124,10 @@
           </div>
 
           <!-- Reason Selection -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+          <fieldset>
+            <legend class="block text-sm font-medium text-gray-700 mb-2">
               Why are you reporting this? <span class="text-red-500">*</span>
-            </label>
+            </legend>
             <div class="space-y-2">
               {#each REPORT_REASONS as opt}
                 <label
@@ -147,7 +148,7 @@
                 </label>
               {/each}
             </div>
-          </div>
+          </fieldset>
 
           <!-- Details -->
           <div>

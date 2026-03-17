@@ -45,12 +45,11 @@
   }
 </script>
 
-<a href="/marketplace/{listing._id}" class="group block">
+<a href="/marketplace/{listing._id}" class="group block {showWarningOverlay ? 'pointer-events-none' : ''}">
   <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-[#aca89f]/30 relative">
     {#if showWarningOverlay}
       <!-- Warning overlay for non-owners -->
-      <!-- svelte-ignore a11y_click_events_have_key_events -->
-      <div role="alert" class="absolute inset-0 z-10 backdrop-blur-md bg-white/60 flex flex-col items-center justify-center p-4 text-center" onclick={(e) => e.preventDefault()}>
+      <div role="alert" class="absolute inset-0 z-10 backdrop-blur-md bg-white/60 flex flex-col items-center justify-center p-4 text-center">
         <span class="text-2xl mb-2">&#9888;&#65039;</span>
         <p class="text-sm font-medium text-gray-700 mb-1">Content Warning</p>
         {#if listing.warningText}
@@ -59,7 +58,7 @@
         <p class="text-xs text-gray-500 mb-3">This listing contains content that some users may find sensitive.</p>
         <button
           onclick={revealWarning}
-          class="px-3 py-1.5 text-xs bg-[#814256] text-white rounded hover:bg-[#6a3547] transition-colors"
+          class="px-3 py-1.5 text-xs bg-[#814256] text-white rounded hover:bg-[#6a3547] transition-colors pointer-events-auto"
         >
           Show content anyway
         </button>
