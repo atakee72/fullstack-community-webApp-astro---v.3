@@ -47,6 +47,14 @@ export const DELETE: APIRoute = async ({ request, params }) => {
       });
     }
 
+    // Prevent deletion of listings under moderation review (preserve evidence)
+    if (existingListing.moderationStatus === 'pending' || existingListing.moderationStatus === 'rejected') {
+      return new Response(JSON.stringify({ error: 'Cannot delete a listing that is under moderation review' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     await listingsCollection.deleteOne({ _id: new ObjectId(id) });
 
     return new Response(

@@ -76,7 +76,11 @@
           <span class="text-xs text-gray-500">{formatDate(listing.createdAt)}</span>
           <div class="flex gap-2">
             <a href="/marketplace/{listing._id}" class="text-[#4b9aaa] text-sm hover:underline">View</a>
-            <button onclick={() => onDelete(listing._id as string)} class="text-red-600 text-sm hover:underline">Delete</button>
+            {#if listing.moderationStatus === 'pending' || listing.moderationStatus === 'rejected'}
+              <span class="text-gray-400 text-sm cursor-not-allowed" title="Cannot delete while under moderation review">Delete</span>
+            {:else}
+              <button onclick={() => onDelete(listing._id as string)} class="text-red-600 text-sm hover:underline">Delete</button>
+            {/if}
           </div>
         </div>
       </div>
@@ -149,7 +153,11 @@
           <td class="py-3 px-4 text-right">
             <div class="flex items-center justify-end gap-3">
               <a href="/marketplace/{listing._id}" class="text-[#4b9aaa] hover:underline text-sm">View</a>
-              <button onclick={() => onDelete(listing._id as string)} class="text-red-600 hover:underline text-sm">Delete</button>
+              {#if listing.moderationStatus === 'pending' || listing.moderationStatus === 'rejected'}
+                <span class="text-gray-400 text-sm cursor-not-allowed" title="Cannot delete while under moderation review">Delete</span>
+              {:else}
+                <button onclick={() => onDelete(listing._id as string)} class="text-red-600 hover:underline text-sm">Delete</button>
+              {/if}
             </div>
           </td>
         </tr>
