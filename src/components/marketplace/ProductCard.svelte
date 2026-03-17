@@ -49,8 +49,8 @@
   <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-[#aca89f]/30 relative">
     {#if showWarningOverlay}
       <!-- Warning overlay for non-owners -->
-      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-      <div class="absolute inset-0 z-10 backdrop-blur-md bg-white/60 flex flex-col items-center justify-center p-4 text-center" onclick={(e) => e.preventDefault()}>
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <div role="alert" class="absolute inset-0 z-10 backdrop-blur-md bg-white/60 flex flex-col items-center justify-center p-4 text-center" onclick={(e) => e.preventDefault()}>
         <span class="text-2xl mb-2">&#9888;&#65039;</span>
         <p class="text-sm font-medium text-gray-700 mb-1">Content Warning</p>
         {#if listing.warningText}
@@ -99,6 +99,7 @@
 
       <!-- Save button (shows on hover) -->
       <button
+        aria-label="Save listing"
         class="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
         onclick={(e) => e.preventDefault()}
       >
