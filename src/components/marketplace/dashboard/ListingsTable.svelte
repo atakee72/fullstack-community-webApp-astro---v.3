@@ -118,8 +118,9 @@
             <div class="flex flex-wrap items-center gap-1">
               <select
                 value={listing.status}
+                disabled={listing.moderationStatus === 'pending' || listing.moderationStatus === 'rejected'}
                 onchange={(e) => onStatusChange(listing._id as string, (e.target as HTMLSelectElement).value as 'available' | 'reserved' | 'sold' | 'exchanged')}
-                class="text-xs px-2 py-1 rounded-full border-0 cursor-pointer {STATUS_COLORS[listing.status]}"
+                class="text-xs px-2 py-1 rounded-full border-0 {listing.moderationStatus === 'pending' || listing.moderationStatus === 'rejected' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} {STATUS_COLORS[listing.status]}"
               >
                 <option value="available">Available</option>
                 <option value="reserved">Reserved</option>
