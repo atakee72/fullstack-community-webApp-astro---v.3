@@ -123,7 +123,7 @@ Vercel will automatically:
 - **Content Moderation**: Multi-layer AI moderation (safety scan + GPT spam check) + community reporting
 - **Daily Posting Limits**: 5 per rolling 24h for topics, events, announcements, recommendations, and listings
 - **Newsboard**: AI-curated local news from 9 RSS feeds + NewsData.io, with GPT-4o relevance scoring
-- **Marketplace**: Buy/sell/exchange (Tausch) listings with image gallery, AI moderation (text + vision), and user reports
+- **Marketplace**: Buy/sell/exchange (Tausch) listings with image gallery, AI moderation (text + vision), user reports, and draft save/publish workflow
 
 ## 🛡️ Content Moderation
 
@@ -241,6 +241,8 @@ The app includes an AI-powered local news aggregation system:
 - `PUT /api/listings/edit/[id]` - Edit listing
 - `DELETE /api/listings/delete/[id]` - Delete listing
 - `GET /api/listings/daily-count` - Get user's daily listing count
+- `POST /api/listings/draft` - Save/update draft listing (relaxed validation, no moderation)
+- `POST /api/listings/draft/[id]/publish` - Publish draft (full moderation + daily limit check)
 
 ### Moderation
 - `POST /api/reports/submit` - Submit user report

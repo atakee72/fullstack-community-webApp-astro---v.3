@@ -42,7 +42,7 @@ src/
 │   │   ├── likes/
 │   │   ├── views/
 │   │   ├── news/          # Newsboard CRUD, daily fetch, save/unsave
-│   │   ├── listings/      # Marketplace listings CRUD
+│   │   ├── listings/      # Marketplace listings CRUD + draft save/publish
 │   │   ├── reports/       # User report submission
 │   │   └── admin/         # Admin moderation APIs
 │   └── *.astro       # Page components
