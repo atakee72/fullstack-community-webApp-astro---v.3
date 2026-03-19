@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request }) => {
     const todayCount = await listingsCollection.countDocuments({
       sellerId: session.user.id,
       createdAt: { $gte: dayAgo },
-      status: { $ne: 'draft' as any }
+      status: { $ne: 'draft' }
     });
 
     return new Response(JSON.stringify({

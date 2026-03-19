@@ -6,6 +6,7 @@
   let { session } = $props<{ session: any }>();
 
   let listings = $state<Listing[]>([]);
+  let drafts = $state<Listing[]>([]);
   let stats = $state<ListingStats>({
     totalListings: 0,
     activeListings: 0,
@@ -47,6 +48,7 @@
 
       const data = await response.json();
       listings = data.listings;
+      drafts = data.drafts || [];
       stats = data.stats;
     } catch (e) {
       error = e instanceof Error ? e.message : 'An error occurred';
@@ -78,6 +80,57 @@
       }
     } catch (e) {
       console.error('Failed to update status');
+    }
+  }
+
+  async function handleDeleteDraft(id: string) {
+    if (!confirm('Are you sure you want to delete this draft?')) return;
+
+    try {
+      const response = await fetch(`/api/listings/delete/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        drafts = drafts.filter(d => d._id !== id);
+      }
+    } catch (e) {
+      console.error('Failed to delete draft');
+    }
+  }
+
+  let publishingDraftId = $state<string | null>(null);
+
+  async function handlePublishDraft(id: string) {
+    if (publishingDraftId) return; // Prevent double-clicks
+    publishingDraftId = id;
+    try {
+      const response = await fetch(`/api/listings/draft/${id}/publish`, { method: 'POST' });
+      const data = await response.json();
+
+      if (response.status === 429) {
+        showSuccess = true;
+        successMessage = data.message || 'Daily limit reached. Try again tomorrow.';
+        setTimeout(() => showSuccess = false, 5000);
+        return;
+      }
+
+      if (response.status === 400 && data.missingFields) {
+        // Draft is incomplete — redirect to wizard to complete it
+        window.location.href = `/marketplace/sell?draft=${id}`;
+        return;
+      }
+
+      if (!response.ok) throw new Error(data.error || 'Failed to publish');
+
+      // Move from drafts to listings
+      await fetchMyListings();
+      showSuccess = true;
+      successMessage = data.moderationStatus === 'pending'
+        ? 'Your listing has been submitted and is under review by our moderation team.'
+        : 'Your listing has been published successfully!';
+      setTimeout(() => showSuccess = false, 5000);
+    } catch (e) {
+      console.error('Failed to publish draft');
+    } finally {
+      publishingDraftId = null;
     }
   }
 
@@ -160,6 +213,65 @@
   {:else}
     <!-- Stats Cards -->
     <StatsCards {stats} />
+
+    <!-- Drafts Section -->
+    {#if drafts.length > 0}
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold text-gray-800">Drafts</h2>
+          <span class="text-sm text-gray-500">{drafts.length} draft{drafts.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="bg-white rounded-xl border border-[#aca89f]/30 divide-y divide-[#aca89f]/20">
+          {#each drafts as draft}
+            <div class="p-4 flex items-center gap-4">
+              <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                {#if draft.images && draft.images.length > 0}
+                  <img src={draft.images[0]} alt={draft.title} class="w-full h-full object-cover" />
+                {:else}
+                  <div class="w-full h-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                {/if}
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="font-medium text-gray-800 truncate">{draft.title}</h3>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Draft</span>
+                  <span class="text-xs text-gray-400">Last edited {new Date(draft.updatedAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <a
+                  href="/marketplace/sell?draft={draft._id}"
+                  class="text-[#4b9aaa] text-sm hover:underline"
+                >Edit</a>
+                <button
+                  onclick={() => handlePublishDraft(draft._id as string)}
+                  disabled={publishingDraftId === (draft._id as string)}
+                  class="text-sm px-3 py-1.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+                >
+                  {#if publishingDraftId === (draft._id as string)}
+                    <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Publishing...
+                  {:else}
+                    Publish
+                  {/if}
+                </button>
+                <button
+                  onclick={() => handleDeleteDraft(draft._id as string)}
+                  class="text-red-600 text-sm hover:underline"
+                >Delete</button>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
 
     <!-- Listings Section -->
     <div>

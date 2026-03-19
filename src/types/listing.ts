@@ -45,7 +45,7 @@ export type ListingCondition =
   | 'good'
   | 'fair';
 
-export type ListingStatus = 'available' | 'reserved' | 'sold' | 'exchanged';
+export type ListingStatus = 'draft' | 'available' | 'reserved' | 'sold' | 'exchanged';
 
 export interface Listing {
   _id?: ObjectId | string;
@@ -125,6 +125,7 @@ export const CONDITION_COLORS: Record<ListingCondition, string> = {
 };
 
 export const STATUS_COLORS: Record<ListingStatus, string> = {
+  'draft': 'bg-slate-50 text-slate-700 border-slate-200',
   'available': 'bg-green-50 text-green-700 border-green-200',
   'reserved': 'bg-yellow-50 text-yellow-700 border-yellow-200',
   'sold': 'bg-gray-50 text-gray-700 border-gray-200',

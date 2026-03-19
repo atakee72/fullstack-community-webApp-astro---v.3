@@ -25,17 +25,21 @@ export const GET: APIRoute = async ({ request }) => {
       .sort({ createdAt: -1 })
       .toArray();
 
-    // Calculate stats
+    // Separate drafts from published listings
+    const drafts = listings.filter(l => l.status === 'draft');
+    const published = listings.filter(l => l.status !== 'draft');
+
+    // Calculate stats (exclude drafts)
     const stats: ListingStats = {
-      totalListings: listings.length,
-      activeListings: listings.filter(l => l.status === 'available').length,
-      soldItems: listings.filter(l => l.status === 'sold').length,
-      totalEarnings: listings
+      totalListings: published.length,
+      activeListings: published.filter(l => l.status === 'available').length,
+      soldItems: published.filter(l => l.status === 'sold').length,
+      totalEarnings: published
         .filter(l => l.status === 'sold')
         .reduce((sum, l) => sum + l.price, 0)
     };
 
-    return new Response(JSON.stringify({ listings, stats }), {
+    return new Response(JSON.stringify({ listings: published, drafts, stats }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',

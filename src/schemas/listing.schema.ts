@@ -34,6 +34,7 @@ export const ListingConditionSchema = z.enum([
 ]);
 
 export const ListingStatusSchema = z.enum([
+  'draft',
   'available',
   'reserved',
   'sold',
@@ -169,9 +170,46 @@ export const ListingStep3Schema = z.object({
     .nullable()
 });
 
+// Relaxed schema for saving drafts — only title required
+export const ListingDraftSchema = z.object({
+  title: z
+    .string()
+    .min(1, 'Title is required to save a draft')
+    .max(100, 'Title must be less than 100 characters')
+    .trim(),
+  description: z.union([DeltaSchema, z.string()]).optional(),
+  descriptionPlainText: z
+    .string()
+    .max(2000, 'Description must be less than 2000 characters')
+    .trim()
+    .optional(),
+  listingType: ListingTypeSchema.optional().default('sell'),
+  exchangeFor: z.string().max(150).optional(),
+  category: ListingCategorySchema.optional(),
+  condition: ListingConditionSchema.optional(),
+  price: z
+    .number()
+    .min(0)
+    .max(100000)
+    .optional(),
+  originalPrice: z
+    .number()
+    .min(0)
+    .max(100000)
+    .optional()
+    .nullable(),
+  images: z
+    .array(z.string().url('Each image must be a valid URL'))
+    .max(5, 'Maximum 5 images allowed')
+    .optional()
+    .default([]),
+  draftId: z.string().optional() // For updating an existing draft
+});
+
 export type ListingCreateInput = z.infer<typeof ListingCreateSchema>;
 export type ListingUpdateInput = z.infer<typeof ListingUpdateSchema>;
 export type ListingFilterInput = z.infer<typeof ListingFilterSchema>;
 export type ListingStep1Input = z.infer<typeof ListingStep1Schema>;
 export type ListingStep2Input = z.infer<typeof ListingStep2Schema>;
 export type ListingStep3Input = z.infer<typeof ListingStep3Schema>;
+export type ListingDraftInput = z.infer<typeof ListingDraftSchema>;

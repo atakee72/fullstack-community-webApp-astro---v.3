@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ request }) => {
     const todayCount = await listingsCollection.countDocuments({
       sellerId: userId,
       createdAt: { $gte: dayAgo },
-      status: { $ne: 'draft' as any }
+      status: { $ne: 'draft' }
     });
 
     if (todayCount >= 5) {

@@ -4,13 +4,16 @@
   import PricingStep from './wizard/PricingStep.svelte';
   import ReviewStep from './wizard/ReviewStep.svelte';
 
-  let { session } = $props<{ session: any }>();
+  let { session, draftData = null } = $props<{ session: any; draftData?: any }>();
 
   let currentStep = $state(1);
   let isSubmitting = $state(false);
+  let isSavingDraft = $state(false);
   let error = $state<string | null>(null);
+  let draftSavedMessage = $state<string | null>(null);
   let dailyLimitReached = $state(false);
   let dailyRemaining = $state(5);
+  let draftId = $state<string | null>(draftData?._id?.toString() || draftData?._id || null);
 
   // Check daily listing limit on load
   $effect(() => {
@@ -29,16 +32,16 @@
   }
 
   let listing = $state({
-    title: '',
-    description: { ops: [{ insert: '\n' }] }, // Delta format
-    descriptionPlainText: '', // Plain text for validation/search
-    listingType: 'sell' as 'sell' | 'exchange',
-    exchangeFor: '',
-    category: '',
-    condition: '',
-    images: [] as string[],
-    price: 0,
-    originalPrice: undefined as number | undefined
+    title: draftData?.title || '',
+    description: draftData?.description || { ops: [{ insert: '\n' }] }, // Delta format
+    descriptionPlainText: draftData?.descriptionPlainText || '', // Plain text for validation/search
+    listingType: (draftData?.listingType || 'sell') as 'sell' | 'exchange',
+    exchangeFor: draftData?.exchangeFor || '',
+    category: draftData?.category || '',
+    condition: draftData?.condition || '',
+    images: (draftData?.images || []) as string[],
+    price: draftData?.price || 0,
+    originalPrice: draftData?.originalPrice as number | undefined
   });
 
   // For exchange listings, we skip the pricing step (step 3)
@@ -55,6 +58,43 @@
     listing = { ...listing, [field]: value };
   }
 
+  async function handleSaveDraft() {
+    if (!listing.title.trim()) {
+      error = 'Please enter a title before saving as draft.';
+      return;
+    }
+
+    isSavingDraft = true;
+    error = null;
+    draftSavedMessage = null;
+
+    try {
+      const response = await fetch('/api/listings/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...listing,
+          ...(listing.listingType === 'exchange' && { price: 0 }),
+          draftId: draftId || undefined
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to save draft');
+      }
+
+      const data = await response.json();
+      draftId = data.draftId;
+      draftSavedMessage = 'Draft saved!';
+      setTimeout(() => draftSavedMessage = null, 3000);
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to save draft';
+    } finally {
+      isSavingDraft = false;
+    }
+  }
+
   async function handleSubmit() {
     isSubmitting = true;
     error = null;
@@ -65,11 +105,27 @@
         ? { ...listing, price: 0, originalPrice: undefined }
         : listing;
 
-      const response = await fetch('/api/listings/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submitData)
-      });
+      let response;
+
+      if (draftId) {
+        // Save latest changes to draft first, then publish
+        await fetch('/api/listings/draft', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...submitData, draftId })
+        });
+
+        response = await fetch(`/api/listings/draft/${draftId}/publish`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } else {
+        response = await fetch('/api/listings/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(submitData)
+        });
+      }
 
       if (!response.ok) {
         const data = await response.json();
@@ -107,8 +163,8 @@
       </svg>
       Back to My Listings
     </a>
-    <h1 class="text-3xl font-bold text-[#814256]">List Your Item</h1>
-    <p class="text-gray-600">Share items with your Mahalle community</p>
+    <h1 class="text-3xl font-bold text-[#814256]">{draftId ? 'Edit Draft' : 'List Your Item'}</h1>
+    <p class="text-gray-600">{draftId ? 'Continue working on your draft listing' : 'Share items with your Mahalle community'}</p>
   </div>
 
   {#if dailyLimitReached}
@@ -118,13 +174,22 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
       <h2 class="text-lg font-semibold text-red-800 mb-2">Daily Listing Limit Reached</h2>
-      <p class="text-red-700 text-sm mb-4">You've already created 5 listings in the last 24 hours. Please try again later.</p>
-      <a
-        href="/marketplace/my-listings"
-        class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors font-medium"
-      >
-        Back to My Listings
-      </a>
+      <p class="text-red-700 text-sm mb-4">You've already created 5 listings in the last 24 hours. You can save your progress as a draft and publish later.</p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <a
+          href="/marketplace/my-listings"
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors font-medium"
+        >
+          Back to My Listings
+        </a>
+        <button
+          onclick={handleSaveDraft}
+          disabled={isSavingDraft}
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-[#4b9aaa] border border-[#4b9aaa] rounded-lg hover:bg-[#4b9aaa]/5 transition-colors font-medium disabled:opacity-50"
+        >
+          {isSavingDraft ? 'Saving...' : 'Save as Draft'}
+        </button>
+      </div>
     </div>
   {:else}
 
@@ -169,6 +234,30 @@
       <p class="text-red-700">{error}</p>
     </div>
   {/if}
+
+  <!-- Draft Saved Message -->
+  {#if draftSavedMessage}
+    <div class="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
+      <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <p class="text-green-700">{draftSavedMessage}</p>
+    </div>
+  {/if}
+
+  <!-- Save as Draft button (always visible during wizard) -->
+  <div class="flex justify-end">
+    <button
+      onclick={handleSaveDraft}
+      disabled={isSavingDraft || !listing.title.trim()}
+      class="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#4b9aaa] border border-[#4b9aaa]/40 rounded-lg hover:bg-[#4b9aaa]/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+      </svg>
+      {isSavingDraft ? 'Saving...' : draftId ? 'Update Draft' : 'Save as Draft'}
+    </button>
+  </div>
 
   <!-- Form Steps -->
   <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-[#aca89f]/30">

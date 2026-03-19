@@ -1,6 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getSession } from 'auth-astro/server';
+import { connectDB } from '../../lib/mongodb';
+import { ObjectId } from 'mongodb';
 import ListingWizard from '../../components/marketplace/ListingWizard.svelte';
 
 const session = await getSession(Astro.request);
@@ -9,12 +11,29 @@ const session = await getSession(Astro.request);
 if (!session?.user) {
   return Astro.redirect('/login?redirect=/marketplace/sell');
 }
+
+// Load draft data if ?draft=<id> is provided
+let draftData = null;
+const draftId = Astro.url.searchParams.get('draft');
+if (draftId) {
+  try {
+    const db = await connectDB();
+    const draft = await db.collection('listings').findOne({
+      _id: new ObjectId(draftId),
+      sellerId: session.user.id,
+      status: 'draft'
+    });
+    if (draft) {
+      draftData = JSON.parse(JSON.stringify(draft)); // Serialize ObjectId etc.
+    }
+  } catch {}
+}
 ---
 
-<BaseLayout title="Sell an Item - Mahalle Marketplace">
+<BaseLayout title={draftData ? "Edit Draft - Mahalle Marketplace" : "Sell an Item - Mahalle Marketplace"}>
   <main class="min-h-[calc(100vh-60px)] py-4 md:py-6">
     <div class="max-w-4xl mx-auto px-4 md:px-8">
-      <ListingWizard client:load session={session} />
+      <ListingWizard client:load session={session} draftData={draftData} />
     </div>
   </main>
 </BaseLayout>
