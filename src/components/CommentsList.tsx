@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCommentsQuery, useDeleteComment } from '../hooks/api/useCommentsQuery';
 import type { Comment, User } from '../types';
 import { isOwner as checkIsOwner, getUserDisplayName } from '../utils/authHelpers';
+import { confirmAction } from '../utils/toast';
 
 const REVEALED_WARNINGS_KEY = 'mahalle_revealed_comment_warnings';
 
@@ -131,8 +132,8 @@ export default function CommentsList({ postId, collectionType, postTitle, onAddC
                       {/* Delete button - only shown for comment owner, disabled during moderation */}
                       {isCommentOwner && (
                         <button
-                          onClick={() => {
-                            if (window.confirm('Delete your comment irreversibly?')) {
+                          onClick={async () => {
+                            if (await confirmAction('Delete your comment irreversibly?', { title: 'Delete Comment', confirmLabel: 'Delete', variant: 'danger' })) {
                               handleDeleteComment(comment._id as string);
                             }
                           }}

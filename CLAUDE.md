@@ -172,6 +172,12 @@ Complex React components use a wrapper pattern:
 - Uses native Web Animations API (not Motion) because `is:inline` scripts can't use ES imports
 - `astro:before-swap` listener (commented out, available if needed) strips overlay from incoming pages
 
+### Global UI: Toasts & Confirm Dialogs
+- **Toast system**: `sonner` library, triggered via `CustomEvent` bridge (`app:toast`) from `src/utils/toast.ts`
+- **Confirm dialog**: Custom `<dialog>`-based modal replaces all `window.confirm()` calls. Uses `CustomEvent` bridge (`app:confirm`) with `confirmAction()` returning `Promise<boolean>`. Works across React and Svelte.
+- Both are mounted globally in `ToastProvider.tsx` (rendered in layouts) — no per-component state needed
+- `confirmAction(message, { title, confirmLabel, variant })` — `variant: 'danger'` shows red confirm button
+
 ### Animation (Motion Library)
 - **Navbar**: `motion/react` — spring-based menu slide (`AnimatePresence`), staggered nav item entrance
 - **Splash screen**: Native Web Animations API (fade-in/out) — `is:inline` context, no imports

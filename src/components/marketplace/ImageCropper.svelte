@@ -1,5 +1,6 @@
 <script lang="ts">
   import Cropper from 'svelte-easy-crop';
+  import { showError } from '../../utils/toast';
 
   let {
     imageSrc,
@@ -81,7 +82,7 @@
       onCropComplete(croppedBlob);
     } catch (e) {
       console.error('Crop failed:', e);
-      alert('Failed to crop image. Please try again.');
+      showError('Failed to crop image. Please try again.');
     } finally {
       processing = false;
     }

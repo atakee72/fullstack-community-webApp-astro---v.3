@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { showSuccess, showError } from '../../utils/toast';
 
   export let userId: string;
 
@@ -116,12 +117,12 @@
 
       // Show result message (includes strike count for rejections)
       if (result.message) {
-        alert(result.message);
+        showSuccess(result.message);
       }
 
       await fetchQueue();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed');
+      showError(err instanceof Error ? err.message : 'Failed');
     } finally {
       actionLoading = null;
     }

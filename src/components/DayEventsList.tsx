@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { format, isSameDay } from 'date-fns';
 import type { Locale } from 'date-fns';
 import type { Event } from '../types';
+import { confirmAction } from '../utils/toast';
 
 interface DayEventsListProps {
   selectedDate: Date | undefined;
@@ -316,9 +317,9 @@ export default function DayEventsList({
                       </svg>
                     </button>
                     <button
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
-                        if (confirm(`Delete "${event.title}"?`)) {
+                        if (await confirmAction(`Delete "${event.title}"?`, { title: 'Delete Event', confirmLabel: 'Delete', variant: 'danger' })) {
                           onEventDelete(event._id as string);
                         }
                       }}

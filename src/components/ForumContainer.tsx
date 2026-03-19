@@ -10,6 +10,8 @@ import ReadMoreModal from './ReadMoreModal';
 import ReportModal from './ReportModal';
 import HeartBtn from './HeartBtn';
 import EyeIcon from './EyeIcon';
+import { toast } from 'sonner';
+import { confirmAction } from '../utils/toast';
 import { cn } from '../lib/utils';
 import { isOwner } from '../utils/authHelpers';
 import type { Topic, Announcement, Recommendation } from '../types';
@@ -131,10 +133,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
 
         // Show moderation notice if content is pending review
         if (result?.moderationStatus === 'pending') {
-          // Use setTimeout to show alert after modal closes
-          setTimeout(() => {
-            alert('📝 Your post has been submitted for review.\n\nIt will be visible to others once approved by a moderator. You can still see it in your feed while it\'s pending.');
-          }, 100);
+          toast.info('Your post has been submitted for review. It will be visible once approved.');
         }
       }
 
@@ -508,8 +507,8 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                                 ✎
                               </button>
                               <button
-                                onClick={() => {
-                                  if (item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected' && window.confirm(`Are you sure you want to delete this ${collectionType.slice(0, -1)}?`)) {
+                                onClick={async () => {
+                                  if (item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected' && await confirmAction(`Are you sure you want to delete this ${collectionType.slice(0, -1)}?`, { title: `Delete ${collectionType.slice(0, -1)}`, confirmLabel: 'Delete', variant: 'danger' })) {
                                     deletePost.mutate(item._id);
                                   }
                                 }}

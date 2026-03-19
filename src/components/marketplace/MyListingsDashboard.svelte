@@ -2,6 +2,7 @@
   import type { Listing, ListingStats } from '../../types/listing';
   import StatsCards from './dashboard/StatsCards.svelte';
   import ListingsTable from './dashboard/ListingsTable.svelte';
+  import { confirmAction } from '../../utils/toast';
 
   let { session } = $props<{ session: any }>();
 
@@ -84,7 +85,7 @@
   }
 
   async function handleDeleteDraft(id: string) {
-    if (!confirm('Are you sure you want to delete this draft?')) return;
+    if (!await confirmAction('Are you sure you want to delete this draft?', { title: 'Delete Draft', confirmLabel: 'Delete', variant: 'danger' })) return;
 
     try {
       const response = await fetch(`/api/listings/delete/${id}`, { method: 'DELETE' });
@@ -135,7 +136,7 @@
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Are you sure you want to delete this listing?')) return;
+    if (!await confirmAction('Are you sure you want to delete this listing?', { title: 'Delete Listing', confirmLabel: 'Delete', variant: 'danger' })) return;
 
     try {
       const response = await fetch(`/api/listings/delete/${id}`, {

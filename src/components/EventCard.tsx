@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import HeartBtn from './HeartBtn';
 import EyeIcon from './EyeIcon';
 import { isOwner } from '../utils/authHelpers';
+import { confirmAction } from '../utils/toast';
 import type { Event } from '../types';
 
 interface EventCardProps {
@@ -88,9 +89,9 @@ export default function EventCard({
                 ✎
               </button>
               <button
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
-                  if (window.confirm('Are you sure you want to delete this event?')) {
+                  if (await confirmAction('Are you sure you want to delete this event?', { title: 'Delete Event', confirmLabel: 'Delete', variant: 'danger' })) {
                     onDelete?.(event._id as string);
                   }
                 }}
@@ -162,8 +163,8 @@ export default function EventCard({
               ✎
             </button>
             <button
-              onClick={() => {
-                if (window.confirm('Are you sure you want to delete this event?')) {
+              onClick={async () => {
+                if (await confirmAction('Are you sure you want to delete this event?', { title: 'Delete Event', confirmLabel: 'Delete', variant: 'danger' })) {
                   onDelete?.(event._id as string);
                 }
               }}

@@ -1,6 +1,7 @@
 ---
 import { getSession } from 'auth-astro/server';
 import Navbar from '../components/Navbar';
+import ToastProvider from '../components/ToastProvider';
 import SplashScreen from '../components/SplashScreen.astro';
 
 const session = await getSession(Astro.request);
@@ -44,6 +45,7 @@ const { title, description = 'Mahalle - A community web app for local neighborho
   <body class="min-h-screen bg-[#eccc6e]">
     <SplashScreen />
     <Navbar client:load user={session?.user} />
+    <ToastProvider client:load />
     <main>
       <slot />
     </main>

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { showSuccess } from '../../utils/toast';
+
   let { listingId, listingTitle, session, show = $bindable(false) } = $props<{
     listingId: string;
     listingTitle: string;
@@ -20,7 +22,6 @@
   let details = $state('');
   let isSubmitting = $state(false);
   let error = $state<string | null>(null);
-  let success = $state(false);
 
   function close() {
     show = false;
@@ -29,7 +30,6 @@
       reason = '';
       details = '';
       error = null;
-      success = false;
     }, 300);
   }
 
@@ -62,8 +62,8 @@
         return;
       }
 
-      success = true;
-      setTimeout(close, 2000);
+      showSuccess('Report submitted. Thank you.');
+      close();
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to submit report';
     } finally {
@@ -107,16 +107,6 @@
       </div>
 
       <div class="px-6 py-5 space-y-5">
-        {#if success}
-          <!-- Success State -->
-          <div class="text-center py-4">
-            <svg class="w-12 h-12 text-green-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p class="text-gray-700 font-medium">Thank you for reporting.</p>
-            <p class="text-sm text-gray-500">Our team will review this listing.</p>
-          </div>
-        {:else}
           <!-- Content Preview -->
           <div class="bg-gray-50 rounded-lg p-3">
             <p class="text-xs text-gray-500 mb-1">Reporting:</p>
@@ -189,7 +179,6 @@
               {isSubmitting ? 'Submitting...' : 'Submit Report'}
             </button>
           </div>
-        {/if}
       </div>
     </div>
   </div>
