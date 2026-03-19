@@ -42,6 +42,7 @@ src/
 │   │   ├── likes/
 │   │   ├── views/
 │   │   ├── news/          # Newsboard CRUD, daily fetch, save/unsave
+│   │   ├── listings/      # Marketplace listings CRUD
 │   │   ├── reports/       # User report submission
 │   │   └── admin/         # Admin moderation APIs
 │   └── *.astro       # Page components
@@ -93,10 +94,14 @@ export const POST: APIRoute = async ({ request }) => {
 - React Query for server state
 
 ### Content Moderation
-- **AI moderation**: OpenAI `omni-moderation-latest` scans all content types (topics, comments, events, announcements, recommendations) on submission
+- **AI moderation**: OpenAI `omni-moderation-latest` scans all content types (topics, comments, events, announcements, recommendations, marketplace listings) on submission
+- **GPT spam check**: `checkSpamWithGPT()` runs in parallel with `moderateText()` on all content types — catches spam, ads, scams that the safety scan misses
+- **Marketplace extra**: Listings also get `checkImagesWithGPT()` (GPT-4o vision) for image safety
 - **Turkish filter**: Custom blocklist in `lib/moderation.ts` for Turkish profanity (OpenAI is English-focused)
+- **Result merging**: `mergeModerationResults()` combines all checks into a single flagged record
+- **Daily posting limits**: 5 per rolling 24h for topics, events, announcements, recommendations, and marketplace listings. Comments excluded (lightweight/conversational). Checked before validation to save API costs.
 - **User reports**: Community can flag content via report button (all content types)
-- **Admin queue**: `/admin/moderation` page (Svelte: `ModerationQueue.svelte`) with filter tabs (All/Posts/Comments/Events/Announcements/Recommendations)
+- **Admin queue**: `/admin/moderation` page (Svelte: `ModerationQueue.svelte`) with filter tabs (All/Posts/Comments/Events/Announcements/Recommendations/Marketplace)
 - **Warning labels**: Approved-with-warning content shows blur overlay until user clicks "Show content anyway" (persisted to localStorage)
 - **Strike system**: 3 strikes = automatic user ban
 - **Status flow**: `pending` → `approved`/`rejected` (with optional warning label)
@@ -121,7 +126,8 @@ export const POST: APIRoute = async ({ request }) => {
 - `events` - Calendar events (includes `moderationStatus`, `isUserReported` fields)
 - `announcements` - Community announcements (includes `moderationStatus`, `isUserReported` fields)
 - `recommendations` - User recommendations (includes `moderationStatus`, `isUserReported` fields)
-- `comments` - Comments on posts
+- `comments` - Comments on posts (includes `moderationStatus` field)
+- `listings` - Marketplace listings (includes `moderationStatus`, `listingType`, `status` fields)
 - `news` - Newsboard articles (AI-fetched and user-submitted, includes `moderationStatus`, `aiRelevanceScore`, `fetchDate`, `sourceName`, `sourceUrl` fields)
 - `savedNews` - User bookmarks (userId + newsId pairs, server-side persistence)
 - `flaggedContent` - Content flagged by AI or user reports (for admin review queue)

@@ -32,6 +32,7 @@ src/
 │   │   ├── likes/
 │   │   ├── views/
 │   │   ├── news/          # Newsboard CRUD, daily fetch, save/unsave
+│   │   ├── listings/      # Marketplace listings CRUD
 │   │   ├── reports/       # User report submission
 │   │   └── admin/         # Admin moderation APIs
 │   └── *.astro       # Page components
@@ -119,21 +120,24 @@ Vercel will automatically:
 - **NextAuth Authentication**: Credentials provider with bcrypt + JWT strategy
 - **Responsive Design**: Mobile-first approach
 - **Performance**: Optimized with Astro's island architecture
-- **Content Moderation**: AI-powered + community reporting system
+- **Content Moderation**: Multi-layer AI moderation (safety scan + GPT spam check) + community reporting
+- **Daily Posting Limits**: 5 per rolling 24h for topics, events, announcements, recommendations, and listings
 - **Newsboard**: AI-curated local news from 9 RSS feeds + NewsData.io, with GPT-4o relevance scoring
-- **Marketplace**: Buy/sell listings with image gallery
+- **Marketplace**: Buy/sell/exchange (Tausch) listings with image gallery, AI moderation (text + vision), and user reports
 
 ## 🛡️ Content Moderation
 
 The app includes a comprehensive content moderation system:
 
 ### AI Moderation
-- Uses OpenAI's `omni-moderation-latest` model
-- Automatically scans all content types on submission (topics, comments, events, announcements, recommendations)
-- Flags content for categories: harassment, hate speech, violence, sexual content, etc.
-- **Turkish profanity filter**: Custom blocklist for Turkish swear words (OpenAI is English-focused)
+- **Layer 1 — Turkish profanity filter**: Custom blocklist for Turkish swear words (OpenAI is English-focused)
+- **Layer 2 — Safety scan**: OpenAI `omni-moderation-latest` scans all content types on submission (topics, comments, events, announcements, recommendations, marketplace listings)
+- **Layer 3 — GPT spam check**: `checkSpamWithGPT()` catches spam, ads, and scams that the safety scan misses — runs on all content types
+- **Layer 4 — Image safety** (marketplace only): GPT-4o vision scans listing images for inappropriate content
+- All checks run in parallel via `Promise.all()` and are merged with `mergeModerationResults()`
 - Content exceeding thresholds is queued for admin review
-- Fail-safe: If API fails, content is queued for manual review
+- Fail-safe: If any API fails, content is queued for manual review (never auto-approves on error)
+- **Daily posting limits**: 5 per rolling 24h for topics, events, announcements, recommendations, and listings. Comments excluded.
 
 ### User Reporting
 - Users can report all content types via 🚩 flag button
@@ -145,7 +149,7 @@ The app includes a comprehensive content moderation system:
 ### Admin Dashboard (`/admin/moderation`)
 - **Queue view**: Review pending flagged content
 - **History view**: See approved/rejected items
-- **Filter tabs**: All, Discussions, Comments, Announcements, Events, Recommendations
+- **Filter tabs**: All, Discussions, Comments, Announcements, Events, Recommendations, Marketplace
 - **Stats counters**: Urgent, Pending, Approved, With Warning, Rejected
 - **Actions**:
   - ✓ Approve (publish content)
@@ -230,6 +234,13 @@ The app includes an AI-powered local news aggregation system:
 - `POST /api/news/save` - Save/unsave a news article (bookmark)
 - `GET /api/news/save` - Get user's saved news IDs
 - `GET /api/news/preview` - Preview metadata from a URL
+
+### Marketplace (Listings)
+- `GET /api/listings` - Browse listings (with filters)
+- `POST /api/listings/create` - Create listing
+- `PUT /api/listings/edit/[id]` - Edit listing
+- `DELETE /api/listings/delete/[id]` - Delete listing
+- `GET /api/listings/daily-count` - Get user's daily listing count
 
 ### Moderation
 - `POST /api/reports/submit` - Submit user report
