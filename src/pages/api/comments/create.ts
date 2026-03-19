@@ -5,7 +5,7 @@ import { ObjectId } from 'mongodb';
 import type { Comment, FlaggedContent } from '../../../types';
 import { CommentCreateSchema } from '../../../schemas/comment.schema';
 import { parseRequestBody } from '../../../schemas/validation.utils';
-import { moderateText, createFlaggedContentRecord } from '../../../lib/moderation';
+import { moderateText, checkSpamWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../lib/moderation';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -29,9 +29,14 @@ export const POST: APIRoute = async ({ request }) => {
 
     const { body, topicId, collectionType } = validation.data;
 
-    // Run AI content moderation
-    const moderationResult = await moderateText(body);
-    const moderationStatus = moderationResult.canPublish ? 'approved' : 'pending';
+    // Run AI content moderation + spam check in parallel
+    const [textModerationResult, spamResult] = await Promise.all([
+      moderateText(body),
+      checkSpamWithGPT(body, 'community forum comment')
+    ]);
+
+    const mergedResult = mergeModerationResults(textModerationResult, spamResult);
+    const moderationStatus = mergedResult ? 'pending' : 'approved';
 
     // Connect to database
     const db = await connectDB();
@@ -60,9 +65,9 @@ export const POST: APIRoute = async ({ request }) => {
           ? 'events'
           : 'topics';
 
-    // If content needs review, create a flagged content record
+    // If any moderation check failed, create a single merged flagged content record
     // Don't add to parent's comments array yet - will be added when approved
-    if (moderationResult.needsReview) {
+    if (mergedResult) {
       const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
       const flaggedRecord = createFlaggedContentRecord(
         'comment',
@@ -72,7 +77,7 @@ export const POST: APIRoute = async ({ request }) => {
           name: session.user.name || undefined,
           email: session.user.email || undefined
         },
-        moderationResult
+        mergedResult
       );
       flaggedRecord.contentId = result.insertedId.toString();
       // Store parent info so we can add to comments array when approved
@@ -105,11 +110,11 @@ export const POST: APIRoute = async ({ request }) => {
     };
 
     // Return appropriate response based on moderation result
-    if (moderationResult.needsReview) {
+    if (mergedResult) {
       return new Response(
         JSON.stringify({
           comment: createdComment,
-          message: moderationResult.userMessage,
+          message: mergedResult.userMessage,
           moderationStatus: 'pending'
         }),
         {

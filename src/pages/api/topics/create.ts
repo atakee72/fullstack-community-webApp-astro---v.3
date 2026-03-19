@@ -5,7 +5,7 @@ import { ObjectId } from 'mongodb';
 import type { Topic, FlaggedContent } from '../../../types';
 import { TopicCreateSchema } from '../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../schemas/validation.utils';
-import { moderateText, createFlaggedContentRecord } from '../../../lib/moderation';
+import { moderateText, checkSpamWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../lib/moderation';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -21,6 +21,27 @@ export const POST: APIRoute = async ({ request }) => {
 
     const userId = session.user.id;
 
+    // Check daily topic limit (5 per rolling 24h) before validation to save API costs
+    const db = await connectDB();
+    const topicsCollection = db.collection<Topic>('topics');
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const todayCount = await topicsCollection.countDocuments({
+      author: userId,
+      createdAt: { $gte: dayAgo }
+    });
+
+    if (todayCount >= 5) {
+      return new Response(JSON.stringify({
+        error: 'Daily topic limit reached',
+        message: 'You can create up to 5 topics per day. Please try again tomorrow.',
+        dailyLimit: 5,
+        currentCount: todayCount
+      }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     // Validate request body with Zod
     const validation = await parseRequestBody(request, TopicCreateSchema);
 
@@ -30,28 +51,25 @@ export const POST: APIRoute = async ({ request }) => {
 
     const { title, body, tags } = validation.data;
 
-    // Run content moderation (FAIL-SAFE: queues for review on any error)
-    // Moderate main content (title + body)
-    const mainModerationResult = await moderateText(`${title}\n\n${body}`);
-
-    // Moderate tags SEPARATELY to catch profanity that might get diluted in main content
-    let tagsModerationResult = null;
+    // Run content moderation + spam check in parallel (FAIL-SAFE: queues for review on any error)
+    const contentText = `${title}\n\n${body}`;
+    const moderationChecks: Promise<any>[] = [
+      moderateText(contentText),
+      checkSpamWithGPT(contentText, 'neighborhood community forum post')
+    ];
     if (tags?.length) {
-      tagsModerationResult = await moderateText(tags.join(' '));
+      moderationChecks.push(moderateText(tags.join(' ')));
     }
 
-    // Combine results: flag if EITHER main content OR tags need review
-    const needsReview = mainModerationResult.needsReview || (tagsModerationResult?.needsReview ?? false);
-    const moderationResult = needsReview
-      ? (tagsModerationResult?.needsReview ? tagsModerationResult : mainModerationResult)
-      : mainModerationResult;
+    const [mainModerationResult, spamResult, tagsModerationResult] = await Promise.all(moderationChecks);
 
-    // Connect to database
-    const db = await connectDB();
-    const topicsCollection = db.collection<Topic>('topics');
+    // Merge all moderation results — returns null if all passed
+    const resultsToMerge = [mainModerationResult, spamResult];
+    if (tagsModerationResult) resultsToMerge.push(tagsModerationResult);
+    const mergedResult = mergeModerationResults(...resultsToMerge);
 
     // Determine moderation status
-    const moderationStatus = moderationResult.canPublish ? 'approved' : 'pending';
+    const moderationStatus = mergedResult ? 'pending' : 'approved';
 
     // Create new topic
     const newTopic: Topic = {
@@ -71,8 +89,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     const result = await topicsCollection.insertOne(newTopic);
 
-    // If content needs review, create a flagged content record
-    if (moderationResult.needsReview) {
+    // If any moderation check failed, create a single merged flagged content record
+    if (mergedResult) {
       const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
       const flaggedRecord = createFlaggedContentRecord(
         'topic',
@@ -82,7 +100,7 @@ export const POST: APIRoute = async ({ request }) => {
           name: session.user.name || undefined,
           email: session.user.email || undefined
         },
-        moderationResult
+        mergedResult
       );
       flaggedRecord.contentId = result.insertedId.toString();
       await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
@@ -102,11 +120,11 @@ export const POST: APIRoute = async ({ request }) => {
     };
 
     // Return appropriate response based on moderation result
-    if (moderationResult.needsReview) {
+    if (mergedResult) {
       return new Response(
         JSON.stringify({
           topic: createdTopic,
-          message: moderationResult.userMessage,
+          message: mergedResult.userMessage,
           moderationStatus: 'pending'
         }),
         {
