@@ -39,10 +39,18 @@ function isJunkImage(url: string): boolean {
     || /\bs=\d{1,2}\b/.test(url); // tiny images like s=96
 }
 
+function cleanWpImageUrl(url: string): string {
+  // WordPress.com feeds append ?w=100 etc. for thumbnails — remove to get full-size
+  return url.replace(/\?w=\d+(&.*)?$/, '');
+}
+
 function extractImageFromItem(xml: string): string | undefined {
-  // Try media:content or media:thumbnail
-  const mediaMatch = xml.match(/<media:(?:content|thumbnail)[^>]+url=["']([^"']+)["']/i);
-  if (mediaMatch && !isJunkImage(mediaMatch[1])) return mediaMatch[1];
+  // Try all media:content or media:thumbnail tags (some feeds put junk avatars first)
+  const mediaMatches = xml.matchAll(/<media:(?:content|thumbnail)[^>]+url=["']([^"']+)["']/gi);
+  for (const match of mediaMatches) {
+    const url = match[1].replace(/&#38;/g, '&');
+    if (!isJunkImage(url)) return cleanWpImageUrl(url);
+  }
 
   // Try enclosure
   const enclosureMatch = xml.match(/<enclosure[^>]+url=["']([^"']+)["']/i);
