@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
+import React, { useState, useEffect, useMemo } from 'react';
+import { format, startOfMonth, endOfMonth, addMonths, subMonths, isBefore, isSameDay, startOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEventsQuery, useCreateEvent, useEditEvent, useDeleteEvent, useEventLikeMutation } from '../hooks/api/useEventsQuery';
@@ -26,6 +26,8 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
   // View state
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date()); // Default to today
+  const [rangeStart, setRangeStart] = useState<Date | undefined>(undefined);
+  const [rangeEnd, setRangeEnd] = useState<Date | undefined>(undefined);
 
   // Modal state
   const [showEventModal, setShowEventModal] = useState(false);
@@ -248,10 +250,72 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
 
   // Handle date click in grid view
   const handleDateClick = (date: Date) => {
+    const isPast = isBefore(startOfDay(date), startOfDay(new Date()));
+
+    // Always update sidebar
     setSelectedDate(date);
-    // Switch to list view filtered by selected date
-    // This could be enhanced to show a modal with events for that day
+
+    // Past dates: clear range, don't start selection
+    if (isPast) {
+      setRangeStart(undefined);
+      setRangeEnd(undefined);
+      return;
+    }
+
+    // Range selection logic for future dates
+    if (!rangeStart) {
+      // Nothing selected → select start
+      setRangeStart(date);
+      setRangeEnd(undefined);
+    } else if (!rangeEnd) {
+      if (isSameDay(date, rangeStart)) {
+        // Click same date → deselect everything
+        setRangeStart(undefined);
+      } else if (isBefore(date, rangeStart)) {
+        // Clicked before start → swap
+        setRangeEnd(rangeStart);
+        setRangeStart(date);
+      } else {
+        // Clicked after start → set end
+        setRangeEnd(date);
+      }
+    } else {
+      // Both set
+      if (isSameDay(date, rangeEnd)) {
+        // Click end date → collapse to single
+        setRangeEnd(undefined);
+      } else {
+        // Click any other date → new selection
+        setRangeStart(date);
+        setRangeEnd(undefined);
+      }
+    }
   };
+
+  // Handle create event from range selection
+  const handleCreateFromRange = () => {
+    if (!rangeStart) return;
+    setShowEventModal(true);
+  };
+
+  // Memoize prefill dates to prevent unnecessary useEffect triggers in EventModal
+  const prefillDates = useMemo(() => {
+    if (editingEvent || !rangeStart) return undefined;
+    const endDate = rangeEnd || rangeStart;
+
+    // If start is today and it's already past 9 AM, use next full hour
+    const now = new Date();
+    let startHour = 9;
+    if (isSameDay(rangeStart, now) && now.getHours() >= 9) {
+      startHour = now.getMinutes() > 0 ? now.getHours() + 1 : now.getHours();
+    }
+    const endHour = Math.max(startHour + 1, 17);
+
+    return {
+      startDate: new Date(rangeStart.getFullYear(), rangeStart.getMonth(), rangeStart.getDate(), startHour, 0),
+      endDate: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), endHour, 0),
+    };
+  }, [editingEvent, rangeStart, rangeEnd]);
 
   // Handle report submission
   const handleReportSubmit = async (data: {
@@ -400,6 +464,10 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
             onMonthChange={setCurrentMonth}
             onDateClick={handleDateClick}
             selectedDate={selectedDate}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            onCreateFromRange={handleCreateFromRange}
+            isLoggedIn={!!user}
             locale={de}
           />
         </div>
@@ -441,6 +509,7 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
           category: editingEvent.category,
           tags: editingEvent.tags
         } : undefined}
+        prefillDates={prefillDates}
       />
 
       {/* Event View Modal */}

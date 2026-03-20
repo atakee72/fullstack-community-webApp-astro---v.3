@@ -25,6 +25,10 @@ interface CalendarGridViewProps {
   onMonthChange: (newMonth: Date) => void;
   onDateClick: (date: Date) => void;
   selectedDate?: Date;
+  rangeStart?: Date;
+  rangeEnd?: Date;
+  onCreateFromRange?: () => void;
+  isLoggedIn?: boolean;
   onEventClick?: (event: Event) => void;
   locale?: Locale;
 }
@@ -51,6 +55,10 @@ export default function CalendarGridView({
   onMonthChange,
   onDateClick,
   selectedDate,
+  rangeStart,
+  rangeEnd,
+  onCreateFromRange,
+  isLoggedIn,
   onEventClick,
   locale
 }: CalendarGridViewProps) {
@@ -248,6 +256,15 @@ export default function CalendarGridView({
               const isFocused = focusedDateIndex === dateIndex;
               const isPastDate = isBefore(startOfDay(day.date), startOfDay(new Date()));
 
+              // Range selection state
+              const hasRange = rangeStart && rangeEnd;
+              const isRangeStart = rangeStart && isSameDay(day.date, rangeStart);
+              const isRangeEnd = rangeEnd && isSameDay(day.date, rangeEnd);
+              const isInRange = hasRange
+                && startOfDay(day.date) >= startOfDay(rangeStart)
+                && startOfDay(day.date) <= startOfDay(rangeEnd);
+              const isActionDate = !isPastDate && (isRangeEnd || (!rangeEnd && isRangeStart));
+
               return (
                 <button
                   key={day.fullDate}
@@ -262,9 +279,17 @@ export default function CalendarGridView({
                   onFocus={() => setFocusedDateIndex(dateIndex)}
                   className={`
                     relative min-h-[40px] md:min-h-[55px] lg:min-h-[65px] p-0.5 md:p-1 lg:p-2 rounded-md md:rounded-lg border-2 transition-all
-                    ${day.isCurrentMonth ? (isPastDate ? 'bg-white' : 'bg-[#eccc6e]/70') : (isPastDate ? 'bg-gray-50' : 'bg-[#eccc6e]/30')}
-                    ${day.isToday ? 'border-[#4b9aaa] ring-2 ring-[#4b9aaa]/30' : 'border-gray-200'}
-                    ${isSelected ? 'bg-[#eccc6e] border-[#eccc6e]' : ''}
+                    ${hasRange && isInRange
+                      ? (isRangeStart || isRangeEnd ? 'bg-[#4b9aaa]/30 border-[#4b9aaa]' : 'bg-[#4b9aaa]/15 border-[#4b9aaa]/30')
+                      : (!rangeEnd && isRangeStart)
+                        ? 'bg-[#4b9aaa]/30 border-[#4b9aaa]'
+                        : isSelected
+                          ? 'bg-[#eccc6e] border-[#eccc6e]'
+                          : day.isCurrentMonth
+                            ? (isPastDate ? 'bg-white' : 'bg-[#eccc6e]/70')
+                            : (isPastDate ? 'bg-gray-50' : 'bg-[#eccc6e]/30')
+                    }
+                    ${day.isToday && !(hasRange && isInRange) && !(!rangeEnd && isRangeStart) ? 'border-[#4b9aaa] ring-2 ring-[#4b9aaa]/30' : (day.isToday ? 'ring-2 ring-[#4b9aaa]/30' : '')}
                     ${isFocused ? 'ring-2 ring-offset-1 ring-[#814256]' : ''}
                     ${isPastDate ? 'opacity-60 cursor-default' : 'hover:bg-[#eccc6e]/85 hover:border-[#4b9aaa]/50 cursor-pointer'}
                     focus:outline-none focus:ring-2 focus:ring-[#814256]
@@ -337,6 +362,26 @@ export default function CalendarGridView({
                         )}
                       </div>
                     </>
+                  )}
+
+                  {/* "+" create event button on action date */}
+                  {isActionDate && isLoggedIn && onCreateFromRange && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCreateFromRange();
+                      }}
+                      className="absolute bottom-0.5 right-0.5 md:bottom-1 md:right-1
+                                 w-5 h-5 md:w-6 md:h-6
+                                 bg-[#814256] text-white rounded-full
+                                 flex items-center justify-center
+                                 text-xs md:text-sm font-bold
+                                 hover:bg-[#6a3646] transition-colors
+                                 z-20 shadow-md"
+                      aria-label="Create event on selected date"
+                    >
+                      +
+                    </button>
                   )}
 
                 </button>

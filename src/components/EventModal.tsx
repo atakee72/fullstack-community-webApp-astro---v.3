@@ -25,6 +25,7 @@ interface EventModalProps {
     category?: 'community' | 'sports-health' | 'culture-education' | 'other';
     tags?: string[];
   };
+  prefillDates?: { startDate: Date; endDate: Date };
 }
 
 export default function EventModal({
@@ -32,7 +33,8 @@ export default function EventModal({
   handleClose,
   onSubmit,
   editMode = false,
-  initialData
+  initialData,
+  prefillDates
 }: EventModalProps) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -119,7 +121,7 @@ export default function EventModal({
     }
   }, [show, handleClose]);
 
-  // Separate useEffect for populating form in edit mode
+  // Separate useEffect for populating form in edit mode or prefilling dates from range selection
   useEffect(() => {
     if (show && editMode && initialData) {
       setTitle(initialData.title || '');
@@ -138,8 +140,11 @@ export default function EventModal({
       setLocation(initialData.location || '');
       setCategory(initialData.category || 'other');
       setSelectedTags(initialData.tags || []);
+    } else if (show && !editMode && prefillDates) {
+      setStartDate(format(prefillDates.startDate, "yyyy-MM-dd'T'HH:mm"));
+      setEndDate(format(prefillDates.endDate, "yyyy-MM-dd'T'HH:mm"));
     }
-  }, [show, editMode, initialData]);
+  }, [show, editMode, initialData, prefillDates]);
 
   const validateForm = () => {
     const newErrors: {
