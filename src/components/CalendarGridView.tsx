@@ -364,24 +364,34 @@ export default function CalendarGridView({
                     </>
                   )}
 
-                  {/* "+" create event button on action date */}
+                  {/* Speech-bubble tooltip to create event on action date */}
                   {isActionDate && isLoggedIn && onCreateFromRange && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCreateFromRange();
-                      }}
-                      className="absolute bottom-0.5 right-0.5 md:bottom-1 md:right-1
-                                 w-5 h-5 md:w-6 md:h-6
-                                 bg-[#814256] text-white rounded-full
-                                 flex items-center justify-center
-                                 text-xs md:text-sm font-bold
-                                 hover:bg-[#6a3646] transition-colors
-                                 z-20 shadow-md"
-                      aria-label="Create event on selected date"
+                    <div
+                      className="absolute -top-9 left-1/2 -translate-x-1/2 z-30"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      +
-                    </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onCreateFromRange();
+                        }}
+                        className="bg-[#814256] text-white rounded-lg
+                                   px-2 py-0.5 md:px-2.5 md:py-1
+                                   text-[10px] md:text-xs font-semibold
+                                   hover:bg-[#6a3646] transition-colors
+                                   shadow-lg whitespace-nowrap
+                                   flex items-center gap-0.5"
+                        aria-label="Create event on selected date"
+                      >
+                        <span className="text-sm md:text-base leading-none">+</span>
+                        <span className="hidden sm:inline">Event</span>
+                      </button>
+                      {/* Arrow pointing down */}
+                      <div className="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-0 h-0
+                                      border-l-[6px] border-l-transparent
+                                      border-r-[6px] border-r-transparent
+                                      border-t-[6px] border-t-[#814256]" />
+                    </div>
                   )}
 
                 </button>

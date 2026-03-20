@@ -282,11 +282,21 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
     } else {
       // Both set
       if (isSameDay(date, rangeEnd)) {
-        // Click end date → collapse to single
-        setRangeEnd(undefined);
-      } else {
-        // Click any other date → new selection
+        // Click end date → make it the new start
         setRangeStart(date);
+        setRangeEnd(undefined);
+      } else if (isBefore(startOfDay(rangeEnd), startOfDay(date))) {
+        // Click after end → extend range forward
+        setRangeEnd(date);
+      } else if (isBefore(startOfDay(date), startOfDay(rangeStart))) {
+        // Click before start → new selection
+        setRangeStart(date);
+        setRangeEnd(undefined);
+      } else if (!isSameDay(date, rangeStart)) {
+        // Click within range → shorten range to that day
+        setRangeEnd(date);
+      } else {
+        // Click start date → collapse to single
         setRangeEnd(undefined);
       }
     }
