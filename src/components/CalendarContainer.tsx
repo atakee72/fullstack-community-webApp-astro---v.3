@@ -50,6 +50,7 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
     preview: string;
   } | null>(null);
   const [showReportToast, setShowReportToast] = useState(false);
+  const [reportedItems, setReportedItems] = useState<Set<string>>(new Set());
 
   // Filter state
   const [searchValue, setSearchValue] = useState('');
@@ -350,6 +351,7 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
 
       setShowReportModal(false);
       setReportContent(null);
+      setReportedItems(prev => new Set([...prev, data.contentId]));
 
       // Show success toast
       setShowReportToast(true);
@@ -364,6 +366,16 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
       console.error('Report submission error:', error);
       throw error;
     }
+  };
+
+  // Open report modal for comment
+  const openCommentReportModal = (commentId: string, preview: string) => {
+    setReportContent({
+      id: commentId,
+      contentType: 'comment',
+      preview
+    });
+    setShowReportModal(true);
   };
 
   // Open report modal for event
@@ -536,6 +548,8 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
         commentModerationMessage={commentModerationMessage}
         onClearModerationMessage={() => setCommentModerationMessage(null)}
         onReportEvent={openEventReportModal}
+        onReportComment={openCommentReportModal}
+        reportedComments={reportedItems}
       />
 
       {/* Report Modal */}

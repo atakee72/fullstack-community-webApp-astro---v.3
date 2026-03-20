@@ -610,7 +610,7 @@ Return JSON only: {"classification": "...", "confidence": 0.0-1.0, "reason": "br
       reason: string;
     };
 
-    if (result.classification === 'legitimate') {
+    if (result.classification === 'legitimate' || result.classification === 'irrelevant_nonsense') {
       return createApprovedResult();
     }
 

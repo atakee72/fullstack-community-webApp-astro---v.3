@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import type { Event } from '../types';
+import { generateGoogleCalendarUrl, downloadIcsFile } from '../utils/calendarExport';
 
 const REVEALED_WARNINGS_KEY = 'mahalle_revealed_event_comment_warnings';
 const REVEALED_EVENT_WARNINGS_KEY = 'mahalle_revealed_event_warnings';
@@ -15,6 +16,8 @@ interface EventViewModalProps {
   commentModerationMessage?: string | null;
   onClearModerationMessage?: () => void;
   onReportEvent?: (event: Event) => void;
+  onReportComment?: (commentId: string, preview: string) => void;
+  reportedComments?: Set<string>;
 }
 
 const categoryColors: Record<string, string> = {
@@ -33,7 +36,9 @@ export default function EventViewModal({
   isAddingComment = false,
   commentModerationMessage,
   onClearModerationMessage,
-  onReportEvent
+  onReportEvent,
+  onReportComment,
+  reportedComments = new Set()
 }: EventViewModalProps) {
   const [commentText, setCommentText] = useState('');
 
@@ -235,6 +240,22 @@ export default function EventViewModal({
               )}
             </div>
 
+            {/* Export to Calendar */}
+            <div className="flex gap-2 pl-7">
+              <button
+                onClick={() => window.open(generateGoogleCalendarUrl(event), '_blank', 'noopener')}
+                className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded border border-[#4b9aaa]/50 text-[#4b9aaa] hover:bg-[#4b9aaa] hover:text-white transition-colors"
+              >
+                Google Calendar
+              </button>
+              <button
+                onClick={() => downloadIcsFile(event)}
+                className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded border border-[#4b9aaa]/50 text-[#4b9aaa] hover:bg-[#4b9aaa] hover:text-white transition-colors"
+              >
+                Download .ics
+              </button>
+            </div>
+
             {/* Location */}
             {event.location && (
               <div className="flex items-start gap-2">
@@ -362,6 +383,21 @@ export default function EventViewModal({
                           <span className="text-[10px] text-gray-500">
                             {comment.createdAt ? format(new Date(comment.createdAt), 'MMM d, h:mm a') : ''}
                           </span>
+                          {/* Report button - only for logged-in non-authors, and only if comment has a real _id */}
+                          {user && !isAuthor && comment._id && onReportComment && (
+                            <button
+                              onClick={() => onReportComment(comment._id as string, (comment.body || comment.comment || '').substring(0, 50) + ((comment.body || comment.comment || '').length > 50 ? '...' : ''))}
+                              disabled={reportedComments.has(comment._id as string)}
+                              className={`rounded px-1.5 py-0.5 text-xs transition-colors ${
+                                reportedComments.has(comment._id as string)
+                                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                  : 'bg-gray-300 hover:bg-orange-400 text-gray-700 hover:text-white'
+                              }`}
+                              title={reportedComments.has(comment._id as string) ? "Already reported" : "Report comment"}
+                            >
+                              🚩
+                            </button>
+                          )}
                         </div>
 
                         {/* AI Flagged Banner - Only visible to comment author */}

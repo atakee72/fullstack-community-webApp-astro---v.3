@@ -95,12 +95,12 @@ export const POST: APIRoute = async ({ request }) => {
 
 ### Content Moderation
 - **AI moderation**: OpenAI `omni-moderation-latest` scans all content types (topics, comments, events, announcements, recommendations, marketplace listings) on submission
-- **GPT spam check**: `checkSpamWithGPT()` runs in parallel with `moderateText()` on all content types — catches spam, ads, scams that the safety scan misses
+- **GPT spam check**: `checkSpamWithGPT()` runs in parallel with `moderateText()` on all content types — catches spam, ads, scams that the safety scan misses. `irrelevant_nonsense` classification is treated as legitimate (too many false positives on short/casual content like "nice", "Çok iyi!"). Only `spam`, `ad_promotional`, and `scam` are flagged.
 - **Marketplace extra**: Listings also get `checkImagesWithGPT()` (GPT-4o vision) for image safety
 - **Turkish filter**: Custom blocklist in `lib/moderation.ts` for Turkish profanity (OpenAI is English-focused)
 - **Result merging**: `mergeModerationResults()` combines all checks into a single flagged record
 - **Daily posting limits**: 5 per rolling 24h for topics, events, announcements, recommendations, and marketplace listings. Comments excluded (lightweight/conversational). Checked before validation to save API costs.
-- **User reports**: Community can flag content via report button (all content types)
+- **User reports**: Community can flag content via report button (all content types including calendar event comments via `EventViewModal`)
 - **Admin queue**: `/admin/moderation` page (Svelte: `ModerationQueue.svelte`) with filter tabs (All/Posts/Comments/Events/Announcements/Recommendations/Marketplace)
 - **Warning labels**: Approved-with-warning content shows blur overlay until user clicks "Show content anyway" (persisted to localStorage)
 - **Strike system**: 3 strikes = automatic user ban

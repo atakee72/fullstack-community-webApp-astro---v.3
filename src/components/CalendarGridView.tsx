@@ -159,7 +159,6 @@ export default function CalendarGridView({
   const handleToday = () => {
     const today = new Date();
     onMonthChange(today);
-    onDateClick(today);
   };
 
   // Get localized weekday names starting with Monday
@@ -291,7 +290,11 @@ export default function CalendarGridView({
                     }
                     ${day.isToday && !(hasRange && isInRange) && !(!rangeEnd && isRangeStart) ? 'border-[#4b9aaa] ring-2 ring-[#4b9aaa]/30' : (day.isToday ? 'ring-2 ring-[#4b9aaa]/30' : '')}
                     ${isFocused ? 'ring-2 ring-offset-1 ring-[#814256]' : ''}
-                    ${isPastDate ? 'opacity-60 cursor-default' : 'hover:bg-[#eccc6e]/85 hover:border-[#4b9aaa]/50 cursor-pointer'}
+                    ${isPastDate ? 'opacity-60 cursor-default'
+                      : (hasRange && isInRange) || (!rangeEnd && isRangeStart)
+                        ? 'hover:bg-[#4b9aaa]/40 hover:border-[#4b9aaa] cursor-pointer'
+                        : 'hover:bg-[#eccc6e]/85 hover:border-[#4b9aaa]/50 cursor-pointer'
+                    }
                     focus:outline-none focus:ring-2 focus:ring-[#814256]
                   `}
                 >
