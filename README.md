@@ -206,6 +206,7 @@ The app includes an AI-powered local news aggregation system:
 - `POST /api/events/create` - Create event
 - `PUT /api/events/edit/[id]` - Edit event
 - `DELETE /api/events/delete/[id]` - Delete event
+- **Date range selection**: Click a future day in the calendar grid to select it, click another to define a range (teal highlight), then click "+" to open the event form with dates pre-filled
 
 ### Announcements
 - `GET /api/announcements` - List announcements

@@ -161,6 +161,15 @@ Complex React components use a wrapper pattern:
 - `CalendarWrapper.tsx` → `CalendarContainer.tsx`
 - `ForumWrapper.tsx` → `ForumContainer.tsx`
 
+### Calendar Date Range Selection
+- **Click-to-select**: Click a future day to select it (teal highlight + "+" button), click another future day to select a range (teal highlight across days)
+- **"+" button**: Opens EventModal with dates pre-filled (09:00–17:00, or next full hour if today)
+- **State design**: `selectedDate` (sidebar filtering) is separate from `rangeStart`/`rangeEnd` (event creation) — past date clicks update sidebar only and clear range
+- **Auto-swap**: If end date is before start date, they swap automatically
+- **Deselect**: Click start date again (no range) → deselects; click end date → collapses to single; click any other day → new selection
+- **Auth-gated**: "+" button only appears for logged-in users
+- **`prefillDates` memoized** via `useMemo` in CalendarContainer to prevent useEffect churn in EventModal
+
 ### Splash Screen
 - `SplashScreen.astro` — plays logo video with fade-in/out and 3D CSS effect
 - **Page allowlist**: Only shows on main nav pages (`/`, `/blog`, `/newsboard`, `/calendar`, `/marketplace`, `/profile`). Sub-pages (e.g. `/blog/my-post`, `/login`) skip it entirely via pathname check.
