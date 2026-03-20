@@ -162,12 +162,14 @@ Complex React components use a wrapper pattern:
 - `ForumWrapper.tsx` → `ForumContainer.tsx`
 
 ### Calendar Date Range Selection
-- **Click-to-select**: Click a future day to select it (teal highlight + "+" button), click another future day to select a range (teal highlight across days)
-- **"+" button**: Opens EventModal with dates pre-filled (09:00–17:00, or next full hour if today)
+- **Click-to-select**: Click a future day to select it (teal highlight + speech-bubble tooltip), click another future day to select a range (teal highlight across days)
+- **Tooltip**: Floating speech-bubble with "+" (mobile) / "+ Event" (desktop) above selected cell — opens EventModal with dates pre-filled (09:00–17:00, or next full hour if today)
 - **State design**: `selectedDate` (sidebar filtering) is separate from `rangeStart`/`rangeEnd` (event creation) — past date clicks update sidebar only and clear range
-- **Auto-swap**: If end date is before start date, they swap automatically
-- **Deselect**: Click start date again (no range) → deselects; click end date → collapses to single; click any other day → new selection
-- **Auth-gated**: "+" button only appears for logged-in users
+- **Auto-swap**: If second click is before start date, they swap automatically
+- **Extend/shorten**: Click after end → extends range forward; click within range → shortens to that day
+- **Pivot**: Click end date again → makes it the new start (ready to select new range from there)
+- **Deselect**: Click start date (no range) → deselects; click before start (range exists) → new selection
+- **Auth-gated**: Tooltip only appears for logged-in users
 - **`prefillDates` memoized** via `useMemo` in CalendarContainer to prevent useEffect churn in EventModal
 
 ### Splash Screen
