@@ -189,6 +189,14 @@ Complex React components use a wrapper pattern:
 - **Features**: First/Prev/Next/Last buttons, "Page X of Y · N items" display, optional page size dropdown
 - **Accent colors**: Teal for marketplace/moderation, burgundy for newsboard, white-on-dark for blog
 
+### Blog Tag Bar (Mobile)
+- **Component**: `src/components/blog/TagBarMobile.astro` — horizontal scrollable tag pills, visible only below `lg` (1024px)
+- **"All" pill**: First pill links to `/blog`, highlighted when no tag is active; recovers sidebar's "All Posts" link on mobile
+- **Active tag**: `currentTag` prop highlights the matching pill with `bg-white text-[#4b9aaa]`; inactive pills use `bg-white/20 text-white`
+- **Edge bleed**: `-mx-4 px-4 md:-mx-8 md:px-8` makes scroll area extend to viewport edges while parent content stays padded
+- **Sidebar swap**: Sidebar (`<aside>`) uses `hidden lg:block` — hidden on mobile (tags in bar), visible on desktop. No layout shift.
+- **Used on**: `/blog` (index) and `/blog/tag/[tag]` pages
+
 ### Splash Screen
 - `SplashScreen.astro` — plays logo video with fade-in/out and 3D CSS effect
 - **Page allowlist**: Only shows on main nav pages (`/`, `/blog`, `/newsboard`, `/calendar`, `/marketplace`, `/profile`). Sub-pages (e.g. `/blog/my-post`, `/login`) skip it entirely via pathname check.

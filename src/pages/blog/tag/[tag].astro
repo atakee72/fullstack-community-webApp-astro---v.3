@@ -4,6 +4,7 @@ export const prerender = true;
 import BlogBaseLayout from '../../../layouts/BlogBaseLayout.astro';
 import BlogCard from '../../../components/blog/BlogCard.astro';
 import TagCloud from '../../../components/blog/TagCloud.astro';
+import TagBarMobile from '../../../components/blog/TagBarMobile.astro';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -58,15 +59,42 @@ const allPosts = await getCollection('blog', ({ data }) => !data.draft);
         </p>
       </header>
 
+      <TagBarMobile posts={allPosts} currentTag={tag} />
+
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- Main content -->
         <div class="lg:col-span-3">
           {sortedPosts.length > 0 ? (
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {sortedPosts.map(post => (
-                <BlogCard post={post} />
+              {sortedPosts.map((post, index) => (
+                <div class="opacity-0" data-reveal={index}>
+                  <BlogCard post={post} />
+                </div>
               ))}
             </div>
+
+            <script is:inline data-astro-rerun>
+            {
+              const cards = document.querySelectorAll('[data-reveal]');
+              if (cards.length) {
+                const cols = window.innerWidth >= 768 ? 2 : 1;
+
+                const observer = new IntersectionObserver(function(entries) {
+                  for (let i = 0; i < entries.length; i++) {
+                    if (entries[i].isIntersecting) {
+                      var el = entries[i].target;
+                      var idx = parseInt(el.dataset.reveal, 10);
+                      el.style.animationDelay = (idx % cols) * 0.12 + 's';
+                      el.classList.add('animate-scroll-reveal');
+                      observer.unobserve(el);
+                    }
+                  }
+                }, { rootMargin: '-80px' });
+
+                cards.forEach(function(card) { observer.observe(card); });
+              }
+            }
+            </script>
           ) : (
             <div class="text-center py-16 bg-white/10 rounded-xl">
               <p class="text-white/80">No posts found with this tag.</p>
@@ -78,7 +106,7 @@ const allPosts = await getCollection('blog', ({ data }) => !data.draft);
         </div>
 
         <!-- Sidebar -->
-        <aside class="lg:col-span-1">
+        <aside class="hidden lg:block lg:col-span-1">
           <div class="sticky top-24 space-y-6">
             <TagCloud posts={allPosts} currentTag={tag} />
 

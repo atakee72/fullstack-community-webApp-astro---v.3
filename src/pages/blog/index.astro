@@ -1,6 +1,7 @@
 ---
 import BlogBaseLayout from '../../layouts/BlogBaseLayout.astro';
 import TagCloud from '../../components/blog/TagCloud.astro';
+import TagBarMobile from '../../components/blog/TagBarMobile.astro';
 import BlogSearch from '../../components/blog/BlogSearch.svelte';
 import { getCollection } from 'astro:content';
 
@@ -32,6 +33,8 @@ const postsForSearch = sortedPosts.map(post => ({
         </p>
       </header>
 
+      <TagBarMobile posts={sortedPosts} />
+
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- Main content -->
         <div class="lg:col-span-3">
@@ -49,7 +52,7 @@ const postsForSearch = sortedPosts.map(post => ({
         </div>
 
         <!-- Sidebar -->
-        <aside class="lg:col-span-1">
+        <aside class="hidden lg:block lg:col-span-1">
           <div class="sticky top-24 space-y-6">
             <TagCloud posts={sortedPosts} />
 
