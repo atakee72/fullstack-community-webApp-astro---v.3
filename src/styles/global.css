@@ -78,6 +78,30 @@ body {
   animation: slide-up 0.3s ease-out;
 }
 
+/* Scroll-triggered card reveal */
+@keyframes scroll-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(80px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-scroll-reveal {
+  animation: scroll-reveal 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-scroll-reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Simple opacity fade (for backdrops) */
 @keyframes fade-in-simple {
   from {

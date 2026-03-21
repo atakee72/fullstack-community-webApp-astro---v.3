@@ -73,6 +73,53 @@
   function handleSearch(query: string) {
     filters = { ...filters, search: query, offset: 0 };
   }
+
+  // --- Scroll-triggered stagger animation ---
+
+  let columnsPerRow = $state(getColumnsPerRow());
+
+  function getColumnsPerRow(): number {
+    if (typeof window === 'undefined') return 1;
+    if (window.innerWidth >= 1280) return 4;
+    if (window.innerWidth >= 1024) return 3;
+    if (window.innerWidth >= 640) return 2;
+    return 1;
+  }
+
+  $effect(() => {
+    const handler = () => { columnsPerRow = getColumnsPerRow(); };
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  });
+
+  function reveal(node: HTMLElement, delay: number) {
+    let currentDelay = delay;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const el = entry.target as HTMLElement;
+            el.style.animationDelay = `${currentDelay}s`;
+            el.classList.add('animate-scroll-reveal');
+            observer.unobserve(el);
+          }
+        }
+      },
+      { rootMargin: '-80px' }
+    );
+
+    observer.observe(node);
+
+    return {
+      update(newDelay: number) {
+        currentDelay = newDelay;
+      },
+      destroy() {
+        observer.disconnect();
+      }
+    };
+  }
 </script>
 
 <div class="space-y-6">
@@ -158,8 +205,10 @@
     </div>
   {:else}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {#each listings as listing (listing._id)}
-        <ProductCard {listing} {session} />
+      {#each listings as listing, index (listing._id)}
+        <div class="opacity-0" use:reveal={(index % columnsPerRow) * 0.12}>
+          <ProductCard {listing} {session} />
+        </div>
       {/each}
     </div>
   {/if}
@@ -181,35 +230,36 @@
         </select>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5 sm:gap-2">
         <button
           onclick={() => goToPage(0)}
           disabled={currentPage === 0 || loading}
-          class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+          class="hidden sm:inline-flex px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
         >
           First
         </button>
         <button
           onclick={() => goToPage(currentPage - 1)}
           disabled={currentPage === 0 || loading}
-          class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+          class="px-2.5 sm:px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
         >
-          ← Prev
+          &larr;<span class="hidden sm:inline"> Prev</span>
         </button>
-        <span class="text-sm text-gray-500">
-          Page {currentPage + 1} of {totalPages} · {total} items
+        <span class="text-sm text-gray-500 px-1">
+          <span class="sm:hidden">{currentPage + 1}/{totalPages}</span>
+          <span class="hidden sm:inline">Page {currentPage + 1} of {totalPages} &middot; {total} items</span>
         </span>
         <button
           onclick={() => goToPage(currentPage + 1)}
           disabled={currentPage >= totalPages - 1 || loading}
-          class="px-3 py-1.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a8999] disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+          class="px-2.5 sm:px-3 py-1.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a8999] disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
         >
-          Next →
+          <span class="hidden sm:inline">Next </span>&rarr;
         </button>
         <button
           onclick={() => goToPage(totalPages - 1)}
           disabled={currentPage >= totalPages - 1 || loading}
-          class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+          class="hidden sm:inline-flex px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
         >
           Last
         </button>

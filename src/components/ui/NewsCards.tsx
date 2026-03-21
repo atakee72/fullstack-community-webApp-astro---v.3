@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "motion/react";
 import { BookmarkIcon, X, ExternalLink, Plus, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNewsQuery, useSubmitNews, useSaveNewsMutation, useSavedNewsQuery } from "../../hooks/api/useNewsQuery";
@@ -47,7 +48,7 @@ export function NewsCards({
   user,
   enableAnimations = true,
 }: NewsCardsProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isHeaderLoaded, setIsHeaderLoaded] = useState(false);
   const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
   const [savedItems, setSavedItems] = useState<Set<string>>(new Set());
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -64,8 +65,24 @@ export function NewsCards({
     title: '', description: '', sourceUrl: '', sourceName: '', imageUrl: '', submitterComment: ''
   });
 
-  const [pageSize, setPageSize] = useState(12);
+  const [pageSize, setPageSize] = useState(24);
   const shouldAnimate = enableAnimations && !prefersReducedMotion;
+
+  // Responsive column count for row-based stagger delay
+  const getColumnsPerRow = (): number => {
+    if (typeof window === 'undefined') return 1;
+    if (window.innerWidth >= 1280) return 3;
+    if (window.innerWidth >= 768) return 2;
+    return 1;
+  };
+  const [columnsPerRow, setColumnsPerRow] = useState(1);
+
+  useEffect(() => {
+    setColumnsPerRow(getColumnsPerRow());
+    const handler = () => setColumnsPerRow(getColumnsPerRow());
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   // Compute date range based on filter selection
   const getDateRange = (): { dateFrom?: string; dateTo?: string } => {
@@ -106,7 +123,7 @@ export function NewsCards({
     setPrefersReducedMotion(mediaQuery.matches);
     const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
     mediaQuery.addEventListener('change', handler);
-    const timer = setTimeout(() => setIsLoaded(true), 100);
+    const timer = setTimeout(() => setIsHeaderLoaded(true), 100);
     return () => {
       mediaQuery.removeEventListener('change', handler);
       clearTimeout(timer);
@@ -312,7 +329,7 @@ export function NewsCards({
       <div
         className={cn(
           "mb-8 transition-all duration-500",
-          shouldAnimate && !isLoaded ? "opacity-0 -translate-y-5" : "opacity-100 translate-y-0"
+          shouldAnimate && !isHeaderLoaded ? "opacity-0 -translate-y-5" : "opacity-100 translate-y-0"
         )}
       >
         <div className="flex items-start justify-between gap-4">
@@ -340,7 +357,7 @@ export function NewsCards({
               key={bar.id}
               className={cn(
                 "h-0.5 bg-[#814256] rounded-full transition-all duration-700 origin-left",
-                shouldAnimate && !isLoaded ? "scale-x-0" : "scale-x-100"
+                shouldAnimate && !isHeaderLoaded ? "scale-x-0" : "scale-x-100"
               )}
               style={{
                 opacity: bar.opacity,
@@ -443,20 +460,17 @@ export function NewsCards({
             const warningDismissed = dismissedWarnings.has(itemId);
             const showWarningOverlay = hasWarning && !warningDismissed && !isItemAuthor;
 
-            return (
+            const cardClassName = cn(
+              "bg-white border border-gray-200 rounded-lg overflow-hidden group relative",
+              "transition-[transform,box-shadow] duration-300",
+              !isRejected && "cursor-pointer hover:-translate-y-1 hover:scale-[1.01] hover:shadow-lg",
+              isPending && "opacity-60 border-amber-300",
+              isRejected && "opacity-50 border-red-300 grayscale"
+            );
+
+            const card = (
               <article
-                key={itemId}
-                className={cn(
-                  "bg-white border border-gray-200 rounded-lg overflow-hidden group relative",
-                  "transition-all duration-300",
-                  !isRejected && "cursor-pointer hover:-translate-y-1 hover:scale-[1.01] hover:shadow-lg",
-                  shouldAnimate && !isLoaded ? "opacity-0 translate-y-8" : "opacity-100 translate-y-0",
-                  isPending && "opacity-60 border-amber-300",
-                  isRejected && "opacity-50 border-red-300 grayscale"
-                )}
-                style={{
-                  transitionDelay: shouldAnimate ? `${500 + index * 120}ms` : '0ms'
-                }}
+                className={cardClassName}
                 onClick={() => !isRejected && !showWarningOverlay && openItem(item, index)}
               >
                 {/* Warning overlay (blur until dismissed) */}
@@ -553,6 +567,24 @@ export function NewsCards({
                   )}
                 </div>
               </article>
+            );
+
+            return shouldAnimate ? (
+              <motion.div
+                key={itemId}
+                initial={{ opacity: 0, y: 80 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-80px" }}
+                transition={{
+                  duration: 0.8,
+                  delay: (index % columnsPerRow) * 0.12,
+                  ease: [0.25, 0.1, 0.25, 1],
+                }}
+              >
+                {card}
+              </motion.div>
+            ) : (
+              <div key={itemId}>{card}</div>
             );
           })}
         </div>

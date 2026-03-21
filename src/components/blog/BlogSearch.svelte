@@ -56,6 +56,52 @@
     pageSize = size;
     currentPage = 0;
   }
+
+  // --- Scroll-triggered stagger animation ---
+
+  let columnsPerRow = $state(getColumnsPerRow());
+
+  function getColumnsPerRow(): number {
+    if (typeof window === 'undefined') return 1;
+    if (window.innerWidth >= 1024) return 3;
+    if (window.innerWidth >= 768) return 2;
+    return 1;
+  }
+
+  $effect(() => {
+    const handler = () => { columnsPerRow = getColumnsPerRow(); };
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  });
+
+  function reveal(node: HTMLElement, delay: number) {
+    let currentDelay = delay;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const el = entry.target as HTMLElement;
+            el.style.animationDelay = `${currentDelay}s`;
+            el.classList.add('animate-scroll-reveal');
+            observer.unobserve(el);
+          }
+        }
+      },
+      { rootMargin: '-80px' }
+    );
+
+    observer.observe(node);
+
+    return {
+      update(newDelay: number) {
+        currentDelay = newDelay;
+      },
+      destroy() {
+        observer.disconnect();
+      }
+    };
+  }
 </script>
 
 <div class="mb-8">
@@ -94,7 +140,8 @@
 
 <!-- Results grid -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {#each paginatedPosts as post (post.id)}
+  {#each paginatedPosts as post, index (post.id)}
+    <div class="opacity-0" use:reveal={(index % columnsPerRow) * 0.12}>
     <article class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group">
       <a href={`/blog/${post.id}`} class="block">
         {#if post.cover}
@@ -146,6 +193,7 @@
         {/if}
       </div>
     </article>
+    </div>
   {:else}
     <div class="col-span-full text-center py-12">
       <svg class="w-16 h-16 mx-auto text-white/50 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,35 +227,36 @@
       </select>
     </div>
 
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1.5 sm:gap-2">
       <button
         onclick={() => goToPage(0)}
         disabled={currentPage === 0}
-        class="px-3 py-1.5 bg-white/10 text-white rounded-lg hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+        class="hidden sm:inline-flex px-3 py-1.5 bg-white/10 text-white rounded-lg hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
       >
         First
       </button>
       <button
         onclick={() => goToPage(currentPage - 1)}
         disabled={currentPage === 0}
-        class="px-3 py-1.5 bg-white/10 text-white rounded-lg hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+        class="px-2.5 sm:px-3 py-1.5 bg-white/10 text-white rounded-lg hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
       >
-        ← Prev
+        &larr;<span class="hidden sm:inline"> Prev</span>
       </button>
-      <span class="text-sm text-white/70">
-        Page {currentPage + 1} of {totalPages} · {filteredPosts.length} posts
+      <span class="text-sm text-white/70 px-1">
+        <span class="sm:hidden">{currentPage + 1}/{totalPages}</span>
+        <span class="hidden sm:inline">Page {currentPage + 1} of {totalPages} &middot; {filteredPosts.length} posts</span>
       </span>
       <button
         onclick={() => goToPage(currentPage + 1)}
         disabled={currentPage >= totalPages - 1}
-        class="px-3 py-1.5 bg-white/20 text-white rounded-lg hover:bg-white/30 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+        class="px-2.5 sm:px-3 py-1.5 bg-white/20 text-white rounded-lg hover:bg-white/30 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
       >
-        Next →
+        <span class="hidden sm:inline">Next </span>&rarr;
       </button>
       <button
         onclick={() => goToPage(totalPages - 1)}
         disabled={currentPage >= totalPages - 1}
-        class="px-3 py-1.5 bg-white/10 text-white rounded-lg hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+        class="hidden sm:inline-flex px-3 py-1.5 bg-white/10 text-white rounded-lg hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
       >
         Last
       </button>
