@@ -46,35 +46,36 @@ export function Pagination({
         </div>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         <button
           onClick={() => onPageChange(0)}
           disabled={currentPage === 0}
-          className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+          className="hidden sm:inline-flex px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
         >
           First
         </button>
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 0}
-          className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+          className="px-2.5 sm:px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
         >
-          ← Prev
+          ←<span className="hidden sm:inline"> Prev</span>
         </button>
-        <span className="text-sm text-gray-500">
-          Page {currentPage + 1} of {totalPages} · {totalItems} {itemLabel}
+        <span className="text-sm text-gray-500 px-1">
+          <span className="sm:hidden">{currentPage + 1}/{totalPages}</span>
+          <span className="hidden sm:inline">Page {currentPage + 1} of {totalPages} · {totalItems} {itemLabel}</span>
         </span>
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages - 1}
-          className={`px-3 py-1.5 ${accentColor} text-white rounded-lg ${accentHover} disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium`}
+          className={`px-2.5 sm:px-3 py-1.5 ${accentColor} text-white rounded-lg ${accentHover} disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium`}
         >
-          Next →
+          <span className="hidden sm:inline">Next </span>→
         </button>
         <button
           onClick={() => onPageChange(totalPages - 1)}
           disabled={currentPage >= totalPages - 1}
-          className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+          className="hidden sm:inline-flex px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
         >
           Last
         </button>
