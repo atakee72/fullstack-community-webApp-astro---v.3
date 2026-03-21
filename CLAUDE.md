@@ -44,13 +44,14 @@ src/
 │   │   ├── news/          # Newsboard CRUD, daily fetch, save/unsave
 │   │   ├── listings/      # Marketplace listings CRUD + draft save/publish
 │   │   ├── reports/       # User report submission
-│   │   └── admin/         # Admin moderation APIs
+│   │   └── admin/         # Admin moderation APIs (review + bulk-review)
 │   └── *.astro       # Page components
 ├── hooks/
 │   └── api/          # TanStack Query hooks
 ├── lib/
 │   ├── mongodb.ts    # Database connection
 │   ├── auth.ts       # Auth utilities
+│   ├── reviewAction.ts # Shared moderation review logic (single + bulk)
 │   └── queryUtils.ts # Query helpers
 ├── schemas/          # Zod validation schemas
 ├── stores/           # Zustand stores
@@ -105,7 +106,16 @@ export const POST: APIRoute = async ({ request }) => {
 - **Warning labels**: Approved-with-warning content shows blur overlay until user clicks "Show content anyway" (persisted to localStorage)
 - **Strike system**: 3 strikes = automatic user ban
 - **Status flow**: `pending` → `approved`/`rejected` (with optional warning label)
+- **Bulk review**: `POST /api/admin/moderation/bulk-review` — approve/reject up to 50 items at once. Skips already-reviewed items, processes all even if some fail, returns partial results with ban notifications.
+- **Shared review logic**: `src/lib/reviewAction.ts` — `processReviewAction()` handles updating flagged content, original content, comment parent arrays, strike system, and auto-ban. Used by both `review.ts` and `bulk-review.ts`.
 - Key fields: `moderationStatus`, `isUserReported`, `hasWarningLabel`, `warningText` on content
+
+### Admin Moderation Table (`ModerationQueue.svelte`)
+- **Sortable columns**: Date (`createdAt`), Flagged For (`maxScore`), Decision (`reviewStatus`) — click header to toggle asc/desc
+- **Column visibility**: "Columns" dropdown to show/hide columns; Reason/Warning hidden by default
+- **Improved pagination**: Page size selector (10/25/50), First/Prev/Next/Last buttons, "Page X of Y"
+- **Bulk actions** (queue view only): Select items via checkboxes → Approve All / Reject All with `confirmAction()` dialogs
+- **Human-readable categories**: Raw strings like `spam_check:irrelevant_nonsense` displayed as "Irrelevant content", `image_safety:sexual` as "Sexual image", etc. (via `CATEGORY_LABELS` map + `formatCategory()`)
 
 ### Newsboard
 - **Daily AI fetch**: Vercel cron (6 AM daily) triggers `/api/news/fetch-daily` which fetches from 9 RSS feeds + NewsData.io API
@@ -171,6 +181,13 @@ Complex React components use a wrapper pattern:
 - **Deselect**: Click start date (no range) → deselects; click before start (range exists) → new selection
 - **Auth-gated**: Tooltip only appears for logged-in users
 - **`prefillDates` memoized** via `useMemo` in CalendarContainer to prevent useEffect churn in EventModal
+
+### Pagination
+- **React component**: `src/components/ui/Pagination.tsx` — reusable with props for accent color, page size options, item label
+- **Used in**: Newsboard (`NewsCards.tsx`), with page size selector (12/24/48)
+- **Svelte inline**: Marketplace (`MarketplaceBrowse.svelte`), Blog (`BlogSearch.svelte`), Admin Moderation (`ModerationQueue.svelte`) — same layout, adapted to Svelte syntax
+- **Features**: First/Prev/Next/Last buttons, "Page X of Y · N items" display, optional page size dropdown
+- **Accent colors**: Teal for marketplace/moderation, burgundy for newsboard, white-on-dark for blog
 
 ### Splash Screen
 - `SplashScreen.astro` — plays logo video with fade-in/out and 3D CSS effect

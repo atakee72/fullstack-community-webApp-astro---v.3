@@ -148,14 +148,15 @@ The app includes a comprehensive content moderation system:
 - Author sees orange banner: "Your content has been reported by the community"
 
 ### Admin Dashboard (`/admin/moderation`)
-- **Queue view**: Review pending flagged content
-- **History view**: See approved/rejected items
+- **Queue view**: Review pending flagged content with row selection and bulk actions
+- **History view**: Sortable table with column visibility toggle and human-readable category labels
 - **Filter tabs**: All, Discussions, Comments, Announcements, Events, Recommendations, Marketplace
 - **Stats counters**: Urgent, Pending, Approved, With Warning, Rejected
 - **Actions**:
   - ✓ Approve (publish content)
   - ⚠ Approve with Warning (add content warning label)
   - ✕ Reject (remove content, add strike to author)
+  - Bulk Approve / Bulk Reject (up to 50 items at once)
 - **Strike system**: 3 strikes = automatic user ban
 
 ### Moderation Status Flow
@@ -186,7 +187,7 @@ The app includes an AI-powered local news aggregation system:
 ### Newsboard UI
 - Date filter tabs: 7 Days, 30 Days, 3 Months, 6 Months, 1 Year, Archive
 - Live search with 300ms debounce
-- Numbered pagination
+- Pagination with page size selector and First/Prev/Next/Last navigation
 - Modal view with keyboard navigation (← →)
 - Server-side bookmark persistence for logged-in users
 
@@ -250,6 +251,7 @@ The app includes an AI-powered local news aggregation system:
 - `POST /api/reports/submit` - Submit user report
 - `GET /api/admin/moderation` - List flagged content (admin)
 - `POST /api/admin/moderation/review` - Approve/reject content (admin)
+- `POST /api/admin/moderation/bulk-review` - Bulk approve/reject up to 50 items (admin)
 
 ### Other
 - `POST /api/upload/image` - Upload image to Cloudinary

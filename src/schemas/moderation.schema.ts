@@ -109,6 +109,7 @@ export const BulkReviewActionSchema = z.object({
   flaggedContentIds: z.array(ObjectIdSchema).min(1).max(50),
   action: z.enum(['approve', 'reject']),
   notes: z.string().max(1000).optional(),
+  rejectionReason: z.string().max(500).optional(),
 });
 
 // Query schema for fetching flagged content

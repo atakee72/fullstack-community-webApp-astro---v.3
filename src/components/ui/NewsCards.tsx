@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { BookmarkIcon, X, ExternalLink, Plus, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNewsQuery, useSubmitNews, useSaveNewsMutation, useSavedNewsQuery } from "../../hooks/api/useNewsQuery";
+import { Pagination } from "./Pagination";
 import type { NewsItem } from "../../types";
 
 interface StatusBar {
@@ -63,7 +64,7 @@ export function NewsCards({
     title: '', description: '', sourceUrl: '', sourceName: '', imageUrl: '', submitterComment: ''
   });
 
-  const PAGE_SIZE = 12;
+  const [pageSize, setPageSize] = useState(12);
   const shouldAnimate = enableAnimations && !prefersReducedMotion;
 
   // Compute date range based on filter selection
@@ -87,8 +88,8 @@ export function NewsCards({
 
   // Data fetching
   const { data, isLoading, error } = useNewsQuery({
-    limit: PAGE_SIZE,
-    offset: page * PAGE_SIZE,
+    limit: pageSize,
+    offset: page * pageSize,
     sortBy: dateFilter === 'archive' ? 'publishedAt' : 'approvedAt',
     sortOrder: 'desc',
     search: debouncedSearch || undefined,
@@ -291,7 +292,7 @@ export function NewsCards({
 
   const GENERIC_WARNING = 'This content may contain sensitive material.';
 
-  const totalPages = pagination ? Math.ceil(pagination.total / PAGE_SIZE) : 0;
+  const totalPages = pagination ? Math.ceil(pagination.total / pageSize) : 0;
 
   const clearSearch = () => {
     setSearchInput('');
@@ -304,19 +305,6 @@ export function NewsCards({
     setPage(0);
   };
 
-  // Generate page numbers with ellipsis
-  const getPageNumbers = (): (number | 'ellipsis')[] => {
-    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i);
-    const pages: (number | 'ellipsis')[] = [];
-    pages.push(0); // Always show first page
-    if (page > 2) pages.push('ellipsis');
-    for (let i = Math.max(1, page - 1); i <= Math.min(totalPages - 2, page + 1); i++) {
-      pages.push(i);
-    }
-    if (page < totalPages - 3) pages.push('ellipsis');
-    pages.push(totalPages - 1); // Always show last page
-    return pages;
-  };
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4 md:p-6 text-gray-800">
@@ -571,42 +559,18 @@ export function NewsCards({
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-1 mt-8">
-          <button
-            onClick={() => setPage(p => p - 1)}
-            disabled={page === 0}
-            className="px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            ←
-          </button>
-          {getPageNumbers().map((p, i) =>
-            p === 'ellipsis' ? (
-              <span key={`ellipsis-${i}`} className="px-2 py-2 text-gray-400 text-sm">…</span>
-            ) : (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                className={cn(
-                  "w-9 h-9 text-sm font-medium rounded-lg transition-colors",
-                  page === p
-                    ? "bg-[#814256] text-white"
-                    : "text-gray-600 hover:bg-gray-100"
-                )}
-              >
-                {p + 1}
-              </button>
-            )
-          )}
-          <button
-            onClick={() => setPage(p => p + 1)}
-            disabled={page >= totalPages - 1}
-            className="px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            →
-          </button>
-        </div>
-      )}
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        totalItems={pagination?.total ?? 0}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        pageSizeOptions={[12, 24, 48]}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(0); }}
+        accentColor="bg-[#814256]"
+        accentHover="hover:bg-[#6b3548]"
+        itemLabel="articles"
+      />
 
       {/* Expanded Card Modal */}
       {selectedItem && (

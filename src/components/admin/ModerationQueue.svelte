@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { showSuccess, showError } from '../../utils/toast';
+  import { confirmAction } from '../../utils/toast';
 
   export let userId: string;
 
@@ -53,7 +54,156 @@
   let filterType = 'all';
   let actionLoading: string | null = null;
   let currentPage = 0;
-  const PAGE_SIZE = 10;
+  let pageSize = 10;
+
+  // Sorting state
+  let sortBy: 'createdAt' | 'maxScore' | 'reviewStatus' = 'createdAt';
+  let sortOrder: 'asc' | 'desc' = 'desc';
+
+  // Column visibility state (only for history table)
+  let hiddenColumns: Set<string> = new Set(['reason']);
+  let showColumnMenu = false;
+
+  const ALL_COLUMNS = [
+    { key: 'date', label: 'Date' },
+    { key: 'source', label: 'Source' },
+    { key: 'type', label: 'Type' },
+    { key: 'content', label: 'Content' },
+    { key: 'author', label: 'Author' },
+    { key: 'flagged', label: 'Flagged For' },
+    { key: 'decision', label: 'Decision' },
+    { key: 'reason', label: 'Reason/Warning' },
+  ];
+
+  // Row selection state
+  let selectedIds: Set<string> = new Set();
+  let bulkActionLoading = false;
+
+  function toggleSort(field: 'createdAt' | 'maxScore' | 'reviewStatus') {
+    if (sortBy === field) {
+      sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortBy = field;
+      sortOrder = 'desc';
+    }
+  }
+
+  function toggleColumnVisibility(key: string) {
+    // Prevent hiding all columns
+    const visibleCount = ALL_COLUMNS.length - hiddenColumns.size;
+    if (!hiddenColumns.has(key) && visibleCount <= 1) return;
+
+    if (hiddenColumns.has(key)) {
+      hiddenColumns.delete(key);
+    } else {
+      hiddenColumns.add(key);
+    }
+    hiddenColumns = hiddenColumns; // trigger reactivity
+  }
+
+  function toggleSelectAll() {
+    if (!data) return;
+    const allIds = data.items.map(item => item._id);
+    const allSelected = allIds.every(id => selectedIds.has(id));
+    if (allSelected) {
+      selectedIds = new Set();
+    } else {
+      selectedIds = new Set(allIds);
+    }
+  }
+
+  function toggleSelectItem(id: string) {
+    if (selectedIds.has(id)) {
+      selectedIds.delete(id);
+    } else {
+      selectedIds.add(id);
+    }
+    selectedIds = selectedIds; // trigger reactivity
+  }
+
+  function clearSelection() {
+    selectedIds = new Set();
+  }
+
+  async function handleBulkApprove() {
+    if (selectedIds.size === 0) return;
+    const confirmed = await confirmAction(
+      `Approve ${selectedIds.size} item${selectedIds.size > 1 ? 's' : ''}?`,
+      { title: 'Bulk Approve', confirmLabel: 'Approve All' }
+    );
+    if (!confirmed) return;
+
+    bulkActionLoading = true;
+    try {
+      const response = await fetch('/api/admin/moderation/bulk-review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          flaggedContentIds: Array.from(selectedIds),
+          action: 'approve'
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Bulk approve failed');
+      }
+
+      const result = await response.json();
+      showSuccess(result.message);
+      clearSelection();
+      await fetchQueue();
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Bulk approve failed');
+    } finally {
+      bulkActionLoading = false;
+    }
+  }
+
+  async function handleBulkReject() {
+    if (selectedIds.size === 0) return;
+    const confirmed = await confirmAction(
+      `Reject ${selectedIds.size} item${selectedIds.size > 1 ? 's' : ''}? This will add strikes to the authors.`,
+      { title: 'Bulk Reject', confirmLabel: 'Reject All', variant: 'danger' }
+    );
+    if (!confirmed) return;
+
+    const reason = prompt('Shared rejection reason (leave blank for default):');
+    if (reason === null) return; // cancelled
+
+    bulkActionLoading = true;
+    try {
+      const response = await fetch('/api/admin/moderation/bulk-review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          flaggedContentIds: Array.from(selectedIds),
+          action: 'reject',
+          rejectionReason: reason || 'Content violated community guidelines'
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Bulk reject failed');
+      }
+
+      const result = await response.json();
+      let msg = result.message;
+      if (result.bansTriggered > 0) {
+        msg = `⚠ ${result.bansTriggered} user(s) BANNED. ${msg}`;
+      }
+      showSuccess(msg);
+      clearSelection();
+      await fetchQueue();
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Bulk reject failed');
+    } finally {
+      bulkActionLoading = false;
+    }
+  }
 
   async function fetchQueue() {
     loading = true;
@@ -79,8 +229,10 @@
         params.set('contentType', filterType);
       }
 
-      params.set('limit', PAGE_SIZE.toString());
-      params.set('offset', (currentPage * PAGE_SIZE).toString());
+      params.set('limit', pageSize.toString());
+      params.set('offset', (currentPage * pageSize).toString());
+      params.set('sortBy', sortBy);
+      params.set('sortOrder', sortOrder);
 
       const response = await fetch(`/api/admin/moderation?${params}`, { credentials: 'include' });
 
@@ -128,14 +280,50 @@
     }
   }
 
+  const CATEGORY_LABELS: Record<string, string> = {
+    // OpenAI moderation categories
+    'harassment': 'Harassment',
+    'harassment/threatening': 'Threats',
+    'hate': 'Hate speech',
+    'hate/threatening': 'Hate threats',
+    'illicit': 'Illegal activity',
+    'illicit/violent': 'Violent illegal',
+    'self-harm': 'Self-harm',
+    'self-harm/intent': 'Self-harm intent',
+    'self-harm/instructions': 'Self-harm instructions',
+    'sexual': 'Sexual content',
+    'sexual/minors': 'Child safety',
+    'violence': 'Violence',
+    'violence/graphic': 'Graphic violence',
+    // Spam check classifications
+    'spam_check:spam': 'Spam',
+    'spam_check:ad_promotional': 'Ad / promotion',
+    'spam_check:scam': 'Scam',
+    'spam_check:irrelevant_nonsense': 'Irrelevant content',
+    // Image safety classifications
+    'image_safety:sexual': 'Sexual image',
+    'image_safety:violence': 'Violent image',
+    'image_safety:hate': 'Hateful image',
+    'image_safety:other_violation': 'Inappropriate image',
+    // Other
+    'turkish_profanity': 'Profanity (TR)',
+    'moderation_error': 'Error',
+  };
+
+  function formatCategory(cat: string): string {
+    return CATEGORY_LABELS[cat] || cat.replace(/[_:]/g, ' ');
+  }
+
   function getCategoryColor(cat: string): string {
-    if (cat.includes('sexual/minors')) return 'bg-red-600';
+    if (cat.includes('sexual/minors') || cat === 'image_safety:sexual') return 'bg-red-600';
     if (cat.includes('self-harm')) return 'bg-orange-600';
     if (cat.includes('threatening')) return 'bg-red-500';
-    if (cat.includes('hate')) return 'bg-purple-600';
-    if (cat.includes('violence')) return 'bg-red-400';
+    if (cat.includes('hate') || cat === 'image_safety:hate') return 'bg-purple-600';
+    if (cat.includes('violence') || cat === 'image_safety:violence') return 'bg-red-400';
     if (cat.includes('sexual')) return 'bg-pink-500';
-    if (cat.includes('harassment')) return 'bg-yellow-600';
+    if (cat.includes('harassment') || cat === 'turkish_profanity') return 'bg-yellow-600';
+    if (cat.startsWith('spam_check:')) return 'bg-amber-600';
+    if (cat.startsWith('image_safety:')) return 'bg-pink-600';
     if (cat === 'moderation_error') return 'bg-gray-500';
     return 'bg-gray-400';
   }
@@ -146,6 +334,12 @@
       hour: '2-digit', minute: '2-digit'
     });
   }
+
+  // Computed: total pages
+  $: totalPages = data ? Math.max(1, Math.ceil(data.pagination.total / pageSize)) : 1;
+
+  // Computed: are all visible items selected?
+  $: allSelected = data ? data.items.length > 0 && data.items.every(item => selectedIds.has(item._id)) : false;
 
   onMount(fetchQueue);
 
@@ -164,23 +358,35 @@
       // Clear items only on actual view change to prevent flash of stale data
       if (data) data = { ...data, items: [] };
       previousViewMode = viewMode;
+      clearSelection();
     }
   }
 
-  // Reset page and refetch when filters change
-  $: if (filterStatus || filterType) {
+  // Reset page and refetch when filters or sort change
+  $: if (filterStatus || filterType || sortBy || sortOrder) {
     currentPage = 0;
+    clearSelection();
+    fetchQueue();
+  }
+
+  // Reset to page 0 when pageSize changes
+  let previousPageSize = pageSize;
+  $: if (pageSize !== previousPageSize) {
+    previousPageSize = pageSize;
+    currentPage = 0;
+    clearSelection();
     fetchQueue();
   }
 
   // Refetch when page changes (but not on initial load — onMount handles that)
   function goToPage(page: number) {
     currentPage = page;
+    clearSelection();
     fetchQueue();
   }
 </script>
 
-<div class="space-y-6 max-w-6xl mx-auto">
+<div class="space-y-6 w-full px-4 mx-auto">
   <!-- Stats Cards -->
   <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
     <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-red-500">
@@ -294,7 +500,36 @@
           </button>
         </div>
       </div>
-      <div class="flex items-end">
+      <div class="flex items-end gap-2">
+        <!-- Column Visibility Toggle (history view only) -->
+        {#if viewMode === 'history'}
+          <div class="relative">
+            <button
+              on:click={() => showColumnMenu = !showColumnMenu}
+              class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium flex items-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
+              </svg>
+              Columns
+            </button>
+            {#if showColumnMenu}
+              <div class="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-2 min-w-[160px]">
+                {#each ALL_COLUMNS as col}
+                  <label class="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer text-sm">
+                    <input
+                      type="checkbox"
+                      checked={!hiddenColumns.has(col.key)}
+                      on:change={() => toggleColumnVisibility(col.key)}
+                      class="rounded border-gray-300 text-[#4b9aaa] focus:ring-[#4b9aaa]"
+                    />
+                    {col.label}
+                  </label>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        {/if}
         <button on:click={fetchQueue} disabled={loading} class="px-4 py-2 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a8999] disabled:opacity-50 flex items-center gap-2">
           <svg class="w-4 h-4 {loading ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -304,6 +539,33 @@
       </div>
     </div>
   </div>
+
+  <!-- Bulk Action Bar (queue view only — history items are already reviewed) -->
+  {#if selectedIds.size > 0 && viewMode === 'queue'}
+    <div class="bg-[#814256]/10 border border-[#814256]/30 rounded-lg px-4 py-3 flex items-center gap-3 flex-wrap">
+      <span class="text-sm font-medium text-[#814256]">{selectedIds.size} selected</span>
+      <button
+        on:click={handleBulkApprove}
+        disabled={bulkActionLoading}
+        class="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
+      >
+        {bulkActionLoading ? '...' : '✓ Approve All'}
+      </button>
+      <button
+        on:click={handleBulkReject}
+        disabled={bulkActionLoading}
+        class="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 font-medium"
+      >
+        {bulkActionLoading ? '...' : '✕ Reject All'}
+      </button>
+      <button
+        on:click={clearSelection}
+        class="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 font-medium"
+      >
+        Clear
+      </button>
+    </div>
+  {/if}
 
   <!-- Loading / Error -->
   {#if loading && !data}
@@ -318,7 +580,6 @@
   {:else if data?.items.length === 0}
     <div class="bg-white rounded-lg p-8 shadow-md text-center">
       <p class="text-gray-500 text-lg">{viewMode === 'queue' ? 'No items in the queue' : 'No moderation history found'}</p>
-      <p class="text-xs text-gray-400 mt-2">Debug: viewMode={viewMode}, filterStatus={filterStatus}</p>
     </div>
   {:else if viewMode === 'history'}
     <!-- History Table View -->
@@ -327,110 +588,151 @@
         <table class="w-full text-sm">
           <thead class="bg-gray-50 border-b">
             <tr>
-              <th class="px-4 py-3 text-left font-medium text-gray-700">Date</th>
-              <th class="px-4 py-3 text-left font-medium text-gray-700">Source</th>
-              <th class="px-4 py-3 text-left font-medium text-gray-700">Type</th>
-              <th class="px-4 py-3 text-left font-medium text-gray-700">Content</th>
-              <th class="px-4 py-3 text-left font-medium text-gray-700">Author</th>
-              <th class="px-4 py-3 text-left font-medium text-gray-700">Flagged For</th>
-              <th class="px-4 py-3 text-left font-medium text-gray-700">Decision</th>
-              <th class="px-4 py-3 text-left font-medium text-gray-700">Reason/Warning</th>
+              {#if !hiddenColumns.has('date')}
+                <th class="px-4 py-3 text-left font-medium text-gray-700 cursor-pointer hover:text-[#814256] select-none"
+                    on:click={() => toggleSort('createdAt')}>
+                  Date {sortBy === 'createdAt' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+                </th>
+              {/if}
+              {#if !hiddenColumns.has('source')}
+                <th class="px-4 py-3 text-left font-medium text-gray-700 min-w-[120px]">Source</th>
+              {/if}
+              {#if !hiddenColumns.has('type')}
+                <th class="px-4 py-3 text-left font-medium text-gray-700">Type</th>
+              {/if}
+              {#if !hiddenColumns.has('content')}
+                <th class="px-4 py-3 text-left font-medium text-gray-700">Content</th>
+              {/if}
+              {#if !hiddenColumns.has('author')}
+                <th class="px-4 py-3 text-left font-medium text-gray-700">Author</th>
+              {/if}
+              {#if !hiddenColumns.has('flagged')}
+                <th class="px-3 py-3 text-left font-medium text-gray-700 cursor-pointer hover:text-[#814256] select-none max-w-[140px]"
+                    on:click={() => toggleSort('maxScore')}>
+                  Flagged For {sortBy === 'maxScore' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+                </th>
+              {/if}
+              {#if !hiddenColumns.has('decision')}
+                <th class="px-4 py-3 text-left font-medium text-gray-700 cursor-pointer hover:text-[#814256] select-none"
+                    on:click={() => toggleSort('reviewStatus')}>
+                  Decision {sortBy === 'reviewStatus' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+                </th>
+              {/if}
+              {#if !hiddenColumns.has('reason')}
+                <th class="px-4 py-3 text-left font-medium text-gray-700">Reason/Warning</th>
+              {/if}
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200">
             {#each data?.items ?? [] as item (item._id)}
               <tr class="hover:bg-gray-50">
-                <td class="px-4 py-3 whitespace-nowrap text-gray-500">
-                  <div>{formatDate(item.createdAt)}</div>
-                  {#if item.reviewedAt}
-                    <div class="text-xs text-gray-400">Reviewed: {formatDate(item.reviewedAt)}</div>
-                  {/if}
-                </td>
-                <td class="px-4 py-3">
-                  {#if item.source === 'user_report'}
-                    <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">
-                      🚩 Report{item.reportCount && item.reportCount > 1 ? ` (${item.reportCount})` : ''}
-                    </span>
-                  {:else if item.contentType === 'news' && item.authorId === 'system'}
-                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">🤖 AI Found</span>
-                  {:else if item.contentType === 'news'}
-                    <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">👤 User News</span>
-                  {:else}
-                    <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">🤖 AI</span>
-                  {/if}
-                </td>
-                <td class="px-4 py-3">
-                  <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">{item.contentType}</span>
-                </td>
-                <td class="px-4 py-3 min-w-[200px] max-w-sm">
-                  <div class="max-h-24 overflow-y-auto">
-                    {#if item.title}
-                      <p class="font-medium text-gray-900 break-words">{item.title}</p>
+                {#if !hiddenColumns.has('date')}
+                  <td class="px-3 py-3 text-gray-500 text-xs">
+                    <div class="whitespace-nowrap">{formatDate(item.createdAt)}</div>
+                    {#if item.reviewedAt}
+                      <div class="text-[10px] text-gray-400 whitespace-nowrap">Rev: {formatDate(item.reviewedAt)}</div>
                     {/if}
-                    {#if item.body}
-                      <p class="text-gray-500 text-xs break-words whitespace-pre-wrap">{item.body}</p>
+                  </td>
+                {/if}
+                {#if !hiddenColumns.has('source')}
+                  <td class="px-4 py-3">
+                    {#if item.source === 'user_report'}
+                      <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">
+                        🚩 Report{item.reportCount && item.reportCount > 1 ? ` (${item.reportCount})` : ''}
+                      </span>
+                    {:else if item.contentType === 'news' && item.authorId === 'system'}
+                      <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">🤖 AI Found</span>
+                    {:else if item.contentType === 'news'}
+                      <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">👤 User News</span>
+                    {:else}
+                      <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">🤖 AI</span>
                     {/if}
-                    {#if item.sourceUrl}
-                      <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs text-[#4b9aaa] hover:underline mt-1">
-                        🔗 Source
-                      </a>
-                    {/if}
-                    {#if item.tags?.length}
-                      <div class="mt-1 flex flex-wrap gap-1">
-                        {#each item.tags as tag}
-                          <span class="px-1 py-0.5 text-[10px] bg-amber-100 text-amber-800 border border-amber-200 rounded">{tag}</span>
+                  </td>
+                {/if}
+                {#if !hiddenColumns.has('type')}
+                  <td class="px-4 py-3">
+                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">{item.contentType}</span>
+                  </td>
+                {/if}
+                {#if !hiddenColumns.has('content')}
+                  <td class="px-4 py-3 min-w-[150px] max-w-[250px]">
+                    <div class="max-h-24 overflow-y-auto">
+                      {#if item.title}
+                        <p class="font-medium text-gray-900 break-words">{item.title}</p>
+                      {/if}
+                      {#if item.body}
+                        <p class="text-gray-500 text-xs break-words whitespace-pre-wrap">{item.body}</p>
+                      {/if}
+                      {#if item.sourceUrl}
+                        <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs text-[#4b9aaa] hover:underline mt-1">
+                          🔗 Source
+                        </a>
+                      {/if}
+                      {#if item.tags?.length}
+                        <div class="mt-1 flex flex-wrap gap-1">
+                          {#each item.tags as tag}
+                            <span class="px-1 py-0.5 text-[10px] bg-amber-100 text-amber-800 border border-amber-200 rounded">{tag}</span>
+                          {/each}
+                        </div>
+                      {/if}
+                    </div>
+                  </td>
+                {/if}
+                {#if !hiddenColumns.has('author')}
+                  <td class="px-4 py-3">
+                    <div class="text-gray-900">{item.authorName || 'Unknown'}</div>
+                    <div class="text-xs text-gray-500">{item.authorEmail || ''}</div>
+                  </td>
+                {/if}
+                {#if !hiddenColumns.has('flagged')}
+                  <td class="px-3 py-3 max-w-[140px]">
+                    {#if item.source === 'user_report'}
+                      <div class="space-y-1">
+                        <span class="px-1.5 py-0.5 text-xs rounded bg-orange-500 text-white">
+                          {item.reportReason?.replace('_', ' ') || 'Other'}
+                        </span>
+                        {#if item.reporterName}
+                          <div class="text-[10px] text-gray-400">by {item.reporterName}</div>
+                        {/if}
+                      </div>
+                    {:else}
+                      <div class="flex flex-wrap gap-1">
+                        {#each item.flaggedCategories.slice(0, 2) as cat}
+                          <span class="px-1.5 py-0.5 text-xs rounded text-white {getCategoryColor(cat)}">{formatCategory(cat)}</span>
                         {/each}
+                        {#if item.flaggedCategories.length > 2}
+                          <span class="text-xs text-gray-500">+{item.flaggedCategories.length - 2}</span>
+                        {/if}
                       </div>
                     {/if}
-                  </div>
-                </td>
-                <td class="px-4 py-3">
-                  <div class="text-gray-900">{item.authorName || 'Unknown'}</div>
-                  <div class="text-xs text-gray-500">{item.authorEmail || ''}</div>
-                </td>
-                <td class="px-4 py-3">
-                  {#if item.source === 'user_report'}
-                    <div class="space-y-1">
-                      <span class="px-1.5 py-0.5 text-xs rounded bg-orange-500 text-white">
-                        {item.reportReason?.replace('_', ' ') || 'Other'}
+                  </td>
+                {/if}
+                {#if !hiddenColumns.has('decision')}
+                  <td class="px-4 py-3">
+                    {#if item.reviewStatus === 'approved'}
+                      <span class="px-2 py-1 text-xs font-medium rounded-full {item.hasWarningLabel ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
+                        {item.hasWarningLabel ? '⚠ With Warning' : '✓ Approved'}
                       </span>
-                      {#if item.reporterName}
-                        <div class="text-[10px] text-gray-400">by {item.reporterName}</div>
-                      {/if}
-                    </div>
-                  {:else}
-                    <div class="flex flex-wrap gap-1">
-                      {#each item.flaggedCategories.slice(0, 2) as cat}
-                        <span class="px-1.5 py-0.5 text-xs rounded text-white {getCategoryColor(cat)}">{cat}</span>
-                      {/each}
-                      {#if item.flaggedCategories.length > 2}
-                        <span class="text-xs text-gray-500">+{item.flaggedCategories.length - 2}</span>
-                      {/if}
-                    </div>
-                  {/if}
-                </td>
-                <td class="px-4 py-3">
-                  {#if item.reviewStatus === 'approved'}
-                    <span class="px-2 py-1 text-xs font-medium rounded-full {item.hasWarningLabel ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
-                      {item.hasWarningLabel ? '⚠ With Warning' : '✓ Approved'}
-                    </span>
-                  {:else if item.reviewStatus === 'rejected'}
-                    <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">✕ Rejected</span>
-                  {:else}
-                    <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">⏳ Pending</span>
-                  {/if}
-                </td>
-                <td class="px-4 py-3 max-w-xs">
-                  {#if item.rejectionReason}
-                    <p class="text-red-600 text-xs">{item.rejectionReason}</p>
-                  {:else if item.warningText}
-                    <p class="text-yellow-600 text-xs">{item.warningText}</p>
-                  {:else if item.reviewNotes}
-                    <p class="text-gray-500 text-xs italic">{item.reviewNotes}</p>
-                  {:else}
-                    <span class="text-gray-400 text-xs">-</span>
-                  {/if}
-                </td>
+                    {:else if item.reviewStatus === 'rejected'}
+                      <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">✕ Rejected</span>
+                    {:else}
+                      <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">⏳ Pending</span>
+                    {/if}
+                  </td>
+                {/if}
+                {#if !hiddenColumns.has('reason')}
+                  <td class="px-4 py-3 max-w-xs">
+                    {#if item.rejectionReason}
+                      <p class="text-red-600 text-xs">{item.rejectionReason}</p>
+                    {:else if item.warningText}
+                      <p class="text-yellow-600 text-xs">{item.warningText}</p>
+                    {:else if item.reviewNotes}
+                      <p class="text-gray-500 text-xs italic">{item.reviewNotes}</p>
+                    {:else}
+                      <span class="text-gray-400 text-xs">-</span>
+                    {/if}
+                  </td>
+                {/if}
               </tr>
             {/each}
           </tbody>
@@ -441,9 +743,15 @@
     <!-- Queue Items (Card View) -->
     <div class="space-y-4">
       {#each data?.items ?? [] as item (item._id)}
-        <div class="bg-white rounded-lg shadow-md overflow-hidden {item.decision === 'urgent_review' ? 'ring-2 ring-red-500' : ''}">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden {item.decision === 'urgent_review' ? 'ring-2 ring-red-500' : ''} {selectedIds.has(item._id) ? 'ring-2 ring-[#814256]' : ''}">
           <!-- Header -->
           <div class="bg-gray-50 px-4 py-3 border-b flex flex-wrap items-center gap-2">
+            <input
+              type="checkbox"
+              checked={selectedIds.has(item._id)}
+              on:change={() => toggleSelectItem(item._id)}
+              class="rounded border-gray-300 text-[#814256] focus:ring-[#814256] mr-1"
+            />
             {#if item.source === 'user_report'}
               <span class="px-2 py-1 text-xs font-bold bg-orange-500 text-white rounded-full">
                 🚩 User Report{item.reportCount && item.reportCount > 1 ? ` (${item.reportCount})` : ''}
@@ -520,7 +828,7 @@
               <div class="flex flex-wrap gap-2">
                 {#each item.flaggedCategories as cat}
                   <span class="px-2 py-1 text-xs font-medium rounded-full text-white {getCategoryColor(cat)}">
-                    {cat} ({((item.scores[cat] ?? 0) * 100).toFixed(0)}%)
+                    {formatCategory(cat)} ({((item.scores[cat] ?? 0) * 100).toFixed(0)}%)
                   </span>
                 {/each}
               </div>
@@ -613,25 +921,61 @@
   {/if}
 
   <!-- Pagination -->
-  {#if data?.pagination && (data.pagination.hasMore || currentPage > 0)}
-    <div class="flex justify-center items-center gap-4 mt-6">
-      <button
-        on:click={() => goToPage(currentPage - 1)}
-        disabled={currentPage === 0 || loading}
-        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed font-medium"
-      >
-        ← Previous
-      </button>
-      <span class="text-sm text-gray-500">
-        Page {currentPage + 1} · {data.pagination.total} items total
-      </span>
-      <button
-        on:click={() => goToPage(currentPage + 1)}
-        disabled={!data.pagination.hasMore || loading}
-        class="px-4 py-2 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a8999] disabled:opacity-40 disabled:cursor-not-allowed font-medium"
-      >
-        Next →
-      </button>
+  {#if data?.pagination && (data.pagination.total > pageSize || currentPage > 0)}
+    <div class="flex flex-wrap justify-center items-center gap-4 mt-6">
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-gray-500" for="page-size">Show</label>
+        <select
+          id="page-size"
+          bind:value={pageSize}
+          class="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#814256]"
+        >
+          <option value={10}>10</option>
+          <option value={25}>25</option>
+          <option value={50}>50</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          on:click={() => goToPage(0)}
+          disabled={currentPage === 0 || loading}
+          class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+        >
+          First
+        </button>
+        <button
+          on:click={() => goToPage(currentPage - 1)}
+          disabled={currentPage === 0 || loading}
+          class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+        >
+          ← Prev
+        </button>
+        <span class="text-sm text-gray-500">
+          Page {currentPage + 1} of {totalPages} · {data.pagination.total} items
+        </span>
+        <button
+          on:click={() => goToPage(currentPage + 1)}
+          disabled={currentPage >= totalPages - 1 || loading}
+          class="px-3 py-1.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a8999] disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+        >
+          Next →
+        </button>
+        <button
+          on:click={() => goToPage(totalPages - 1)}
+          disabled={currentPage >= totalPages - 1 || loading}
+          class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+        >
+          Last
+        </button>
+      </div>
     </div>
   {/if}
 </div>
+
+<!-- Close column menu on outside click -->
+<svelte:window on:click={(e) => {
+  if (showColumnMenu && !(e.target as HTMLElement).closest('.relative')) {
+    showColumnMenu = false;
+  }
+}} />

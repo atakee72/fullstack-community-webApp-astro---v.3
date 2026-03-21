@@ -11,13 +11,27 @@
   let error = $state<string | null>(null);
   let total = $state(0);
 
+  let pageSize = $state(12);
+
   let filters = $state<ListingFilters>({
     category: 'all',
     condition: 'all',
     sortBy: 'newest',
-    limit: 12,
+    limit: pageSize,
     offset: 0
   });
+
+  let currentPage = $derived(Math.floor((filters.offset || 0) / pageSize));
+  let totalPages = $derived(Math.max(1, Math.ceil(total / pageSize)));
+
+  function goToPage(page: number) {
+    filters = { ...filters, offset: page * pageSize };
+  }
+
+  function handlePageSizeChange(size: number) {
+    pageSize = size;
+    filters = { ...filters, limit: size, offset: 0 };
+  }
 
   async function fetchListings() {
     loading = true;
@@ -147,6 +161,59 @@
       {#each listings as listing (listing._id)}
         <ProductCard {listing} {session} />
       {/each}
+    </div>
+  {/if}
+
+  <!-- Pagination -->
+  {#if totalPages > 1 || total > 12}
+    <div class="flex flex-wrap justify-center items-center gap-4 mt-6">
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-gray-500" for="mp-page-size">Show</label>
+        <select
+          id="mp-page-size"
+          bind:value={pageSize}
+          onchange={() => handlePageSizeChange(pageSize)}
+          class="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#4b9aaa]"
+        >
+          <option value={12}>12</option>
+          <option value={24}>24</option>
+          <option value={48}>48</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          onclick={() => goToPage(0)}
+          disabled={currentPage === 0 || loading}
+          class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+        >
+          First
+        </button>
+        <button
+          onclick={() => goToPage(currentPage - 1)}
+          disabled={currentPage === 0 || loading}
+          class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+        >
+          ← Prev
+        </button>
+        <span class="text-sm text-gray-500">
+          Page {currentPage + 1} of {totalPages} · {total} items
+        </span>
+        <button
+          onclick={() => goToPage(currentPage + 1)}
+          disabled={currentPage >= totalPages - 1 || loading}
+          class="px-3 py-1.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a8999] disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+        >
+          Next →
+        </button>
+        <button
+          onclick={() => goToPage(totalPages - 1)}
+          disabled={currentPage >= totalPages - 1 || loading}
+          class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+        >
+          Last
+        </button>
+      </div>
     </div>
   {/if}
 

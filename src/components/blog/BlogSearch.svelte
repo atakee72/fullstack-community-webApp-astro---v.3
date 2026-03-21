@@ -17,6 +17,8 @@
   let { posts }: Props = $props();
 
   let searchQuery = $state('');
+  let pageSize = $state(12);
+  let currentPage = $state(0);
 
   const filteredPosts = $derived(
     searchQuery.trim() === ''
@@ -31,8 +33,28 @@
         })
   );
 
+  const totalPages = $derived(Math.max(1, Math.ceil(filteredPosts.length / pageSize)));
+  const paginatedPosts = $derived(filteredPosts.slice(currentPage * pageSize, (currentPage + 1) * pageSize));
+
+  // Reset to first page when search changes
+  $effect(() => {
+    searchQuery;
+    currentPage = 0;
+  });
+
   function clearSearch() {
     searchQuery = '';
+    currentPage = 0;
+  }
+
+  function goToPage(page: number) {
+    currentPage = page;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function handlePageSizeChange(size: number) {
+    pageSize = size;
+    currentPage = 0;
   }
 </script>
 
@@ -72,7 +94,7 @@
 
 <!-- Results grid -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {#each filteredPosts as post (post.id)}
+  {#each paginatedPosts as post (post.id)}
     <article class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group">
       <a href={`/blog/${post.id}`} class="block">
         {#if post.cover}
@@ -139,3 +161,56 @@
     </div>
   {/each}
 </div>
+
+<!-- Pagination -->
+{#if totalPages > 1 || filteredPosts.length > 12}
+  <div class="flex flex-wrap justify-center items-center gap-4 mt-8">
+    <div class="flex items-center gap-2">
+      <label class="text-sm text-white/70" for="blog-page-size">Show</label>
+      <select
+        id="blog-page-size"
+        bind:value={pageSize}
+        onchange={() => handlePageSizeChange(pageSize)}
+        class="px-2 py-1 border border-white/30 bg-white/10 text-white rounded-lg text-sm focus:ring-2 focus:ring-white/50"
+      >
+        <option value={12}>12</option>
+        <option value={24}>24</option>
+        <option value={48}>48</option>
+      </select>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button
+        onclick={() => goToPage(0)}
+        disabled={currentPage === 0}
+        class="px-3 py-1.5 bg-white/10 text-white rounded-lg hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+      >
+        First
+      </button>
+      <button
+        onclick={() => goToPage(currentPage - 1)}
+        disabled={currentPage === 0}
+        class="px-3 py-1.5 bg-white/10 text-white rounded-lg hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+      >
+        ← Prev
+      </button>
+      <span class="text-sm text-white/70">
+        Page {currentPage + 1} of {totalPages} · {filteredPosts.length} posts
+      </span>
+      <button
+        onclick={() => goToPage(currentPage + 1)}
+        disabled={currentPage >= totalPages - 1}
+        class="px-3 py-1.5 bg-white/20 text-white rounded-lg hover:bg-white/30 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+      >
+        Next →
+      </button>
+      <button
+        onclick={() => goToPage(totalPages - 1)}
+        disabled={currentPage >= totalPages - 1}
+        class="px-3 py-1.5 bg-white/10 text-white rounded-lg hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+      >
+        Last
+      </button>
+    </div>
+  </div>
+{/if}

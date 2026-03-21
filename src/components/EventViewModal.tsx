@@ -375,7 +375,8 @@ export default function EventViewModal({
                     const commentId = comment._id?.toString() || idx.toString();
 
                     return (
-                      <div key={idx} className="bg-gray-100 rounded-lg p-1.5">
+                      <div key={idx} className="bg-gray-100 rounded-lg p-1.5 flex items-center gap-1.5">
+                        <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
                           <span className="font-semibold text-xs text-gray-800">
                             {comment.author?.userName || comment.author?.name || 'Anonymous'}
@@ -383,21 +384,6 @@ export default function EventViewModal({
                           <span className="text-[10px] text-gray-500">
                             {comment.createdAt ? format(new Date(comment.createdAt), 'MMM d, h:mm a') : ''}
                           </span>
-                          {/* Report button - only for logged-in non-authors, and only if comment has a real _id */}
-                          {user && !isAuthor && comment._id && onReportComment && (
-                            <button
-                              onClick={() => onReportComment(comment._id as string, (comment.body || comment.comment || '').substring(0, 50) + ((comment.body || comment.comment || '').length > 50 ? '...' : ''))}
-                              disabled={reportedComments.has(comment._id as string)}
-                              className={`rounded px-1.5 py-0.5 text-xs transition-colors ${
-                                reportedComments.has(comment._id as string)
-                                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                  : 'bg-gray-300 hover:bg-orange-400 text-gray-700 hover:text-white'
-                              }`}
-                              title={reportedComments.has(comment._id as string) ? "Already reported" : "Report comment"}
-                            >
-                              🚩
-                            </button>
-                          )}
                         </div>
 
                         {/* AI Flagged Banner - Only visible to comment author */}
@@ -465,6 +451,22 @@ export default function EventViewModal({
                             )}
                             <p className="text-xs text-gray-700 leading-snug">{comment.body || comment.comment}</p>
                           </>
+                        )}
+                        </div>
+                        {/* Report button - right side, vertically centered */}
+                        {user && !isAuthor && comment._id && onReportComment && (
+                          <button
+                            onClick={() => onReportComment(comment._id as string, (comment.body || comment.comment || '').substring(0, 50) + ((comment.body || comment.comment || '').length > 50 ? '...' : ''))}
+                            disabled={reportedComments.has(comment._id as string)}
+                            className={`flex-shrink-0 text-xs transition-colors ${
+                              reportedComments.has(comment._id as string)
+                                ? 'text-gray-400 cursor-not-allowed'
+                                : 'text-gray-400 hover:text-red-500'
+                            }`}
+                            title={reportedComments.has(comment._id as string) ? "Already reported" : "Report comment"}
+                          >
+                            🚩
+                          </button>
                         )}
                       </div>
                     );
