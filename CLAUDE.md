@@ -44,7 +44,8 @@ src/
 │   │   ├── news/          # Newsboard CRUD, daily fetch, save/unsave
 │   │   ├── listings/      # Marketplace listings CRUD + draft save/publish
 │   │   ├── reports/       # User report submission
-│   │   └── admin/         # Admin moderation APIs (review + bulk-review)
+│   │   ├── admin/         # Admin moderation APIs (review + bulk-review)
+│   │   └── kiez-stats.ts  # Public Schillerkiez demographics/social API
 │   └── *.astro       # Page components
 ├── hooks/
 │   └── api/          # TanStack Query hooks
@@ -130,6 +131,16 @@ export const POST: APIRoute = async ({ request }) => {
 - **Archive**: Articles older than 1 year shown in Archive tab with "Archived" badge
 - Key config: `vercel.json` (cron schedule), `src/pages/api/news/fetch-daily.ts` (RSS feeds, thresholds)
 
+### Kiez Data Dashboard
+- **Data pipeline**: `scripts/sync-stats.ts` downloads XLSX from AfS (demographics) and MSS (social index), parses with `exceljs`, upserts to MongoDB
+- **Sync schedule**: GitHub Actions workflow runs 2x/year (March + September) + manual dispatch
+- **LOR codes**: Schillerkiez = 4 Planungsräume: `08100102` (Schillerpromenade Nord), `08100103` (Süd), `08100104` (Wartheplatz), `08100105` (Silbersteinstraße)
+- **API**: `GET /api/kiez-stats` — public, no auth, 24h cache. Aggregates demographics + social data, pre-computes non-overlapping migration segments (MH includes AUSL)
+- **Frontend**: `KiezDashboard.svelte` — Svelte 5 with hand-drawn SVG charts (no chart library). German UI. Fetches data client-side via `onMount`.
+- **Charts**: Horizontal bar (age), donut (migration, gender), vertical bar (PLR areas), horizontal bar (social indicators). Uses project color palette.
+- **Page**: `/schillerkiez` — prerendered static shell, Svelte hydrates client-side
+- **Dry-run**: `pnpm tsx scripts/sync-stats.ts --dry-run` — parses XLSX without DB writes (for verifying structure)
+
 ## Database Collections
 - `users` - User accounts (includes `moderationStrikes`, `isBanned` fields)
 - `topics` - Forum posts (includes `moderationStatus`, `isUserReported` fields)
@@ -141,6 +152,8 @@ export const POST: APIRoute = async ({ request }) => {
 - `news` - Newsboard articles (AI-fetched and user-submitted, includes `moderationStatus`, `aiRelevanceScore`, `fetchDate`, `sourceName`, `sourceUrl` fields)
 - `savedNews` - User bookmarks (userId + newsId pairs, server-side persistence)
 - `flaggedContent` - Content flagged by AI or user reports (for admin review queue)
+- `schillerkiez_demographics` - AfS demographic data per PLR area per period (unique: `plr_code + period`)
+- `schillerkiez_social` - MSS social index data per PLR area per report period (unique: `plr_code + period`)
 
 ## Environment Variables
 
@@ -155,6 +168,10 @@ CLOUDINARY_API_SECRET=
 OPENAI_API_KEY=         # Content moderation API + news relevance scoring
 CRON_SECRET=            # Vercel cron job authentication
 NEWSDATA_API_KEY=       # NewsData.io API (optional, for additional news sources)
+STATS_XLSX_URL=         # AfS demographics XLSX URL (sync script + GitHub Actions)
+STATS_PERIOD=           # AfS period, e.g. "2025h2" (sync script + GitHub Actions)
+MSS_XLSX_URL=           # MSS social index XLSX URL (optional, sync script)
+MSS_PERIOD=             # MSS report period, e.g. "2023" (optional, sync script)
 ```
 
 ## Component Patterns

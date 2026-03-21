@@ -51,6 +51,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
     { href: '/blog', label: 'Blog', icon: '📝' },
     { href: '/newsboard', label: 'Newsboard', icon: '📰' },
     { href: '/marketplace', label: 'Marketplace', icon: '🛒' },
+    { href: '/schillerkiez', label: 'Kiez Data', icon: '📊' },
   ];
 
   const authNavItems = [
@@ -59,6 +60,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
     { href: '/newsboard', label: 'Newsboard', icon: '📰' },
     { href: '/calendar', label: 'Calendar', icon: '📅' },
     { href: '/marketplace', label: 'Marketplace', icon: '🛒' },
+    { href: '/schillerkiez', label: 'Kiez Data', icon: '📊' },
     { href: '/profile', label: 'Profile', icon: '👤' },
   ];
 

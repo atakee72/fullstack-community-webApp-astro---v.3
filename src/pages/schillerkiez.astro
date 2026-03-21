@@ -1,0 +1,17 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import KiezDashboard from '../components/kiez/KiezDashboard.svelte';
+---
+
+<BaseLayout
+  title="Schillerkiez in Zahlen - Mahalle"
+  description="Demografische und soziale Daten aus dem Schillerkiez in Berlin-Neukölln"
+>
+  <main class="min-h-[calc(100vh-60px)] py-2 md:py-3">
+    <div class="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
+      <KiezDashboard client:load />
+    </div>
+  </main>
+</BaseLayout>
