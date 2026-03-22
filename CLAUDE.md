@@ -140,7 +140,8 @@ export const POST: APIRoute = async ({ request }) => {
 - **Charts**: Horizontal bar (age), donut (migration, gender), vertical bar (PLR areas), horizontal bar (social indicators). Uses project color palette.
 - **Page**: `/schillerkiez` — prerendered static shell, Svelte hydrates client-side
 - **Per-PLR carousels**: Each data section (stat cards + charts) is a horizontally scrollable carousel of 5 same-sized cards (CSS scroll-snap, no JS library). First card shows aggregate, next 4 show per-PLR data with the same chart type (bar chart, donut, etc.). Stat carousels use `lg:grid-cols-5` on desktop; chart carousels remain scrollable at all viewports (~3 visible on desktop).
-- **Air quality**: Live data from BLUME API station MC042 (Nansenstraße). `GET /api/kiez-air` proxies LQI grades (1–5) with 30 min cache. No auth, no MongoDB, no sync script. Cards show German pollutant names (Feinstaub, Stickstoffdioxid, etc.) with abbreviations below, plus a color-coded grade scale legend.
+- **Air quality**: Live data from BLUME API station MC042 (Nansenstraße). `GET /api/kiez-air` proxies LQI grades (1–5) with 30 min cache. No auth, no MongoDB, no sync script. Cards show German pollutant names (Feinstaub, Stickstoffdioxid, Ozon, Kohlenmonoxid) with abbreviations below, plus a color-coded grade scale legend. Pollutants with no current reading show "keine Angabe" instead of being hidden.
+- **Carousel scroll-padding**: Chart carousels use `scroll-pl-*` classes matching the edge-bleed `px-*` padding, so `scroll-snap` lands the first card at `scrollLeft = 0`. Arrow visibility uses dynamic `paddingLeft` threshold to prevent flicker.
 - **Entrance animation**: Staggered reveal — sections cascade in with 120ms delay after data loads (air quality → age → migration → gender → social → sources)
 - **Dry-run**: `pnpm tsx scripts/sync-stats.ts --dry-run` — parses XLSX without DB writes (for verifying structure)
 

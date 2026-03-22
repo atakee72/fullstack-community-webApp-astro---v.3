@@ -37,12 +37,12 @@ export const GET: APIRoute = async () => {
     }
 
     const pollutants = mc042.data
-      .filter((d) => d.component !== 'lqi' && d.grade != null)
+      .filter((d) => d.component !== 'lqi' && d.component in POLLUTANT_NAMES)
       .map((d) => ({
         name: POLLUTANT_NAMES[d.component] ?? d.component.toUpperCase(),
         component: d.component,
-        grade: d.grade!,
-        gradeLabel: GRADE_LABELS[d.grade!] ?? '',
+        grade: d.grade,
+        gradeLabel: d.grade != null ? (GRADE_LABELS[d.grade] ?? '') : 'keine Angabe',
       }));
 
     const response: AirQualityResponse = {

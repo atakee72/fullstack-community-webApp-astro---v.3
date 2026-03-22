@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { PLR_PATHS, PLR_CODES, PLR_VIEWBOX } from './plrPaths';
 
   /** @type {import('../../types/kiezStats').KiezStatsResponse | null} */
   let data = $state(null);
@@ -31,7 +32,7 @@
     : true;
 
   // Carousel CSS — chart cards (scrollable, tighter padding for more chart space)
-  const chartScrollCls = 'flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-4 px-4 md:-mx-8 md:px-8 lg:-mx-12 lg:px-12';
+  const chartScrollCls = 'flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-4 px-4 md:-mx-8 md:px-8 lg:-mx-12 lg:px-12 scroll-pl-4 md:scroll-pl-8 lg:scroll-pl-12';
   const chartCardCls = 'snap-start shrink-0 w-[85vw] sm:w-[55%] lg:w-[calc(33.333%-1rem)] min-h-[22rem] bg-white rounded-xl p-4 sm:p-5 shadow-sm';
 
   // Arrow button classes (all screens, scaled)
@@ -89,6 +90,7 @@
     return n != null ? `${n.toFixed(1)}%` : '–';
   }
 
+
   // Human-readable German descriptions for pollutant abbreviations
   const POLLUTANT_DESCRIPTIONS = {
     pm10: 'Feinstaub',
@@ -141,14 +143,71 @@
     }
   }
 
-  // Carousel container refs
+  // Carousel container refs (used by scrollCarousel)
   let ageScroll = $state(null);
   let migScroll = $state(null);
   let genderScroll = $state(null);
   let socialScroll = $state(null);
+
+  /** @type {Record<string, { left: boolean, right: boolean }>} */
+  let canScroll = $state({
+    age:    { left: false, right: true },
+    mig:    { left: false, right: true },
+    gender: { left: false, right: true },
+    social: { left: false, right: true },
+  });
+
+  /** Per-carousel debounce timers to catch scroll-snap settle */
+  const scrollTimers = { age: 0, mig: 0, gender: 0, social: 0 };
+
+  function handleScroll(key) {
+    return function (/** @type {Event} */ e) {
+      const el = /** @type {HTMLElement} */ (e.currentTarget);
+      const update = () => {
+        const pad = parseFloat(getComputedStyle(el).paddingLeft) || 0;
+        canScroll[key] = {
+          left: el.scrollLeft > pad + 2,
+          right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+        };
+      };
+      update();                              // immediate — responsive during active scroll
+      clearTimeout(scrollTimers[key]);
+      scrollTimers[key] = setTimeout(update, 200); // debounced — catches snap settle
+    };
+  }
+
+  // After stagger reveal completes, measure initial overflow state
+  $effect(() => {
+    if (revealedCount < TOTAL_SECTIONS) return;
+    const refs = { age: ageScroll, mig: migScroll, gender: genderScroll, social: socialScroll };
+    setTimeout(() => {
+      for (const [key, el] of Object.entries(refs)) {
+        if (!el) continue;
+        const pad = parseFloat(getComputedStyle(el).paddingLeft) || 0;
+        canScroll[key] = {
+          left: el.scrollLeft > pad + 2,
+          right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+        };
+      }
+    }, 100);
+  });
 </script>
 
 <div class="space-y-8">
+  {#snippet plrMiniMap(highlightCode)}
+    <svg viewBox={PLR_VIEWBOX} class="w-10 h-10 sm:w-12 sm:h-12 shrink-0" aria-hidden="true">
+      {#each PLR_CODES as code}
+        <path
+          d={PLR_PATHS[code]}
+          fill={highlightCode === 'all' || highlightCode === code ? COLORS.teal : '#e5e7eb'}
+          stroke="white"
+          stroke-width="1.5"
+          opacity={highlightCode === 'all' || highlightCode === code ? 0.85 : 1}
+        />
+      {/each}
+    </svg>
+  {/snippet}
+
   {#if data?.lastUpdated}
     <p class="text-sm text-gray-400 -mt-4 mb-4 transition-all duration-500 {revealedCount >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">Stand: {data.lastUpdated}</p>
   {/if}
@@ -191,9 +250,9 @@
           </span>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div class="flex flex-wrap justify-center gap-3">
           <!-- Overall LQI -->
-          <div class="col-span-2 sm:col-span-1 rounded-lg p-4 text-center"
+          <div class="w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)] rounded-lg p-4 text-center"
                style="background: {gradeColor(airData.overallGrade)}15; border: 2px solid {gradeColor(airData.overallGrade)}">
             <p class="text-xs text-gray-500 font-medium">Gesamt</p>
             <p class="text-3xl font-bold" style="color: {gradeColor(airData.overallGrade)}">
@@ -206,10 +265,10 @@
 
           <!-- Per-pollutant cards -->
           {#each airData.pollutants as pol}
-            <div class="rounded-lg p-3 bg-gray-50 text-center">
+            <div class="w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)] rounded-lg p-3 bg-gray-50 text-center">
               <p class="text-xs text-gray-400 font-medium">{POLLUTANT_DESCRIPTIONS[pol.component] ?? pol.name}</p>
-              <p class="text-xl font-bold" style="color: {gradeColor(pol.grade)}">{pol.grade}</p>
-              <p class="text-xs" style="color: {gradeColor(pol.grade)}">{pol.gradeLabel}</p>
+              <p class="text-xl font-bold" style="color: {pol.grade != null ? gradeColor(pol.grade) : '#d1d5db'}">{pol.grade ?? '–'}</p>
+              <p class="text-xs" style="color: {pol.grade != null ? gradeColor(pol.grade) : '#9ca3af'}">{pol.gradeLabel}</p>
               <p class="text-[10px] text-gray-300 mt-0.5">{pol.name}</p>
             </div>
           {/each}
@@ -243,12 +302,17 @@
         <div class="transition-all duration-500 {revealedCount >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
           <h2 class="text-lg font-bold text-gray-800 mb-3">Altersverteilung</h2>
           <div class="relative">
-            <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(ageScroll, -1)} aria-label="Zurück">
-              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-            </button>
-            <div class={chartScrollCls} bind:this={ageScroll}>
+            {#if canScroll.age.left}
+              <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(ageScroll, -1)} aria-label="Zurück">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+            {/if}
+            <div class={chartScrollCls} bind:this={ageScroll} onscroll={handleScroll('age')}>
               <div class={chartCardCls} data-card>
-                <h3 class="text-sm font-semibold text-gray-500 mb-3">Gesamt · Schillerkiez</h3>
+                <div class="flex items-start justify-between mb-3">
+                  <h3 class="text-sm font-semibold text-gray-500">Gesamt · Schillerkiez</h3>
+                  {@render plrMiniMap('all')}
+                </div>
                 <svg viewBox="0 0 400 240" class="w-full" role="img" aria-label="Altersverteilung Gesamt">
                   {#each data.demographics.ageDistribution as age, i}
                     {@const barWidth = maxCount > 0 ? (age.count / maxCount) * 260 : 0}
@@ -260,11 +324,15 @@
                     </text>
                   {/each}
                 </svg>
+                <p class="text-xs text-gray-400 mt-1 text-right">Einwohner: {fmt(data.demographics.population.total)}</p>
               </div>
               {#each data.plrAreas as area}
                 {@const plrMax = Math.max(...area.ageDistribution.map(a => a.count))}
                 <div class={chartCardCls} data-card>
-                  <h3 class="text-sm font-semibold text-gray-500 mb-3">{shortName(area.name)}</h3>
+                  <div class="flex items-start justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-gray-500">{shortName(area.name)}</h3>
+                    {@render plrMiniMap(area.code)}
+                  </div>
                   <svg viewBox="0 0 400 240" class="w-full" role="img" aria-label="Altersverteilung {area.name}">
                     {#each area.ageDistribution as age, i}
                       {@const barWidth = plrMax > 0 ? (age.count / plrMax) * 260 : 0}
@@ -276,12 +344,15 @@
                       </text>
                     {/each}
                   </svg>
+                  <p class="text-xs text-gray-400 mt-1 text-right">Einwohner: {fmt(area.population.total)}</p>
                 </div>
               {/each}
             </div>
-            <button class="{arrowCls} -right-1 lg:-right-5" onclick={() => scrollCarousel(ageScroll, 1)} aria-label="Weiter">
-              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-            </button>
+            {#if canScroll.age.right}
+              <button class="{arrowCls} -right-1 lg:-right-5" onclick={() => scrollCarousel(ageScroll, 1)} aria-label="Weiter">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            {/if}
           </div>
         </div>
       {/if}
@@ -297,12 +368,17 @@
         <div class="transition-all duration-500 {revealedCount >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
           <h2 class="text-lg font-bold text-gray-800 mb-3">Vielfalt</h2>
           <div class="relative">
-            <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(migScroll, -1)} aria-label="Zurück">
-              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-            </button>
-            <div class={chartScrollCls} bind:this={migScroll}>
+            {#if canScroll.mig.left}
+              <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(migScroll, -1)} aria-label="Zurück">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+            {/if}
+            <div class={chartScrollCls} bind:this={migScroll} onscroll={handleScroll('mig')}>
               <div class={chartCardCls} data-card>
-                <h3 class="text-sm font-semibold text-gray-500 mb-3">Gesamt · Schillerkiez</h3>
+                <div class="flex items-start justify-between mb-3">
+                  <h3 class="text-sm font-semibold text-gray-500">Gesamt · Schillerkiez</h3>
+                  {@render plrMiniMap('all')}
+                </div>
                 <div class="flex flex-col items-center gap-3">
                   <svg viewBox="0 0 120 120" class="w-36 h-36 shrink-0" role="img" aria-label="Vielfalt Gesamt">
                     {#each aggSegments as seg}
@@ -329,7 +405,10 @@
                   { label: 'Ohne MH', value: area.migration.withoutMigBg, color: MIGRATION_COLORS[2] },
                 ], area.migration.totalPopulation)}
                 <div class={chartCardCls} data-card>
-                  <h3 class="text-sm font-semibold text-gray-500 mb-3">{shortName(area.name)}</h3>
+                  <div class="flex items-start justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-gray-500">{shortName(area.name)}</h3>
+                    {@render plrMiniMap(area.code)}
+                  </div>
                   <div class="flex flex-col items-center gap-3">
                     <svg viewBox="0 0 120 120" class="w-36 h-36 shrink-0" role="img" aria-label="Vielfalt {area.name}">
                       {#each plrSegs as seg}
@@ -351,9 +430,11 @@
                 </div>
               {/each}
             </div>
-            <button class="{arrowCls} -right-1 lg:-right-5" onclick={() => scrollCarousel(migScroll, 1)} aria-label="Weiter">
-              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-            </button>
+            {#if canScroll.mig.right}
+              <button class="{arrowCls} -right-1 lg:-right-5" onclick={() => scrollCarousel(migScroll, 1)} aria-label="Weiter">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            {/if}
           </div>
         </div>
       {/if}
@@ -368,12 +449,17 @@
         <div class="transition-all duration-500 {revealedCount >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
           <h2 class="text-lg font-bold text-gray-800 mb-3">Geschlecht</h2>
           <div class="relative">
-            <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(genderScroll, -1)} aria-label="Zurück">
-              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-            </button>
-            <div class={chartScrollCls} bind:this={genderScroll}>
+            {#if canScroll.gender.left}
+              <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(genderScroll, -1)} aria-label="Zurück">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+            {/if}
+            <div class={chartScrollCls} bind:this={genderScroll} onscroll={handleScroll('gender')}>
               <div class={chartCardCls} data-card>
-                <h3 class="text-sm font-semibold text-gray-500 mb-3">Gesamt · Schillerkiez</h3>
+                <div class="flex items-start justify-between mb-3">
+                  <h3 class="text-sm font-semibold text-gray-500">Gesamt · Schillerkiez</h3>
+                  {@render plrMiniMap('all')}
+                </div>
                 <div class="flex flex-col items-center gap-3">
                   <svg viewBox="0 0 120 120" class="w-36 h-36 shrink-0" role="img" aria-label="Geschlecht Gesamt">
                     {#each aggGenderSegs as seg}
@@ -397,7 +483,10 @@
                   { label: 'Weiblich', value: area.population.female, color: COLORS.wine },
                 ], area.population.total)}
                 <div class={chartCardCls} data-card>
-                  <h3 class="text-sm font-semibold text-gray-500 mb-3">{shortName(area.name)}</h3>
+                  <div class="flex items-start justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-gray-500">{shortName(area.name)}</h3>
+                    {@render plrMiniMap(area.code)}
+                  </div>
                   <div class="flex flex-col items-center gap-3">
                     <svg viewBox="0 0 120 120" class="w-36 h-36 shrink-0" role="img" aria-label="Geschlecht {area.name}">
                       {#each plrGenderSegs as seg}
@@ -417,9 +506,11 @@
                 </div>
               {/each}
             </div>
-            <button class="{arrowCls} -right-1 lg:-right-5" onclick={() => scrollCarousel(genderScroll, 1)} aria-label="Weiter">
-              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-            </button>
+            {#if canScroll.gender.right}
+              <button class="{arrowCls} -right-1 lg:-right-5" onclick={() => scrollCarousel(genderScroll, 1)} aria-label="Weiter">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            {/if}
           </div>
         </div>
       {/if}
@@ -435,12 +526,17 @@
         <div class="transition-all duration-500 {revealedCount >= 5 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
           <h2 class="text-lg font-bold text-gray-800 mb-3">Soziale Lage</h2>
           <div class="relative">
-            <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(socialScroll, -1)} aria-label="Zurück">
-              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-            </button>
-            <div class={chartScrollCls} bind:this={socialScroll}>
+            {#if canScroll.social.left}
+              <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(socialScroll, -1)} aria-label="Zurück">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+            {/if}
+            <div class={chartScrollCls} bind:this={socialScroll} onscroll={handleScroll('social')}>
               <div class={chartCardCls} data-card>
-                <h3 class="text-sm font-semibold text-gray-500 mb-3">Gesamt · Schillerkiez</h3>
+                <div class="flex items-start justify-between mb-3">
+                  <h3 class="text-sm font-semibold text-gray-500">Gesamt · Schillerkiez</h3>
+                  {@render plrMiniMap('all')}
+                </div>
                 <svg viewBox="0 0 300 195" class="w-full" role="img" aria-label="Soziale Lage Gesamt">
                   {#each aggIndicators as ind, i}
                     {@const barWidth = Math.min(ind.value, 100) / 100 * 240}
@@ -455,12 +551,16 @@
                   <div class="mt-3 flex flex-wrap gap-4 text-sm text-gray-600">
                     <span>Status-Index: <strong>{social.statusIndex}</strong></span>
                     <span>Dynamik-Index: <strong>{social.dynamikIndex}</strong></span>
+                    <span class="text-gray-400">(*)</span>
                   </div>
                 {/if}
               </div>
               {#each data.plrAreas as area}
                 <div class={chartCardCls} data-card>
-                  <h3 class="text-sm font-semibold text-gray-500 mb-3">{shortName(area.name)}</h3>
+                  <div class="flex items-start justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-gray-500">{shortName(area.name)}</h3>
+                    {@render plrMiniMap(area.code)}
+                  </div>
                   {#if area.social}
                     {@const plrIndicators = [
                       { label: 'Arbeitslosenquote', value: area.social.unemploymentRate, color: COLORS.teal },
@@ -481,6 +581,7 @@
                       <div class="mt-3 flex flex-wrap gap-4 text-sm text-gray-600">
                         <span>Status-Index: <strong>{area.social.statusIndex}</strong></span>
                         <span>Dynamik-Index: <strong>{area.social.dynamikIndex}</strong></span>
+                        <span class="text-gray-400">(*)</span>
                       </div>
                     {/if}
                   {:else}
@@ -491,9 +592,11 @@
                 </div>
               {/each}
             </div>
-            <button class="{arrowCls} -right-1 lg:-right-5" onclick={() => scrollCarousel(socialScroll, 1)} aria-label="Weiter">
-              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-            </button>
+            {#if canScroll.social.right}
+              <button class="{arrowCls} -right-1 lg:-right-5" onclick={() => scrollCarousel(socialScroll, 1)} aria-label="Weiter">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            {/if}
           </div>
         </div>
       {/if}
@@ -522,6 +625,12 @@
         Die Daten beziehen sich auf den Schillerkiez (4 Planungsräume im LOR-System 2021):
         Schillerpromenade Nord, Schillerpromenade Süd, Wartheplatz und Silbersteinstraße.
       </p>
+      <hr class="border-gray-300/50 my-2" />
+      <p class="text-xs text-gray-400 italic">
+        (*) <strong class="font-semibold">Status-Index:</strong> Zusammengesetzter Wert aus Arbeitslosigkeit, Kinderarmut und Transferleistungen — je niedriger, desto besser die soziale Lage.
+        <strong class="font-semibold">Dynamik-Index:</strong> Zeigt die Entwicklung über die Zeit — positiv = Verbesserung, negativ = Verschlechterung, 0 = stabil.
+      </p>
+      <hr class="border-gray-300/50 my-2" />
     </div>
   {/if}
 </div>

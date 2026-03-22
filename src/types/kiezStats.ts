@@ -103,8 +103,8 @@ export interface KiezStatsResponse {
 export interface AirQualityPollutant {
   name: string;         // "PM10", "NO₂", "O₃", "CO"
   component: string;    // "pm10", "no2", "o3", "co"
-  grade: number;        // 1–5
-  gradeLabel: string;   // "sehr gut" | "gut" | "mäßig" | "schlecht" | "sehr schlecht"
+  grade: number | null;  // 1–5, null when station has no current reading
+  gradeLabel: string;   // "sehr gut" | "gut" | "mäßig" | "schlecht" | "sehr schlecht" | "k.A."
 }
 
 /** BLUME air quality — full response from /api/kiez-air */
