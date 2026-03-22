@@ -81,3 +81,21 @@ export interface KiezStatsResponse {
     population: number;
   }>;
 }
+
+/** BLUME air quality — single pollutant grade */
+export interface AirQualityPollutant {
+  name: string;         // "PM10", "NO₂", "O₃", "CO"
+  component: string;    // "pm10", "no2", "o3", "co"
+  grade: number;        // 1–5
+  gradeLabel: string;   // "sehr gut" | "gut" | "mäßig" | "schlecht" | "sehr schlecht"
+}
+
+/** BLUME air quality — full response from /api/kiez-air */
+export interface AirQualityResponse {
+  station: string;      // "mc042"
+  stationName: string;  // "Nansenstraße"
+  datetime: string;     // ISO timestamp of measurement
+  overallGrade: number; // 1–5 (from "lqi" component)
+  overallLabel: string; // German label
+  pollutants: AirQualityPollutant[];
+}

@@ -139,6 +139,7 @@ export const POST: APIRoute = async ({ request }) => {
 - **Frontend**: `KiezDashboard.svelte` — Svelte 5 with hand-drawn SVG charts (no chart library). German UI. Fetches data client-side via `onMount`.
 - **Charts**: Horizontal bar (age), donut (migration, gender), vertical bar (PLR areas), horizontal bar (social indicators). Uses project color palette.
 - **Page**: `/schillerkiez` — prerendered static shell, Svelte hydrates client-side
+- **Air quality**: Live data from BLUME API station MC042 (Nansenstraße). `GET /api/kiez-air` proxies LQI grades (1–5) with 30 min cache. No auth, no MongoDB, no sync script. Cards show German pollutant names (Feinstaub, Stickstoffdioxid, etc.) with abbreviations below, plus a color-coded grade scale legend.
 - **Dry-run**: `pnpm tsx scripts/sync-stats.ts --dry-run` — parses XLSX without DB writes (for verifying structure)
 
 ## Database Collections

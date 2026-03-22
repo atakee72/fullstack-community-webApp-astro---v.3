@@ -3,6 +3,8 @@
 
   /** @type {import('../../types/kiezStats').KiezStatsResponse | null} */
   let data = $state(null);
+  /** @type {import('../../types/kiezStats').AirQualityResponse | null} */
+  let airData = $state(null);
   let loading = $state(true);
   let error = $state('');
 
@@ -42,7 +44,20 @@
     }
   }
 
-  onMount(fetchData);
+  async function fetchAirData() {
+    try {
+      const res = await fetch('/api/kiez-air');
+      if (!res.ok) return;
+      airData = await res.json();
+    } catch {
+      // Silently ignore — air quality is supplementary
+    }
+  }
+
+  onMount(() => {
+    fetchData();
+    fetchAirData();
+  });
 
   // Format numbers with German locale
   function fmt(n) {
@@ -51,6 +66,22 @@
 
   function pct(n) {
     return n != null ? `${n.toFixed(1)}%` : '–';
+  }
+
+  // Human-readable German descriptions for pollutant abbreviations
+  const POLLUTANT_DESCRIPTIONS = {
+    pm10: 'Feinstaub',
+    no2: 'Stickstoffdioxid',
+    o3: 'Ozon',
+    co: 'Kohlenmonoxid',
+  };
+
+  // Air quality grade → project palette color
+  function gradeColor(grade) {
+    if (grade <= 2) return '#4b9aaa'; // teal — gut/sehr gut
+    if (grade === 3) return '#eccc6e'; // yellow — mäßig
+    if (grade === 4) return '#814256'; // wine — schlecht
+    return '#c0392b';                  // red — sehr schlecht
   }
 
   // Donut chart math
@@ -148,6 +179,60 @@
           <p class="text-sm text-gray-500 font-medium">Planungsräume</p>
           <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">{data.plrAreas.length}</p>
         </div>
+      </div>
+    {/if}
+
+    <!-- Air Quality (live BLUME data) -->
+    {#if airData}
+      <div class="bg-white rounded-xl p-6 shadow-sm">
+        <div class="flex items-center gap-2 mb-4">
+          <h2 class="text-lg font-bold text-gray-800">Luftqualität</h2>
+          <span class="inline-flex items-center gap-1 text-xs text-gray-400">
+            <span class="w-2 h-2 rounded-full bg-green-500 motion-safe:animate-pulse"></span>
+            Live · Nansenstraße
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <!-- Overall LQI -->
+          <div class="col-span-2 sm:col-span-1 rounded-lg p-4 text-center"
+               style="background: {gradeColor(airData.overallGrade)}15; border: 2px solid {gradeColor(airData.overallGrade)}">
+            <p class="text-xs text-gray-500 font-medium">Gesamt</p>
+            <p class="text-3xl font-bold" style="color: {gradeColor(airData.overallGrade)}">
+              {airData.overallGrade}
+            </p>
+            <p class="text-sm font-medium" style="color: {gradeColor(airData.overallGrade)}">
+              {airData.overallLabel}
+            </p>
+          </div>
+
+          <!-- Per-pollutant cards -->
+          {#each airData.pollutants as pol}
+            <div class="rounded-lg p-3 bg-gray-50 text-center">
+              <p class="text-xs text-gray-400 font-medium">{POLLUTANT_DESCRIPTIONS[pol.component] ?? pol.name}</p>
+              <p class="text-xl font-bold" style="color: {gradeColor(pol.grade)}">{pol.grade}</p>
+              <p class="text-xs" style="color: {gradeColor(pol.grade)}">{pol.gradeLabel}</p>
+              <p class="text-[10px] text-gray-300 mt-0.5">{pol.name}</p>
+            </div>
+          {/each}
+        </div>
+
+        <!-- Grade scale legend -->
+        <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400">
+          <span class="font-medium text-gray-500">Skala:</span>
+          {#each [{ g: 1, l: 'sehr gut' }, { g: 2, l: 'gut' }, { g: 3, l: 'mäßig' }, { g: 4, l: 'schlecht' }, { g: 5, l: 'sehr schlecht' }] as item}
+            <span class="inline-flex items-center gap-1">
+              <span class="w-2.5 h-2.5 rounded-sm" style="background: {gradeColor(item.g)}"></span>
+              {item.g} = {item.l}
+            </span>
+          {/each}
+        </div>
+
+        <p class="mt-2 text-xs text-gray-400">
+          Messung: {new Date(airData.datetime).toLocaleString('de-DE')}
+          · <a href="https://luftdaten.berlin.de/station/mc042" target="_blank" rel="noopener"
+               class="text-[#4b9aaa] hover:underline">Quelle: BLUME-Messnetz</a>
+        </p>
       </div>
     {/if}
 
@@ -337,6 +422,13 @@
           CC BY 3.0 DE
         </a>
       </p>
+      {#if airData}
+        <p>
+          <strong>Luftdaten:</strong>
+          <a href="https://luftdaten.berlin.de/station/mc042" target="_blank" rel="noopener"
+             class="text-[#4b9aaa] hover:underline">Berliner Luftgüte-Messnetz (BLUME)</a>, Station MC042 Nansenstraße
+        </p>
+      {/if}
       <p class="text-xs text-gray-400">
         Die Daten beziehen sich auf den Schillerkiez (4 Planungsräume im LOR-System 2021):
         Schillerpromenade Nord, Schillerpromenade Süd, Wartheplatz und Silbersteinstraße.
