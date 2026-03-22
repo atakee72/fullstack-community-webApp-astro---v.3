@@ -30,6 +30,26 @@
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : true;
 
+  // Carousel CSS — chart cards (scrollable, tighter padding for more chart space)
+  const chartScrollCls = 'flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-4 px-4 md:-mx-8 md:px-8 lg:-mx-12 lg:px-12';
+  const chartCardCls = 'snap-start shrink-0 w-[85vw] sm:w-[55%] lg:w-[calc(33.333%-1rem)] min-h-[22rem] bg-white rounded-xl p-4 sm:p-5 shadow-sm';
+
+  // Arrow button classes (all screens, scaled)
+  const arrowCls = 'flex absolute top-1/2 -translate-y-1/2 z-10 w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 items-center justify-center rounded-full bg-white/90 shadow-md hover:bg-white hover:shadow-lg active:scale-95 transition-all text-gray-500 hover:text-gray-800 cursor-pointer';
+
+  /** Shorten PLR names for compact display */
+  function shortName(name) {
+    return name.replace('Schillerpromenade', 'Schiller.').replace('straße', 'str.');
+  }
+
+  /** Scroll a carousel by one card width */
+  function scrollCarousel(container, direction) {
+    const card = container.querySelector('[data-card]');
+    if (!card) return;
+    const scrollAmount = card.offsetWidth + 16; // card width + gap
+    container.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+  }
+
   async function fetchData() {
     loading = true;
     error = '';
@@ -41,6 +61,7 @@
       error = e instanceof Error ? e.message : 'Unbekannter Fehler';
     } finally {
       loading = false;
+      if (!error) staggerReveal();
     }
   }
 
@@ -103,17 +124,34 @@
     }
     return segments;
   }
+
+  // Staggered entrance animation
+  let revealedCount = $state(0);
+  const STAGGER_DELAY = 120; // ms between each section
+  const TOTAL_SECTIONS = 6; // air, age, migration, gender, social, sources
+
+  function staggerReveal() {
+    if (reducedMotion) {
+      revealedCount = TOTAL_SECTIONS;
+      return;
+    }
+    revealedCount = 0;
+    for (let i = 1; i <= TOTAL_SECTIONS; i++) {
+      setTimeout(() => { revealedCount = i; }, i * STAGGER_DELAY);
+    }
+  }
+
+  // Carousel container refs
+  let ageScroll = $state(null);
+  let migScroll = $state(null);
+  let genderScroll = $state(null);
+  let socialScroll = $state(null);
 </script>
 
 <div class="space-y-8">
-  <!-- Header -->
-  <div class="text-center">
-    <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Schillerkiez in Zahlen</h1>
-    <p class="mt-2 text-gray-600 text-lg">Demografische und soziale Daten aus dem Herzen Neuköllns</p>
-    {#if data?.lastUpdated}
-      <p class="mt-1 text-sm text-gray-400">Stand: {data.lastUpdated}</p>
-    {/if}
-  </div>
+  {#if data?.lastUpdated}
+    <p class="text-sm text-gray-400 -mt-4 mb-4 transition-all duration-500 {revealedCount >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">Stand: {data.lastUpdated}</p>
+  {/if}
 
   {#if loading}
     <!-- Loading skeleton -->
@@ -142,49 +180,9 @@
       <p class="text-gray-500 text-lg">Noch keine Daten verfügbar</p>
     </div>
   {:else}
-    <!-- Stat Cards -->
-    {#if data.demographics}
-      {@const d = data.demographics}
-      {@const migPct = d.migration.totalPopulation > 0
-        ? Math.round((d.migration.foreignNationals + d.migration.germanWithMigBg) / d.migration.totalPopulation * 1000) / 10
-        : 0}
-      {@const auslPct = d.migration.totalPopulation > 0
-        ? Math.round(d.migration.foreignNationals / d.migration.totalPopulation * 1000) / 10
-        : 0}
-
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-[#4b9aaa]">
-          <p class="text-sm text-gray-500 font-medium">Bevölkerung</p>
-          <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">{fmt(d.population.total)}</p>
-        </div>
-        <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-[#814256]">
-          <p class="text-sm text-gray-500 font-medium">Ausländeranteil</p>
-          <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">{pct(auslPct)}</p>
-        </div>
-        <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-[#eccc6e]">
-          <p class="text-sm text-gray-500 font-medium">Migrationshintergrund</p>
-          <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">{pct(migPct)}</p>
-        </div>
-        {#if data.social}
-          <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-[#aca89f]">
-            <p class="text-sm text-gray-500 font-medium">Arbeitslosenquote</p>
-            <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">{pct(data.social.unemploymentRate)}</p>
-          </div>
-          <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-[#814256]">
-            <p class="text-sm text-gray-500 font-medium">Kinderarmut</p>
-            <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">{pct(data.social.childPovertyRate)}</p>
-          </div>
-        {/if}
-        <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-[#4b9aaa]">
-          <p class="text-sm text-gray-500 font-medium">Planungsräume</p>
-          <p class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">{data.plrAreas.length}</p>
-        </div>
-      </div>
-    {/if}
-
     <!-- Air Quality (live BLUME data) -->
     {#if airData}
-      <div class="bg-white rounded-xl p-6 shadow-sm">
+      <div class="bg-white rounded-xl p-6 shadow-sm transition-all duration-500 {revealedCount >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
         <div class="flex items-center gap-2 mb-4">
           <h2 class="text-lg font-bold text-gray-800">Luftqualität</h2>
           <span class="inline-flex items-center gap-1 text-xs text-gray-400">
@@ -236,183 +234,274 @@
       </div>
     {/if}
 
-    <!-- Charts Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Chart Carousels -->
+    <div class="space-y-6">
 
-      <!-- Age Distribution - Horizontal Bar Chart -->
+      <!-- Age Distribution Carousel -->
       {#if data.demographics}
         {@const maxCount = Math.max(...data.demographics.ageDistribution.map(a => a.count))}
-        <div class="bg-white rounded-xl p-6 shadow-sm">
-          <h2 class="text-lg font-bold text-gray-800 mb-4">Altersverteilung</h2>
-          <svg viewBox="0 0 400 240" class="w-full" role="img" aria-label="Altersverteilung im Schillerkiez">
-            {#each data.demographics.ageDistribution as age, i}
-              {@const barWidth = maxCount > 0 ? (age.count / maxCount) * 260 : 0}
-              {@const y = i * 32 + 10}
-              <!-- Label -->
-              <text x="55" y={y + 16} text-anchor="end" fill="#4a5568" font-size="12" font-weight="500">{age.group}</text>
-              <!-- Bar -->
-              <rect
-                x="65"
-                y={y + 2}
-                width={barWidth}
-                height="20"
-                rx="4"
-                fill={AGE_COLORS[i]}
-                opacity="0.85"
-              />
-              <!-- Value -->
-              <text x={65 + barWidth + 6} y={y + 16} fill="#4a5568" font-size="11">
-                {fmt(age.count)} ({age.percentage}%)
-              </text>
-            {/each}
-          </svg>
+        <div class="transition-all duration-500 {revealedCount >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
+          <h2 class="text-lg font-bold text-gray-800 mb-3">Altersverteilung</h2>
+          <div class="relative">
+            <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(ageScroll, -1)} aria-label="Zurück">
+              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <div class={chartScrollCls} bind:this={ageScroll}>
+              <div class={chartCardCls} data-card>
+                <h3 class="text-sm font-semibold text-gray-500 mb-3">Gesamt · Schillerkiez</h3>
+                <svg viewBox="0 0 400 240" class="w-full" role="img" aria-label="Altersverteilung Gesamt">
+                  {#each data.demographics.ageDistribution as age, i}
+                    {@const barWidth = maxCount > 0 ? (age.count / maxCount) * 260 : 0}
+                    {@const y = i * 32 + 10}
+                    <text x="55" y={y + 16} text-anchor="end" fill="#4a5568" font-size="12" font-weight="500">{age.group}</text>
+                    <rect x="65" y={y + 2} width={barWidth} height="20" rx="4" fill={AGE_COLORS[i]} opacity="0.85" />
+                    <text x={65 + barWidth + 6} y={y + 16} fill="#4a5568" font-size="11">
+                      {fmt(age.count)} ({age.percentage}%)
+                    </text>
+                  {/each}
+                </svg>
+              </div>
+              {#each data.plrAreas as area}
+                {@const plrMax = Math.max(...area.ageDistribution.map(a => a.count))}
+                <div class={chartCardCls} data-card>
+                  <h3 class="text-sm font-semibold text-gray-500 mb-3">{shortName(area.name)}</h3>
+                  <svg viewBox="0 0 400 240" class="w-full" role="img" aria-label="Altersverteilung {area.name}">
+                    {#each area.ageDistribution as age, i}
+                      {@const barWidth = plrMax > 0 ? (age.count / plrMax) * 260 : 0}
+                      {@const y = i * 32 + 10}
+                      <text x="55" y={y + 16} text-anchor="end" fill="#4a5568" font-size="12" font-weight="500">{age.group}</text>
+                      <rect x="65" y={y + 2} width={barWidth} height="20" rx="4" fill={AGE_COLORS[i]} opacity="0.85" />
+                      <text x={65 + barWidth + 6} y={y + 16} fill="#4a5568" font-size="11">
+                        {fmt(age.count)} ({age.percentage}%)
+                      </text>
+                    {/each}
+                  </svg>
+                </div>
+              {/each}
+            </div>
+            <button class="{arrowCls} -right-1 lg:-right-5" onclick={() => scrollCarousel(ageScroll, 1)} aria-label="Weiter">
+              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
         </div>
       {/if}
 
-      <!-- Migration Donut Chart -->
+      <!-- Migration Donut Carousel -->
       {#if data.demographics}
         {@const mig = data.demographics.migration}
-        {@const segments = donutSegments([
+        {@const aggSegments = donutSegments([
           { label: 'Ausländer', value: mig.foreignNationals, color: MIGRATION_COLORS[0] },
           { label: 'Deutsche mit MH', value: mig.germanWithMigBg, color: MIGRATION_COLORS[1] },
           { label: 'Ohne MH', value: mig.withoutMigBg, color: MIGRATION_COLORS[2] },
         ], mig.totalPopulation)}
-        <div class="bg-white rounded-xl p-6 shadow-sm">
-          <h2 class="text-lg font-bold text-gray-800 mb-4">Vielfalt</h2>
-          <div class="flex flex-col sm:flex-row items-center gap-4">
-            <svg viewBox="0 0 120 120" class="w-40 h-40 shrink-0" role="img" aria-label="Vielfalt im Schillerkiez">
-              {#each segments as seg}
-                <circle
-                  cx="60" cy="60" r="40"
-                  fill="none"
-                  stroke={seg.color}
-                  stroke-width="18"
-                  stroke-dasharray={seg.dashArray}
-                  stroke-dashoffset={-seg.offset}
-                  transform="rotate(-90 60 60)"
-                />
-              {/each}
-              <text x="60" y="58" text-anchor="middle" fill="#4a5568" font-size="10" font-weight="600">{fmt(mig.totalPopulation)}</text>
-              <text x="60" y="70" text-anchor="middle" fill="#9ca3af" font-size="7">Gesamt</text>
-            </svg>
-            <!-- Legend -->
-            <div class="space-y-2 text-sm">
-              {#each segments as seg}
-                <div class="flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full shrink-0" style="background: {seg.color}"></span>
-                  <span class="text-gray-700">{seg.label}: <strong>{fmt(seg.value)}</strong> ({seg.percentage}%)</span>
+        <div class="transition-all duration-500 {revealedCount >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
+          <h2 class="text-lg font-bold text-gray-800 mb-3">Vielfalt</h2>
+          <div class="relative">
+            <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(migScroll, -1)} aria-label="Zurück">
+              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <div class={chartScrollCls} bind:this={migScroll}>
+              <div class={chartCardCls} data-card>
+                <h3 class="text-sm font-semibold text-gray-500 mb-3">Gesamt · Schillerkiez</h3>
+                <div class="flex flex-col items-center gap-3">
+                  <svg viewBox="0 0 120 120" class="w-36 h-36 shrink-0" role="img" aria-label="Vielfalt Gesamt">
+                    {#each aggSegments as seg}
+                      <circle cx="60" cy="60" r="40" fill="none" stroke={seg.color} stroke-width="18"
+                        stroke-dasharray={seg.dashArray} stroke-dashoffset={-seg.offset} transform="rotate(-90 60 60)" />
+                    {/each}
+                    <text x="60" y="58" text-anchor="middle" fill="#4a5568" font-size="10" font-weight="600">{fmt(mig.totalPopulation)}</text>
+                    <text x="60" y="70" text-anchor="middle" fill="#9ca3af" font-size="7">Gesamt</text>
+                  </svg>
+                  <div class="space-y-1 text-sm">
+                    {#each aggSegments as seg}
+                      <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full shrink-0" style="background: {seg.color}"></span>
+                        <span class="text-gray-700">{seg.label}: <strong>{fmt(seg.value)}</strong> ({seg.percentage}%)</span>
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              </div>
+              {#each data.plrAreas as area}
+                {@const plrSegs = donutSegments([
+                  { label: 'Ausländer', value: area.migration.foreignNationals, color: MIGRATION_COLORS[0] },
+                  { label: 'Deutsche mit MH', value: area.migration.germanWithMigBg, color: MIGRATION_COLORS[1] },
+                  { label: 'Ohne MH', value: area.migration.withoutMigBg, color: MIGRATION_COLORS[2] },
+                ], area.migration.totalPopulation)}
+                <div class={chartCardCls} data-card>
+                  <h3 class="text-sm font-semibold text-gray-500 mb-3">{shortName(area.name)}</h3>
+                  <div class="flex flex-col items-center gap-3">
+                    <svg viewBox="0 0 120 120" class="w-36 h-36 shrink-0" role="img" aria-label="Vielfalt {area.name}">
+                      {#each plrSegs as seg}
+                        <circle cx="60" cy="60" r="40" fill="none" stroke={seg.color} stroke-width="18"
+                          stroke-dasharray={seg.dashArray} stroke-dashoffset={-seg.offset} transform="rotate(-90 60 60)" />
+                      {/each}
+                      <text x="60" y="58" text-anchor="middle" fill="#4a5568" font-size="10" font-weight="600">{fmt(area.migration.totalPopulation)}</text>
+                      <text x="60" y="70" text-anchor="middle" fill="#9ca3af" font-size="7">{shortName(area.name)}</text>
+                    </svg>
+                    <div class="space-y-1 text-sm">
+                      {#each plrSegs as seg}
+                        <div class="flex items-center gap-2">
+                          <span class="w-3 h-3 rounded-full shrink-0" style="background: {seg.color}"></span>
+                          <span class="text-gray-700">{seg.label}: <strong>{fmt(seg.value)}</strong> ({seg.percentage}%)</span>
+                        </div>
+                      {/each}
+                    </div>
+                  </div>
                 </div>
               {/each}
             </div>
+            <button class="{arrowCls} -right-1 lg:-right-5" onclick={() => scrollCarousel(migScroll, 1)} aria-label="Weiter">
+              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            </button>
           </div>
         </div>
       {/if}
 
-      <!-- Gender - Stat Cards -->
+      <!-- Gender Donut Carousel -->
       {#if data.demographics}
         {@const pop = data.demographics.population}
-        {@const malePct = pop.total > 0 ? Math.round(pop.male / pop.total * 1000) / 10 : 0}
-        {@const femalePct = pop.total > 0 ? Math.round(pop.female / pop.total * 1000) / 10 : 0}
-        {@const genderSegs = donutSegments([
+        {@const aggGenderSegs = donutSegments([
           { label: 'Männlich', value: pop.male, color: COLORS.teal },
           { label: 'Weiblich', value: pop.female, color: COLORS.wine },
         ], pop.total)}
-        <div class="bg-white rounded-xl p-6 shadow-sm">
-          <h2 class="text-lg font-bold text-gray-800 mb-4">Geschlecht</h2>
-          <div class="flex flex-col sm:flex-row items-center gap-4">
-            <svg viewBox="0 0 120 120" class="w-40 h-40 shrink-0" role="img" aria-label="Geschlechterverteilung">
-              {#each genderSegs as seg}
-                <circle
-                  cx="60" cy="60" r="40"
-                  fill="none"
-                  stroke={seg.color}
-                  stroke-width="18"
-                  stroke-dasharray={seg.dashArray}
-                  stroke-dashoffset={-seg.offset}
-                  transform="rotate(-90 60 60)"
-                />
+        <div class="transition-all duration-500 {revealedCount >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
+          <h2 class="text-lg font-bold text-gray-800 mb-3">Geschlecht</h2>
+          <div class="relative">
+            <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(genderScroll, -1)} aria-label="Zurück">
+              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <div class={chartScrollCls} bind:this={genderScroll}>
+              <div class={chartCardCls} data-card>
+                <h3 class="text-sm font-semibold text-gray-500 mb-3">Gesamt · Schillerkiez</h3>
+                <div class="flex flex-col items-center gap-3">
+                  <svg viewBox="0 0 120 120" class="w-36 h-36 shrink-0" role="img" aria-label="Geschlecht Gesamt">
+                    {#each aggGenderSegs as seg}
+                      <circle cx="60" cy="60" r="40" fill="none" stroke={seg.color} stroke-width="18"
+                        stroke-dasharray={seg.dashArray} stroke-dashoffset={-seg.offset} transform="rotate(-90 60 60)" />
+                    {/each}
+                  </svg>
+                  <div class="space-y-1 text-sm">
+                    {#each aggGenderSegs as seg}
+                      <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full shrink-0" style="background: {seg.color}"></span>
+                        <span class="text-gray-700">{seg.label}: <strong>{fmt(seg.value)}</strong> ({seg.percentage}%)</span>
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              </div>
+              {#each data.plrAreas as area}
+                {@const plrGenderSegs = donutSegments([
+                  { label: 'Männlich', value: area.population.male, color: COLORS.teal },
+                  { label: 'Weiblich', value: area.population.female, color: COLORS.wine },
+                ], area.population.total)}
+                <div class={chartCardCls} data-card>
+                  <h3 class="text-sm font-semibold text-gray-500 mb-3">{shortName(area.name)}</h3>
+                  <div class="flex flex-col items-center gap-3">
+                    <svg viewBox="0 0 120 120" class="w-36 h-36 shrink-0" role="img" aria-label="Geschlecht {area.name}">
+                      {#each plrGenderSegs as seg}
+                        <circle cx="60" cy="60" r="40" fill="none" stroke={seg.color} stroke-width="18"
+                          stroke-dasharray={seg.dashArray} stroke-dashoffset={-seg.offset} transform="rotate(-90 60 60)" />
+                      {/each}
+                    </svg>
+                    <div class="space-y-1 text-sm">
+                      {#each plrGenderSegs as seg}
+                        <div class="flex items-center gap-2">
+                          <span class="w-3 h-3 rounded-full shrink-0" style="background: {seg.color}"></span>
+                          <span class="text-gray-700">{seg.label}: <strong>{fmt(seg.value)}</strong> ({seg.percentage}%)</span>
+                        </div>
+                      {/each}
+                    </div>
+                  </div>
+                </div>
               {/each}
-            </svg>
-            <div class="space-y-3">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full shrink-0" style="background: {COLORS.teal}"></span>
-                <span class="text-gray-700">Männlich: <strong>{fmt(pop.male)}</strong> ({malePct}%)</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full shrink-0" style="background: {COLORS.wine}"></span>
-                <span class="text-gray-700">Weiblich: <strong>{fmt(pop.female)}</strong> ({femalePct}%)</span>
-              </div>
             </div>
+            <button class="{arrowCls} -right-1 lg:-right-5" onclick={() => scrollCarousel(genderScroll, 1)} aria-label="Weiter">
+              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            </button>
           </div>
         </div>
       {/if}
 
-      <!-- PLR Area Vertical Bar Chart -->
-      {#if data.plrAreas.length > 0}
-        {@const maxPop = Math.max(...data.plrAreas.map(a => a.population))}
-        <div class="bg-white rounded-xl p-6 shadow-sm">
-          <h2 class="text-lg font-bold text-gray-800 mb-4">Bevölkerung nach Planungsraum</h2>
-          <svg viewBox="0 0 400 220" class="w-full" role="img" aria-label="Bevölkerung nach Planungsraum">
-            {#each data.plrAreas as area, i}
-              {@const barHeight = maxPop > 0 ? (area.population / maxPop) * 140 : 0}
-              {@const x = i * 95 + 30}
-              <!-- Bar -->
-              <rect
-                x={x}
-                y={180 - barHeight}
-                width="60"
-                height={barHeight}
-                rx="4"
-                fill={AGE_COLORS[i % AGE_COLORS.length]}
-                opacity="0.85"
-              />
-              <!-- Count -->
-              <text x={x + 30} y={175 - barHeight} text-anchor="middle" fill="#4a5568" font-size="11" font-weight="600">
-                {fmt(area.population)}
-              </text>
-              <!-- Name (shortened) -->
-              <text x={x + 30} y="198" text-anchor="middle" fill="#6b7280" font-size="9">
-                {area.name.replace('Schillerpromenade', 'Schiller.').replace('straße', 'str.')}
-              </text>
-            {/each}
-          </svg>
-        </div>
-      {/if}
-
-      <!-- Social Indicators -->
+      <!-- Social Indicators Carousel -->
       {#if data.social}
         {@const social = data.social}
-        {@const indicators = [
+        {@const aggIndicators = [
           { label: 'Arbeitslosenquote', value: social.unemploymentRate, color: COLORS.teal },
           { label: 'Kinderarmut (U15)', value: social.childPovertyRate, color: COLORS.wine },
           { label: 'Transferleistungen', value: social.transferBenefitRate, color: COLORS.yellow },
         ]}
-        <div class="bg-white rounded-xl p-6 shadow-sm lg:col-span-2">
-          <h2 class="text-lg font-bold text-gray-800 mb-4">Soziale Lage</h2>
-          <svg viewBox="0 0 500 130" class="w-full" role="img" aria-label="Soziale Indikatoren im Schillerkiez">
-            {#each indicators as ind, i}
-              {@const barWidth = Math.min(ind.value, 100) / 100 * 320}
-              {@const y = i * 38 + 10}
-              <text x="130" y={y + 16} text-anchor="end" fill="#4a5568" font-size="12" font-weight="500">{ind.label}</text>
-              <!-- Background track -->
-              <rect x="140" y={y + 2} width="320" height="20" rx="4" fill="#f3f4f6" />
-              <!-- Value bar -->
-              <rect x="140" y={y + 2} width={barWidth} height="20" rx="4" fill={ind.color} opacity="0.8" />
-              <text x={140 + barWidth + 6} y={y + 16} fill="#4a5568" font-size="11" font-weight="600">{ind.value}%</text>
-            {/each}
-          </svg>
-          {#if social.statusIndex || social.dynamikIndex}
-            <div class="mt-4 flex flex-wrap gap-4 text-sm text-gray-600">
-              <span>Status-Index: <strong>{social.statusIndex}</strong></span>
-              <span>Dynamik-Index: <strong>{social.dynamikIndex}</strong></span>
+        <div class="transition-all duration-500 {revealedCount >= 5 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
+          <h2 class="text-lg font-bold text-gray-800 mb-3">Soziale Lage</h2>
+          <div class="relative">
+            <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(socialScroll, -1)} aria-label="Zurück">
+              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <div class={chartScrollCls} bind:this={socialScroll}>
+              <div class={chartCardCls} data-card>
+                <h3 class="text-sm font-semibold text-gray-500 mb-3">Gesamt · Schillerkiez</h3>
+                <svg viewBox="0 0 300 195" class="w-full" role="img" aria-label="Soziale Lage Gesamt">
+                  {#each aggIndicators as ind, i}
+                    {@const barWidth = Math.min(ind.value, 100) / 100 * 240}
+                    {@const y = i * 60 + 5}
+                    <text x="10" y={y + 14} fill="#4a5568" font-size="13" font-weight="500">{ind.label}</text>
+                    <rect x="10" y={y + 22} width="240" height="22" rx="4" fill="#f3f4f6" />
+                    <rect x="10" y={y + 22} width={barWidth} height="22" rx="4" fill={ind.color} opacity="0.8" />
+                    <text x={10 + barWidth + 6} y={y + 38} fill="#4a5568" font-size="12" font-weight="600">{ind.value}%</text>
+                  {/each}
+                </svg>
+                {#if social.statusIndex || social.dynamikIndex}
+                  <div class="mt-3 flex flex-wrap gap-4 text-sm text-gray-600">
+                    <span>Status-Index: <strong>{social.statusIndex}</strong></span>
+                    <span>Dynamik-Index: <strong>{social.dynamikIndex}</strong></span>
+                  </div>
+                {/if}
+              </div>
+              {#each data.plrAreas as area}
+                <div class={chartCardCls} data-card>
+                  <h3 class="text-sm font-semibold text-gray-500 mb-3">{shortName(area.name)}</h3>
+                  {#if area.social}
+                    {@const plrIndicators = [
+                      { label: 'Arbeitslosenquote', value: area.social.unemploymentRate, color: COLORS.teal },
+                      { label: 'Kinderarmut (U15)', value: area.social.childPovertyRate, color: COLORS.wine },
+                      { label: 'Transferleistungen', value: area.social.transferBenefitRate, color: COLORS.yellow },
+                    ]}
+                    <svg viewBox="0 0 300 195" class="w-full" role="img" aria-label="Soziale Lage {area.name}">
+                      {#each plrIndicators as ind, i}
+                        {@const barWidth = Math.min(ind.value, 100) / 100 * 240}
+                        {@const y = i * 60 + 5}
+                        <text x="10" y={y + 14} fill="#4a5568" font-size="13" font-weight="500">{ind.label}</text>
+                        <rect x="10" y={y + 22} width="240" height="22" rx="4" fill="#f3f4f6" />
+                        <rect x="10" y={y + 22} width={barWidth} height="22" rx="4" fill={ind.color} opacity="0.8" />
+                        <text x={10 + barWidth + 6} y={y + 38} fill="#4a5568" font-size="12" font-weight="600">{ind.value}%</text>
+                      {/each}
+                    </svg>
+                    {#if area.social.statusIndex || area.social.dynamikIndex}
+                      <div class="mt-3 flex flex-wrap gap-4 text-sm text-gray-600">
+                        <span>Status-Index: <strong>{area.social.statusIndex}</strong></span>
+                        <span>Dynamik-Index: <strong>{area.social.dynamikIndex}</strong></span>
+                      </div>
+                    {/if}
+                  {:else}
+                    <div class="flex items-center justify-center h-32 text-gray-400">
+                      Keine Sozialdaten verfügbar
+                    </div>
+                  {/if}
+                </div>
+              {/each}
             </div>
-          {/if}
+            <button class="{arrowCls} -right-1 lg:-right-5" onclick={() => scrollCarousel(socialScroll, 1)} aria-label="Weiter">
+              <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
         </div>
       {/if}
+
     </div>
 
     <!-- Footer / Sources -->
-    <div class="bg-white/60 rounded-xl p-6 text-sm text-gray-500 space-y-2">
+    <div class="bg-white/60 rounded-xl p-6 text-sm text-gray-500 space-y-2 transition-all duration-500 {revealedCount >= 6 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
       <p>
         <strong>Quelle:</strong> Amt für Statistik Berlin-Brandenburg, Monitoring Soziale Stadtentwicklung Berlin
       </p>

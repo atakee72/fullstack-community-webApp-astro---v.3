@@ -2,6 +2,7 @@
 export const prerender = true;
 
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/ui/PageHeader.astro';
 import KiezDashboard from '../components/kiez/KiezDashboard.svelte';
 ---
 
@@ -11,6 +12,11 @@ import KiezDashboard from '../components/kiez/KiezDashboard.svelte';
 >
   <main class="min-h-[calc(100vh-60px)] py-2 md:py-3">
     <div class="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
+      <PageHeader
+        title="Schillerkiez in Zahlen"
+        subtitle="Demografische und soziale Daten aus dem Herzen Neuköllns"
+        color="#6aab8e"
+      />
       <KiezDashboard client:load />
     </div>
   </main>

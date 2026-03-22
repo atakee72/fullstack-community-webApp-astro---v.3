@@ -8,24 +8,10 @@ import { useNewsQuery, useSubmitNews, useSaveNewsMutation, useSavedNewsQuery } f
 import { Pagination } from "./Pagination";
 import type { NewsItem } from "../../types";
 
-interface StatusBar {
-  id: string;
-  length: number;
-  opacity: number;
-}
-
 interface NewsCardsProps {
-  title?: string;
-  subtitle?: string;
   user?: any;
   enableAnimations?: boolean;
 }
-
-const statusBars: StatusBar[] = [
-  { id: "1", length: 3, opacity: 1 },
-  { id: "2", length: 2, opacity: 0.7 },
-  { id: "3", length: 1, opacity: 0.4 },
-];
 
 function formatTimeAgo(date: Date | string): string {
   const now = new Date();
@@ -43,12 +29,9 @@ function formatTimeAgo(date: Date | string): string {
 }
 
 export function NewsCards({
-  title = "Neighbourhood News",
-  subtitle = "Stories from your community",
   user,
   enableAnimations = true,
 }: NewsCardsProps) {
-  const [isHeaderLoaded, setIsHeaderLoaded] = useState(false);
   const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
   const [savedItems, setSavedItems] = useState<Set<string>>(new Set());
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -123,10 +106,8 @@ export function NewsCards({
     setPrefersReducedMotion(mediaQuery.matches);
     const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
     mediaQuery.addEventListener('change', handler);
-    const timer = setTimeout(() => setIsHeaderLoaded(true), 100);
     return () => {
       mediaQuery.removeEventListener('change', handler);
-      clearTimeout(timer);
     };
   }, []);
 
@@ -325,49 +306,18 @@ export function NewsCards({
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4 md:p-6 text-gray-800">
-      {/* Header */}
-      <div
-        className={cn(
-          "mb-8 transition-all duration-500",
-          shouldAnimate && !isHeaderLoaded ? "opacity-0 -translate-y-5" : "opacity-100 translate-y-0"
-        )}
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-[#814256]">{title}</h1>
-            <p className="text-gray-600 text-lg">{subtitle}</p>
-          </div>
-
-          {/* Submit News Button */}
-          {user && (
-            <button
-              onClick={() => setShowSubmitForm(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors font-medium shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Submit News</span>
-            </button>
-          )}
+      {/* Submit News Button */}
+      {user && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setShowSubmitForm(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors font-medium shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Submit News</span>
+          </button>
         </div>
-
-        {/* Status Bars */}
-        <div className="mt-6 space-y-1">
-          {statusBars.map((bar, index) => (
-            <div
-              key={bar.id}
-              className={cn(
-                "h-0.5 bg-[#814256] rounded-full transition-all duration-700 origin-left",
-                shouldAnimate && !isHeaderLoaded ? "scale-x-0" : "scale-x-100"
-              )}
-              style={{
-                opacity: bar.opacity,
-                width: `${(bar.length / 3) * 100}%`,
-                transitionDelay: shouldAnimate ? `${300 + index * 100}ms` : '0ms'
-              }}
-            />
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Search & Filter Bar */}
       <div className="mb-6 space-y-3">

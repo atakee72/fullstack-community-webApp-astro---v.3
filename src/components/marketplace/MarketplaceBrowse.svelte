@@ -125,10 +125,6 @@
 <div class="space-y-6">
   <!-- Hero Section -->
   <div class="bg-gradient-to-r from-[#4b9aaa] to-[#3a7a8a] rounded-2xl p-8 text-white text-center">
-    <h1 class="text-3xl md:text-4xl font-bold mb-3">Mahalle Marketplace</h1>
-    <p class="text-lg opacity-90 mb-6 max-w-2xl mx-auto">
-      Buy and sell within your neighbourhood community. Find unique items from your neighbours!
-    </p>
     <SearchBar onSearch={handleSearch} placeholder="Search by item name or description..." />
   </div>
 

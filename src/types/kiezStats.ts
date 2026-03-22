@@ -48,6 +48,27 @@ export interface AgeDistributionEntry {
   percentage: number;
 }
 
+/** Per-PLR area detail (demographics + social) */
+export interface PlrAreaDetail {
+  code: string;
+  name: string;
+  population: { total: number; male: number; female: number };
+  ageDistribution: AgeDistributionEntry[];
+  migration: {
+    foreignNationals: number;
+    germanWithMigBg: number;
+    withoutMigBg: number;
+    totalPopulation: number;
+  };
+  social: {
+    unemploymentRate: number;
+    childPovertyRate: number;
+    transferBenefitRate: number;
+    statusIndex: number;
+    dynamikIndex: number;
+  } | null;
+}
+
 /** Aggregated API response */
 export interface KiezStatsResponse {
   lastUpdated: string;
@@ -70,11 +91,7 @@ export interface KiezStatsResponse {
     statusIndex: number;
     dynamikIndex: number;
   } | null;
-  plrAreas: Array<{
-    code: string;
-    name: string;
-    population: number;
-  }>;
+  plrAreas: PlrAreaDetail[];
   trend: Array<{
     period: string;
     date: string;

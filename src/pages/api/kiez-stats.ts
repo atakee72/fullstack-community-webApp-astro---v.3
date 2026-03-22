@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { connectDB } from '../../lib/mongodb';
-import type { KiezStatsResponse, AgeDistributionEntry } from '../../types/kiezStats';
+import type { KiezStatsResponse, AgeDistributionEntry, PlrAreaDetail } from '../../types/kiezStats';
 
 const AGE_LABELS: Array<{ key: string; group: string }> = [
   { key: 'u6', group: '0–5' },
@@ -22,7 +22,7 @@ export const GET: APIRoute = async () => {
       .findOne({}, { sort: { period: -1 }, projection: { period: 1, date: 1 } });
 
     let demographics: KiezStatsResponse['demographics'] = null;
-    let plrAreas: KiezStatsResponse['plrAreas'] = [];
+    let plrAreas: PlrAreaDetail[] = [];
     let lastUpdated = '';
 
     if (latestDemo) {
@@ -47,10 +47,33 @@ export const GET: APIRoute = async () => {
         migrationBg += doc.migration.migration_background;
         singlePerson += doc.households.single_person;
 
+        // Per-PLR age distribution
+        const plrTotal = doc.population.total;
+        const plrAgeDist: AgeDistributionEntry[] = AGE_LABELS.map(({ key, group }) => ({
+          group,
+          key,
+          count: doc.age_groups[key] ?? 0,
+          percentage: plrTotal > 0 ? Math.round(((doc.age_groups[key] ?? 0) / plrTotal) * 1000) / 10 : 0,
+        }));
+
+        // Per-PLR non-overlapping migration segments
+        const plrForeign = doc.migration.foreign_nationals;
+        const plrMigBg = doc.migration.migration_background;
+        const plrGermanWithMigBg = plrMigBg - plrForeign;
+        const plrWithoutMigBg = plrTotal - plrMigBg;
+
         plrAreas.push({
           code: doc.plr_code,
           name: doc.plr_name,
-          population: doc.population.total,
+          population: doc.population,
+          ageDistribution: plrAgeDist,
+          migration: {
+            foreignNationals: plrForeign,
+            germanWithMigBg: plrGermanWithMigBg,
+            withoutMigBg: plrWithoutMigBg,
+            totalPopulation: plrTotal,
+          },
+          social: null,
         });
       }
 
@@ -105,6 +128,21 @@ export const GET: APIRoute = async () => {
           statusIndex: avg('status_index'),
           dynamikIndex: avg('dynamik_index'),
         };
+
+        // Attach per-PLR social data
+        const socialByPlr = new Map(socialDocs.map(d => [d.plr_code, d]));
+        for (const area of plrAreas) {
+          const s = socialByPlr.get(area.code);
+          if (s) {
+            area.social = {
+              unemploymentRate: s.unemployment_rate,
+              childPovertyRate: s.child_poverty_rate,
+              transferBenefitRate: s.transfer_benefit_rate,
+              statusIndex: s.status_index,
+              dynamikIndex: s.dynamik_index,
+            };
+          }
+        }
       }
     }
 

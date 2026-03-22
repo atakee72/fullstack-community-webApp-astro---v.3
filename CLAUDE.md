@@ -139,7 +139,9 @@ export const POST: APIRoute = async ({ request }) => {
 - **Frontend**: `KiezDashboard.svelte` — Svelte 5 with hand-drawn SVG charts (no chart library). German UI. Fetches data client-side via `onMount`.
 - **Charts**: Horizontal bar (age), donut (migration, gender), vertical bar (PLR areas), horizontal bar (social indicators). Uses project color palette.
 - **Page**: `/schillerkiez` — prerendered static shell, Svelte hydrates client-side
+- **Per-PLR carousels**: Each data section (stat cards + charts) is a horizontally scrollable carousel of 5 same-sized cards (CSS scroll-snap, no JS library). First card shows aggregate, next 4 show per-PLR data with the same chart type (bar chart, donut, etc.). Stat carousels use `lg:grid-cols-5` on desktop; chart carousels remain scrollable at all viewports (~3 visible on desktop).
 - **Air quality**: Live data from BLUME API station MC042 (Nansenstraße). `GET /api/kiez-air` proxies LQI grades (1–5) with 30 min cache. No auth, no MongoDB, no sync script. Cards show German pollutant names (Feinstaub, Stickstoffdioxid, etc.) with abbreviations below, plus a color-coded grade scale legend.
+- **Entrance animation**: Staggered reveal — sections cascade in with 120ms delay after data loads (air quality → age → migration → gender → social → sources)
 - **Dry-run**: `pnpm tsx scripts/sync-stats.ts --dry-run` — parses XLSX without DB writes (for verifying structure)
 
 ## Database Collections
@@ -232,9 +234,16 @@ Complex React components use a wrapper pattern:
 - Both are mounted globally in `ToastProvider.tsx` (rendered in layouts) — no per-component state needed
 - `confirmAction(message, { title, confirmLabel, variant })` — `variant: 'danger'` shows red confirm button
 
+### Page Header
+- **Component**: `src/components/ui/PageHeader.astro` — animated title with fade-in + sweeping status bars
+- **Props**: `title`, `subtitle?`, `color?` (hex, defaults to wine `#814256`), `subtitleClass?` (defaults to `text-gray-600`)
+- **Animation**: `is:inline data-astro-rerun` script — re-triggers on every ViewTransitions navigation. Title fades in + slides up, then 3 decorative bars sweep in with staggered delays. Respects `prefers-reduced-motion`.
+- **Used on**: All main pages (`/`, `/calendar`, `/newsboard`, `/marketplace`, `/blog`, `/profile`, `/schillerkiez`). Blog uses `color="#ffffff" subtitleClass="text-white/80"` for dark background. Marketplace uses `color="#4b9aaa"` (teal). Schillerkiez uses `color="#6aab8e"` (green).
+
 ### Animation (Motion Library)
 - **Navbar**: `motion/react` — spring-based menu slide (`AnimatePresence`), staggered nav item entrance
 - **Splash screen**: Native Web Animations API (fade-in/out) — `is:inline` context, no imports
+- **Kiez dashboard**: Staggered section reveal — `revealedCount` counter increments every 120ms after data loads, each section transitions from `opacity-0 translate-y-4` to visible. Respects `prefers-reduced-motion`.
 - Motion is available for future use: scroll reveals (`inView`), micro-interactions, spring physics
 
 ## Color Palette
