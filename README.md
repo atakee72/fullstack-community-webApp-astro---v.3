@@ -34,7 +34,9 @@ src/
 │   │   ├── news/          # Newsboard CRUD, daily fetch, save/unsave
 │   │   ├── listings/      # Marketplace listings CRUD
 │   │   ├── reports/       # User report submission
-│   │   └── admin/         # Admin moderation APIs
+│   │   ├── admin/         # Admin moderation APIs
+│   │   ├── kiez-stats.ts  # Schillerkiez demographics + social API
+│   │   └── kiez-air.ts    # Live BLUME air quality proxy
 │   └── *.astro       # Page components
 ├── hooks/
 │   └── api/          # TanStack Query hooks
@@ -125,6 +127,7 @@ Vercel will automatically:
 - **Newsboard**: AI-curated local news from 9 RSS feeds + NewsData.io, with GPT-4o relevance scoring
 - **Marketplace**: Buy/sell/exchange (Tausch) listings with image gallery, AI moderation (text + vision), user reports, and draft save/publish workflow
 - **Custom UI Dialogs**: Native `<dialog>`-based confirm modals and sonner toasts replace all browser-native dialogs
+- **Kiez Data Dashboard**: Interactive Schillerkiez neighborhood statistics with hand-drawn SVG charts, historical trends (demographics + social indicators 2013–2023), and live air quality data
 
 ## 🛡️ Content Moderation
 
@@ -191,6 +194,37 @@ The app includes an AI-powered local news aggregation system:
 - Modal view with keyboard navigation (← →)
 - Server-side bookmark persistence for logged-in users
 
+## 📊 Kiez Data Dashboard
+
+The `/schillerkiez` page shows neighborhood-level statistics for the Schillerkiez area in Berlin-Neukölln.
+
+### Data Sources
+- **Demographics** (half-yearly): Population, age distribution, migration background, gender — from Amt für Statistik Berlin-Brandenburg
+- **Social indicators** (biennial, 2013–2023): Unemployment rate, child poverty, transfer benefits, Status/Dynamik index — from Monitoring Soziale Stadtentwicklung Berlin
+- **Air quality** (live): PM10, NO₂, O₃, CO grades from BLUME station MC042 (Nansenstraße)
+
+### Data Pipeline
+- `scripts/sync-stats.ts` downloads XLSX files, parses with ExcelJS, and upserts to MongoDB
+- `scripts/backfill-history.sh` — one-time demographic backfill (6 periods)
+- `scripts/backfill-social.sh` — one-time MSS social index backfill (2013–2021)
+- GitHub Actions workflow runs 2x/year (March + September) + manual dispatch
+- Handles Berlin's 2021 LOR reform: auto-detects old (2 PLR) vs new (4 PLR) area codes
+
+### Dashboard Sections
+1. **Air Quality** — live pollutant grades with color-coded scale
+2. **Age Distribution** — horizontal bar charts (aggregate + per-PLR carousel)
+3. **Migration Background** — donut charts showing non-overlapping segments
+4. **Gender** — donut charts (male/female split)
+5. **Social Snapshot** — horizontal bar charts for unemployment, child poverty, transfer benefits
+6. **Population Trend** — line charts (aggregate + per-PLR + migration diversity %)
+7. **Social Trend** — "Soziale Entwicklung" carousel showing 10-year trends with merged old/new LOR lines
+8. **Sources** — data attribution, LOR reform explanation, index definitions
+
+### Environment Variables (sync script)
+- `STATS_XLSX_URL` / `STATS_PERIOD` — AfS demographics XLSX
+- `MSS_XLSX_URL` / `MSS_PERIOD` — MSS social index XLSX
+- `MSS_SDI_URL` — MSS Status/Dynamik index XLSX (optional)
+
 ## 📚 API Endpoints
 
 ### Authentication
@@ -253,6 +287,10 @@ The app includes an AI-powered local news aggregation system:
 - `POST /api/admin/moderation/review` - Approve/reject content (admin)
 - `POST /api/admin/moderation/bulk-review` - Bulk approve/reject up to 50 items (admin)
 
+### Kiez Data
+- `GET /api/kiez-stats` - Schillerkiez demographics, social indicators, and trends (public, 24h cache)
+- `GET /api/kiez-air` - Live BLUME air quality grades for station MC042 (public, 30 min cache)
+
 ### Other
 - `POST /api/upload/image` - Upload image to Cloudinary
 - `GET /api/users/update` - Update user profile
@@ -270,6 +308,11 @@ Required environment variables:
 - `OPENAI_API_KEY` - OpenAI API key (content moderation + news relevance scoring)
 - `CRON_SECRET` - Vercel cron job authentication secret
 - `NEWSDATA_API_KEY` - NewsData.io API key (optional, for additional news sources)
+- `STATS_XLSX_URL` - AfS demographics XLSX URL (optional, sync script)
+- `STATS_PERIOD` - AfS period, e.g. "2025h2" (optional, sync script)
+- `MSS_XLSX_URL` - MSS social index XLSX URL (optional, sync script)
+- `MSS_PERIOD` - MSS report period, e.g. "2023" (optional, sync script)
+- `MSS_SDI_URL` - MSS SDI XLSX URL (optional, sync script)
 
 ## 🐛 Debugging
 
