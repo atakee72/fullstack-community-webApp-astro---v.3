@@ -11,6 +11,7 @@
  *   STATS_PERIOD     — e.g. "2025h2" (required)
  *   MSS_XLSX_URL     — MSS social index XLSX URL (optional)
  *   MSS_PERIOD       — e.g. "2023" (optional, required if MSS_XLSX_URL set)
+ *   MSS_SDI_URL      — MSS SDI XLSX URL (optional, for Status/Dynamik index)
  */
 import 'dotenv/config';
 import { MongoClient } from 'mongodb';
@@ -283,13 +284,29 @@ async function syncAfS(db: any) {
 
 // MSS uses two XLSX files:
 // 1. Indicators file (MSS_XLSX_URL): rates at PLR level
-//    Col layout: [1] PLR code, [2] name, [3] population,
-//    [4] S1 (unemployment %), [5] S2 (child poverty %), [6] S3 (youth unemployment %), [7] S4 (transfer benefits %),
-//    [8] D1–D4 (dynamic indicators — changes over time)
+//    2023 layout: [1] PLR code, [2] name, [3] pop, [4] S1 unemployment, [5] S2 child poverty, [6] S3 youth unemp, [7] S4 transfer benefits
+//    Pre-2023 layout: [1] PLR code, [2] name, [3] pop, [4] S1 unemployment, [5] S2 long-term unemp, [6] S3 transfer benefits, [7] S4 child poverty
 // 2. SDI file (MSS_SDI_URL): Status-Index and Dynamik-Index classes
-//    Col layout: [1] PLR code, [2] name, [3] pop, [4] Status class (1-4), [5] Status label, [6] Dynamik class, [7] Dynamik label
+//
+// Pre-2021 LOR codes for Schillerkiez (2 PLRs, split into 4 in 2021 LOR reform):
+//   08010117 = Schillerpromenade (→ 08100102 Nord + 08100103 Süd)
+//   08010118 = Silbersteinstraße (→ 08100104 Wartheplatz + 08100105 Silbersteinstraße)
 
-const MSS_SDI_URL = 'https://www.berlin.de/sen/sbw/_assets/stadtdaten/stadtwissen/monitoring-soziale-stadtentwicklung/bericht-2023/1sdi_mss2023.xlsx';
+const MSS_SDI_URL = process.env.MSS_SDI_URL;
+
+// Old LOR codes used in MSS reports before the 2021 LOR reform
+const OLD_PLR_CODES = ['08010117', '08010118'];
+
+/** Find the sheet containing 8-digit PLR code data (not always the first sheet) */
+function findDataSheet(workbook: ExcelJS.Workbook): ExcelJS.Worksheet | null {
+  for (const ws of workbook.worksheets) {
+    for (let r = 1; r <= Math.min(ws.rowCount, 30); r++) {
+      const v = String(cellValue(ws.getRow(r), 1) ?? '').trim();
+      if (/^\d{8}$/.test(v)) return ws;
+    }
+  }
+  return null;
+}
 
 async function syncMSS(db: any) {
   const url = process.env.MSS_XLSX_URL;
@@ -303,16 +320,35 @@ async function syncMSS(db: any) {
     return;
   }
 
+  const periodNum = parseInt(period);
+  const isOldLOR = periodNum < 2021;
+  const matchCodes = isOldLOR ? OLD_PLR_CODES : PLR_CODES;
+
+  // Column mapping changed between reports:
+  // Pre-2023: S1=unemployment(4), S2=long-term-unemp(5), S3=transfer(6), S4=child-poverty(7)
+  // 2023+:    S1=unemployment(4), S2=child-poverty(5), S3=youth-unemp(6), S4=transfer(7)
+  const COL_UNEMPLOYMENT = 4;
+  const COL_CHILD_POVERTY = periodNum < 2023 ? 7 : 5;
+  const COL_TRANSFER = periodNum < 2023 ? 6 : 7;
+  const COL_YOUTH = periodNum < 2023 ? 5 : 6;
+
   console.log('\n═══ MSS Social Index Sync ═══');
+  if (isOldLOR) console.log(`  Using pre-2021 LOR codes: ${OLD_PLR_CODES.join(', ')}`);
+  console.log(`  Column layout: unemployment=col${COL_UNEMPLOYMENT}, child_poverty=col${COL_CHILD_POVERTY}, transfer=col${COL_TRANSFER}`);
 
   // Download indicators file
   const workbook = await downloadXlsx(url);
-  const ws = workbook.worksheets[0];
+  const ws = findDataSheet(workbook);
+  if (!ws) {
+    console.error('  ✗ Could not find data sheet with PLR codes in indicators file');
+    console.log(`  Available sheets: ${workbook.worksheets.map(s => s.name).join(', ')}`);
+    return;
+  }
   console.log(`  Indicators sheet: "${ws.name}" (${ws.rowCount} rows)`);
 
   // Find first data row — PLR codes are 8-digit strings in column 1
   let dataStart = -1;
-  for (let r = 1; r <= Math.min(ws.rowCount, 20); r++) {
+  for (let r = 1; r <= Math.min(ws.rowCount, 30); r++) {
     const v = String(cellValue(ws.getRow(r), 1) ?? '').trim();
     if (/^\d{8}$/.test(v)) { dataStart = r; break; }
   }
@@ -324,21 +360,25 @@ async function syncMSS(db: any) {
 
   // Download SDI file for Status/Dynamik index
   const sdiMap = new Map<string, { status: number; dynamik: number }>();
-  try {
-    const sdiWb = await downloadXlsx(MSS_SDI_URL);
-    const sdiWs = sdiWb.worksheets[0];
-    console.log(`  SDI sheet: "${sdiWs.name}" (${sdiWs.rowCount} rows)`);
-    for (let r = 1; r <= sdiWs.rowCount; r++) {
-      const row = sdiWs.getRow(r);
-      const plr = String(cellValue(row, 1) ?? '').trim();
-      if (!PLR_CODES.includes(plr)) continue;
-      sdiMap.set(plr, {
-        status: toNumber(cellValue(row, 4)),
-        dynamik: toNumber(cellValue(row, 6)),
-      });
+  if (MSS_SDI_URL) {
+    try {
+      const sdiWb = await downloadXlsx(MSS_SDI_URL);
+      const sdiWs = findDataSheet(sdiWb) ?? sdiWb.worksheets[0];
+      console.log(`  SDI sheet: "${sdiWs.name}" (${sdiWs.rowCount} rows)`);
+      for (let r = 1; r <= sdiWs.rowCount; r++) {
+        const row = sdiWs.getRow(r);
+        const plr = String(cellValue(row, 1) ?? '').trim();
+        if (!matchCodes.includes(plr)) continue;
+        sdiMap.set(plr, {
+          status: toNumber(cellValue(row, 4)),
+          dynamik: toNumber(cellValue(row, 6)),
+        });
+      }
+    } catch (e) {
+      console.log(`  ⚠ Could not fetch SDI file: ${e instanceof Error ? e.message : e}`);
     }
-  } catch (e) {
-    console.log(`  ⚠ Could not fetch SDI file: ${e instanceof Error ? e.message : e}`);
+  } else {
+    console.log('  ⚠ MSS_SDI_URL not set — skipping Status/Dynamik index');
   }
 
   // Extract indicator rows for our PLR codes
@@ -357,22 +397,24 @@ async function syncMSS(db: any) {
   for (let r = dataStart; r <= ws.rowCount; r++) {
     const row = ws.getRow(r);
     const plr = String(cellValue(row, 1) ?? '').trim();
-    if (!PLR_CODES.includes(plr)) continue;
+    if (!matchCodes.includes(plr)) continue;
 
+    // For pre-2021 data, store under old PLR code (aggregated differently)
+    // but keep the original code so we can identify it
     const sdi = sdiMap.get(plr);
     rows.push({
       plr_code: plr,
       plr_name: String(cellValue(row, 2) ?? plr),
-      unemployment_rate: Math.round(toNumber(cellValue(row, 4)) * 100) / 100,
-      child_poverty_rate: Math.round(toNumber(cellValue(row, 5)) * 100) / 100,
-      youth_unemployment_rate: Math.round(toNumber(cellValue(row, 6)) * 100) / 100,
-      transfer_benefit_rate: Math.round(toNumber(cellValue(row, 7)) * 100) / 100,
+      unemployment_rate: Math.round(toNumber(cellValue(row, COL_UNEMPLOYMENT)) * 100) / 100,
+      child_poverty_rate: Math.round(toNumber(cellValue(row, COL_CHILD_POVERTY)) * 100) / 100,
+      youth_unemployment_rate: Math.round(toNumber(cellValue(row, COL_YOUTH)) * 100) / 100,
+      transfer_benefit_rate: Math.round(toNumber(cellValue(row, COL_TRANSFER)) * 100) / 100,
       status_index: sdi?.status ?? 0,
       dynamik_index: sdi?.dynamik ?? 0,
     });
   }
 
-  console.log(`  Matched ${rows.length} of ${PLR_CODES.length} PLR areas`);
+  console.log(`  Matched ${rows.length} of ${matchCodes.length} PLR areas`);
   for (const row of rows) {
     console.log(`    ${row.plr_code} — ${row.plr_name}: unemployment ${row.unemployment_rate}%, child poverty ${row.child_poverty_rate}%, transfers ${row.transfer_benefit_rate}%`);
   }
@@ -389,7 +431,7 @@ async function syncMSS(db: any) {
   for (const row of rows) {
     await collection.updateOne(
       { plr_code: row.plr_code, period },
-      { $set: { ...row, period } },
+      { $set: { ...row, period, date: `${period}-12-31` } },
       { upsert: true }
     );
     upserted++;

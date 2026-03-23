@@ -96,6 +96,32 @@ export interface KiezStatsResponse {
     period: string;
     date: string;
     population: number;
+    foreignNationals: number;
+    germanWithMigBg: number;
+    withoutMigBg: number;
+  }>;
+  plrTrend: Array<{
+    plr_code: string;
+    plr_name: string;
+    period: string;
+    date: string;
+    population: number;
+  }>;
+  socialTrend: Array<{
+    period: string;
+    date: string;
+    unemploymentRate: number;
+    childPovertyRate: number;
+    transferBenefitRate: number;
+  }>;
+  plrSocialTrend: Array<{
+    plr_code: string;
+    plr_name: string;
+    period: string;
+    date: string;
+    unemploymentRate: number;
+    childPovertyRate: number;
+    transferBenefitRate: number;
   }>;
 }
 

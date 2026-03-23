@@ -17,6 +17,9 @@ on:
       mss_period:
         description: 'MSS period, e.g. 2023'
         required: false
+      mss_sdi_url:
+        description: 'MSS SDI XLSX URL (leave empty for secret)'
+        required: false
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -35,3 +38,4 @@ jobs:
           STATS_PERIOD: ${{ inputs.period || secrets.STATS_PERIOD }}
           MSS_XLSX_URL: ${{ inputs.mss_xlsx_url || secrets.MSS_XLSX_URL }}
           MSS_PERIOD: ${{ inputs.mss_period || secrets.MSS_PERIOD }}
+          MSS_SDI_URL: ${{ inputs.mss_sdi_url || secrets.MSS_SDI_URL }}

@@ -151,6 +151,8 @@ export const GET: APIRoute = async () => {
       { $group: {
         _id: { period: '$period', date: '$date' },
         population: { $sum: '$population.total' },
+        foreignNationals: { $sum: '$migration.foreign_nationals' },
+        migrationBackground: { $sum: '$migration.migration_background' },
       }},
       { $sort: { '_id.period': 1 as const } },
       { $project: {
@@ -158,6 +160,8 @@ export const GET: APIRoute = async () => {
         period: '$_id.period',
         date: '$_id.date',
         population: 1,
+        foreignNationals: 1,
+        migrationBackground: 1,
       }},
     ];
     const trend = await db
@@ -165,13 +169,85 @@ export const GET: APIRoute = async () => {
       .aggregate(trendPipeline)
       .toArray();
 
+    // Per-PLR trend data for overlay line chart
+    const plrTrendDocs = await db
+      .collection('schillerkiez_demographics')
+      .find({}, {
+        projection: { _id: 0, plr_code: 1, plr_name: 1, period: 1, date: 1, 'population.total': 1 }
+      })
+      .sort({ period: 1 })
+      .toArray();
+
+    const plrTrend = plrTrendDocs.map(d => ({
+      plr_code: d.plr_code,
+      plr_name: d.plr_name,
+      period: d.period,
+      date: d.date,
+      population: d.population.total,
+    }));
+
+    // Social trend — aggregate across PLR areas per period
+    const socialTrendPipeline = [
+      { $group: {
+        _id: '$period',
+        unemploymentRate: { $avg: '$unemployment_rate' },
+        childPovertyRate: { $avg: '$child_poverty_rate' },
+        transferBenefitRate: { $avg: '$transfer_benefit_rate' },
+      }},
+      { $sort: { '_id': 1 as const } },
+      { $project: {
+        _id: 0,
+        period: '$_id',
+        date: { $concat: ['$_id', '-12-31'] },
+        unemploymentRate: { $round: ['$unemploymentRate', 1] },
+        childPovertyRate: { $round: ['$childPovertyRate', 1] },
+        transferBenefitRate: { $round: ['$transferBenefitRate', 1] },
+      }},
+    ];
+    const socialTrend = await db
+      .collection('schillerkiez_social')
+      .aggregate(socialTrendPipeline)
+      .toArray();
+
+    // Per-PLR social trend data
+    const plrSocialTrendDocs = await db
+      .collection('schillerkiez_social')
+      .find({}, {
+        projection: {
+          _id: 0, plr_code: 1, plr_name: 1, period: 1,
+          unemployment_rate: 1, child_poverty_rate: 1, transfer_benefit_rate: 1,
+        }
+      })
+      .sort({ period: 1 })
+      .toArray();
+
+    const plrSocialTrend = plrSocialTrendDocs.map(d => ({
+      plr_code: d.plr_code,
+      plr_name: d.plr_name,
+      period: d.period,
+      date: `${d.period}-12-31`,
+      unemploymentRate: d.unemployment_rate,
+      childPovertyRate: d.child_poverty_rate,
+      transferBenefitRate: d.transfer_benefit_rate,
+    }));
+
     const response: KiezStatsResponse = {
       lastUpdated,
       source: 'Amt für Statistik Berlin-Brandenburg / Monitoring Soziale Stadtentwicklung',
       demographics,
       social,
       plrAreas,
-      trend: trend.map(t => ({ period: t.period, date: t.date, population: t.population })),
+      trend: trend.map(t => ({
+        period: t.period,
+        date: t.date,
+        population: t.population,
+        foreignNationals: t.foreignNationals,
+        germanWithMigBg: Math.max(0, t.migrationBackground - t.foreignNationals),
+        withoutMigBg: Math.max(0, t.population - t.migrationBackground),
+      })),
+      plrTrend,
+      socialTrend,
+      plrSocialTrend,
     };
 
     return new Response(JSON.stringify(response), {
