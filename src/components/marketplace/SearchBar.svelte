@@ -32,7 +32,7 @@
       value={query}
       oninput={handleInput}
       {placeholder}
-      class="w-full pl-12 pr-4 py-3 rounded-full border border-[#aca89f]/30 bg-white focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] focus:border-transparent shadow-sm"
+      class="w-full pl-12 pr-4 py-3 rounded-full border border-[#aca89f]/30 bg-white text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] focus:border-transparent shadow-sm"
     />
     {#if query}
       <button
