@@ -62,7 +62,7 @@
       error = e instanceof Error ? e.message : 'Unbekannter Fehler';
     } finally {
       loading = false;
-      if (!error) staggerReveal();
+      if (!error) dataReady = true;
     }
   }
 
@@ -174,20 +174,32 @@
     return segments;
   }
 
-  // Staggered entrance animation
-  let revealedCount = $state(0);
-  const STAGGER_DELAY = 120; // ms between each section
-  const TOTAL_SECTIONS = 8; // air, trend, age, migration, gender, social-trend, social-snapshot, sources
+  // Scroll-triggered reveal animation (IntersectionObserver)
+  let dataReady = $state(false);
 
-  function staggerReveal() {
+  function reveal(node) {
     if (reducedMotion) {
-      revealedCount = TOTAL_SECTIONS;
+      node.classList.add('revealed');
       return;
     }
-    revealedCount = 0;
-    for (let i = 1; i <= TOTAL_SECTIONS; i++) {
-      setTimeout(() => { revealedCount = i; }, i * STAGGER_DELAY);
-    }
+    // Start hidden
+    node.classList.add('reveal-hidden');
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && dataReady) {
+          node.classList.remove('reveal-hidden');
+          node.classList.add('revealed');
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15, rootMargin: '-40px 0px' }
+    );
+    observer.observe(node);
+
+    return {
+      destroy() { observer.disconnect(); }
+    };
   }
 
   // Carousel container refs (used by scrollCarousel)
@@ -227,9 +239,9 @@
     };
   }
 
-  // After stagger reveal completes, measure initial overflow state
+  // After data loads, measure initial overflow state for carousels
   $effect(() => {
-    if (revealedCount < TOTAL_SECTIONS) return;
+    if (!dataReady) return;
     const refs = { trend: trendScroll, age: ageScroll, mig: migScroll, gender: genderScroll, social: socialScroll, socialTrend: socialTrendScroll };
     setTimeout(() => {
       for (const [key, el] of Object.entries(refs)) {
@@ -240,7 +252,7 @@
           right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
         };
       }
-    }, 100);
+    }, 600);
   });
 </script>
 
@@ -260,7 +272,7 @@
   {/snippet}
 
   {#if data?.lastUpdated}
-    <p class="text-sm text-gray-400 -mt-4 mb-4 transition-all duration-500 {revealedCount >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">Stand: {data.lastUpdated}</p>
+    <p use:reveal class="text-sm text-gray-400 -mt-4 mb-4 transition-all duration-700 ease-out">Stand: {data.lastUpdated}</p>
   {/if}
 
   {#if loading}
@@ -292,7 +304,7 @@
   {:else}
     <!-- Air Quality (live BLUME data) -->
     {#if airData}
-      <div class="bg-white rounded-xl p-6 shadow-sm transition-all duration-500 {revealedCount >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
+      <div use:reveal class="bg-white rounded-xl p-6 shadow-sm transition-all duration-700 ease-out">
         <div class="flex items-center gap-2 mb-4">
           <h2 class="text-lg font-bold text-gray-800">Luftqualität</h2>
           <span class="inline-flex items-center gap-1 text-xs text-gray-400">
@@ -350,7 +362,7 @@
       <!-- Age Distribution Carousel -->
       {#if data.demographics}
         {@const maxCount = Math.max(...data.demographics.ageDistribution.map(a => a.count))}
-        <div class="transition-all duration-500 {revealedCount >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
+        <div use:reveal class="transition-all duration-700 ease-out">
           <h2 class="text-lg font-bold text-gray-800 mb-3">Altersverteilung</h2>
           <div class="relative">
             {#if canScroll.age.left}
@@ -416,7 +428,7 @@
           { label: 'Deutsche mit MH', value: mig.germanWithMigBg, color: MIGRATION_COLORS[1] },
           { label: 'Ohne MH', value: mig.withoutMigBg, color: MIGRATION_COLORS[2] },
         ], mig.totalPopulation)}
-        <div class="transition-all duration-500 {revealedCount >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
+        <div use:reveal class="transition-all duration-700 ease-out">
           <h2 class="text-lg font-bold text-gray-800 mb-3">Vielfalt</h2>
           <div class="relative">
             {#if canScroll.mig.left}
@@ -497,7 +509,7 @@
           { label: 'Männlich', value: pop.male, color: COLORS.teal },
           { label: 'Weiblich', value: pop.female, color: COLORS.wine },
         ], pop.total)}
-        <div class="transition-all duration-500 {revealedCount >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
+        <div use:reveal class="transition-all duration-700 ease-out">
           <h2 class="text-lg font-bold text-gray-800 mb-3">Geschlecht</h2>
           <div class="relative">
             {#if canScroll.gender.left}
@@ -574,7 +586,7 @@
           { label: 'Kinderarmut (U15)', value: social.childPovertyRate, color: COLORS.wine },
           { label: 'Transferleistungen', value: social.transferBenefitRate, color: COLORS.yellow },
         ]}
-        <div class="transition-all duration-500 {revealedCount >= 5 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
+        <div use:reveal class="transition-all duration-700 ease-out">
           <h2 class="text-lg font-bold text-gray-800 mb-3">Soziale Lage</h2>
           <div class="relative">
             {#if canScroll.social.left}
@@ -679,7 +691,7 @@
       {@const toY = (/** @type {number} */ pop) => chartB - ((pop - yMin) / yRange) * chartH}
       {@const aggPoints = trend.map(t => `${toX(t.date)},${toY(t.population)}`).join(' ')}
       {@const gridLines = Array.from({ length: 5 }, (_, i) => yMin + (yRange / 4) * i)}
-      <div class="transition-all duration-500 {revealedCount >= 6 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
+      <div use:reveal class="transition-all duration-700 ease-out">
         <h2 class="text-lg font-bold text-gray-800 mb-3">Bevölkerungsentwicklung</h2>
         <div class="relative">
           {#if canScroll.trend.left}
@@ -855,7 +867,7 @@
       {@const sToY = (/** @type {number} */ v) => sChartB - (v / sYRange) * sChartH}
       {@const sGridStep = sYMax <= 30 ? 5 : 10}
       {@const sGridLines = Array.from({ length: Math.floor(sYMax / sGridStep) + 1 }, (_, i) => i * sGridStep)}
-      <div class="transition-all duration-500 {revealedCount >= 7 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
+      <div use:reveal class="transition-all duration-700 ease-out">
         <h2 class="text-lg font-bold text-gray-800 mb-3">Soziale Entwicklung</h2>
         <div class="relative">
           {#if canScroll.socialTrend.left}
@@ -963,7 +975,7 @@
     {/if}
 
     <!-- Footer / Sources -->
-    <div class="bg-white/60 rounded-xl p-6 text-sm text-gray-500 space-y-2 transition-all duration-500 {revealedCount >= 8 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}">
+    <div use:reveal class="bg-white/60 rounded-xl p-6 text-sm text-gray-500 space-y-2 transition-all duration-700 ease-out">
       <p>
         <strong>Quellen:</strong> Amt für Statistik Berlin-Brandenburg (Demografie, halbjährlich) · Monitoring Soziale Stadtentwicklung Berlin (Sozialindex, alle 2 Jahre, 2013–2023)
       </p>
@@ -997,3 +1009,14 @@
     </div>
   {/if}
 </div>
+
+<style>
+  .reveal-hidden {
+    opacity: 0;
+    transform: translateY(2rem);
+  }
+  .revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
