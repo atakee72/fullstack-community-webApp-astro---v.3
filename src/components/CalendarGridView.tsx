@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   startOfMonth,
   endOfMonth,
@@ -63,6 +64,7 @@ export default function CalendarGridView({
   locale
 }: CalendarGridViewProps) {
   const [focusedDateIndex, setFocusedDateIndex] = useState<number>(0);
+  const direction = useRef(1); // 1 = forward (slide left), -1 = backward (slide right)
 
   // Generate calendar days (42 days for consistent 6-week grid)
   const calendarDays = useMemo(() => {
@@ -149,15 +151,18 @@ export default function CalendarGridView({
   };
 
   const handlePrevMonth = () => {
+    direction.current = -1;
     onMonthChange(subMonths(currentMonth, 1));
   };
 
   const handleNextMonth = () => {
+    direction.current = 1;
     onMonthChange(addMonths(currentMonth, 1));
   };
 
   const handleToday = () => {
     const today = new Date();
+    direction.current = today > currentMonth ? 1 : -1;
     onMonthChange(today);
   };
 
@@ -200,8 +205,19 @@ export default function CalendarGridView({
             <span className="text-lg md:text-xl lg:text-2xl text-[#4b9aaa]">◀</span>
           </button>
 
-          <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-[#814256]">
-            {format(currentMonth, 'MMMM yyyy', { locale })}
+          <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-[#814256] overflow-hidden">
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={format(currentMonth, 'yyyy-MM')}
+                initial={{ y: direction.current * 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: direction.current * -20, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className="inline-block"
+              >
+                {format(currentMonth, 'MMMM yyyy', { locale })}
+              </motion.span>
+            </AnimatePresence>
           </h2>
 
           <button
@@ -229,7 +245,7 @@ export default function CalendarGridView({
       <div
         role="grid"
         aria-label={`Event Calendar for ${format(currentMonth, 'MMMM yyyy')}`}
-        className="calendar-grid"
+        className="calendar-grid overflow-x-hidden"
         onKeyDown={handleKeyboardNav}
       >
         {/* Week day headers */}
@@ -246,7 +262,18 @@ export default function CalendarGridView({
         </div>
 
         {/* Calendar date cells */}
-        <div className="space-y-1 md:space-y-1.5 lg:space-y-2">
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={format(currentMonth, 'yyyy-MM')}
+            initial={{ x: direction.current * 150, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: direction.current * -150, opacity: 0 }}
+            transition={{
+              x: { type: 'spring', stiffness: 200, damping: 25, mass: 0.8 },
+              opacity: { duration: 0.2 },
+            }}
+            className="space-y-1 md:space-y-1.5 lg:space-y-2"
+          >
           {weeks.map((week, weekIndex) => (
             <div key={weekIndex} role="row" className="grid grid-cols-7 gap-1 md:gap-1.5 lg:gap-2">
             {week.map((day, dayIndex) => {
@@ -402,7 +429,8 @@ export default function CalendarGridView({
             })}
           </div>
           ))}
-        </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
     </div>

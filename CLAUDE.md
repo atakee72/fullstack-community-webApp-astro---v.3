@@ -147,7 +147,7 @@ export const POST: APIRoute = async ({ request }) => {
 - **Historical backfill (demographics)**: `bash scripts/backfill-history.sh` (one-time, 6 periods). Use `--dry-run` first.
 - **Historical backfill (social)**: `bash scripts/backfill-social.sh` (one-time, 5 MSS periods 2013–2021). Use `--dry-run` first.
 - **Social trend chart**: "Soziale Entwicklung" 4-card carousel showing unemployment, child poverty, and transfer benefits over ~10 years. Merges old/new LOR codes for continuous lines across 2021 boundary. Data from `socialTrend` + `plrSocialTrend` API fields.
-- **Entrance animation**: Staggered reveal — sections cascade in with 120ms delay after data loads (air quality → age → migration → gender → social snapshot → population trend → social trend → sources)
+- **Entrance animation**: Scroll-triggered reveal via IntersectionObserver (`use:reveal` Svelte action). Each section fades in + slides up when it enters the viewport (15% threshold). Respects `prefers-reduced-motion`.
 - **Dry-run**: `pnpm tsx scripts/sync-stats.ts --dry-run` — parses XLSX without DB writes (for verifying structure)
 
 ## Database Collections
@@ -249,9 +249,10 @@ Complex React components use a wrapper pattern:
 
 ### Animation (Motion Library)
 - **Navbar**: `motion/react` — spring-based menu slide (`AnimatePresence`), staggered nav item entrance
+- **Calendar**: `motion/react` — spring-physics slide on month change (grid slides horizontally, month name slides vertically). `AnimatePresence mode="popLayout"` for smooth height transitions between 4/5/6-week months. Direction tracked via `useRef`.
+- **Newsboard**: `motion/react` — `whileInView` scroll-triggered card reveals with per-column stagger delay
 - **Splash screen**: Native Web Animations API (fade-in/out) — `is:inline` context, no imports
-- **Kiez dashboard**: Staggered section reveal — `revealedCount` counter increments every 120ms after data loads, each section transitions from `opacity-0 translate-y-4` to visible. Respects `prefers-reduced-motion`.
-- Motion is available for future use: scroll reveals (`inView`), micro-interactions, spring physics
+- **Kiez dashboard**: Scroll-triggered section reveal via IntersectionObserver (`use:reveal` Svelte action). CSS transitions for opacity + translateY. Respects `prefers-reduced-motion`.
 
 ## Color Palette
 The project uses these CSS variables (defined in `global.css`):
