@@ -416,14 +416,14 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
               <p className="text-gray-600 text-base md:text-lg">No {collectionType} found. Be the first to create one!</p>
             </div>
           ) : (
-            <div className="space-y-4 transition-all duration-400 ease-out">
+            <div className="space-y-4">
               {filteredItems.map((item) => {
                 const currentTab = getCardActiveTab(item._id);
                 return (
                   <div
                     key={item._id}
                     className={cn(
-                      "bg-[#c9c4b9] rounded-lg shadow-md overflow-hidden p-4 md:p-6 flex flex-col min-h-[300px] md:min-h-[400px] hover:shadow-lg transition-all duration-400 ease-out",
+                      "sticky top-6 bg-[#c9c4b9] rounded-lg shadow-md overflow-hidden p-4 md:p-6 flex flex-col min-h-[300px] md:min-h-[400px] hover:shadow-lg transition-all duration-400 ease-out",
                       item.moderationStatus === 'pending' && !item.isUserReported && isOwner(item.author, user) && "ring-2 ring-amber-300",
                       item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && "ring-2 ring-orange-300",
                       item.moderationStatus === 'rejected' && isOwner(item.author, user) && "ring-2 ring-red-400"
