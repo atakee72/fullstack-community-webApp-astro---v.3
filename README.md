@@ -128,6 +128,7 @@ Vercel will automatically:
 - **Marketplace**: Buy/sell/exchange (Tausch) listings with image gallery, AI moderation (text + vision), user reports, and draft save/publish workflow
 - **Custom UI Dialogs**: Native `<dialog>`-based confirm modals and sonner toasts replace all browser-native dialogs
 - **Kiez Data Dashboard**: Interactive Schillerkiez neighborhood statistics with hand-drawn SVG charts, historical trends (demographics + social indicators 2013–2023), and live air quality data
+- **Sticky-stack forum cards**: Forum post cards stick at the top of the viewport as you scroll, with the next card sliding over the previous — pure CSS, scales to any list length
 
 ## 🛡️ Content Moderation
 

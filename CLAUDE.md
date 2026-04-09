@@ -198,6 +198,12 @@ Complex React components use a wrapper pattern:
 - `CalendarWrapper.tsx` → `CalendarContainer.tsx`
 - `ForumWrapper.tsx` → `ForumContainer.tsx`
 
+### Forum List (Sticky Stack)
+- **Pattern**: Each forum card in `ForumContainer.tsx` has `sticky top-6` — all siblings share the same `top` offset, so as you scroll down, each new card slides up and visually covers the previous one (later DOM siblings paint on top). Scales to any list length — always one active card at a time, no deep stacking pile-up.
+- **Applies to all 3 forums** (Topics, Announcements, Recommendations) via the shared `collectionType` prop — one change covers all.
+- **Zero JavaScript**: pure CSS `position: sticky`. No scroll listeners, no IntersectionObserver, no scroll-driven animations.
+- **Critical dependency**: requires the `overflow-x: clip` fix in `global.css` (see "Common Errors to Avoid" below). Using `overflow-x: hidden` on `html/body` silently breaks all sticky positioning project-wide.
+
 ### Calendar Date Range Selection
 - **Click-to-select**: Click a future day to select it (teal highlight + speech-bubble tooltip), click another future day to select a range (teal highlight across days)
 - **Tooltip**: Floating speech-bubble with "+" (mobile) / "+ Event" (desktop) above selected cell — opens EventModal with dates pre-filled (09:00–17:00, or next full hour if today)
@@ -274,6 +280,18 @@ When I say yellow, red, green, I always mean the default variants of the project
 - `<script is:inline>` may or may not re-run — use `data-astro-rerun` to force re-execution on every navigation
 - For critical synchronous code (e.g. splash screen), always use `is:inline` — module scripts load too late for timing-sensitive DOM manipulation
 - `astro:before-swap` event can modify `e.newDocument` before it enters the live DOM — useful for stripping elements from incoming pages
+
+### `position: sticky` + `overflow-x: hidden` interaction
+- **Do NOT use `overflow-x: hidden` on `html` or `body`** — it silently breaks every `position: sticky` on the site. Per CSS spec, when one axis of `overflow` is `visible` and the other is not, `visible` computes to `auto`, turning the element into a scroll container. Sticky descendants then try to stick relative to body (which doesn't scroll) instead of the viewport, and never activate.
+- **Use `overflow-x: clip` instead** (supported in all modern browsers since 2020-2022). `clip` prevents horizontal overflow without creating a scroll container. For very old browsers, pair with `overflow-x: hidden` as a fallback declaration FIRST:
+  ```css
+  html, body {
+    overflow-x: hidden; /* fallback for pre-2020 browsers */
+    overflow-x: clip;   /* modern — preserves position: sticky */
+  }
+  ```
+- **If sticky stops working anywhere in the project**, check `global.css` and any container components for `overflow-x: hidden` on the axis-scroll ancestors. Use `getComputedStyle(el).overflowY` in devtools to verify — the "upgraded" value shows as `auto` even if you wrote `visible`.
+- **This was a real latent bug discovered in March 2026** when adding sticky cards to the forum. The fix repaired sticky globally (blog sidebars, calendar agenda headers, and any future sticky usage).
 
 ## TODO / Reminders
 - [ ] Create a pre-commit hook for automatic credentials/secrets check before git add (husky + custom grep script)
