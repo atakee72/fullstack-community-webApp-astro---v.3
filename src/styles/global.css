@@ -32,7 +32,12 @@
 /* Base styles */
 html, body {
   margin: 0;
-  overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+  /* Prevent horizontal scroll on mobile without breaking position: sticky.
+     `clip` clips overflow without creating a scroll container — unlike
+     `hidden`, which per CSS spec silently upgrades `overflow-y: visible` to
+     `overflow-y: auto`, turning body into a scroll container that breaks sticky. */
+  overflow-x: hidden; /* fallback for very old browsers (pre-2020) */
+  overflow-x: clip;   /* modern browsers — preserves position: sticky */
 }
 
 body {
