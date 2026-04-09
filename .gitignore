@@ -46,6 +46,8 @@ netlify/functions-serve/
 # os
 Thumbs.db
 desktop.ini
+# WSL: Windows "mark of the web" metadata leaked from NTFS alternate data streams
+*:Zone.Identifier
 
 # logs
 logs/
