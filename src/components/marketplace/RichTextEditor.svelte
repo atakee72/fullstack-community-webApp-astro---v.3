@@ -122,10 +122,12 @@
     <button
       type="button"
       onclick={toggleBold}
-      class="p-2 rounded hover:bg-gray-200 transition-colors {activeFormats.bold ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
+      class="p-2.5 sm:p-2 rounded hover:bg-gray-200 transition-colors {activeFormats.bold ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
       title="Bold (Ctrl+B)"
+      aria-label="Bold"
+      aria-pressed={!!activeFormats.bold}
     >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+      <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
         <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
       </svg>
@@ -135,24 +137,28 @@
     <button
       type="button"
       onclick={toggleItalic}
-      class="p-2 rounded hover:bg-gray-200 transition-colors {activeFormats.italic ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
+      class="p-2.5 sm:p-2 rounded hover:bg-gray-200 transition-colors {activeFormats.italic ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
       title="Italic (Ctrl+I)"
+      aria-label="Italic"
+      aria-pressed={!!activeFormats.italic}
     >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
         <line x1="19" y1="4" x2="10" y2="4"/>
         <line x1="14" y1="20" x2="5" y2="20"/>
         <line x1="15" y1="4" x2="9" y2="20"/>
       </svg>
     </button>
 
-    <div class="w-px h-5 bg-gray-300 mx-1"></div>
+    <div class="w-px h-5 bg-gray-300 mx-1" aria-hidden="true"></div>
 
     <!-- Heading 1 -->
     <button
       type="button"
       onclick={() => toggleHeading(1)}
-      class="p-2 rounded hover:bg-gray-200 transition-colors text-sm font-bold {activeFormats.header === 1 ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
+      class="p-2.5 sm:p-2 rounded hover:bg-gray-200 transition-colors text-sm font-bold {activeFormats.header === 1 ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
       title="Heading 1"
+      aria-label="Heading 1"
+      aria-pressed={activeFormats.header === 1}
     >
       H1
     </button>
@@ -161,22 +167,26 @@
     <button
       type="button"
       onclick={() => toggleHeading(2)}
-      class="p-2 rounded hover:bg-gray-200 transition-colors text-sm font-bold {activeFormats.header === 2 ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
+      class="p-2.5 sm:p-2 rounded hover:bg-gray-200 transition-colors text-sm font-bold {activeFormats.header === 2 ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
       title="Heading 2"
+      aria-label="Heading 2"
+      aria-pressed={activeFormats.header === 2}
     >
       H2
     </button>
 
-    <div class="w-px h-5 bg-gray-300 mx-1"></div>
+    <div class="w-px h-5 bg-gray-300 mx-1" aria-hidden="true"></div>
 
     <!-- Bullet List -->
     <button
       type="button"
       onclick={toggleBulletList}
-      class="p-2 rounded hover:bg-gray-200 transition-colors {activeFormats.list === 'bullet' ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
+      class="p-2.5 sm:p-2 rounded hover:bg-gray-200 transition-colors {activeFormats.list === 'bullet' ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
       title="Bullet List"
+      aria-label="Bullet list"
+      aria-pressed={activeFormats.list === 'bullet'}
     >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
         <line x1="9" y1="6" x2="20" y2="6"/>
         <line x1="9" y1="12" x2="20" y2="12"/>
         <line x1="9" y1="18" x2="20" y2="18"/>
@@ -190,10 +200,12 @@
     <button
       type="button"
       onclick={toggleNumberedList}
-      class="p-2 rounded hover:bg-gray-200 transition-colors {activeFormats.list === 'ordered' ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
+      class="p-2.5 sm:p-2 rounded hover:bg-gray-200 transition-colors {activeFormats.list === 'ordered' ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
       title="Numbered List"
+      aria-label="Numbered list"
+      aria-pressed={activeFormats.list === 'ordered'}
     >
-      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg class="w-5 h-5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <line x1="10" y1="6" x2="20" y2="6"/>
         <line x1="10" y1="12" x2="20" y2="12"/>
         <line x1="10" y1="18" x2="20" y2="18"/>
@@ -207,7 +219,8 @@
   <!-- Editor Content - always rendered so we can bind to it -->
   <div
     bind:this={editorRoot}
-    class="min-h-[150px] max-h-[300px] overflow-y-auto px-4 py-3 border border-t-0 border-[#aca89f]/30 rounded-b-xl focus-within:ring-2 focus-within:ring-[#4b9aaa] focus-within:border-transparent prose prose-sm max-w-none editor-content bg-white"
+    data-placeholder={placeholder}
+    class="min-h-[200px] max-h-[400px] overflow-y-auto px-4 py-3 border border-t-0 border-[#aca89f]/30 rounded-b-xl focus-within:ring-2 focus-within:ring-[#4b9aaa] focus-within:border-transparent prose prose-sm max-w-none editor-content bg-white"
   >
     {#if !mounted}
       <div class="animate-pulse">
@@ -266,5 +279,13 @@
   }
   :global(.editor-content:focus) {
     outline: none;
+  }
+  /* Placeholder shown when editor is empty (typewriter sets it to a single empty <p>) */
+  :global(.editor-content:has(> p:only-child:empty))::before,
+  :global(.editor-content:empty)::before {
+    content: attr(data-placeholder);
+    color: #9ca3af;
+    pointer-events: none;
+    font-style: italic;
   }
 </style>

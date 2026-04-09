@@ -51,7 +51,7 @@
           if (attrs.bold) formatted = `<strong>${formatted}</strong>`;
           if (attrs.italic) formatted = `<em>${formatted}</em>`;
           if (attrs.code) formatted = `<code>${formatted}</code>`;
-          if (attrs.link) formatted = `<a href="${escapeHtml(attrs.link)}" target="_blank" rel="noopener">${formatted}</a>`;
+          if (attrs.link) formatted = `<a href="${safeHref(attrs.link)}" target="_blank" rel="noopener noreferrer">${formatted}</a>`;
           currentLine += formatted;
         }
       }
@@ -77,6 +77,15 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  // Allow only safe URL schemes — blocks javascript:, data:, vbscript:, file:
+  function safeHref(url: string): string {
+    const escaped = escapeHtml(url);
+    if (/^(https?:\/\/|mailto:|\/)/i.test(escaped)) {
+      return escaped;
+    }
+    return '#';
   }
 
   const displayHtml = $derived(
