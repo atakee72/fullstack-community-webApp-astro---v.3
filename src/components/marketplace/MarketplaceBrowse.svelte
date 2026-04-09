@@ -13,11 +13,12 @@
 
   let pageSize = $state(12);
 
+  // Filters describe "what to find". Pagination (pageSize, offset) is tracked
+  // separately so the two can't drift out of sync.
   let filters = $state<ListingFilters>({
     category: 'all',
     condition: 'all',
     sortBy: 'newest',
-    limit: pageSize,
     offset: 0
   });
 
@@ -30,7 +31,7 @@
 
   function handlePageSizeChange(size: number) {
     pageSize = size;
-    filters = { ...filters, limit: size, offset: 0 };
+    filters = { ...filters, offset: 0 };
   }
 
   async function fetchListings() {
@@ -46,7 +47,7 @@
       if (filters.search) params.set('search', filters.search);
       if (filters.priceMin !== undefined) params.set('priceMin', String(filters.priceMin));
       if (filters.priceMax !== undefined) params.set('priceMax', String(filters.priceMax));
-      params.set('limit', String(filters.limit || 12));
+      params.set('limit', String(pageSize));
       params.set('offset', String(filters.offset || 0));
 
       const response = await fetch(`/api/listings?${params}`);

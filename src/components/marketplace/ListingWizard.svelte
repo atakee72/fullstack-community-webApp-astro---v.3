@@ -6,6 +6,32 @@
 
   let { session, draftData = null } = $props<{ session: any; draftData?: any }>();
 
+  // Snapshot the incoming draft once at mount. The wizard then owns its own
+  // editable state — the prop is treated as initial seed data, not a live source.
+  // Wrapping the reads in a function makes the access opaque to Svelte's static
+  // analyzer, so it stops warning about "captures only the initial value" — which
+  // is exactly the behaviour we want for a form.
+  function initialDraftId(): string | null {
+    const d = draftData;
+    return d?._id?.toString() || d?._id || null;
+  }
+
+  function initialListing() {
+    const d = draftData;
+    return {
+      title: d?.title || '',
+      description: d?.description || { ops: [{ insert: '\n' }] }, // Delta format
+      descriptionPlainText: d?.descriptionPlainText || '', // Plain text for validation/search
+      listingType: (d?.listingType || 'sell') as 'sell' | 'exchange',
+      exchangeFor: d?.exchangeFor || '',
+      category: d?.category || '',
+      condition: d?.condition || '',
+      images: (d?.images || []) as string[],
+      price: d?.price || 0,
+      originalPrice: d?.originalPrice as number | undefined
+    };
+  }
+
   let currentStep = $state(1);
   let isSubmitting = $state(false);
   let isSavingDraft = $state(false);
@@ -13,7 +39,8 @@
   let draftSavedMessage = $state<string | null>(null);
   let dailyLimitReached = $state(false);
   let dailyRemaining = $state(5);
-  let draftId = $state<string | null>(draftData?._id?.toString() || draftData?._id || null);
+  let draftId = $state<string | null>(initialDraftId());
+  let listing = $state(initialListing());
 
   // Check daily listing limit on load
   $effect(() => {
@@ -30,19 +57,6 @@
       }
     } catch {}
   }
-
-  let listing = $state({
-    title: draftData?.title || '',
-    description: draftData?.description || { ops: [{ insert: '\n' }] }, // Delta format
-    descriptionPlainText: draftData?.descriptionPlainText || '', // Plain text for validation/search
-    listingType: (draftData?.listingType || 'sell') as 'sell' | 'exchange',
-    exchangeFor: draftData?.exchangeFor || '',
-    category: draftData?.category || '',
-    condition: draftData?.condition || '',
-    images: (draftData?.images || []) as string[],
-    price: draftData?.price || 0,
-    originalPrice: draftData?.originalPrice as number | undefined
-  });
 
   // For exchange listings, we skip the pricing step (step 3)
   const isExchange = $derived(listing.listingType === 'exchange');
@@ -219,7 +233,7 @@
           <div
             class="w-8 sm:w-16 lg:w-24 h-0.5 mx-2 sm:mx-4
               {currentStep > step.id ? 'bg-[#4b9aaa]' : 'bg-gray-300'}"
-          />
+          ></div>
         {/if}
       </div>
     {/each}

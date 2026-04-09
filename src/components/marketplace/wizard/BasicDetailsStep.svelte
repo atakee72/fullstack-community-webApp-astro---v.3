@@ -87,10 +87,10 @@
 
   <!-- Listing Type Toggle -->
   <div>
-    <label class="block text-sm font-medium text-gray-700 mb-3">
+    <div id="listing-type-label" class="block text-sm font-medium text-gray-700 mb-3">
       What would you like to do? <span class="text-red-500">*</span>
-    </label>
-    <div class="grid grid-cols-2 gap-3">
+    </div>
+    <div role="group" aria-labelledby="listing-type-label" class="grid grid-cols-2 gap-3">
       <button
         type="button"
         onclick={() => updateListing('listingType', 'sell')}

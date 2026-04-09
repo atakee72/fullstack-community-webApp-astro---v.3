@@ -181,6 +181,9 @@
 
   <!-- Upload Zone -->
   <div
+    role="button"
+    tabindex="0"
+    aria-label="Upload photos — drag and drop files here or use the button below"
     class="border-2 border-dashed rounded-2xl p-8 text-center transition-colors relative
       {dragOver ? 'border-[#4b9aaa] bg-[#4b9aaa]/5' : 'border-[#aca89f]/50'}
       {listing.images.length >= 5 ? 'opacity-50 pointer-events-none' : ''}"
@@ -250,10 +253,12 @@
           {/if}
 
           <button
+            type="button"
             onclick={() => removeImage(index)}
+            aria-label="Remove photo {index + 1}"
             class="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>

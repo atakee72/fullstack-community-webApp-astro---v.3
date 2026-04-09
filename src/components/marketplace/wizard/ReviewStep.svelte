@@ -48,13 +48,13 @@
       <h3 class="font-semibold text-gray-800">Photos</h3>
       {#if listing.images.length > 0}
         <div class="aspect-square rounded-xl overflow-hidden border border-[#aca89f]/30">
-          <img src={listing.images[0]} alt="Main photo" class="w-full h-full object-cover" />
+          <img src={listing.images[0]} alt="Main preview of your listing" class="w-full h-full object-cover" />
         </div>
         {#if listing.images.length > 1}
           <div class="grid grid-cols-4 gap-2">
             {#each listing.images.slice(1) as image, index}
               <div class="aspect-square rounded-lg overflow-hidden border border-[#aca89f]/30">
-                <img src={image} alt="Photo {index + 2}" class="w-full h-full object-cover" />
+                <img src={image} alt="Additional preview {index + 1}" class="w-full h-full object-cover" />
               </div>
             {/each}
           </div>
