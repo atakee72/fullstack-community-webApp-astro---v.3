@@ -47,7 +47,7 @@ export default function HeartBtn({ isLiked, likeCount, onToggle, disabled = fals
     >
       {/* Like count badge - Behind the heart */}
       {likeCount > 0 && (
-        <span className="absolute top-0 -right-1 bg-gray-300 text-gray-800 text-[8px] md:text-[10px] font-bold rounded-full min-w-[14px] h-[14px] md:min-w-[16px] md:h-[16px] flex items-center justify-center px-0.5">
+        <span className="absolute top-0 -right-1 bg-gray-300 text-gray-800 text-[8px] md:text-[10px] font-bold rounded-full min-w-[12px] h-[12px] md:min-w-[14px] md:h-[14px] flex items-center justify-center px-0.5">
           {likeCount}
         </span>
       )}
@@ -56,7 +56,7 @@ export default function HeartBtn({ isLiked, likeCount, onToggle, disabled = fals
         viewBox="0 0 24 24"
         fill="none"
         aria-hidden="true"
-        className="relative block w-5 h-5 md:w-6 md:h-6 z-10"
+        className="relative block w-4 h-4 md:w-5 md:h-5 z-10"
       >
         <path
           d="M3.68546 5.43796C8.61936 1.29159 11.8685 7.4309 12.0406 7.4309C12.2126 7.43091 15.4617 1.29159 20.3956 5.43796C26.8941 10.8991 13.5 21.8215 12.0406 21.8215C10.5811 21.8215 -2.81297 10.8991 3.68546 5.43796Z"

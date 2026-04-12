@@ -15,12 +15,12 @@ export default function EyeIcon({ viewCount, createdAt }: EyeIconProps) {
     <button className="particleButton relative p-1 md:p-1.5 bg-transparent border-none rounded-full cursor-default">
       {/* View count badge - Behind the eye */}
       {viewCount > 0 && (
-        <span className="absolute top-0 -right-1 bg-gray-300 text-gray-800 text-[8px] md:text-[10px] font-bold rounded-full min-w-[14px] h-[14px] md:min-w-[16px] md:h-[16px] flex items-center justify-center px-0.5">
+        <span className="absolute top-0 -right-1 bg-gray-300 text-gray-800 text-[8px] md:text-[10px] font-bold rounded-full min-w-[12px] h-[12px] md:min-w-[14px] md:h-[14px] flex items-center justify-center px-0.5">
           {viewCount}
         </span>
       )}
 
-      <div className="eye-blink relative w-5 h-5 md:w-6 md:h-6 z-10" style={{ '--animation-delay': animationDelay } as React.CSSProperties}>
+      <div className="eye-blink relative w-4 h-4 md:w-5 md:h-5 z-10" style={{ '--animation-delay': animationDelay } as React.CSSProperties}>
         <svg
           viewBox="0 0 24 24"
           fill="none"
