@@ -266,3 +266,51 @@ export function useDeletePost(type: 'topics' | 'announcements' | 'recommendation
     },
   });
 }
+
+// Save/bookmark posts
+async function toggleSavePost(postId: string, action: 'save' | 'unsave') {
+  const res = await fetch(`${API_URL}/posts/save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ postId, action }),
+  });
+  if (!res.ok) throw new Error('Failed to save post');
+  return res.json();
+}
+
+export function useSavePostMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, action }: { postId: string; action: 'save' | 'unsave' }) =>
+      toggleSavePost(postId, action),
+    onMutate: async ({ postId, action }) => {
+      await queryClient.cancelQueries({ queryKey: ['savedPosts'] });
+      const prev = queryClient.getQueryData<{ savedIds: string[] }>(['savedPosts']);
+      queryClient.setQueryData(['savedPosts'], (old: { savedIds: string[] } | undefined) => {
+        const ids = old?.savedIds || [];
+        return { savedIds: action === 'save' ? [...ids, postId] : ids.filter(id => id !== postId) };
+      });
+      return { prev };
+    },
+    onError: (_err: unknown, _vars: unknown, context: { prev?: { savedIds: string[] } } | undefined) => {
+      if (context?.prev) queryClient.setQueryData(['savedPosts'], context.prev);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['savedPosts'] });
+    },
+  });
+}
+
+export function useSavedPostsQuery(enabled: boolean) {
+  return useQuery({
+    queryKey: ['savedPosts'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/posts/save`, { credentials: 'include' });
+      if (!res.ok) return { savedIds: [] as string[] };
+      return res.json() as Promise<{ savedIds: string[] }>;
+    },
+    enabled,
+    staleTime: 5 * 60 * 1000,
+  });
+}
