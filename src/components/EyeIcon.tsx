@@ -3,9 +3,10 @@ import React from 'react';
 interface EyeIconProps {
   viewCount: number;
   createdAt?: number | Date; // Topic creation timestamp
+  color?: string; // Stroke color (default: #814256)
 }
 
-export default function EyeIcon({ viewCount, createdAt }: EyeIconProps) {
+export default function EyeIcon({ viewCount, createdAt, color = '#814256' }: EyeIconProps) {
   // Calculate unique animation delay based on creation timestamp
   const animationDelay = createdAt
     ? `${(typeof createdAt === 'number' ? createdAt : createdAt.getTime()) % 4000}ms`
@@ -20,7 +21,7 @@ export default function EyeIcon({ viewCount, createdAt }: EyeIconProps) {
         </span>
       )}
 
-      <div className="eye-blink relative w-4 h-4 md:w-5 md:h-5 z-10" style={{ '--animation-delay': animationDelay } as React.CSSProperties}>
+      <div className="eye-blink relative w-5 h-5 z-10" style={{ '--animation-delay': animationDelay } as React.CSSProperties}>
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -30,7 +31,7 @@ export default function EyeIcon({ viewCount, createdAt }: EyeIconProps) {
           {/* Eye outline */}
           <path
             d="M12 5C7 5 2.73 8.11 1 12.5C2.73 16.89 7 20 12 20C17 20 21.27 16.89 23 12.5C21.27 8.11 17 5 12 5Z"
-            stroke="#814256"
+            stroke={color}
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -41,7 +42,7 @@ export default function EyeIcon({ viewCount, createdAt }: EyeIconProps) {
             cx="12"
             cy="12.5"
             r="3"
-            stroke="#814256"
+            stroke={color}
             strokeWidth="2.5"
             fill="none"
           />
@@ -56,7 +57,7 @@ export default function EyeIcon({ viewCount, createdAt }: EyeIconProps) {
         >
           <path
             d="M12 12.5C7 12.5 2.73 12.5 1 12.5C2.73 12.5 7 12.5 12 12.5C17 12.5 21.27 12.5 23 12.5C21.27 12.5 17 12.5 12 12.5Z"
-            stroke="#814256"
+            stroke={color}
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"

@@ -5,9 +5,10 @@ interface HeartBtnProps {
   likeCount: number;
   onToggle: () => void;
   disabled?: boolean;
+  color?: string; // Stroke/fill color (default: #814256)
 }
 
-export default function HeartBtn({ isLiked, likeCount, onToggle, disabled = false }: HeartBtnProps) {
+export default function HeartBtn({ isLiked, likeCount, onToggle, disabled = false, color = '#814256' }: HeartBtnProps) {
   const [particles, setParticles] = useState<Array<{ id: number; angle: number; distance: number }>>([]);
 
   const FADE_DURATION = 1000;
@@ -43,6 +44,7 @@ export default function HeartBtn({ isLiked, likeCount, onToggle, disabled = fals
       onClick={handleClick}
       disabled={disabled}
       className={`particleButton relative p-1 md:p-1.5 bg-transparent border-none rounded-full cursor-pointer transition-all hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed ${isLiked ? 'liked' : ''}`}
+      style={{ '--heart-color': color } as React.CSSProperties}
       aria-label={isLiked ? 'Unlike this post' : 'Like this post'}
     >
       {/* Like count badge - Behind the heart */}
@@ -56,14 +58,15 @@ export default function HeartBtn({ isLiked, likeCount, onToggle, disabled = fals
         viewBox="0 0 24 24"
         fill="none"
         aria-hidden="true"
-        className="relative block w-4 h-4 md:w-5 md:h-5 z-10"
+        className="relative block w-5 h-5 z-10"
       >
         <path
           d="M3.68546 5.43796C8.61936 1.29159 11.8685 7.4309 12.0406 7.4309C12.2126 7.43091 15.4617 1.29159 20.3956 5.43796C26.8941 10.8991 13.5 21.8215 12.0406 21.8215C10.5811 21.8215 -2.81297 10.8991 3.68546 5.43796Z"
-          stroke="#814256"
+          stroke={color}
           strokeWidth="2"
           strokeLinecap="round"
-          className={`transition-all ${isLiked ? 'fill-[#814256] stroke-[#814256]' : 'fill-none stroke-[#814256]'}`}
+          className="transition-all"
+          style={{ fill: isLiked ? color : 'none', stroke: color }}
         />
       </svg>
 
@@ -105,12 +108,12 @@ export default function HeartBtn({ isLiked, likeCount, onToggle, disabled = fals
         }
 
         .particleButton:hover svg path {
-          stroke: #814256;
+          stroke: var(--heart-color, #814256);
         }
 
         .particleButton.liked svg path {
-          fill: #814256;
-          stroke: #814256;
+          fill: var(--heart-color, #814256);
+          stroke: var(--heart-color, #814256);
         }
       `}</style>
     </button>
