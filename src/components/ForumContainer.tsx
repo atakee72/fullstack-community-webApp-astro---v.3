@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { useTopicsQuery, useCreatePost, useDeletePost, useEditPost } from '../hooks/api/useTopicsQuery';
+import { motion, AnimatePresence } from 'motion/react';
+import { useTopicsQuery, useCreatePost, useDeletePost, useEditPost, useSavePostMutation, useSavedPostsQuery } from '../hooks/api/useTopicsQuery';
+import { BookmarkIcon } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLikeMutation } from '../hooks/api/useLikeMutation';
 import PostModal from './PostModal';
@@ -54,6 +56,9 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   const deletePost = useDeletePost(collectionType);
   const editPost = useEditPost(collectionType);
   const likeMutation = useLikeMutation(collectionType);
+  const savePost = useSavePostMutation();
+  const { data: savedPostsData } = useSavedPostsQuery(!!user);
+  const savedPosts = new Set(savedPostsData?.savedIds || []);
 
   const queryClient = useQueryClient();
 
@@ -138,9 +143,10 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     (currentPage + 1) * pageSize
   );
 
-  // Reset to first page whenever the underlying list changes (new tab or new search).
+  // Reset to first page and scroll to top whenever the tab or search changes.
   useEffect(() => {
     setCurrentPage(0);
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [collectionType, searchValue]);
 
   // Disable click events on sticky cards hidden behind the active (topmost) one.
@@ -150,24 +156,15 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   // sticky element" (all stuck cards match @container scroll-state(stuck: top)
   // equally), so we use a throttled scroll listener to toggle pointer-events.
   useEffect(() => {
-    const cards = Array.from(document.querySelectorAll<HTMLElement>('.forum-sticky-card'));
-    if (cards.length === 0) return;
-
     let rafId = 0;
     const update = () => {
-      // Find the visually topmost card: the HIGHEST-index card whose top edge
-      // is in the "pile region" (near the sticky header). In the pile, later
-      // DOM siblings paint over earlier ones, so iterating in REVERSE and
-      // picking the first hit gives us the visually topmost card — whether
-      // it's a stuck sticky card OR the non-sticky last card scrolling past.
-      //
-      // This replaces the fragile sticky-position-matching approach, which
-      // broke when cards released from sticky at the end of scroll.
+      // Re-query cards every time — DOM nodes change after AnimatePresence transitions
+      const cards = Array.from(document.querySelectorAll<HTMLElement>('.forum-sticky-card'));
+      if (cards.length === 0) return;
+
       const root = document.querySelector('[class*="max-w-4xl"]');
       const headerEl = root?.querySelector('[class*="sticky"]');
       const headerBottom = headerEl ? headerEl.getBoundingClientRect().bottom : 100;
-      // Pile region: from just above the header bottom to 120px below it
-      // (covers all pile offsets: 0, 20, 40, 60, 80, plus buffer).
       const pileTop = headerBottom - 10;
       const pileBottom = headerBottom + 120;
 
@@ -176,14 +173,10 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
         const rect = cards[i].getBoundingClientRect();
         if (rect.top >= pileTop && rect.top <= pileBottom) {
           activeIndex = i;
-          break; // highest DOM index in region = visually topmost
+          break;
         }
       }
 
-      // WRITE PASS: cards before the active index are "stuck but hidden". Toggle a single
-      // class that both disables pointer events AND applies the "pressed behind" shadow
-      // (defined in global.css). Cards not yet stuck, and the active top card, both get
-      // the default "free/floating" shadow (shadow-xl from Tailwind) with no class.
       for (let i = 0; i < cards.length; i++) {
         const isHidden = activeIndex >= 0 && i < activeIndex;
         cards[i].classList.toggle('is-hidden-behind', isHidden);
@@ -205,7 +198,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
       window.removeEventListener('scroll', handleScroll);
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [filteredItems, currentPage, pageSize]);
+  }, [filteredItems, currentPage, pageSize, collectionType]);
 
   const handlePostSubmit = async (data: { title: string; body: string; tags: string[]; images: { url: string; publicId: string }[] }) => {
     try {
@@ -461,7 +454,15 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
               <p className="text-gray-600 text-base md:text-lg">No {collectionType} found. Be the first to create one!</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <AnimatePresence mode="wait">
+            <motion.div
+              key={collectionType}
+              className="space-y-4"
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+            >
               {pagedItems.map((item, index) => {
                 // Piling effect: cards stick just below the sticky header.
                 // `--forum-header-h` is set live via ResizeObserver (see useEffect above)
@@ -519,7 +520,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                                   setShowAddModal(true);
                                 }
                               }}
-                              className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="p-0.5 md:p-1 rounded-md transition-colors text-sm md:text-base text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                               title={item.moderationStatus === 'pending' ? "Editing disabled while pending review" : item.moderationStatus === 'rejected' ? "Editing disabled for rejected posts" : "Edit post"}
                               disabled={item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
                             >
@@ -531,7 +532,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                                   deletePost.mutate(item._id);
                                 }
                               }}
-                              className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="p-0.5 md:p-1 rounded-md transition-colors text-sm md:text-base text-gray-500 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                               title={item.moderationStatus === 'pending' ? "Deletion disabled while pending review" : item.moderationStatus === 'rejected' ? "Deletion disabled for rejected posts" : "Delete post"}
                               disabled={item.moderationStatus === 'pending' || item.moderationStatus === 'rejected' || deletePost.isPending}
                             >
@@ -625,8 +626,8 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           item.hasWarningLabel && !isOwner(item.author, user) && !revealedWarnings.has(item._id) && "blur-sm pointer-events-none select-none"
                         )}>
                           {/* Author Info Header */}
-                          <div className="bg-[#4b9aaa] text-white px-2 md:px-3 py-px md:py-0.5 rounded-md mt-0 mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs">
-                            <div className="w-7 h-7 md:w-8 md:h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+                          <div className="bg-[#4b9aaa] text-white px-1.5 md:px-2 py-0 rounded-md mt-0 mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs">
+                            <div className="w-11 h-11 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center flex-shrink-0 -my-2">
                               <span className="text-[#4b9aaa] font-bold text-xs md:text-sm">
                                 {item.author?.name?.charAt(0)?.toUpperCase() || item.author?.userName?.charAt(0)?.toUpperCase() || 'A'}
                               </span>
@@ -642,7 +643,28 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                                 )}
                               </div>
                             </div>
-                            <div className="flex gap-2 md:gap-3 items-center text-xs md:text-sm">
+                            <div className="flex gap-0 items-center text-xs md:text-sm">
+                              {/* Bookmark icon */}
+                              {user && (
+                                <button
+                                  onClick={() => {
+                                    const action = savedPosts.has(item._id) ? 'unsave' : 'save';
+                                    savePost.mutate({ postId: item._id, action });
+                                  }}
+                                  className="particleButton relative p-1 md:p-1.5 bg-transparent border-none rounded-full cursor-pointer transition-all hover:bg-white/10"
+                                  aria-label={savedPosts.has(item._id) ? "Unsave post" : "Save post"}
+                                >
+                                  <BookmarkIcon
+                                    className={cn(
+                                      "w-4 h-4 md:w-5 md:h-5 transition-colors",
+                                      savedPosts.has(item._id)
+                                        ? "text-[#814256] fill-[#814256]"
+                                        : "text-[#814256] hover:text-[#814256]/80"
+                                    )}
+                                    strokeWidth={2}
+                                  />
+                                </button>
+                              )}
                               {/* Comment count icon */}
                               <button
                                 onClick={() => handleReadMore(item)}
@@ -650,11 +672,11 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                                 aria-label="View comments"
                               >
                                 {(item.comments?.length || 0) > 0 && (
-                                  <span className="absolute top-0 -right-1 bg-gray-300 text-gray-800 text-[8px] md:text-[10px] font-bold rounded-full min-w-[14px] h-[14px] md:min-w-[16px] md:h-[16px] flex items-center justify-center px-0.5">
+                                  <span className="absolute top-0 -right-1 bg-gray-300 text-gray-800 text-[8px] md:text-[10px] font-bold rounded-full min-w-[12px] h-[12px] md:min-w-[14px] md:h-[14px] flex items-center justify-center px-0.5">
                                     {item.comments.length}
                                   </span>
                                 )}
-                                <svg viewBox="0 0 24 24" fill="none" className="relative block w-5 h-5 md:w-6 md:h-6 z-10">
+                                <svg viewBox="0 0 24 24" fill="none" className="relative block w-4 h-4 md:w-5 md:h-5 z-10">
                                   <path
                                     d="M21 11.5C21 16.75 16.97 21 12 21C10.67 21 9.4 20.71 8.25 20.2L3 21L4.39 16.88C3.52 15.38 3 13.5 3 11.5C3 6.25 7.03 2 12 2C16.97 2 21 6.25 21 11.5Z"
                                     stroke="#814256"
@@ -749,7 +771,8 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                   </div>
                 );
               })}
-            </div>
+            </motion.div>
+            </AnimatePresence>
           )}
           {filteredItems.length > pageSize && (
             <div className="mt-6 md:mt-8">
