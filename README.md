@@ -129,6 +129,7 @@ Vercel will automatically:
 - **Custom UI Dialogs**: Native `<dialog>`-based confirm modals and sonner toasts replace all browser-native dialogs
 - **Kiez Data Dashboard**: Interactive Schillerkiez neighborhood statistics with hand-drawn SVG charts, historical trends (demographics + social indicators 2013–2023), and live air quality data
 - **Sticky-stack forum cards**: Forum post cards stick at the top of the viewport as you scroll, with the next card sliding over the previous — variable pile offsets create a "casually tossed" stack effect. Client-side pagination (12/24/48 per page). Click-blocking prevents interaction with hidden cards in the pile.
+- **Forum post images**: Up to 5 images per post (topics, announcements, recommendations) with Cloudinary upload, GPT-4o vision moderation, full-height cover image on card (50/50 split), and scroll-snap carousel with arrow nav in the detail modal
 
 ## 🛡️ Content Moderation
 
@@ -138,7 +139,7 @@ The app includes a comprehensive content moderation system:
 - **Layer 1 — Turkish profanity filter**: Custom blocklist for Turkish swear words (OpenAI is English-focused)
 - **Layer 2 — Safety scan**: OpenAI `omni-moderation-latest` scans all content types on submission (topics, comments, events, announcements, recommendations, marketplace listings)
 - **Layer 3 — GPT spam check**: `checkSpamWithGPT()` catches spam, ads, and scams that the safety scan misses — runs on all content types
-- **Layer 4 — Image safety** (marketplace only): GPT-4o vision scans listing images for inappropriate content
+- **Layer 4 — Image safety** (marketplace + forum posts): GPT-4o vision scans images for inappropriate content
 - All checks run in parallel via `Promise.all()` and are merged with `mergeModerationResults()`
 - Content exceeding thresholds is queued for admin review
 - Fail-safe: If any API fails, content is queued for manual review (never auto-approves on error)
@@ -293,7 +294,8 @@ The `/schillerkiez` page shows neighborhood-level statistics for the Schillerkie
 - `GET /api/kiez-air` - Live BLUME air quality grades for station MC042 (public, 30 min cache)
 
 ### Other
-- `POST /api/upload/image` - Upload image to Cloudinary
+- `POST /api/upload/image` - Upload image to Cloudinary (profile pictures)
+- `POST /api/posts/upload` - Upload forum post image to Cloudinary (max 5MB)
 - `GET /api/users/update` - Update user profile
 
 ## 🔒 Environment Variables

@@ -42,6 +42,7 @@ src/
 │   │   ├── likes/
 │   │   ├── views/
 │   │   ├── news/          # Newsboard CRUD, daily fetch, save/unsave
+│   │   ├── posts/         # Forum post image upload
 │   │   ├── listings/      # Marketplace listings CRUD + draft save/publish
 │   │   ├── reports/       # User report submission
 │   │   ├── admin/         # Admin moderation APIs (review + bulk-review)
@@ -98,7 +99,7 @@ export const POST: APIRoute = async ({ request }) => {
 ### Content Moderation
 - **AI moderation**: OpenAI `omni-moderation-latest` scans all content types (topics, comments, events, announcements, recommendations, marketplace listings) on submission
 - **GPT spam check**: `checkSpamWithGPT()` runs in parallel with `moderateText()` on all content types — catches spam, ads, scams that the safety scan misses. `irrelevant_nonsense` classification is treated as legitimate (too many false positives on short/casual content like "nice", "Çok iyi!"). Only `spam`, `ad_promotional`, and `scam` are flagged.
-- **Marketplace extra**: Listings also get `checkImagesWithGPT()` (GPT-4o vision) for image safety
+- **Image moderation**: Forum posts (topics, announcements, recommendations) and marketplace listings get `checkImagesWithGPT()` (GPT-4o vision) for image safety — runs in parallel with text moderation
 - **Turkish filter**: Custom blocklist in `lib/moderation.ts` for Turkish profanity (OpenAI is English-focused)
 - **Result merging**: `mergeModerationResults()` combines all checks into a single flagged record
 - **Daily posting limits**: 5 per rolling 24h for topics, events, announcements, recommendations, and marketplace listings. Comments excluded (lightweight/conversational). Checked before validation to save API costs.
@@ -152,10 +153,10 @@ export const POST: APIRoute = async ({ request }) => {
 
 ## Database Collections
 - `users` - User accounts (includes `moderationStrikes`, `isBanned` fields)
-- `topics` - Forum posts (includes `moderationStatus`, `isUserReported` fields)
+- `topics` - Forum posts (includes `moderationStatus`, `isUserReported`, `images` fields)
 - `events` - Calendar events (includes `moderationStatus`, `isUserReported` fields)
-- `announcements` - Community announcements (includes `moderationStatus`, `isUserReported` fields)
-- `recommendations` - User recommendations (includes `moderationStatus`, `isUserReported` fields)
+- `announcements` - Community announcements (includes `moderationStatus`, `isUserReported`, `images` fields)
+- `recommendations` - User recommendations (includes `moderationStatus`, `isUserReported`, `images` fields)
 - `comments` - Comments on posts (includes `moderationStatus` field)
 - `listings` - Marketplace listings (includes `moderationStatus`, `listingType`, `status` fields)
 - `news` - Newsboard articles (AI-fetched and user-submitted, includes `moderationStatus`, `aiRelevanceScore`, `fetchDate`, `sourceName`, `sourceUrl` fields)
@@ -207,6 +208,15 @@ Complex React components use a wrapper pattern:
 - **Pagination**: Client-side slicing of `filteredItems` into pages of 12 (configurable 12/24/48). Uses the shared `Pagination` component (`src/components/ui/Pagination.tsx`) with wine accent (`#814256`). Page resets to 0 on tab switch or search. Scroll-to-top on page change.
 - **Applies to all 3 forums** (Topics, Announcements, Recommendations) via the shared `collectionType` prop.
 - **Critical dependency**: requires the `overflow-x: clip` fix in `global.css` (see "Common Errors to Avoid" below). Using `overflow-x: hidden` on `html/body` silently breaks all sticky positioning project-wide.
+
+### Forum Post Images
+- **Upload**: Up to 5 images per post (topics, announcements, recommendations), 5MB each. Uploaded to Cloudinary via `POST /api/posts/upload` (session auth, folder `mahalle/posts`, transform 1200x800 limit).
+- **Data model**: `images?: { url: string; publicId: string }[]` on Topic, Announcement, Recommendation types. Validated by `PostImageSchema` in `forum.schema.ts`.
+- **Moderation**: `checkImagesWithGPT()` runs in parallel with text moderation on create. Flagged images → post goes to `pending` review.
+- **Card layout**: Cards with images use `flex-row` — left half (`w-1/2`) contains all content (title, author, text, tags), right half (`w-1/2`) shows cover image (`object-contain` on card-colored `#c9c4b9` background, absolutely positioned to fill full card height). Cards without images use normal `flex-col` layout unchanged.
+- **PostModal**: Image picker section between body textarea and tags. File input with preview grid, X-to-remove, counter (N/5). Images uploaded to Cloudinary on form submit (not on select). Edit mode pre-populates existing images.
+- **ReadMoreModal**: CSS scroll-snap carousel (`w-[65%]` per image, shows 1.5 images). `object-contain` with `max-h-64 sm:max-h-80`. Arrow nav buttons (`<` / `>`) for 2+ images. Single image shows full width.
+- **Comments**: Inline in ReadMoreModal (not on card face). Simple cards matching EventViewModal pattern, newest first. `useCommentsQuery(postId)` fetches full comment data.
 
 ### Calendar Date Range Selection
 - **Click-to-select**: Click a future day to select it (teal highlight + speech-bubble tooltip), click another future day to select a range (teal highlight across days)
