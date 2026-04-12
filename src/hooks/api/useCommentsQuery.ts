@@ -69,12 +69,12 @@ export function useCreateComment() {
   return useMutation({
     mutationFn: createComment,
     onSuccess: (response, variables) => {
-      // Add the new comment to the cache (user's own pending comments are visible to them)
+      // Prepend the new comment to the cache (newest first, matching API sort order)
       queryClient.setQueryData(
         ['comments', variables.topicId],
         (old: Comment[] | undefined) => {
           if (!old) return [response.comment];
-          return [...old, response.comment];
+          return [response.comment, ...old];
         }
       );
 
