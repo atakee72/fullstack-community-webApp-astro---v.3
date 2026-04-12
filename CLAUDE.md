@@ -191,17 +191,21 @@ Use `client:load` or `client:only="react"` directive:
 ```astro
 <Navbar client:load user={session?.user} />
 <CalendarWrapper client:only="react" />
+<ForumWrapper client:only="react" session={session} />
 ```
+Note: `ForumWrapper` uses `client:only="react"` (not `client:load`) because `ForumContainer` uses `useLayoutEffect`, which warns during SSR. Since the forum is fully interactive (TanStack Query, sticky measurement), there's no SEO benefit from server rendering.
 
 ### Wrapper Pattern
 Complex React components use a wrapper pattern:
 - `CalendarWrapper.tsx` → `CalendarContainer.tsx`
 - `ForumWrapper.tsx` → `ForumContainer.tsx`
 
-### Forum List (Sticky Stack)
-- **Pattern**: Each forum card in `ForumContainer.tsx` has `sticky top-6` — all siblings share the same `top` offset, so as you scroll down, each new card slides up and visually covers the previous one (later DOM siblings paint on top). Scales to any list length — always one active card at a time, no deep stacking pile-up.
-- **Applies to all 3 forums** (Topics, Announcements, Recommendations) via the shared `collectionType` prop — one change covers all.
-- **Zero JavaScript**: pure CSS `position: sticky`. No scroll listeners, no IntersectionObserver, no scroll-driven animations.
+### Forum List (Sticky Stack + Pagination)
+- **Pattern**: Each forum card in `ForumContainer.tsx` has `position: sticky` with a variable `top` computed from `--forum-header-h` CSS variable + a pile offset (`index * 20`, capped at 80px). Later DOM siblings paint on top, creating a visual stack. The last card on each page is **non-sticky** (normal flow) to avoid a "floats too high" quirk at the end of the list — this is a known trade-off.
+- **Sticky header**: Tabs + search bar stick at `top: 16px` (top-4). The header's rendered height is measured via `ResizeObserver` and published as `--forum-header-h` on the forum root. Cards read this via `calc()` in their `top` style.
+- **Click-blocking**: A `useEffect` scroll listener in `ForumContainer.tsx` toggles `.is-hidden-behind` (defined in `global.css`) on cards visually covered by later siblings. Detection uses a "pile region" heuristic: iterate cards in reverse DOM order and find the highest-index card whose `rect.top` is within the header-bottom vicinity. Cards before the active one get `pointer-events: none` + dimming filter.
+- **Pagination**: Client-side slicing of `filteredItems` into pages of 12 (configurable 12/24/48). Uses the shared `Pagination` component (`src/components/ui/Pagination.tsx`) with wine accent (`#814256`). Page resets to 0 on tab switch or search. Scroll-to-top on page change.
+- **Applies to all 3 forums** (Topics, Announcements, Recommendations) via the shared `collectionType` prop.
 - **Critical dependency**: requires the `overflow-x: clip` fix in `global.css` (see "Common Errors to Avoid" below). Using `overflow-x: hidden` on `html/body` silently breaks all sticky positioning project-wide.
 
 ### Calendar Date Range Selection
@@ -217,10 +221,10 @@ Complex React components use a wrapper pattern:
 
 ### Pagination
 - **React component**: `src/components/ui/Pagination.tsx` — reusable with props for accent color, page size options, item label
-- **Used in**: Newsboard (`NewsCards.tsx`), with page size selector (12/24/48)
+- **Used in**: Forum (`ForumContainer.tsx`, client-side slicing, 12/24/48), Newsboard (`NewsCards.tsx`, server-side, 12/24/48)
 - **Svelte inline**: Marketplace (`MarketplaceBrowse.svelte`), Blog (`BlogSearch.svelte`), Admin Moderation (`ModerationQueue.svelte`) — same layout, adapted to Svelte syntax
 - **Features**: First/Prev/Next/Last buttons, "Page X of Y · N items" display, optional page size dropdown
-- **Accent colors**: Teal for marketplace/moderation, burgundy for newsboard, white-on-dark for blog
+- **Accent colors**: Wine/burgundy for forum and newsboard, teal for marketplace/moderation, white-on-dark for blog
 
 ### Blog Tag Bar (Mobile)
 - **Component**: `src/components/blog/TagBarMobile.astro` — horizontal scrollable tag pills, visible only below `lg` (1024px)
