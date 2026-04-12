@@ -4,6 +4,12 @@ import { z } from 'zod';
 export const ObjectIdSchema = z.string()
   .regex(/^[0-9a-fA-F]{24}$/, 'Invalid MongoDB ObjectId');
 
+// Reusable image schema for forum posts
+const PostImageSchema = z.array(z.object({
+  url: z.string().url(),
+  publicId: z.string()
+})).max(5, 'Maximum 5 images allowed').default([]);
+
 // Base Forum Post Schema (shared fields)
 const BasePostSchema = z.object({
   title: z.string()
@@ -16,7 +22,8 @@ const BasePostSchema = z.object({
     .trim(),
   tags: z.array(z.string().max(30))
     .max(5, 'Maximum 5 tags allowed')
-    .default([])
+    .default([]),
+  images: PostImageSchema
 });
 
 // Topic Schema
@@ -42,6 +49,7 @@ export const AnnouncementCreateSchema = z.object({
   tags: z.array(z.string().max(30))
     .max(5, 'Maximum 5 tags allowed')
     .default([]),
+  images: PostImageSchema,
   type: z.literal('announcement').optional()
 });
 
@@ -72,6 +80,7 @@ export const RecommendationCreateSchema = z.object({
   tags: z.array(z.string().max(30))
     .max(5, 'Maximum 5 tags allowed')
     .default([]),
+  images: PostImageSchema,
   type: z.literal('recommendation').optional()
 });
 

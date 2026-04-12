@@ -50,6 +50,7 @@ export interface Topic {
   likes: number;
   likedBy: (ObjectId | string)[];
   tags: string[];
+  images?: { url: string; publicId: string }[];
   date: number;
   wasLiked?: number;
   editHistory?: EditHistory[]; // Track all edits
@@ -99,6 +100,7 @@ export interface Announcement {
   likes: number;
   likedBy: (ObjectId | string)[];
   tags: string[];
+  images?: { url: string; publicId: string }[];
   date: number;
   editHistory?: EditHistory[];
   isEdited?: boolean;
@@ -126,6 +128,7 @@ export interface Recommendation {
   likes: number;
   likedBy: (ObjectId | string)[];
   tags: string[];
+  images?: { url: string; publicId: string }[];
   date: number;
   editHistory?: EditHistory[];
   isEdited?: boolean;
