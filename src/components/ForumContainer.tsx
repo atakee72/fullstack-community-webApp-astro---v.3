@@ -44,7 +44,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
 
   // Use React Query for data fetching with field selection
   const { data: items = [], isLoading, error, refetch } = useTopicsQuery(collectionType, {
-    fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'comments', 'date', 'likes', 'likedBy', 'views', 'moderationStatus', 'isUserReported', 'rejectionReason', 'hasWarningLabel', 'warningText'],
+    fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'images', 'comments', 'date', 'likes', 'likedBy', 'views', 'moderationStatus', 'isUserReported', 'rejectionReason', 'hasWarningLabel', 'warningText'],
     sortBy: 'date',
     sortOrder: 'desc',
   });
@@ -108,7 +108,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   // Prefetch other collections on mount for instant tab switching
   useEffect(() => {
     const queryOptions = {
-      fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'comments', 'date', 'likes', 'likedBy', 'views', 'moderationStatus', 'isUserReported', 'rejectionReason', 'hasWarningLabel', 'warningText'],
+      fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'images', 'comments', 'date', 'likes', 'likedBy', 'views', 'moderationStatus', 'isUserReported', 'rejectionReason', 'hasWarningLabel', 'warningText'],
       sortBy: 'date' as const,
       sortOrder: 'desc' as const,
     };
@@ -207,20 +207,18 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     };
   }, [filteredItems, currentPage, pageSize]);
 
-  const handlePostSubmit = async (data: { title: string; body: string; tags: string[] }) => {
+  const handlePostSubmit = async (data: { title: string; body: string; tags: string[]; images: { url: string; publicId: string }[] }) => {
     try {
       if (editingPost) {
         // Edit mode - update existing post
         await editPost.mutateAsync({
           postId: editingPost._id,
-          data: { title: data.title, body: data.body, tags: data.tags }
+          data: { title: data.title, body: data.body, tags: data.tags, images: data.images }
         });
         setEditingPost(null);
       } else {
         // Create mode - new post
-        const postData = collectionType === 'announcements'
-          ? { title: data.title, body: data.body, tags: data.tags }
-          : { title: data.title, body: data.body, tags: data.tags };
+        const postData = { title: data.title, body: data.body, tags: data.tags, images: data.images };
 
         const result = await createPost.mutateAsync(postData);
 
@@ -489,14 +487,20 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                       transform: `translateX(${xOffset}px)`,
                     }}
                     className={cn(
-                      "forum-sticky-card bg-[#c9c4b9] rounded-lg shadow-xl overflow-hidden p-4 md:p-6 flex flex-col min-h-[300px] md:min-h-[400px] transition-all duration-400 ease-out",
+                      "forum-sticky-card bg-[#c9c4b9] rounded-lg shadow-xl overflow-hidden flex min-h-[300px] md:min-h-[400px] transition-all duration-400 ease-out border border-[#4b9aaa]/40",
+                      item.images?.length ? "flex-row" : "flex-col p-4 md:p-6",
                       !isLast && "sticky",
                       item.moderationStatus === 'pending' && !item.isUserReported && isOwner(item.author, user) && "ring-2 ring-amber-300",
                       item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && "ring-2 ring-orange-300",
                       item.moderationStatus === 'rejected' && isOwner(item.author, user) && "ring-2 ring-red-400"
                     )}>
+                    {/* Content wrapper — takes w-1/2 when images, full width otherwise */}
+                    <div className={cn(
+                      "flex flex-col flex-1 min-w-0",
+                      item.images?.length && "w-1/2 p-4 md:p-6 overflow-hidden"
+                    )}>
                     {/* Card Header Strip — Title + Comment Count + Action Icons */}
-                    <div className="bg-gray-200/60 -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-3 md:px-6 py-2 mb-4">
+                    <div className="bg-[#c9c4b9] -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-3 md:px-6 py-2 mb-4">
                       <div className="flex items-center gap-2">
                         {/* Post Title */}
                         <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
@@ -621,7 +625,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           item.hasWarningLabel && !isOwner(item.author, user) && !revealedWarnings.has(item._id) && "blur-sm pointer-events-none select-none"
                         )}>
                           {/* Author Info Header */}
-                          <div className="bg-[#4b9aaa] text-white px-2 md:px-3 py-1 md:py-2 rounded-md mt-0 mb-3 md:mb-4 flex items-center gap-2 md:gap-3 text-xs md:text-sm">
+                          <div className="bg-[#4b9aaa] text-white px-2 md:px-3 py-px md:py-0.5 rounded-md mt-0 mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs">
                             <div className="w-7 h-7 md:w-8 md:h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0">
                               <span className="text-[#4b9aaa] font-bold text-xs md:text-sm">
                                 {item.author?.name?.charAt(0)?.toUpperCase() || item.author?.userName?.charAt(0)?.toUpperCase() || 'A'}
@@ -718,7 +722,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
 
                           {/* Tags */}
                           {Array.isArray(item.tags) && item.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 md:gap-2 pt-3 md:pt-4 border-t border-gray-300 px-2 md:px-4">
+                            <div className="flex flex-wrap gap-1.5 md:gap-2 pt-3 md:pt-4 px-2 md:px-4">
                               {item.tags.map((tag) => (
                                 <span
                                   key={tag}
@@ -731,6 +735,17 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           )}
                         </div>
                     </div>
+                    </div>{/* close content wrapper */}
+                    {item.images?.length > 0 && (
+                      <div className="w-1/2 flex-shrink-0 bg-[#c9c4b9] relative">
+                        <img
+                          src={item.images[0].url}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-contain"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -771,7 +786,8 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
           id: editingPost._id,
           title: editingPost.title,
           body: editingPost.body || editingPost.description,
-          tags: editingPost.tags
+          tags: editingPost.tags,
+          images: editingPost.images
         } : undefined}
       />
 
@@ -784,6 +800,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
         author={selectedPost?.author?.name || selectedPost?.author?.userName || 'Anonymous'}
         date={selectedPost?.date}
         tags={selectedPost?.tags}
+        images={selectedPost?.images}
         postId={selectedPost?._id}
         collectionType={collectionType}
         user={user}
