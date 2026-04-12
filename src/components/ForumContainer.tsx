@@ -133,7 +133,8 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
 
   const filteredItems = (items as any[]).filter(item =>
     (item.title?.toLowerCase() || '').includes(searchValue.toLowerCase()) ||
-    ((item.description || item.body || '')?.toLowerCase() || '').includes(searchValue.toLowerCase())
+    ((item.description || item.body || '')?.toLowerCase() || '').includes(searchValue.toLowerCase()) ||
+    ((item.author?.name || item.author?.userName || '')?.toLowerCase() || '').includes(searchValue.toLowerCase())
   );
 
   // Client-side pagination: slice filteredItems into pages of `pageSize`.
@@ -256,7 +257,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   };
 
   // Truncate text to approximately 3 lines (about 150 characters)
-  const truncateText = (text: string, maxLength: number = 150) => {
+  const truncateText = (text: string, maxLength: number = 300) => {
     if (!text) return '';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength).trim() + '...';
@@ -488,58 +489,143 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                       transform: `translateX(${xOffset}px)`,
                     }}
                     className={cn(
-                      "forum-sticky-card bg-[#c9c4b9] rounded-lg shadow-xl overflow-hidden flex min-h-[300px] md:min-h-[400px] transition-all duration-400 ease-out border border-[#4b9aaa]/40",
-                      item.images?.length ? "flex-row" : "flex-col p-4 md:p-6",
+                      "forum-sticky-card bg-[#c9c4b9] rounded-lg shadow-xl overflow-hidden flex flex-col min-h-[300px] md:min-h-[400px] transition-all duration-400 ease-out border border-[#4b9aaa]/40",
+                      !item.images?.length && "p-4 md:p-6",
                       !isLast && "sticky",
                       item.moderationStatus === 'pending' && !item.isUserReported && isOwner(item.author, user) && "ring-2 ring-amber-300",
                       item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && "ring-2 ring-orange-300",
                       item.moderationStatus === 'rejected' && isOwner(item.author, user) && "ring-2 ring-red-400"
                     )}>
-                    {/* Content wrapper — takes w-1/2 when images, full width otherwise */}
+                    {/* ===== MOBILE OVERLAY LAYOUT (image cards only, < md) ===== */}
+                    {item.images?.length > 0 && (
+                      <div className="md:hidden flex flex-col flex-1">
+                        {/* Image hero area */}
+                        <div className="relative h-48 overflow-hidden flex-shrink-0 cursor-pointer" onClick={() => handleReadMore(item)}>
+                          <img src={item.images[0].url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                          {/* Gradient overlay */}
+                          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
+
+                          {/* Moderation badges — top-left */}
+                          {item.moderationStatus === 'pending' && !item.isUserReported && isOwner(item.author, user) && (
+                            <span className="absolute top-2 left-2 px-2 py-0.5 text-[10px] bg-amber-500 text-white rounded">Under review</span>
+                          )}
+                          {item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && (
+                            <span className="absolute top-2 left-2 px-2 py-0.5 text-[10px] bg-orange-500 text-white rounded">Reported</span>
+                          )}
+                          {item.moderationStatus === 'rejected' && isOwner(item.author, user) && (
+                            <span className="absolute top-2 left-2 px-2 py-0.5 text-[10px] bg-red-600 text-white rounded">Rejected</span>
+                          )}
+                          {item.hasWarningLabel && isOwner(item.author, user) && item.moderationStatus !== 'rejected' && (
+                            <span className="absolute top-2 left-2 px-2 py-0.5 text-[10px] bg-amber-600 text-white rounded">Warning</span>
+                          )}
+
+                          {/* Warning blur overlay */}
+                          {item.hasWarningLabel && !isOwner(item.author, user) && !revealedWarnings.has(item._id) && (
+                            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/60 backdrop-blur-sm">
+                              <div className="bg-orange-100 border border-orange-300 rounded-lg px-4 py-3 text-center max-w-[80%]">
+                                <span className="text-2xl mb-1 block">{'\u26A0\uFE0F'}</span>
+                                <p className="text-orange-800 font-semibold text-xs mb-1">Sensitive Content</p>
+                                <button onClick={() => revealWarning(item._id)} className="px-3 py-1 bg-orange-500 text-white rounded text-xs">
+                                  Click to reveal
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Author + date — bottom-left over gradient */}
+                          <div className="absolute bottom-2 left-2 flex items-end gap-2 z-[5]">
+                            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-[#4b9aaa] font-bold text-xs">
+                                {item.author?.name?.charAt(0)?.toUpperCase() || item.author?.userName?.charAt(0)?.toUpperCase() || 'A'}
+                              </span>
+                            </div>
+                            <div className="text-white">
+                              <div className="text-xs font-medium drop-shadow">{item.author?.name || item.author?.userName || 'Anonymous'}</div>
+                              <div className="text-[10px] opacity-80 drop-shadow">{new Date(item.date).toLocaleDateString()}</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Title + icons + tags below image */}
+                        <div className="p-3 flex flex-col flex-1">
+                          <h3 className="font-semibold text-sm leading-tight line-clamp-2 text-gray-900">{item.title}</h3>
+
+                          {/* Icon row — all icons evenly distributed */}
+                          <div className="flex items-center justify-evenly mt-2">
+                            {user && (
+                              <button
+                                onClick={() => { const action = savedPosts.has(item._id) ? 'unsave' : 'save'; savePost.mutate({ postId: item._id, action }); }}
+                                className="particleButton relative p-1 bg-transparent border-none rounded-full cursor-pointer transition-all hover:bg-black/5"
+                              >
+                                <BookmarkIcon className={cn("w-5 h-5 transition-colors", savedPosts.has(item._id) ? "text-[#814256] fill-[#814256]" : "text-[#814256] hover:text-[#814256]/80")} strokeWidth={2} />
+                              </button>
+                            )}
+                            <button onClick={() => handleReadMore(item)} className="particleButton relative p-1.5 bg-transparent border-none rounded-full cursor-pointer transition-all hover:bg-black/5">
+                              {(item.comments?.length || 0) > 0 && (
+                                <span className="absolute top-0 -right-1 bg-gray-300 text-gray-800 text-[7px] font-bold rounded-full min-w-[12px] h-[12px] flex items-center justify-center px-0.5">{item.comments.length}</span>
+                              )}
+                              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+                                <path d="M21 11.5C21 16.75 16.97 21 12 21C10.67 21 9.4 20.71 8.25 20.2L3 21L4.39 16.88C3.52 15.38 3 13.5 3 11.5C3 6.25 7.03 2 12 2C16.97 2 21 6.25 21 11.5Z" stroke="#814256" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                              </svg>
+                            </button>
+                            <EyeIcon viewCount={item.views || 0} createdAt={new Date(item.date || item.createdAt)} />
+                            <HeartBtn
+                              isLiked={user ? item.likedBy?.includes(user.id) || false : false}
+                              likeCount={item.likes || 0}
+                              onToggle={() => handleLikeToggle(item._id, item.likedBy?.includes(user?.id))}
+                              disabled={!user || item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
+                            />
+                            {user && !isOwner(item.author, user) && (
+                              <button
+                                onClick={() => openReportModal(item)}
+                                disabled={reportedItems.has(item._id) || reportCheckLoading === item._id}
+                                className={cn("p-1 transition-colors text-xl", reportedItems.has(item._id) ? "text-gray-400 cursor-not-allowed" : "text-gray-400 hover:text-red-500")}
+                              >{reportCheckLoading === item._id ? '\u231B' : '\u{1F6A9}'}</button>
+                            )}
+                            {isOwner(item.author, user) && (
+                              <>
+                                <button
+                                  onClick={() => { if (item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected') { setEditingPost(item); setShowAddModal(true); } }}
+                                  className="p-1.5 rounded-full transition-colors text-xl text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                                  disabled={item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
+                                >{'\u270E'}</button>
+                                <button
+                                  onClick={async () => { if (item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected' && await confirmAction(`Delete this ${collectionType.slice(0, -1)}?`, { title: 'Delete', confirmLabel: 'Delete', variant: 'danger' })) deletePost.mutate(item._id); }}
+                                  className="p-1.5 rounded-full transition-colors text-xl text-gray-500 hover:text-red-600 disabled:opacity-50"
+                                  disabled={item.moderationStatus === 'pending' || item.moderationStatus === 'rejected' || deletePost.isPending}
+                                >{deletePost.isPending && deletePost.variables === item._id ? '\u231B' : '\u2715'}</button>
+                              </>
+                            )}
+                          </div>
+
+                          <div className="flex-1"></div>
+                          {Array.isArray(item.tags) && item.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-2">
+                              {item.tags.map((tag) => (
+                                <span key={tag} className="px-2 py-0.5 bg-[#4b9aaa] text-white text-[10px] rounded-md">{tag}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ===== DESKTOP LAYOUT (image cards: 50/50 split, >= md) / TEXT CARDS: all sizes ===== */}
+                    <div className={cn(
+                      "flex flex-col flex-1 min-w-0",
+                      item.images?.length ? "hidden md:flex md:flex-row" : ""
+                    )}>
+                    {/* Content side — takes w-1/2 when images on desktop */}
                     <div className={cn(
                       "flex flex-col flex-1 min-w-0",
                       item.images?.length && "w-1/2 p-4 md:p-6 overflow-hidden"
                     )}>
-                    {/* Card Header Strip — Title + Comment Count + Action Icons */}
-                    <div className="bg-[#c9c4b9] -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-3 md:px-6 py-2 mb-4">
-                      <div className="flex items-center gap-2">
-                        {/* Post Title */}
-                        <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
-                          <span className="inline-block whitespace-nowrap font-medium text-sm md:text-base text-gray-900 px-1">
-                            {item.title}
-                          </span>
-                        </div>
-
-                        {/* Edit and Delete Icons - Disabled for pending/rejected posts */}
-                        {isOwner(item.author, user) && (
-                          <div className="flex gap-1 flex-shrink-0">
-                            <button
-                              onClick={() => {
-                                if (item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected') {
-                                  setEditingPost(item);
-                                  setShowAddModal(true);
-                                }
-                              }}
-                              className="p-0.5 md:p-1 rounded-md transition-colors text-sm md:text-base text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                              title={item.moderationStatus === 'pending' ? "Editing disabled while pending review" : item.moderationStatus === 'rejected' ? "Editing disabled for rejected posts" : "Edit post"}
-                              disabled={item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
-                            >
-                              ✎
-                            </button>
-                            <button
-                              onClick={async () => {
-                                if (item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected' && await confirmAction(`Are you sure you want to delete this ${collectionType.slice(0, -1)}?`, { title: `Delete ${collectionType.slice(0, -1)}`, confirmLabel: 'Delete', variant: 'danger' })) {
-                                  deletePost.mutate(item._id);
-                                }
-                              }}
-                              className="p-0.5 md:p-1 rounded-md transition-colors text-sm md:text-base text-gray-500 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                              title={item.moderationStatus === 'pending' ? "Deletion disabled while pending review" : item.moderationStatus === 'rejected' ? "Deletion disabled for rejected posts" : "Delete post"}
-                              disabled={item.moderationStatus === 'pending' || item.moderationStatus === 'rejected' || deletePost.isPending}
-                            >
-                              {deletePost.isPending && deletePost.variables === item._id ? '⏳' : '✕'}
-                            </button>
-                          </div>
-                        )}
+                    {/* Card Header Strip — Title + Edit/Delete Icons */}
+                    <div className="bg-[#c9c4b9] -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-3 md:px-6 py-3 mb-4">
+                      <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
+                        <span className="inline-block whitespace-nowrap font-medium text-sm md:text-base text-gray-900 px-1">
+                          {item.title}
+                        </span>
                       </div>
                     </div>
 
@@ -643,86 +729,6 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                                 )}
                               </div>
                             </div>
-                            <div className="flex gap-0 items-center text-xs md:text-sm">
-                              {/* Bookmark icon */}
-                              {user && (
-                                <button
-                                  onClick={() => {
-                                    const action = savedPosts.has(item._id) ? 'unsave' : 'save';
-                                    savePost.mutate({ postId: item._id, action });
-                                  }}
-                                  className="particleButton relative p-1 md:p-1.5 bg-transparent border-none rounded-full cursor-pointer transition-all hover:bg-white/10"
-                                  aria-label={savedPosts.has(item._id) ? "Unsave post" : "Save post"}
-                                >
-                                  <BookmarkIcon
-                                    className={cn(
-                                      "w-4 h-4 md:w-5 md:h-5 transition-colors",
-                                      savedPosts.has(item._id)
-                                        ? "text-[#814256] fill-[#814256]"
-                                        : "text-[#814256] hover:text-[#814256]/80"
-                                    )}
-                                    strokeWidth={2}
-                                  />
-                                </button>
-                              )}
-                              {/* Comment count icon */}
-                              <button
-                                onClick={() => handleReadMore(item)}
-                                className="particleButton relative p-1 md:p-1.5 bg-transparent border-none rounded-full cursor-pointer transition-all hover:bg-white/10"
-                                aria-label="View comments"
-                              >
-                                {(item.comments?.length || 0) > 0 && (
-                                  <span className="absolute top-0 -right-1 bg-gray-300 text-gray-800 text-[8px] md:text-[10px] font-bold rounded-full min-w-[12px] h-[12px] md:min-w-[14px] md:h-[14px] flex items-center justify-center px-0.5">
-                                    {item.comments.length}
-                                  </span>
-                                )}
-                                <svg viewBox="0 0 24 24" fill="none" className="relative block w-4 h-4 md:w-5 md:h-5 z-10">
-                                  <path
-                                    d="M21 11.5C21 16.75 16.97 21 12 21C10.67 21 9.4 20.71 8.25 20.2L3 21L4.39 16.88C3.52 15.38 3 13.5 3 11.5C3 6.25 7.03 2 12 2C16.97 2 21 6.25 21 11.5Z"
-                                    stroke="#814256"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    fill="none"
-                                  />
-                                </svg>
-                              </button>
-                              <EyeIcon viewCount={item.views || 0} createdAt={new Date(item.date || item.createdAt)} />
-                              <HeartBtn
-                                isLiked={user ? item.likedBy?.includes(user.id) || false : false}
-                                likeCount={item.likes || 0}
-                                onToggle={() => handleLikeToggle(item._id, item.likedBy?.includes(user?.id))}
-                                disabled={!user || item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
-                              />
-                              {/* Report Button - Hidden for own content */}
-                              {user && !isOwner(item.author, user) && (
-                                <div className="relative">
-                                  <button
-                                    onClick={() => openReportModal(item)}
-                                    disabled={reportedItems.has(item._id) || reportCheckLoading === item._id}
-                                    className={cn(
-                                      "flex items-center gap-1 transition-colors",
-                                      reportedItems.has(item._id)
-                                        ? "text-gray-500 cursor-not-allowed opacity-50"
-                                        : reportCheckLoading === item._id
-                                          ? "text-gray-300 cursor-wait"
-                                          : "text-gray-200 hover:text-red-300"
-                                    )}
-                                    title={reportedItems.has(item._id) ? "Already reported" : "Report this post"}
-                                  >
-                                    <span className="text-sm">{reportCheckLoading === item._id ? '⏳' : '🚩'}</span>
-                                  </button>
-                                  {/* Tooltip for already reported */}
-                                  {reportToastItemId === item._id && (
-                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 whitespace-nowrap z-50 animate-fade-in">
-                                      <div className="bg-gray-800 text-white text-xs px-2 py-1 rounded shadow-lg">
-                                        Already reported
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
                           </div>
 
                           {/* Post Content - Truncated */}
@@ -739,25 +745,70 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                             </button>
                           </div>
 
-                          {/* Spacer pushes tags to bottom */}
+                          {/* Spacer pushes icons + tags to bottom */}
                           <div className="flex-1"></div>
+
+                          {/* Icon toolbar */}
+                          <div className="flex items-center justify-evenly px-2 md:px-4">
+                              {user && (
+                                <button
+                                  onClick={() => { const action = savedPosts.has(item._id) ? 'unsave' : 'save'; savePost.mutate({ postId: item._id, action }); }}
+                                  className="particleButton relative p-1 md:p-1.5 bg-transparent border-none rounded-full cursor-pointer transition-all hover:bg-black/5"
+                                  aria-label={savedPosts.has(item._id) ? "Unsave post" : "Save post"}
+                                >
+                                  <BookmarkIcon className={cn("w-5 h-5 transition-colors", savedPosts.has(item._id) ? "text-[#814256] fill-[#814256]" : "text-[#814256] hover:text-[#814256]/80")} strokeWidth={2} />
+                                </button>
+                              )}
+                              <button onClick={() => handleReadMore(item)} className="particleButton relative p-1 md:p-1.5 bg-transparent border-none rounded-full cursor-pointer transition-all hover:bg-black/5" aria-label="View comments">
+                                {(item.comments?.length || 0) > 0 && (
+                                  <span className="absolute top-0 -right-1 bg-gray-300 text-gray-800 text-[7px] md:text-[8px] font-bold rounded-full min-w-[12px] h-[12px] md:min-w-[14px] md:h-[14px] flex items-center justify-center px-0.5">{item.comments.length}</span>
+                                )}
+                                <svg viewBox="0 0 24 24" fill="none" className="relative block w-5 h-5 z-10">
+                                  <path d="M21 11.5C21 16.75 16.97 21 12 21C10.67 21 9.4 20.71 8.25 20.2L3 21L4.39 16.88C3.52 15.38 3 13.5 3 11.5C3 6.25 7.03 2 12 2C16.97 2 21 6.25 21 11.5Z" stroke="#814256" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                                </svg>
+                              </button>
+                              <EyeIcon viewCount={item.views || 0} createdAt={new Date(item.date || item.createdAt)} />
+                              <HeartBtn
+                                isLiked={user ? item.likedBy?.includes(user.id) || false : false}
+                                likeCount={item.likes || 0}
+                                onToggle={() => handleLikeToggle(item._id, item.likedBy?.includes(user?.id))}
+                                disabled={!user || item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
+                              />
+                              {user && !isOwner(item.author, user) && (
+                                <button
+                                  onClick={() => openReportModal(item)}
+                                  disabled={reportedItems.has(item._id) || reportCheckLoading === item._id}
+                                  className={cn("p-1 transition-colors text-xl", reportedItems.has(item._id) ? "text-gray-400 cursor-not-allowed" : "text-gray-400 hover:text-red-500")}
+                                  title={reportedItems.has(item._id) ? "Already reported" : "Report this post"}
+                                >{reportCheckLoading === item._id ? '\u231B' : '\u{1F6A9}'}</button>
+                              )}
+                              {isOwner(item.author, user) && (
+                                <>
+                                  <button
+                                    onClick={() => { if (item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected') { setEditingPost(item); setShowAddModal(true); } }}
+                                    className="p-1 md:p-1.5 rounded-full transition-colors text-xl text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                                    disabled={item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
+                                  >{'\u270E'}</button>
+                                  <button
+                                    onClick={async () => { if (item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected' && await confirmAction(`Delete this ${collectionType.slice(0, -1)}?`, { title: 'Delete', confirmLabel: 'Delete', variant: 'danger' })) deletePost.mutate(item._id); }}
+                                    className="p-1 md:p-1.5 rounded-full transition-colors text-xl text-gray-500 hover:text-red-600 disabled:opacity-50"
+                                    disabled={item.moderationStatus === 'pending' || item.moderationStatus === 'rejected' || deletePost.isPending}
+                                  >{deletePost.isPending && deletePost.variables === item._id ? '\u231B' : '\u2715'}</button>
+                                </>
+                              )}
+                          </div>
 
                           {/* Tags */}
                           {Array.isArray(item.tags) && item.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 md:gap-2 pt-3 md:pt-4 px-2 md:px-4">
+                            <div className="flex flex-wrap gap-1.5 md:gap-2 pt-4 px-2 md:px-4">
                               {item.tags.map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="px-2 md:px-3 py-0.5 md:py-1 bg-[#4b9aaa] text-white text-xs rounded-md underline"
-                                >
-                                  {tag}
-                                </span>
+                                <span key={tag} className="px-2 md:px-3 py-0.5 md:py-1 bg-[#4b9aaa] text-white text-xs rounded-md underline">{tag}</span>
                               ))}
                             </div>
                           )}
                         </div>
                     </div>
-                    </div>{/* close content wrapper */}
+                    </div>{/* close content side */}
                     {item.images?.length > 0 && (
                       <div className="w-1/2 flex-shrink-0 bg-[#c9c4b9] relative">
                         <img
@@ -768,6 +819,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                         />
                       </div>
                     )}
+                    </div>{/* close desktop layout wrapper */}
                   </div>
                 );
               })}
@@ -829,6 +881,11 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
         user={user}
         onReportComment={openCommentReportModal}
         reportedComments={reportedItems}
+        isLiked={user ? selectedPost?.likedBy?.includes(user.id) || false : false}
+        likeCount={selectedPost?.likes || 0}
+        onToggleLike={selectedPost ? () => handleLikeToggle(selectedPost._id, selectedPost.likedBy?.includes(user?.id)) : undefined}
+        isSaved={selectedPost ? savedPosts.has(selectedPost._id) : false}
+        onToggleSave={selectedPost ? () => { const action = savedPosts.has(selectedPost._id) ? 'unsave' : 'save'; savePost.mutate({ postId: selectedPost._id, action }); } : undefined}
       />
 
       {/* Report Modal */}
