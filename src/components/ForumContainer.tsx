@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useTopicsQuery, useCreatePost, useDeletePost, useEditPost } from '../hooks/api/useTopicsQuery';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCreateComment } from '../hooks/api/useCommentsQuery';
@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { confirmAction } from '../utils/toast';
 import { cn } from '../lib/utils';
 import { isOwner } from '../utils/authHelpers';
+import { Pagination } from './ui/Pagination';
 import type { Topic, Announcement, Recommendation } from '../types';
 
 interface ForumContainerProps {
@@ -38,6 +39,10 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   const [reportedItems, setReportedItems] = useState<Set<string>>(new Set());
   const [reportCheckLoading, setReportCheckLoading] = useState<string | null>(null);
   const [reportToastItemId, setReportToastItemId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(12);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   // localStorage key for persisting revealed warnings
   const REVEALED_WARNINGS_KEY = 'mahalle_revealed_warnings';
@@ -57,6 +62,24 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   const likeMutation = useLikeMutation(collectionType);
 
   const queryClient = useQueryClient();
+
+  // Publish the sticky header's rendered height (including its bottom margin)
+  // as --forum-header-h on the forum root. Cards read this via calc() so their
+  // sticky `top` lands cleanly below the header regardless of tab/search size.
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    const root = rootRef.current;
+    if (!header || !root) return;
+    const measure = () => {
+      const rect = header.getBoundingClientRect();
+      const mb = parseFloat(getComputedStyle(header).marginBottom) || 0;
+      root.style.setProperty('--forum-header-h', `${Math.ceil(rect.height + mb)}px`);
+    };
+    const ro = new ResizeObserver(measure);
+    ro.observe(header);
+    measure();
+    return () => ro.disconnect();
+  }, [isClient, isLoading, items.length]);
 
   useEffect(() => {
     setIsClient(true);
@@ -113,6 +136,82 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     (item.title?.toLowerCase() || '').includes(searchValue.toLowerCase()) ||
     ((item.description || item.body || '')?.toLowerCase() || '').includes(searchValue.toLowerCase())
   );
+
+  // Client-side pagination: slice filteredItems into pages of `pageSize`.
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+  const pagedItems = filteredItems.slice(
+    currentPage * pageSize,
+    (currentPage + 1) * pageSize
+  );
+
+  // Reset to first page whenever the underlying list changes (new tab or new search).
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [collectionType, searchValue]);
+
+  // Disable click events on sticky cards hidden behind the active (topmost) one.
+  // Without this, the peeking header strip of a hidden card would still receive
+  // clicks — meaning a user could accidentally trigger "Write a comment", "Edit",
+  // or "Delete" on the WRONG forum post. Pure CSS can't detect "visually topmost
+  // sticky element" (all stuck cards match @container scroll-state(stuck: top)
+  // equally), so we use a throttled scroll listener to toggle pointer-events.
+  useEffect(() => {
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('.forum-sticky-card'));
+    if (cards.length === 0) return;
+
+    let rafId = 0;
+    const update = () => {
+      // Find the visually topmost card: the HIGHEST-index card whose top edge
+      // is in the "pile region" (near the sticky header). In the pile, later
+      // DOM siblings paint over earlier ones, so iterating in REVERSE and
+      // picking the first hit gives us the visually topmost card — whether
+      // it's a stuck sticky card OR the non-sticky last card scrolling past.
+      //
+      // This replaces the fragile sticky-position-matching approach, which
+      // broke when cards released from sticky at the end of scroll.
+      const root = document.querySelector('[class*="max-w-4xl"]');
+      const headerEl = root?.querySelector('[class*="sticky"]');
+      const headerBottom = headerEl ? headerEl.getBoundingClientRect().bottom : 100;
+      // Pile region: from just above the header bottom to 120px below it
+      // (covers all pile offsets: 0, 20, 40, 60, 80, plus buffer).
+      const pileTop = headerBottom - 10;
+      const pileBottom = headerBottom + 120;
+
+      let activeIndex = -1;
+      for (let i = cards.length - 1; i >= 0; i--) {
+        const rect = cards[i].getBoundingClientRect();
+        if (rect.top >= pileTop && rect.top <= pileBottom) {
+          activeIndex = i;
+          break; // highest DOM index in region = visually topmost
+        }
+      }
+
+      // WRITE PASS: cards before the active index are "stuck but hidden". Toggle a single
+      // class that both disables pointer events AND applies the "pressed behind" shadow
+      // (defined in global.css). Cards not yet stuck, and the active top card, both get
+      // the default "free/floating" shadow (shadow-xl from Tailwind) with no class.
+      for (let i = 0; i < cards.length; i++) {
+        const isHidden = activeIndex >= 0 && i < activeIndex;
+        cards[i].classList.toggle('is-hidden-behind', isHidden);
+      }
+    };
+
+    const handleScroll = () => {
+      if (rafId) return; // already scheduled for next frame
+      rafId = requestAnimationFrame(() => {
+        update();
+        rafId = 0;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    update(); // initial run — in case cards are already stuck at mount
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [filteredItems, currentPage, pageSize]);
 
   const handlePostSubmit = async (data: { title: string; body: string; tags: string[] }) => {
     try {
@@ -342,11 +441,14 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      {/* Header Section with Collection Selector */}
-      <div className="w-full mb-4 md:mb-6">
+    <div ref={rootRef} className="w-full max-w-4xl mx-auto">
+      {/* Header Section with Collection Selector — sticky so tabs + search stay at top on scroll.
+          bg-[#4b9aaa] matches the teal parent box (index.astro:14) so it blends seamlessly. */}
+      <div ref={headerRef} className="sticky top-4 z-30 w-full mb-4 md:mb-6 bg-[#4b9aaa]">
+        {/* Tab row + Plus button grouped together; plus stays visible even when search collapses. */}
+        <div className="flex items-end gap-2 mt-2 md:mt-4 mb-3 md:mb-4 ml-2 md:ml-6">
         {/* Collection Type Buttons - Lifted Tab Style */}
-        <div className="flex flex-wrap xs:flex-nowrap items-center xs:items-end justify-center xs:justify-start gap-1 mt-2 md:mt-4 mb-6 md:mb-8 ml-2 md:ml-6 overflow-x-auto">
+        <div className="flex flex-wrap xs:flex-nowrap items-center xs:items-end justify-center xs:justify-start gap-1 flex-1 overflow-x-auto">
           <button
             onClick={() => setCollectionType('topics')}
             className={cn(
@@ -381,10 +483,23 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
             Recommendations
           </button>
         </div>
+          {/* Plus button — in the tab row so it stays visible when the search bar collapses. */}
+          {user && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="group relative text-[#eccc6e] hover:text-[#d4b85e] hover:scale-110 transition-all duration-200 font-bold text-4xl md:text-5xl leading-none flex-shrink-0 mr-2 md:mr-4 self-center"
+              aria-label={`Add a new ${collectionType.slice(0, -1)}`}
+            >
+              +
+              <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-[#eccc6e] text-[#814256] text-xs md:text-sm font-medium px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                Add a new {collectionType.slice(0, -1)}
+              </span>
+            </button>
+          )}
+        </div>
 
-        {/* Search and Add New in a teal/green box */}
-        <div className="bg-[#4b9aaa]/10 rounded-lg shadow-md p-4 md:p-6">
-          <div className="mb-2">
+        <div className="bg-[#4b9aaa]/10 rounded-lg shadow-md">
+          <div className="p-3 md:p-4">
             <input
               type="text"
               placeholder={`Search in ${collectionType === 'topics' ? 'discussions' : collectionType}...`}
@@ -393,37 +508,45 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
               className="w-full p-2 md:p-3 border-2 border-gray-200 rounded-md text-sm md:text-base focus:outline-none focus:border-[#4b9aaa] transition-colors"
             />
           </div>
-
-          {user && (
-            <div className="flex justify-end">
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="group relative text-[#eccc6e] hover:text-[#d4b85e] hover:scale-110 transition-all duration-200 font-bold text-6xl md:text-7xl leading-none"
-              >
-                +
-                <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 bg-[#eccc6e] text-[#814256] text-sm font-medium px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                  Add a new {collectionType.slice(0, -1)}
-                </span>
-              </button>
-            </div>
-          )}
         </div>
+      </div>
 
-        {/* Posts Grid */}
-        <div className="mt-3 md:mt-4">
-          {filteredItems.length === 0 ? (
+      {/* Posts Grid */}
+      <div className="mt-3 md:mt-4">
+          {pagedItems.length === 0 ? (
             <div className="bg-white rounded-lg shadow-md p-6 md:p-8 text-center">
               <p className="text-gray-600 text-base md:text-lg">No {collectionType} found. Be the first to create one!</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredItems.map((item) => {
+              {pagedItems.map((item, index) => {
                 const currentTab = getCardActiveTab(item._id);
+                // Piling effect: cards stick just below the sticky header.
+                // `--forum-header-h` is set live via ResizeObserver (see useEffect above)
+                // so the pile adapts as the header grows/shrinks (search expanded/collapsed).
+                // 20px step creates a 4-layer visible pile; cap at 80px total peek.
+                const pileOffset = Math.min(index * 20, 80);
+                const stickyTop = `calc(var(--forum-header-h, 140px) + 4px + ${pileOffset}px)`;
+                // Deterministic pseudo-random horizontal offset for organic pile look.
+                // Range [-10, +10] px; 8 and 21 are coprime (GCD=1, since 21=3·7 and 8=2³)
+                // so all 21 values appear in the first 21 cards before cycling. Wide spread
+                // for a dramatic "casually tossed" pile feel.
+                const xOffset = ((index * 8) % 21) - 10;
+                // Last card stays in normal flow (no sticky). At the bottom of
+                // the list there's no scroll runway for sticky to release, so
+                // a sticky last card would "float" above its natural position
+                // and appear higher than the card before it.
+                const isLast = index === pagedItems.length - 1;
                 return (
                   <div
                     key={item._id}
+                    style={{
+                      top: isLast ? undefined : stickyTop,
+                      transform: `translateX(${xOffset}px)`,
+                    }}
                     className={cn(
-                      "sticky top-6 bg-[#c9c4b9] rounded-lg shadow-md overflow-hidden p-4 md:p-6 flex flex-col min-h-[300px] md:min-h-[400px] hover:shadow-lg transition-all duration-400 ease-out",
+                      "forum-sticky-card bg-[#c9c4b9] rounded-lg shadow-xl overflow-hidden p-4 md:p-6 flex flex-col min-h-[300px] md:min-h-[400px] transition-all duration-400 ease-out",
+                      !isLast && "sticky",
                       item.moderationStatus === 'pending' && !item.isUserReported && isOwner(item.author, user) && "ring-2 ring-amber-300",
                       item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && "ring-2 ring-orange-300",
                       item.moderationStatus === 'rejected' && isOwner(item.author, user) && "ring-2 ring-red-400"
@@ -715,8 +838,26 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
               })}
             </div>
           )}
+          {filteredItems.length > pageSize && (
+            <div className="mt-6 md:mt-8">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredItems.length}
+                pageSize={pageSize}
+                onPageChange={(p) => {
+                  setCurrentPage(p);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                pageSizeOptions={[12, 24, 48]}
+                onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(0); }}
+                accentColor="bg-[#814256]"
+                accentHover="hover:bg-[#6b3548]"
+                itemLabel={collectionType === 'topics' ? 'discussions' : collectionType}
+              />
+            </div>
+          )}
         </div>
-      </div>
 
       {/* Post Modal */}
       <PostModal
