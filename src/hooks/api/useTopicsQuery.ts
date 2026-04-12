@@ -78,7 +78,7 @@ export function useTopicsQuery(
 // Create a new topic/announcement/recommendation
 async function createPost(
   type: 'topics' | 'announcements' | 'recommendations',
-  data: { title: string; body?: string; description?: string; tags?: string[]; category?: string }
+  data: { title: string; body?: string; description?: string; tags?: string[]; category?: string; images?: { url: string; publicId: string }[] }
 ) {
   const response = await fetch(`${API_URL}/${type}/create`, {
     method: 'POST',
@@ -185,7 +185,7 @@ export function useLikeMutation(type: 'topics' | 'announcements' | 'recommendati
 async function editPost(
   postId: string,
   type: 'topics' | 'announcements' | 'recommendations',
-  data: { title: string; body: string; tags: string[] }
+  data: { title: string; body: string; tags: string[]; images?: { url: string; publicId: string }[] }
 ) {
   const response = await fetch(`${API_URL}/${type}/edit/${postId}`, {
     method: 'PUT',
@@ -211,7 +211,7 @@ export function useEditPost(type: 'topics' | 'announcements' | 'recommendations'
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ postId, data }: { postId: string; data: { title: string; body: string; tags: string[] } }) =>
+    mutationFn: ({ postId, data }: { postId: string; data: { title: string; body: string; tags: string[]; images?: { url: string; publicId: string }[] } }) =>
       editPost(postId, type, data),
     onSuccess: async () => {
       // Immediately invalidate and refetch all related queries
