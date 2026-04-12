@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useTopicsQuery, useCreatePost, useDeletePost, useEditPost } from '../hooks/api/useTopicsQuery';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCreateComment } from '../hooks/api/useCommentsQuery';
 import { useLikeMutation } from '../hooks/api/useLikeMutation';
 import PostModal from './PostModal';
-import CommentModal from './CommentModal';
-import CommentsList from './CommentsList';
 import ReadMoreModal from './ReadMoreModal';
 import ReportModal from './ReportModal';
 import HeartBtn from './HeartBtn';
@@ -28,10 +25,8 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   const [collectionType, setCollectionType] = useState<'topics' | 'announcements' | 'recommendations'>('topics');
   const [searchValue, setSearchValue] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showCommentModal, setShowCommentModal] = useState(false);
   const [showReadMoreModal, setShowReadMoreModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<any>(null);
-  const [activeCardTabs, setActiveCardTabs] = useState<{ [key: string]: 'posts' | 'comments' | 'newComment' }>({});
   const [editingPost, setEditingPost] = useState<any>(null);
   const [revealedWarnings, setRevealedWarnings] = useState<Set<string>>(new Set());
   const [showReportModal, setShowReportModal] = useState(false);
@@ -56,7 +51,6 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
 
   // Mutations
   const createPost = useCreatePost(collectionType);
-  const createComment = useCreateComment();
   const deletePost = useDeletePost(collectionType);
   const editPost = useEditPost(collectionType);
   const likeMutation = useLikeMutation(collectionType);
@@ -247,46 +241,6 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     }
   };
 
-  const handleCommentClick = (item: any) => {
-    setSelectedPost(item);
-    setShowCommentModal(true);
-  };
-
-  const getCardActiveTab = (itemId: string) => {
-    return activeCardTabs[itemId] || 'posts';
-  };
-
-  const setCardActiveTab = (itemId: string, tab: 'posts' | 'comments' | 'newComment') => {
-    setActiveCardTabs(prev => ({
-      ...prev,
-      [itemId]: tab
-    }));
-  };
-
-  const handleCommentSubmit = async (comment: string) => {
-    if (!selectedPost) return;
-
-    try {
-      // Use React Query mutation
-      await createComment.mutateAsync({
-        body: comment,
-        topicId: selectedPost._id,
-        collectionType
-      });
-
-      // Switch to comments tab BEFORE closing modal
-      setCardActiveTab(selectedPost._id, 'comments');
-
-      // Close modal after setting the tab
-      setShowCommentModal(false);
-
-      // Data will auto-refresh due to cache invalidation
-    } catch (error) {
-      console.error('Failed to add comment:', error);
-      // You might want to show an error toast here
-    }
-  };
-
   // Increment view count
   const incrementViews = async (postId: string) => {
     try {
@@ -307,15 +261,6 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     // Increment views when read more is clicked (only if not the author)
     if (!isOwner(item.author, user)) {
       incrementViews(item._id);
-    }
-  };
-
-  // Handle comment tab click for view tracking
-  const handleCommentTabClick = (itemId: string, item: any) => {
-    setCardActiveTab(itemId, 'comments');
-    // Increment views when comments tab is clicked (only if not the author)
-    if (!isOwner(item.author, user)) {
-      incrementViews(itemId);
     }
   };
 
@@ -520,7 +465,6 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
           ) : (
             <div className="space-y-4">
               {pagedItems.map((item, index) => {
-                const currentTab = getCardActiveTab(item._id);
                 // Piling effect: cards stick just below the sticky header.
                 // `--forum-header-h` is set live via ResizeObserver (see useEffect above)
                 // so the pile adapts as the header grows/shrinks (search expanded/collapsed).
@@ -551,98 +495,46 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                       item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && "ring-2 ring-orange-300",
                       item.moderationStatus === 'rejected' && isOwner(item.author, user) && "ring-2 ring-red-400"
                     )}>
-                    {/* Card Header with Tabs and Action Icons - Shared Gray Background Strip */}
-                    <div className="bg-gray-200/60 -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-2 md:px-6 py-2 mb-4 overflow-hidden">
-                      <div className="flex items-center gap-1">
-                        {/* Tabs Group */}
-                        <div className="flex flex-1 gap-1 min-w-0">
-                          <button
-                            onClick={() => setCardActiveTab(item._id, 'posts')}
-                            className={cn(
-                              'px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border min-w-0',
-                              currentTab === 'posts'
-                                ? 'bg-white text-gray-900 border-gray-300 shadow-sm flex-1 md:flex-initial'
-                                : 'bg-transparent text-gray-700 border-white hover:bg-white/50 flex-shrink-0 max-w-[40%]'
-                            )}
-                          >
-                            <div className={cn(
-                              "min-w-0",
-                              currentTab === 'posts'
-                                ? "overflow-x-auto scrollbar-hide"
-                                : "truncate"
-                            )}>
-                              <span className={cn(
-                                currentTab === 'posts'
-                                  ? "inline-block whitespace-nowrap px-1"
-                                  : "block"
-                              )}>{item.title}</span>
-                            </div>
-                          </button>
-
-                          <button
-                            onClick={() => handleCommentTabClick(item._id, item)}
-                            className={cn(
-                              'px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border whitespace-nowrap flex-shrink-0',
-                              currentTab === 'comments'
-                                ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
-                                : 'bg-transparent text-gray-700 border-white hover:bg-white/50',
-                              currentTab === 'posts' && 'ml-auto md:ml-0'
-                            )}
-                          >
-                            Comments <span className="ml-0.5 px-1 md:px-2 py-0.5 bg-gray-500 text-white text-[10px] md:text-xs rounded-full">{item.comments?.length || 0}</span>
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (user && item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected') {
-                                setSelectedPost(item);
-                                setShowCommentModal(true);
-                                setCardActiveTab(item._id, 'newComment');
-                              }
-                            }}
-                            disabled={!user || item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
-                            className={cn(
-                              'px-2 md:px-3 py-1.5 md:py-2.5 text-xs md:text-sm transition-colors rounded-md border whitespace-nowrap flex-shrink-0 hidden md:block',
-                              currentTab === 'newComment'
-                                ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
-                                : user && item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected'
-                                  ? 'bg-transparent text-gray-700 border-white hover:bg-white/50'
-                                  : 'bg-transparent text-gray-400 border-white cursor-not-allowed'
-                            )}
-                          >
-                            Write a comment
-                          </button>
+                    {/* Card Header Strip — Title + Comment Count + Action Icons */}
+                    <div className="bg-gray-200/60 -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-3 md:px-6 py-2 mb-4">
+                      <div className="flex items-center gap-2">
+                        {/* Post Title */}
+                        <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
+                          <span className="inline-block whitespace-nowrap font-medium text-sm md:text-base text-gray-900 px-1">
+                            {item.title}
+                          </span>
                         </div>
 
                         {/* Edit and Delete Icons - Disabled for pending/rejected posts */}
                         {isOwner(item.author, user) && (
-                            <div className="flex gap-1 flex-shrink-0">
-                              <button
-                                onClick={() => {
-                                  if (item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected') {
-                                    setEditingPost(item);
-                                    setShowAddModal(true);
-                                  }
-                                }}
-                                className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                title={item.moderationStatus === 'pending' ? "Editing disabled while pending review" : item.moderationStatus === 'rejected' ? "Editing disabled for rejected posts" : "Edit post"}
-                                disabled={item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
-                              >
-                                ✎
-                              </button>
-                              <button
-                                onClick={async () => {
-                                  if (item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected' && await confirmAction(`Are you sure you want to delete this ${collectionType.slice(0, -1)}?`, { title: `Delete ${collectionType.slice(0, -1)}`, confirmLabel: 'Delete', variant: 'danger' })) {
-                                    deletePost.mutate(item._id);
-                                  }
-                                }}
-                                className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                                title={item.moderationStatus === 'pending' ? "Deletion disabled while pending review" : item.moderationStatus === 'rejected' ? "Deletion disabled for rejected posts" : "Delete post"}
-                                disabled={item.moderationStatus === 'pending' || item.moderationStatus === 'rejected' || deletePost.isPending}
-                              >
-                                {deletePost.isPending && deletePost.variables === item._id ? '⏳' : '✕'}
-                              </button>
-                            </div>
-                          )}
+                          <div className="flex gap-1 flex-shrink-0">
+                            <button
+                              onClick={() => {
+                                if (item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected') {
+                                  setEditingPost(item);
+                                  setShowAddModal(true);
+                                }
+                              }}
+                              className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={item.moderationStatus === 'pending' ? "Editing disabled while pending review" : item.moderationStatus === 'rejected' ? "Editing disabled for rejected posts" : "Edit post"}
+                              disabled={item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
+                            >
+                              ✎
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (item.moderationStatus !== 'pending' && item.moderationStatus !== 'rejected' && await confirmAction(`Are you sure you want to delete this ${collectionType.slice(0, -1)}?`, { title: `Delete ${collectionType.slice(0, -1)}`, confirmLabel: 'Delete', variant: 'danger' })) {
+                                  deletePost.mutate(item._id);
+                                }
+                              }}
+                              className="p-0.5 md:p-1 rounded-md transition-colors text-lg md:text-2xl text-gray-500 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={item.moderationStatus === 'pending' ? "Deletion disabled while pending review" : item.moderationStatus === 'rejected' ? "Deletion disabled for rejected posts" : "Delete post"}
+                              disabled={item.moderationStatus === 'pending' || item.moderationStatus === 'rejected' || deletePost.isPending}
+                            >
+                              {deletePost.isPending && deletePost.variables === item._id ? '⏳' : '✕'}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -724,8 +616,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                         </div>
                       )}
 
-                      {currentTab === 'posts' ? (
-                        <div className={cn(
+                      <div className={cn(
                           "flex flex-col flex-1",
                           item.hasWarningLabel && !isOwner(item.author, user) && !revealedWarnings.has(item._id) && "blur-sm pointer-events-none select-none"
                         )}>
@@ -748,6 +639,28 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                               </div>
                             </div>
                             <div className="flex gap-2 md:gap-3 items-center text-xs md:text-sm">
+                              {/* Comment count icon */}
+                              <button
+                                onClick={() => handleReadMore(item)}
+                                className="particleButton relative p-1 md:p-1.5 bg-transparent border-none rounded-full cursor-pointer transition-all hover:bg-white/10"
+                                aria-label="View comments"
+                              >
+                                {(item.comments?.length || 0) > 0 && (
+                                  <span className="absolute top-0 -right-1 bg-gray-300 text-gray-800 text-[8px] md:text-[10px] font-bold rounded-full min-w-[14px] h-[14px] md:min-w-[16px] md:h-[16px] flex items-center justify-center px-0.5">
+                                    {item.comments.length}
+                                  </span>
+                                )}
+                                <svg viewBox="0 0 24 24" fill="none" className="relative block w-5 h-5 md:w-6 md:h-6 z-10">
+                                  <path
+                                    d="M21 11.5C21 16.75 16.97 21 12 21C10.67 21 9.4 20.71 8.25 20.2L3 21L4.39 16.88C3.52 15.38 3 13.5 3 11.5C3 6.25 7.03 2 12 2C16.97 2 21 6.25 21 11.5Z"
+                                    stroke="#814256"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    fill="none"
+                                  />
+                                </svg>
+                              </button>
                               <EyeIcon viewCount={item.views || 0} createdAt={new Date(item.date || item.createdAt)} />
                               <HeartBtn
                                 isLiked={user ? item.likedBy?.includes(user.id) || false : false}
@@ -786,22 +699,21 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                             </div>
                           </div>
 
-                          {/* Post Content - Truncated with Read More */}
+                          {/* Post Content - Truncated */}
                           <div className="px-2 md:px-4 mb-3 md:mb-4">
                             <p className="text-gray-700 leading-relaxed text-sm md:text-base">
                               {truncateText(item.description || item.body)}
                             </p>
-                            {(item.description || item.body)?.length > 150 && (
-                              <button
-                                onClick={() => handleReadMore(item)}
-                                className="mt-2 text-[#4b9aaa] hover:text-[#3a7a8a] font-medium text-sm md:text-base underline"
-                              >
-                                Read more
-                              </button>
-                            )}
+                            {/* Read & Comment link — always visible, under post text */}
+                            <button
+                              onClick={() => handleReadMore(item)}
+                              className="mt-4 md:mt-5 text-[#4b9aaa] hover:text-[#3a7a8a] font-medium text-sm md:text-base underline"
+                            >
+                              Read & Comment
+                            </button>
                           </div>
 
-                          {/* Spacer */}
+                          {/* Spacer pushes tags to bottom */}
                           <div className="flex-1"></div>
 
                           {/* Tags */}
@@ -818,20 +730,6 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                             </div>
                           )}
                         </div>
-                      ) : currentTab === 'comments' ? (
-                        <CommentsList
-                          postId={item._id}
-                          collectionType={collectionType}
-                          postTitle={item.title}
-                          onAddComment={() => {
-                            setSelectedPost(item);
-                            setShowCommentModal(true);
-                          }}
-                          user={user}
-                          onReportComment={openCommentReportModal}
-                          reportedComments={reportedItems}
-                        />
-                      ) : null}
                     </div>
                   </div>
                 );
@@ -877,19 +775,6 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
         } : undefined}
       />
 
-      {/* Comment Modal */}
-      <CommentModal
-        show={showCommentModal}
-        handleClose={() => {
-          setShowCommentModal(false);
-          // Don't reset tab when closing - keep whatever tab is currently active
-          // This preserves the comments tab after successful submission
-        }}
-        postTitle={selectedPost?.title || ''}
-        postId={selectedPost?._id || ''}
-        onSubmit={handleCommentSubmit}
-      />
-
       {/* Read More Modal */}
       <ReadMoreModal
         isOpen={showReadMoreModal}
@@ -899,6 +784,11 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
         author={selectedPost?.author?.name || selectedPost?.author?.userName || 'Anonymous'}
         date={selectedPost?.date}
         tags={selectedPost?.tags}
+        postId={selectedPost?._id}
+        collectionType={collectionType}
+        user={user}
+        onReportComment={openCommentReportModal}
+        reportedComments={reportedItems}
       />
 
       {/* Report Modal */}
