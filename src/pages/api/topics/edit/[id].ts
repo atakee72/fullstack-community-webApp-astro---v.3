@@ -6,7 +6,7 @@ import type { Topic, EditHistory, FlaggedContent } from '../../../../types';
 import { TopicCreateSchema } from '../../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../../schemas/validation.utils';
 import { isOwner } from '../../../../utils/authHelpers';
-import { moderateText, createFlaggedContentRecord } from '../../../../lib/moderation';
+import { moderateText, checkImagesWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../../lib/moderation';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
@@ -37,7 +37,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
       return validation.response;
     }
 
-    const { title, body, tags } = validation.data;
+    const { title, body, tags, images } = validation.data;
 
     // Connect to database
     const db = await connectDB();
@@ -62,26 +62,31 @@ export const PUT: APIRoute = async ({ request, params }) => {
     }
 
     // Run content moderation on edited content (FAIL-SAFE: queues for review on any error)
-    // Moderate main content (title + body)
-    const mainModerationResult = await moderateText(`${title}\n\n${body}`);
-
-    // Moderate tags SEPARATELY to catch profanity that might get diluted in main content
-    let tagsModerationResult = null;
+    const moderationChecks: Promise<any>[] = [
+      moderateText(`${title}\n\n${body}`)
+    ];
     if (tags?.length) {
-      tagsModerationResult = await moderateText(tags.join(' '));
+      moderationChecks.push(moderateText(tags.join(' ')));
+    }
+    if (images?.length) {
+      moderationChecks.push(checkImagesWithGPT(images.map(img => img.url)));
     }
 
-    // Combine results: flag if EITHER main content OR tags need review
-    const needsReview = mainModerationResult.needsReview || (tagsModerationResult?.needsReview ?? false);
-    const moderationResult = needsReview
-      ? (tagsModerationResult?.needsReview ? tagsModerationResult : mainModerationResult)
-      : mainModerationResult;
+    const [mainModerationResult, tagsModerationResult, imageModerationResult] = await Promise.all(moderationChecks);
+
+    // Merge all moderation results
+    const resultsToMerge = [mainModerationResult];
+    if (tagsModerationResult) resultsToMerge.push(tagsModerationResult);
+    if (imageModerationResult) resultsToMerge.push(imageModerationResult);
+    const mergedModerationResult = mergeModerationResults(...resultsToMerge);
+
+    // Use merged result for moderation decision
+    const moderationResult = mergedModerationResult || mainModerationResult;
 
     // Determine new moderation status
-    // If content is flagged, it goes back to pending regardless of previous status
-    const newModerationStatus = moderationResult.canPublish
-      ? existingTopic.moderationStatus || 'approved' // Keep existing status if clean
-      : 'pending'; // Reset to pending if flagged
+    const newModerationStatus = mergedModerationResult
+      ? 'pending'
+      : existingTopic.moderationStatus || 'approved';
 
     // Create edit history entry
     const editHistoryEntry: EditHistory = {
@@ -96,6 +101,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
       title,
       body,
       tags: tags || [],
+      images: images || [],
       isEdited: true,
       lastEditedAt: new Date(),
       updatedAt: new Date(),
@@ -120,7 +126,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
     );
 
     // If content was flagged during edit, create a new flagged content record
-    if (moderationResult.needsReview) {
+    if (mergedModerationResult) {
       const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
       const flaggedRecord = createFlaggedContentRecord(
         'topic',
@@ -158,7 +164,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
     };
 
     // Return appropriate response based on moderation result
-    if (moderationResult.needsReview) {
+    if (mergedModerationResult) {
       return new Response(
         JSON.stringify({
           topic: updatedTopic,

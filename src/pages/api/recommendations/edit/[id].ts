@@ -36,7 +36,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
       return validation.response;
     }
 
-    const { title, body, tags } = validation.data;
+    const { title, body, tags, images } = validation.data;
 
     const db = await connectDB();
     const recommendationsCollection = db.collection<Recommendation>('recommendations');
@@ -72,6 +72,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
           body,
           description: body,
           tags: tags || [],
+          images: images || [],
           isEdited: true,
           lastEditedAt: new Date(),
           updatedAt: new Date()

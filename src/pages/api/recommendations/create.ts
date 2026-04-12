@@ -5,7 +5,7 @@ import { ObjectId } from 'mongodb';
 import type { Recommendation, FlaggedContent } from '../../../types';
 import { RecommendationCreateSchema } from '../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../schemas/validation.utils';
-import { moderateText, checkSpamWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../lib/moderation';
+import { moderateText, checkSpamWithGPT, checkImagesWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../lib/moderation';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -49,9 +49,9 @@ export const POST: APIRoute = async ({ request }) => {
       return validation.response;
     }
 
-    const { title, body, tags, category } = validation.data;
+    const { title, body, tags, category, images } = validation.data;
 
-    // Run content moderation + spam check in parallel (FAIL-SAFE: queues for review on any error)
+    // Run content moderation + spam check + image moderation in parallel
     const contentText = `${title}\n\n${body}`;
     const moderationChecks: Promise<any>[] = [
       moderateText(contentText),
@@ -60,12 +60,16 @@ export const POST: APIRoute = async ({ request }) => {
     if (tags?.length) {
       moderationChecks.push(moderateText(tags.join(' ')));
     }
+    if (images?.length) {
+      moderationChecks.push(checkImagesWithGPT(images.map(img => img.url)));
+    }
 
-    const [mainModerationResult, spamResult, tagsModerationResult] = await Promise.all(moderationChecks);
+    const [mainModerationResult, spamResult, tagsModerationResult, imageModerationResult] = await Promise.all(moderationChecks);
 
     // Merge all moderation results — returns null if all passed
     const resultsToMerge = [mainModerationResult, spamResult];
     if (tagsModerationResult) resultsToMerge.push(tagsModerationResult);
+    if (imageModerationResult) resultsToMerge.push(imageModerationResult);
     const mergedResult = mergeModerationResults(...resultsToMerge);
 
     // Determine moderation status
@@ -78,6 +82,7 @@ export const POST: APIRoute = async ({ request }) => {
       author: userId as any, // Save author as ID string
       category: category || 'other',
       tags: tags || [],
+      images: images || [],
       comments: [],
       views: 0,
       likes: 0,
