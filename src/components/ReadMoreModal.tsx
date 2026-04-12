@@ -12,6 +12,7 @@ interface ReadMoreModalProps {
   author?: string;
   date?: string | number | Date;
   tags?: string[];
+  images?: { url: string; publicId: string }[];
   postId?: string;
   collectionType?: string;
   user?: User | null;
@@ -27,6 +28,7 @@ export default function ReadMoreModal({
   author,
   date,
   tags,
+  images,
   postId,
   collectionType,
   user,
@@ -39,6 +41,15 @@ export default function ReadMoreModal({
   const [revealedWarnings, setRevealedWarnings] = useState<Set<string>>(new Set());
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  const scrollCarousel = (direction: 1 | -1) => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const card = el.querySelector('[data-carousel-item]') as HTMLElement;
+    if (!card) return;
+    el.scrollBy({ left: direction * (card.offsetWidth + 12), behavior: 'smooth' });
+  };
 
   const { data: comments = [], isLoading: commentsLoading } = useCommentsQuery(postId || '');
   const createComment = useCreateComment();
@@ -168,6 +179,49 @@ export default function ReadMoreModal({
 
         {/* Modal Body - Scrollable */}
         <div className="flex-1 overflow-y-auto p-6 bg-gray-200">
+          {/* Image Carousel */}
+          {images && images.length > 0 && (
+            <div className="mb-4 -mx-6 px-6 relative">
+              <div
+                ref={carouselRef}
+                className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2"
+              >
+                {images.map((img, i) => (
+                  <div
+                    key={i}
+                    data-carousel-item
+                    className={`snap-start shrink-0 rounded-lg overflow-hidden ${images.length === 1 ? 'w-full' : 'w-[65%]'}`}
+                  >
+                    <img
+                      src={img.url}
+                      alt={`Image ${i + 1}`}
+                      className="w-full max-h-64 sm:max-h-80 object-contain"
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={() => scrollCarousel(-1)}
+                    className="absolute left-7 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 shadow hover:bg-white flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
+                    aria-label="Previous image"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+                  <button
+                    onClick={() => scrollCarousel(1)}
+                    className="absolute right-7 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 shadow hover:bg-white flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
+                    aria-label="Next image"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
           <div className="prose max-w-none">
             <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{body}</p>
           </div>
