@@ -645,9 +645,9 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                       item.images?.length && "w-1/2 p-4 md:p-6 overflow-hidden"
                     )}>
                     {/* Card Header Strip — Title + Edit/Delete Icons */}
-                    <div className="bg-[#c9c4b9] -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-3 md:px-6 py-3 mb-4">
+                    <div className="bg-[#c9c4b9] -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-3 md:px-6 py-3 mb-1">
                       <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
-                        <span className="inline-block whitespace-nowrap font-medium text-sm md:text-base text-gray-900 px-1">
+                        <span className="inline-block whitespace-nowrap font-[550] italic text-sm md:text-base text-gray-900 px-1 pt-4 font-['Consolas',_monospace]">
                           {item.title}
                         </span>
                       </div>
@@ -737,7 +737,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                         )}>
                           {/* Author Info Header */}
                           <div className="bg-[#4b9aaa] text-white px-1.5 md:px-2 py-0 rounded-md mt-0 mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs">
-                            <div className="w-11 h-11 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center flex-shrink-0 -my-2">
+                            <div className="w-8 h-8 md:w-9 md:h-9 bg-white rounded-full flex items-center justify-center flex-shrink-0 -my-1">
                               <span className="text-[#4b9aaa] font-bold text-xs md:text-sm">
                                 {item.author?.name?.charAt(0)?.toUpperCase() || item.author?.userName?.charAt(0)?.toUpperCase() || 'A'}
                               </span>
