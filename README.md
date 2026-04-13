@@ -129,7 +129,9 @@ Vercel will automatically:
 - **Custom UI Dialogs**: Native `<dialog>`-based confirm modals and sonner toasts replace all browser-native dialogs
 - **Kiez Data Dashboard**: Interactive Schillerkiez neighborhood statistics with hand-drawn SVG charts, historical trends (demographics + social indicators 2013–2023), and live air quality data
 - **Sticky-stack forum cards**: Forum post cards stick at the top of the viewport as you scroll, with the next card sliding over the previous — variable pile offsets create a "casually tossed" stack effect. Client-side pagination (12/24/48 per page). Click-blocking prevents interaction with hidden cards in the pile.
-- **Forum post images**: Up to 5 images per post (topics, announcements, recommendations) with Cloudinary upload, GPT-4o vision moderation, full-height cover image on card (50/50 split), and scroll-snap carousel with arrow nav in the detail modal
+- **Forum post images**: Up to 5 images per post (topics, announcements, recommendations) with Cloudinary upload, GPT-4o vision moderation, news-style hero card on mobile, 50/50 split on desktop, and scroll-snap carousel with arrow nav in the detail modal
+- **Forum bookmarks**: Save/bookmark posts with server-side persistence, optimistic UI updates, and bookmark icon in card toolbar + modal footer
+- **Forum search**: Client-side search by title, body, author name, and tags. Clickable tags for instant filtering. Result count display. Search persists across forum tabs
 
 ## 🛡️ Content Moderation
 
@@ -296,6 +298,8 @@ The `/schillerkiez` page shows neighborhood-level statistics for the Schillerkie
 ### Other
 - `POST /api/upload/image` - Upload image to Cloudinary (profile pictures)
 - `POST /api/posts/upload` - Upload forum post image to Cloudinary (max 5MB)
+- `POST /api/posts/save` - Toggle save/unsave forum post bookmark
+- `GET /api/posts/save` - Get user's saved post IDs
 - `GET /api/users/update` - Update user profile
 
 ## 🔒 Environment Variables
