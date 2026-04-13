@@ -131,11 +131,13 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     });
   }, [queryClient, collectionType]);
 
-  const filteredItems = (items as any[]).filter(item =>
-    (item.title?.toLowerCase() || '').includes(searchValue.toLowerCase()) ||
-    ((item.description || item.body || '')?.toLowerCase() || '').includes(searchValue.toLowerCase()) ||
-    ((item.author?.name || item.author?.userName || '')?.toLowerCase() || '').includes(searchValue.toLowerCase())
-  );
+  const filteredItems = (items as any[]).filter(item => {
+    const q = searchValue.toLowerCase();
+    return (item.title?.toLowerCase() || '').includes(q) ||
+      ((item.description || item.body || '')?.toLowerCase() || '').includes(q) ||
+      ((item.author?.name || item.author?.userName || '')?.toLowerCase() || '').includes(q) ||
+      (item.tags || []).some((tag: string) => tag.toLowerCase().includes(q));
+  });
 
   // Client-side pagination: slice filteredItems into pages of `pageSize`.
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
@@ -144,11 +146,15 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     (currentPage + 1) * pageSize
   );
 
-  // Reset to first page and scroll to top whenever the tab or search changes.
+  // Reset to first page whenever the tab or search changes.
   useEffect(() => {
     setCurrentPage(0);
-    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [collectionType, searchValue]);
+
+  // Scroll to top only on tab switch.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [collectionType]);
 
   // Disable click events on sticky cards hidden behind the active (topmost) one.
   // Without this, the peeking header strip of a hidden card would still receive
@@ -383,7 +389,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
           bg-[#4b9aaa] matches the teal parent box (index.astro:14) so it blends seamlessly. */}
       <div ref={headerRef} className="sticky top-4 z-30 w-full mb-4 md:mb-6 bg-[#4b9aaa]">
         {/* Tab row + Plus button grouped together; plus stays visible even when search collapses. */}
-        <div className="flex items-end gap-2 mt-2 md:mt-4 mb-3 md:mb-4 ml-2 md:ml-6">
+        <div className="flex items-end gap-2 mt-0 md:mt-1 mb-1 md:mb-2 ml-2 md:ml-6">
         {/* Collection Type Buttons - Lifted Tab Style */}
         <div className="flex flex-wrap xs:flex-nowrap items-center xs:items-end justify-center xs:justify-start gap-1 flex-1 overflow-x-auto">
           <button
@@ -436,14 +442,32 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
         </div>
 
         <div className="bg-[#4b9aaa]/10 rounded-lg shadow-md">
-          <div className="p-3 md:p-4">
-            <input
-              type="text"
-              placeholder={`Search in ${collectionType === 'topics' ? 'discussions' : collectionType}...`}
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              className="w-full p-2 md:p-3 border-2 border-gray-200 rounded-md text-sm md:text-base focus:outline-none focus:border-[#4b9aaa] transition-colors"
-            />
+          <div className="pt-1 pb-3 px-3 md:pt-1 md:pb-4 md:px-4">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder={`Search in ${collectionType === 'topics' ? 'discussions' : collectionType}...`}
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                className="w-full py-1.5 px-2 md:py-2 md:px-3 pr-8 border-2 border-gray-200 rounded-md text-sm md:text-base focus:outline-none focus:border-[#4b9aaa] transition-colors"
+              />
+              {searchValue && (
+                <button
+                  onClick={() => setSearchValue('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Clear search"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            {searchValue && (
+              <p className="text-xs text-white mt-1 px-1">
+                {filteredItems.length} {filteredItems.length === 1 ? 'result' : 'results'}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -457,7 +481,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
           ) : (
             <AnimatePresence mode="wait">
             <motion.div
-              key={collectionType}
+              key={`${collectionType}-${searchValue}`}
               className="space-y-4"
               initial={{ opacity: 0, y: 100 }}
               animate={{ opacity: 1, y: 0 }}
@@ -489,7 +513,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                       transform: `translateX(${xOffset}px)`,
                     }}
                     className={cn(
-                      "forum-sticky-card bg-[#c9c4b9] rounded-lg shadow-xl overflow-hidden flex flex-col min-h-[300px] md:min-h-[400px] transition-all duration-400 ease-out border border-[#4b9aaa]/40",
+                      "forum-sticky-card bg-[#c9c4b9] rounded-lg shadow-xl overflow-hidden flex flex-col h-[300px] md:h-[400px] transition-all duration-400 ease-out border border-[#4b9aaa]/40",
                       !item.images?.length && "p-4 md:p-6",
                       !isLast && "sticky",
                       item.moderationStatus === 'pending' && !item.isUserReported && isOwner(item.author, user) && "ring-2 ring-amber-300",
@@ -602,7 +626,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           {Array.isArray(item.tags) && item.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 pt-2">
                               {item.tags.map((tag) => (
-                                <span key={tag} className="px-2 py-0.5 bg-[#4b9aaa] text-white text-[10px] rounded-md">{tag}</span>
+                                <button key={tag} onClick={() => setSearchValue(tag)} className="px-2 py-0.5 bg-[#4b9aaa] text-white text-[10px] rounded-md hover:bg-[#3a7a8a] transition-colors cursor-pointer">{tag}</button>
                               ))}
                             </div>
                           )}
@@ -732,9 +756,12 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           </div>
 
                           {/* Post Content - Truncated */}
-                          <div className="px-2 md:px-4 mb-3 md:mb-4">
-                            <p className="text-gray-700 leading-relaxed text-sm md:text-base">
-                              {truncateText(item.description || item.body)}
+                          <div className="px-2 md:px-4 mb-3 md:mb-4 cursor-pointer" onClick={() => handleReadMore(item)}>
+                            <p className={cn(
+                              "text-gray-700 leading-relaxed text-sm md:text-base",
+                              item.images?.length ? "line-clamp-3" : "line-clamp-5"
+                            )}>
+                              {item.description || item.body}
                             </p>
                             {/* Read & Comment link — always visible, under post text */}
                             <button
@@ -802,7 +829,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           {Array.isArray(item.tags) && item.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1.5 md:gap-2 pt-4 px-2 md:px-4">
                               {item.tags.map((tag) => (
-                                <span key={tag} className="px-2 md:px-3 py-0.5 md:py-1 bg-[#4b9aaa] text-white text-xs rounded-md underline">{tag}</span>
+                                <button key={tag} onClick={() => setSearchValue(tag)} className="px-2 md:px-3 py-0.5 md:py-1 bg-[#4b9aaa] text-white text-xs rounded-md underline hover:bg-[#3a7a8a] transition-colors cursor-pointer">{tag}</button>
                               ))}
                             </div>
                           )}
@@ -810,7 +837,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                     </div>
                     </div>{/* close content side */}
                     {item.images?.length > 0 && (
-                      <div className="w-1/2 flex-shrink-0 bg-[#c9c4b9] relative">
+                      <div className="w-1/2 flex-shrink-0 bg-[#c9c4b9] relative cursor-pointer" onClick={() => handleReadMore(item)}>
                         <img
                           src={item.images[0].url}
                           alt=""
