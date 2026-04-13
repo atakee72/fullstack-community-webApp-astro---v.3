@@ -47,7 +47,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
 
   // Navigation items configuration
   const publicNavItems = [
-    { href: '/', label: 'Home', icon: '🏘️' },
+    { href: '/', label: 'Forums', icon: '🏘️' },
     { href: '/blog', label: 'Blog', icon: '📝' },
     { href: '/newsboard', label: 'Newsboard', icon: '📰' },
     { href: '/marketplace', label: 'Marketplace', icon: '🛒' },
@@ -55,7 +55,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
   ];
 
   const authNavItems = [
-    { href: '/', label: 'Home', icon: '🏘️' },
+    { href: '/', label: 'Forums', icon: '🏘️' },
     { href: '/blog', label: 'Blog', icon: '📝' },
     { href: '/newsboard', label: 'Newsboard', icon: '📰' },
     { href: '/calendar', label: 'Calendar', icon: '📅' },
