@@ -195,20 +195,17 @@ Use `client:load` or `client:only="react"` directive:
 <CalendarWrapper client:only="react" />
 <ForumWrapper client:only="react" session={session} />
 ```
-Note: `ForumWrapper` uses `client:only="react"` (not `client:load`) because `ForumContainer` uses `useLayoutEffect`, which warns during SSR. Since the forum is fully interactive (TanStack Query, sticky measurement), there's no SEO benefit from server rendering.
+Note: `ForumWrapper` uses `client:only="react"` (not `client:load`) because the forum is fully interactive (TanStack Query, client-side state) with no SEO benefit from server rendering.
 
 ### Wrapper Pattern
 Complex React components use a wrapper pattern:
 - `CalendarWrapper.tsx` → `CalendarContainer.tsx`
 - `ForumWrapper.tsx` → `ForumContainer.tsx`
 
-### Forum List (Sticky Stack + Pagination)
-- **Pattern**: Each forum card in `ForumContainer.tsx` has `position: sticky` with a variable `top` computed from `--forum-header-h` CSS variable + a pile offset (`index * 20`, capped at 80px). Later DOM siblings paint on top, creating a visual stack. The last card on each page is **non-sticky** (normal flow) to avoid a "floats too high" quirk at the end of the list — this is a known trade-off.
-- **Sticky header**: Tabs + search bar stick at `top: 16px` (top-4). The header's rendered height is measured via `ResizeObserver` and published as `--forum-header-h` on the forum root. Cards read this via `calc()` in their `top` style.
-- **Click-blocking**: A `useEffect` scroll listener in `ForumContainer.tsx` toggles `.is-hidden-behind` (defined in `global.css`) on cards visually covered by later siblings. Detection uses a "pile region" heuristic: iterate cards in reverse DOM order and find the highest-index card whose `rect.top` is within the header-bottom vicinity. Cards before the active one get `pointer-events: none` + dimming filter.
+### Forum List (Pagination)
+- **Sticky header**: Tabs + search bar stick at `top: 16px` (`sticky top-4 z-30`), CSS-only.
 - **Pagination**: Client-side slicing of `filteredItems` into pages of 12 (configurable 12/24/48). Uses the shared `Pagination` component (`src/components/ui/Pagination.tsx`) with wine accent (`#814256`). Page resets to 0 on tab switch or search. Scroll-to-top on page change.
 - **Applies to all 3 forums** (Topics, Announcements, Recommendations) via the shared `collectionType` prop.
-- **Critical dependency**: requires the `overflow-x: clip` fix in `global.css` (see "Common Errors to Avoid" below). Using `overflow-x: hidden` on `html/body` silently breaks all sticky positioning project-wide.
 
 ### Forum Post Images
 - **Upload**: Up to 5 images per post (topics, announcements, recommendations), 5MB each. Uploaded to Cloudinary via `POST /api/posts/upload` (session auth, folder `mahalle/posts`, transform 1200x800 limit).
@@ -322,7 +319,7 @@ When I say yellow, red, green, I always mean the default variants of the project
   }
   ```
 - **If sticky stops working anywhere in the project**, check `global.css` and any container components for `overflow-x: hidden` on the axis-scroll ancestors. Use `getComputedStyle(el).overflowY` in devtools to verify — the "upgraded" value shows as `auto` even if you wrote `visible`.
-- **This was a real latent bug discovered in March 2026** when adding sticky cards to the forum. The fix repaired sticky globally (blog sidebars, calendar agenda headers, and any future sticky usage).
+- **This was a real latent bug discovered in March 2026.** The fix preserves sticky positioning globally (sticky headers, blog sidebars, calendar agenda headers, and any future sticky usage).
 
 ## TODO / Reminders
 - [ ] Create a pre-commit hook for automatic credentials/secrets check before git add (husky + custom grep script)

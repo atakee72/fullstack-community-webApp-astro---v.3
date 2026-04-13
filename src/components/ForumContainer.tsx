@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTopicsQuery, useCreatePost, useDeletePost, useEditPost, useSavePostMutation, useSavedPostsQuery } from '../hooks/api/useTopicsQuery';
 import { BookmarkIcon } from 'lucide-react';
@@ -38,9 +38,6 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   const [reportToastItemId, setReportToastItemId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(12);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-
   // localStorage key for persisting revealed warnings
   const REVEALED_WARNINGS_KEY = 'mahalle_revealed_warnings';
 
@@ -61,24 +58,6 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   const savedPosts = new Set(savedPostsData?.savedIds || []);
 
   const queryClient = useQueryClient();
-
-  // Publish the sticky header's rendered height (including its bottom margin)
-  // as --forum-header-h on the forum root. Cards read this via calc() so their
-  // sticky `top` lands cleanly below the header regardless of tab/search size.
-  useLayoutEffect(() => {
-    const header = headerRef.current;
-    const root = rootRef.current;
-    if (!header || !root) return;
-    const measure = () => {
-      const rect = header.getBoundingClientRect();
-      const mb = parseFloat(getComputedStyle(header).marginBottom) || 0;
-      root.style.setProperty('--forum-header-h', `${Math.ceil(rect.height + mb)}px`);
-    };
-    const ro = new ResizeObserver(measure);
-    ro.observe(header);
-    measure();
-    return () => ro.disconnect();
-  }, [isClient, isLoading, items.length]);
 
   useEffect(() => {
     setIsClient(true);
@@ -155,57 +134,6 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [collectionType]);
-
-  // Disable click events on sticky cards hidden behind the active (topmost) one.
-  // Without this, the peeking header strip of a hidden card would still receive
-  // clicks — meaning a user could accidentally trigger "Write a comment", "Edit",
-  // or "Delete" on the WRONG forum post. Pure CSS can't detect "visually topmost
-  // sticky element" (all stuck cards match @container scroll-state(stuck: top)
-  // equally), so we use a throttled scroll listener to toggle pointer-events.
-  useEffect(() => {
-    let rafId = 0;
-    const update = () => {
-      // Re-query cards every time — DOM nodes change after AnimatePresence transitions
-      const cards = Array.from(document.querySelectorAll<HTMLElement>('.forum-sticky-card'));
-      if (cards.length === 0) return;
-
-      const root = document.querySelector('[class*="max-w-4xl"]');
-      const headerEl = root?.querySelector('[class*="sticky"]');
-      const headerBottom = headerEl ? headerEl.getBoundingClientRect().bottom : 100;
-      const pileTop = headerBottom - 10;
-      const pileBottom = headerBottom + 120;
-
-      let activeIndex = -1;
-      for (let i = cards.length - 1; i >= 0; i--) {
-        const rect = cards[i].getBoundingClientRect();
-        if (rect.top >= pileTop && rect.top <= pileBottom) {
-          activeIndex = i;
-          break;
-        }
-      }
-
-      for (let i = 0; i < cards.length; i++) {
-        const isHidden = activeIndex >= 0 && i < activeIndex;
-        cards[i].classList.toggle('is-hidden-behind', isHidden);
-      }
-    };
-
-    const handleScroll = () => {
-      if (rafId) return; // already scheduled for next frame
-      rafId = requestAnimationFrame(() => {
-        update();
-        rafId = 0;
-      });
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    update(); // initial run — in case cards are already stuck at mount
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafId) cancelAnimationFrame(rafId);
-    };
-  }, [filteredItems, currentPage, pageSize, collectionType]);
 
   const handlePostSubmit = async (data: { title: string; body: string; tags: string[]; images: { url: string; publicId: string }[] }) => {
     try {
@@ -384,10 +312,10 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   }
 
   return (
-    <div ref={rootRef} className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto">
       {/* Header Section with Collection Selector — sticky so tabs + search stay at top on scroll.
           bg-[#4b9aaa] matches the teal parent box (index.astro:14) so it blends seamlessly. */}
-      <div ref={headerRef} className="sticky top-4 z-30 w-full mb-4 md:mb-6 bg-[#4b9aaa]">
+      <div className="sticky top-4 z-30 w-full mb-4 md:mb-6 bg-[#4b9aaa]">
         {/* Tab row + Plus button grouped together; plus stays visible even when search collapses. */}
         <div className="flex items-end gap-2 mt-0 md:mt-1 mb-1 md:mb-2 ml-2 md:ml-6">
         {/* Collection Type Buttons - Lifted Tab Style */}
@@ -489,33 +417,12 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
               transition={{ duration: 0.5, ease: 'easeOut' }}
             >
               {pagedItems.map((item, index) => {
-                // Piling effect: cards stick just below the sticky header.
-                // `--forum-header-h` is set live via ResizeObserver (see useEffect above)
-                // so the pile adapts as the header grows/shrinks (search expanded/collapsed).
-                // 20px step creates a 4-layer visible pile; cap at 80px total peek.
-                const pileOffset = Math.min(index * 20, 80);
-                const stickyTop = `calc(var(--forum-header-h, 140px) + 4px + ${pileOffset}px)`;
-                // Deterministic pseudo-random horizontal offset for organic pile look.
-                // Range [-10, +10] px; 8 and 21 are coprime (GCD=1, since 21=3·7 and 8=2³)
-                // so all 21 values appear in the first 21 cards before cycling. Wide spread
-                // for a dramatic "casually tossed" pile feel.
-                const xOffset = ((index * 8) % 21) - 10;
-                // Last card stays in normal flow (no sticky). At the bottom of
-                // the list there's no scroll runway for sticky to release, so
-                // a sticky last card would "float" above its natural position
-                // and appear higher than the card before it.
-                const isLast = index === pagedItems.length - 1;
                 return (
                   <div
                     key={item._id}
-                    style={{
-                      top: isLast ? undefined : stickyTop,
-                      transform: `translateX(${xOffset}px)`,
-                    }}
                     className={cn(
-                      "forum-sticky-card bg-[#c9c4b9] rounded-lg shadow-xl overflow-hidden flex flex-col h-[300px] md:h-[400px] transition-all duration-400 ease-out border border-[#4b9aaa]/40",
+                      "bg-[#c9c4b9] rounded-lg shadow-xl overflow-hidden flex flex-col h-[300px] md:h-[400px] transition-all duration-400 ease-out border border-[#4b9aaa]/40",
                       !item.images?.length && "p-4 md:p-6",
-                      !isLast && "sticky",
                       item.moderationStatus === 'pending' && !item.isUserReported && isOwner(item.author, user) && "ring-2 ring-amber-300",
                       item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && "ring-2 ring-orange-300",
                       item.moderationStatus === 'rejected' && isOwner(item.author, user) && "ring-2 ring-red-400"

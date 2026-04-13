@@ -40,35 +40,6 @@ html, body {
   overflow-x: clip;   /* modern browsers — preserves position: sticky */
 }
 
-/* Forum sticky cards hidden behind the active top of the pile.
-   The JS scroll listener in ForumContainer.tsx toggles `.is-hidden-behind`
-   on cards whose stuck position is above a later-in-DOM sibling also stuck
-   at the same position (meaning they are visually covered).
-
-   - pointer-events: none blocks accidental clicks on the peeking header strip,
-     preventing users from triggering "Write a comment", edit, or delete on
-     the wrong forum post.
-   - The box-shadow creates a visible 1px edge line just below each hidden card,
-     so the user can SEE individual card boundaries in the pile — like a stack
-     of real paper sheets. Without this, the pile would look like a single flat
-     card because all cards share the same background color. */
-.forum-sticky-card.is-hidden-behind {
-  pointer-events: none;
-  /* Darker + desaturated to emphasise "pushed back into the background".
-     brightness(0.82) reduces luminance 18%; saturate(0.5) halves saturation,
-     turning the warm beige #c9c4b9 into a cool-neutral darker gray. The combination
-     reads as "atmospheric perspective" — a cue that distant objects appear darker
-     and less saturated, used in film/photography for the same depth effect. */
-  filter: brightness(0.82) saturate(0.5);
-  /* IMPORTANT: shadows must be at the TOP of each card, not the bottom. In the pile,
-     every card's bottom is covered by later siblings — only the top 20px peek strip
-     is visible. Inset shadows paint a dark band INSIDE the top border-box, creating
-     the visible "seam line" between stacked cards. */
-  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.25),
-              inset 0 2px 0 rgba(0, 0, 0, 0.12),
-              inset 0 4px 6px rgba(0, 0, 0, 0.07);
-}
-
 body {
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   min-height: 100vh;
