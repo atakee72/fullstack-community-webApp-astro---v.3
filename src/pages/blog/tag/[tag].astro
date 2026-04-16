@@ -51,7 +51,7 @@ const allPosts = await getCollection('blog', ({ data }) => !data.draft);
 
       <!-- Header -->
       <header class="mb-10">
-        <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">
+        <h1 class="text-3xl md:text-4xl font-bold text-[#e8e6e1] mb-2 font-['Space_Grotesk',sans-serif]">
           Posts tagged "{tag}"
         </h1>
         <p class="text-white/80">
@@ -110,10 +110,10 @@ const allPosts = await getCollection('blog', ({ data }) => !data.draft);
           <div class="sticky top-24 space-y-6">
             <TagCloud posts={allPosts} currentTag={tag} />
 
-            <div class="bg-white/90 backdrop-blur rounded-xl shadow-lg p-5">
+            <div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] p-5">
               <a
                 href="/blog"
-                class="inline-flex items-center text-[#4b9aaa] hover:text-[#3a7a8a] font-medium"
+                class="inline-flex items-center text-[#4b9aaa] hover:text-[#5bc8d8] font-medium"
               >
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />

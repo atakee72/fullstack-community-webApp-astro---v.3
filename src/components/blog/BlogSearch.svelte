@@ -116,7 +116,7 @@
       type="text"
       bind:value={searchQuery}
       placeholder="Search posts by title, description, or tag..."
-      class="w-full pl-12 pr-12 py-3 bg-white/[0.08] backdrop-blur-xl border border-white/10 rounded-xl focus:ring-2 focus:ring-[#4b9aaa]/50 focus:border-[#4b9aaa]/50 text-[#e8e6e1] placeholder-white/40"
+      class="w-full pl-12 pr-12 py-3 bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] focus:ring-2 focus:ring-[#4b9aaa]/50 focus:border-[#4b9aaa]/50 text-[#e8e6e1] placeholder-white/40"
     />
     {#if searchQuery}
       <button
