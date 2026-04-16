@@ -421,7 +421,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                   <div
                     key={item._id}
                     className={cn(
-                      "bg-[#c9c4b9] rounded-lg shadow-xl overflow-hidden flex flex-col h-[300px] md:h-[400px] transition-all duration-400 ease-out border border-[#4b9aaa]/40",
+                      "bg-[#c9c4b9] rounded-lg shadow-xl overflow-hidden flex flex-col h-[340px] md:h-[400px] transition-all duration-400 ease-out border border-[#4b9aaa]/40",
                       !item.images?.length && "p-4 md:p-6",
                       item.moderationStatus === 'pending' && !item.isUserReported && isOwner(item.author, user) && "ring-2 ring-amber-300",
                       item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && "ring-2 ring-orange-300",
