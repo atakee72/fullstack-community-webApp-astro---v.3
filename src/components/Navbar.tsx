@@ -174,7 +174,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
               </nav>
 
               {/* Auth Actions */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/15 bg-[#542CC8]/10">
+              <div className="absolute bottom-0 left-0 right-0 p-4">
                 {user ? (
                   <button
                     onClick={handleLogout}
