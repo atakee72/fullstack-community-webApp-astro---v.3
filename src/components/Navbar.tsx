@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { signOut } from 'auth-astro/client';
 import { motion, AnimatePresence } from 'motion/react';
+import { MessageSquare, PenLine, Newspaper, Calendar, ShoppingBag, BarChart3, User, LogOut } from 'lucide-react';
 
 interface NavbarProps {
   user?: any;
@@ -47,21 +48,21 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
 
   // Navigation items configuration
   const publicNavItems = [
-    { href: '/', label: 'Forums', icon: '🏘️' },
-    { href: '/blog', label: 'Blog', icon: '📝' },
-    { href: '/newsboard', label: 'Newsboard', icon: '📰' },
-    { href: '/marketplace', label: 'Marketplace', icon: '🛒' },
-    { href: '/schillerkiez', label: 'Kiez Data', icon: '📊' },
+    { href: '/', label: 'Forums', icon: MessageSquare },
+    { href: '/blog', label: 'Blog', icon: PenLine },
+    { href: '/newsboard', label: 'Newsboard', icon: Newspaper },
+    { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
+    { href: '/schillerkiez', label: 'Kiez Data', icon: BarChart3 },
   ];
 
   const authNavItems = [
-    { href: '/', label: 'Forums', icon: '🏘️' },
-    { href: '/blog', label: 'Blog', icon: '📝' },
-    { href: '/newsboard', label: 'Newsboard', icon: '📰' },
-    { href: '/calendar', label: 'Calendar', icon: '📅' },
-    { href: '/marketplace', label: 'Marketplace', icon: '🛒' },
-    { href: '/schillerkiez', label: 'Kiez Data', icon: '📊' },
-    { href: '/profile', label: 'Profile', icon: '👤' },
+    { href: '/', label: 'Forums', icon: MessageSquare },
+    { href: '/blog', label: 'Blog', icon: PenLine },
+    { href: '/newsboard', label: 'Newsboard', icon: Newspaper },
+    { href: '/calendar', label: 'Calendar', icon: Calendar },
+    { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
+    { href: '/schillerkiez', label: 'Kiez Data', icon: BarChart3 },
+    { href: '/profile', label: 'Profile', icon: User },
   ];
 
   const navItems = user ? authNavItems : publicNavItems;
@@ -165,7 +166,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
                         onClick={closeMenu}
                         className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-[#4b9aaa] transition-colors font-medium"
                       >
-                        <span className="text-xl">{item.icon}</span>
+                        <item.icon className="w-5 h-5" strokeWidth={1.5} />
                         <span>{item.label}</span>
                       </a>
                     </motion.li>
@@ -180,7 +181,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
                     onClick={handleLogout}
                     className="w-full flex items-center justify-center gap-2 bg-[#814256]/30 border border-[#814256]/50 text-white/80 px-4 py-3 rounded-lg font-medium hover:bg-[#814256]/50 transition-colors backdrop-blur-xl"
                   >
-                    <span>🚪</span>
+                    <LogOut className="w-5 h-5" strokeWidth={1.5} />
                     <span>Logout</span>
                   </button>
                 ) : (
