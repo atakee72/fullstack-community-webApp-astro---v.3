@@ -142,7 +142,7 @@
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
   {#each paginatedPosts as post, index (post.id)}
     <div class="opacity-0" use:reveal={(index % columnsPerRow) * 0.12}>
-    <article class="bg-white/[0.06] backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden hover:bg-white/[0.1] hover:border-white/20 transition-all duration-300 group">
+    <article class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl overflow-hidden hover:bg-white/[0.1] hover:border-white/30 transition-all duration-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] group">
       <a href={`/blog/${post.id}`} class="block">
         {#if post.cover}
           <div class="relative h-48 overflow-hidden">

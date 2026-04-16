@@ -16,7 +16,7 @@ const formattedDate = pubDate.toLocaleDateString('en-US', {
 });
 ---
 
-<article class="bg-white/[0.06] backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden hover:bg-white/[0.1] hover:border-white/20 transition-all duration-300 group">
+<article class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl overflow-hidden hover:bg-white/[0.1] hover:border-white/30 transition-all duration-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] group">
   <a href={`/blog/${post.id}`} class="block">
     {cover ? (
       <div class="relative h-48 overflow-hidden">
