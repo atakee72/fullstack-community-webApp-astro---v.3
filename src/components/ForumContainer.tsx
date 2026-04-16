@@ -319,7 +319,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
         {/* Tab row + Plus button grouped together; plus stays visible even when search collapses. */}
         <div className="flex items-end gap-2 mt-0 md:mt-1 mb-1 md:mb-2 ml-2 md:ml-6">
         {/* Collection Type Buttons - Lifted Tab Style */}
-        <div className="flex flex-wrap xs:flex-nowrap items-center xs:items-end justify-center xs:justify-start gap-1 flex-1 overflow-x-auto">
+        <div className="flex flex-wrap xs:flex-nowrap items-center xs:items-end justify-center xs:justify-start gap-1 flex-1">
           <button
             onClick={() => setCollectionType('topics')}
             className={cn(
@@ -650,9 +650,9 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2">
+                              <div className="flex flex-row items-center gap-1 sm:gap-2">
                                 <span className="font-medium truncate">{item.author?.name || item.author?.userName || 'Anonymous'}</span>
-                                <span className="text-gray-200 text-xs">• {new Date(item.date).toLocaleDateString()}</span>
+                                <span className="text-gray-200 text-xs whitespace-nowrap">• {new Date(item.date).toLocaleDateString()}</span>
                                 {item.isEdited && (
                                   <span className="text-gray-200 text-xs" title={item.lastEditedAt ? `Last edited: ${new Date(item.lastEditedAt).toLocaleString()}` : 'Edited'}>
                                     • (edited)
