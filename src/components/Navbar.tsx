@@ -178,7 +178,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
                 {user ? (
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center justify-center gap-2 bg-[#814256] text-white px-4 py-3 rounded-lg font-medium hover:bg-[#6a3646] transition-colors shadow-md"
+                    className="w-full flex items-center justify-center gap-2 bg-[#814256]/30 border border-[#814256]/50 text-white/80 px-4 py-3 rounded-lg font-medium hover:bg-[#814256]/50 transition-colors backdrop-blur-xl"
                   >
                     <span>🚪</span>
                     <span>Logout</span>
