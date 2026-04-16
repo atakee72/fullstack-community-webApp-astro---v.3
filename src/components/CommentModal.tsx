@@ -38,14 +38,19 @@ export default function CommentModal({
 
       // Lock BOTH html and body elements
       const htmlElement = document.documentElement;
-      htmlElement.style.setProperty('overflow', 'hidden', 'important');
-      htmlElement.style.setProperty('touch-action', 'none', 'important');
-
-      document.body.style.setProperty('position', 'fixed', 'important');
-      document.body.style.setProperty('top', `-${scrollY}px`, 'important');
-      document.body.style.setProperty('width', '100%', 'important');
-      document.body.style.setProperty('overflow', 'hidden', 'important');
-      document.body.style.setProperty('touch-action', 'none', 'important');
+      const applyLock = () => {
+        htmlElement.style.setProperty('overflow', 'hidden', 'important');
+        htmlElement.style.setProperty('touch-action', 'none', 'important');
+        htmlElement.style.setProperty('scroll-behavior', 'auto', 'important');
+        document.body.style.setProperty('position', 'fixed', 'important');
+        document.body.style.setProperty('top', `-${scrollY}px`, 'important');
+        document.body.style.setProperty('width', '100%', 'important');
+        document.body.style.setProperty('overflow', 'hidden', 'important');
+        document.body.style.setProperty('touch-action', 'none', 'important');
+      };
+      applyLock();
+      setTimeout(applyLock, 0);
+      setTimeout(applyLock, 10);
 
       // Add escape key listener when modal is open
       const handleEscape = (e: KeyboardEvent) => {

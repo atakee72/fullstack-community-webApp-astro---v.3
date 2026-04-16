@@ -67,12 +67,39 @@ export default function ReadMoreModal({
   const createComment = useCreateComment();
   const deleteComment = useDeleteComment(postId || '');
 
-  // Lock body scroll when modal is open
+  // Lock body scroll when modal is open (robust: works on mobile touch too)
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = ''; };
-    }
+    if (!isOpen) return;
+    const scrollY = window.scrollY;
+    const htmlElement = document.documentElement;
+
+    const applyLock = () => {
+      htmlElement.style.setProperty('overflow', 'hidden', 'important');
+      htmlElement.style.setProperty('touch-action', 'none', 'important');
+      htmlElement.style.setProperty('scroll-behavior', 'auto', 'important');
+      document.body.style.setProperty('position', 'fixed', 'important');
+      document.body.style.setProperty('top', `-${scrollY}px`, 'important');
+      document.body.style.setProperty('width', '100%', 'important');
+      document.body.style.setProperty('overflow', 'hidden', 'important');
+      document.body.style.setProperty('touch-action', 'none', 'important');
+    };
+
+    applyLock();
+    // Re-apply after a tick in case something overrides it
+    setTimeout(applyLock, 0);
+    setTimeout(applyLock, 10);
+
+    return () => {
+      htmlElement.style.overflow = '';
+      htmlElement.style.touchAction = '';
+      htmlElement.style.scrollBehavior = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+      window.scrollTo(0, scrollY);
+    };
   }, [isOpen]);
 
   // Close on Escape key
@@ -151,8 +178,14 @@ export default function ReadMoreModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-3"
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-3 overscroll-contain"
       onClick={handleBackdropClick}
+      onTouchMove={(e) => {
+        // Prevent background scroll on touch devices
+        if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+          e.preventDefault();
+        }
+      }}
     >
       <div ref={modalRef} className="bg-white rounded-lg w-full max-w-3xl max-h-[85vh] flex flex-col">
         {/* Modal Header */}
