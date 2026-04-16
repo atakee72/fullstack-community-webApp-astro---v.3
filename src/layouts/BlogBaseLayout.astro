@@ -73,15 +73,12 @@ const { title, description = 'Mahalle Blog - Community stories and updates', ima
     position: fixed;
     inset: 0;
     z-index: 0;
-    background: linear-gradient(
-      135deg,
-      #282F76 0%,
-      rgba(75, 154, 170, 0.08) 25%,
-      #282F76 50%,
-      rgba(75, 154, 170, 0.12) 75%,
-      #282F76 100%
-    );
-    background-size: 400% 400%;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(75, 154, 170, 0.25) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(75, 154, 170, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(111, 47, 89, 0.12) 0%, transparent 60%),
+      linear-gradient(135deg, #282F76 0%, #1e2460 50%, #282F76 100%);
+    background-size: 200% 200%, 200% 200%, 100% 100%, 100% 100%;
     animation: gradientFlow 25s ease infinite;
     pointer-events: none;
   }
