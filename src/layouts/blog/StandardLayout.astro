@@ -21,13 +21,13 @@ const formattedDate = pubDate.toLocaleDateString('en-US', {
     <div class="max-w-6xl mx-auto px-4 md:px-8">
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <!-- Main content -->
-        <article class="lg:col-span-3 bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] p-6 md:p-10">
+        <article class="lg:col-span-3 bg-white/85 backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] p-6 md:p-10">
           <header class="mb-8 pb-6">
-            <h1 class="text-3xl md:text-4xl font-bold text-[#e8e6e1] mb-4 font-['Space_Grotesk',sans-serif]">{title}</h1>
-            <p class="text-lg text-white/70">{description}</p>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-['Space_Grotesk',sans-serif]">{title}</h1>
+            <p class="text-lg text-gray-600">{description}</p>
           </header>
 
-          <div class="prose prose-lg prose-invert max-w-none prose-headings:text-[#e8e6e1] prose-headings:font-['Space_Grotesk',sans-serif] prose-p:text-white/80 prose-a:text-[#4b9aaa] prose-a:no-underline hover:prose-a:underline prose-strong:text-[#e8e6e1] prose-li:text-white/80 prose-blockquote:text-white/60 prose-blockquote:border-[#4b9aaa]/40 prose-code:text-[#4b9aaa] prose-hr:border-white/10">
+          <div class="prose prose-lg max-w-none prose-headings:text-gray-900 prose-headings:font-['Space_Grotesk',sans-serif] prose-p:text-gray-700 prose-a:text-[#4b9aaa] prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-li:text-gray-700 prose-blockquote:text-gray-500 prose-blockquote:border-[#4b9aaa]/40 prose-code:text-[#4b9aaa] prose-hr:border-gray-200">
             <slot />
           </div>
         </article>
