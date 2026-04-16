@@ -115,13 +115,13 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed top-0 right-0 h-full w-72 md:w-80 bg-[#1e2460]/95 backdrop-blur-xl border-l border-white/10 shadow-2xl z-50"
+              className="fixed top-0 right-0 h-full w-72 md:w-80 bg-[#542CC8]/20 backdrop-blur-2xl border-l border-white/20 border-l-white/30 shadow-[inset_0_0_60px_rgba(84,44,200,0.15),-10px_0_40px_rgba(84,44,200,0.1)] z-50"
               role="dialog"
               aria-modal="true"
               aria-label="Navigation menu"
             >
               {/* Menu Header */}
-              <div className="flex items-center justify-between p-4 border-b border-white/10 bg-[#4b9aaa]/20">
+              <div className="flex items-center justify-between p-4 border-b border-white/15 bg-[#542CC8]/20">
                 <span className="text-lg font-bold text-white font-['Manrope',sans-serif]">Menu</span>
                 <button
                   onClick={closeMenu}
@@ -136,7 +136,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
 
               {/* User Info (if logged in) */}
               {user && (
-                <div className="p-4 bg-white/[0.04] border-b border-white/10">
+                <div className="p-4 bg-white/[0.04] border-b border-white/15">
                   <div className="flex items-center gap-3">
                     <img
                       className="w-12 h-12 rounded-full object-cover border-2 border-[#4b9aaa]"
@@ -175,7 +175,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
               </nav>
 
               {/* Auth Actions */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-white/[0.04]">
+              <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/15 bg-[#542CC8]/10">
                 {user ? (
                   <button
                     onClick={handleLogout}
