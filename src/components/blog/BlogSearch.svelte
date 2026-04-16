@@ -169,7 +169,7 @@
         </div>
 
         <a href={`/blog/${post.id}`} class="block group">
-          <h2 class="text-xl font-bold text-[#e8e6e1] mb-2 group-hover:text-[#4b9aaa] transition-colors line-clamp-2">
+          <h2 class="text-xl font-bold text-[#e8e6e1] mb-2 group-hover:text-[#4b9aaa] transition-colors line-clamp-2 font-['Space_Grotesk',sans-serif]">
             {post.title}
           </h2>
         </a>
