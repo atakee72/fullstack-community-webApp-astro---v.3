@@ -43,7 +43,7 @@ src/
 ├── lib/
 │   ├── mongodb.ts    # Database connection
 │   ├── auth.ts       # Auth utilities
-│   ├── moderation.ts # AI moderation + Turkish filter
+│   ├── moderation.ts # AI moderation + profanity filters (TR/EN/DE) + leetspeak
 │   └── queryUtils.ts # Query helpers
 ├── schemas/          # Zod validation schemas
 ├── stores/           # Zustand stores
@@ -122,7 +122,7 @@ Vercel will automatically:
 - **NextAuth Authentication**: Credentials provider with bcrypt + JWT strategy
 - **Responsive Design**: Mobile-first approach
 - **Performance**: Optimized with Astro's island architecture
-- **Content Moderation**: Multi-layer AI moderation (safety scan + GPT spam check) + community reporting
+- **Content Moderation**: Multi-layer AI moderation (safety scan + GPT content check for spam/hate speech/harassment) + trilingual profanity filters (TR/EN/DE) with leetspeak detection + username validation at registration + community reporting
 - **Daily Posting Limits**: 5 per rolling 24h for topics, events, announcements, recommendations, and listings
 - **Newsboard**: AI-curated local news from 9 RSS feeds + NewsData.io, with GPT-4o relevance scoring
 - **Marketplace**: Buy/sell/exchange (Tausch) listings with image gallery, AI moderation (text + vision), user reports, and draft save/publish workflow
@@ -138,10 +138,11 @@ Vercel will automatically:
 The app includes a comprehensive content moderation system:
 
 ### AI Moderation
-- **Layer 1 — Turkish profanity filter**: Custom blocklist for Turkish swear words (OpenAI is English-focused)
+- **Layer 1 — Profanity filters**: Turkish, English, and German blocklists with leetspeak normalization (catches obfuscated profanity like "m0therfu5ker5", "sh1tface", "a$$hole")
 - **Layer 2 — Safety scan**: OpenAI `omni-moderation-latest` scans all content types on submission (topics, comments, events, announcements, recommendations, marketplace listings)
-- **Layer 3 — GPT spam check**: `checkSpamWithGPT()` catches spam, ads, and scams that the safety scan misses — runs on all content types
+- **Layer 3 — GPT content check**: `checkSpamWithGPT()` catches spam, ads, scams, **hate speech**, and **harassment** that the safety scan misses — runs on all content types. Hate speech and harassment are flagged as urgent.
 - **Layer 4 — Image safety** (marketplace + forum posts): GPT-4o vision scans images for inappropriate content
+- **Layer 5 — Username validation**: `checkNameProfanity()` at registration runs all blocklists (word-boundary + substring for concatenated profanity) plus OpenAI Moderation API + GPT hate speech check
 - All checks run in parallel via `Promise.all()` and are merged with `mergeModerationResults()`
 - Content exceeding thresholds is queued for admin review
 - Fail-safe: If any API fails, content is queued for manual review (never auto-approves on error)

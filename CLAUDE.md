@@ -98,9 +98,10 @@ export const POST: APIRoute = async ({ request }) => {
 
 ### Content Moderation
 - **AI moderation**: OpenAI `omni-moderation-latest` scans all content types (topics, comments, events, announcements, recommendations, marketplace listings) on submission
-- **GPT spam check**: `checkSpamWithGPT()` runs in parallel with `moderateText()` on all content types — catches spam, ads, scams that the safety scan misses. `irrelevant_nonsense` classification is treated as legitimate (too many false positives on short/casual content like "nice", "Çok iyi!"). Only `spam`, `ad_promotional`, and `scam` are flagged.
+- **GPT content check**: `checkSpamWithGPT()` runs in parallel with `moderateText()` on all content types — catches spam, ads, scams, **hate speech**, and **harassment** that the safety scan misses. `irrelevant_nonsense` classification is treated as legitimate (too many false positives on short/casual content like "nice", "Çok iyi!"). `hate_speech` and `harassment` are flagged as urgent.
 - **Image moderation**: Forum posts (topics, announcements, recommendations) and marketplace listings get `checkImagesWithGPT()` (GPT-4o vision) for image safety — runs in parallel with text moderation
-- **Turkish filter**: Custom blocklist in `lib/moderation.ts` for Turkish profanity (OpenAI is English-focused)
+- **Profanity blocklists**: Turkish, English, and German blocklists in `lib/moderation.ts` with leetspeak normalization (`normalizeLeetspeak()` converts `0→o, 1→i, 3→e, 4→a, 5→s/c, 7→t, 8→b, @→a, $→s` etc.). Runs two normalization passes for ambiguous characters (e.g. `5` can mean `s` or `c`).
+- **Username validation**: `checkNameProfanity()` at registration — runs all 3 blocklists (word-boundary + substring check for concatenated profanity like "PenisPenisPenis"), then `moderateText()` + `checkSpamWithGPT()` via OpenAI as safety net for creative spellings and hate speech.
 - **Result merging**: `mergeModerationResults()` combines all checks into a single flagged record
 - **Daily posting limits**: 5 per rolling 24h for topics, events, announcements, recommendations, and marketplace listings. Comments excluded (lightweight/conversational). Checked before validation to save API costs.
 - **User reports**: Community can flag content via report button (all content types including calendar event comments via `EventViewModal`)
