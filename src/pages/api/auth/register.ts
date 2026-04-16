@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import clientPromise from "../../../lib/mongodb";
 import bcrypt from "bcrypt";
+import { checkNameProfanity } from "../../../lib/moderation";
 
 export const POST: APIRoute = async ({ request }) => {
     try {
@@ -17,6 +18,15 @@ export const POST: APIRoute = async ({ request }) => {
         if (password.length < 6) {
             return new Response(
                 JSON.stringify({ error: 'Password must be at least 6 characters' }),
+                { status: 400, headers: { 'Content-Type': 'application/json' } }
+            );
+        }
+
+        // Check display name for profanity (Turkish + English + German + OpenAI)
+        const nameCheck = await checkNameProfanity(name);
+        if (!nameCheck.clean) {
+            return new Response(
+                JSON.stringify({ error: nameCheck.reason || 'Invalid display name' }),
                 { status: 400, headers: { 'Content-Type': 'application/json' } }
             );
         }
