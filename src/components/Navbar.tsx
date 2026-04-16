@@ -135,16 +135,16 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
 
               {/* User Info (if logged in) */}
               {user && (
-                <div className="p-4 bg-white/[0.04] border-b border-white/15">
+                <div className="mx-3 mt-2 mb-1 p-3 rounded-xl bg-white/[0.06] border border-white/10 border-t-white/20">
                   <div className="flex items-center gap-3">
                     <img
-                      className="w-12 h-12 rounded-full object-cover border-2 border-[#4b9aaa]"
+                      className="w-10 h-10 rounded-full object-cover ring-2 ring-white/20"
                       src={user.image || `https://ui-avatars.com/api/?name=${user.name}&background=4b9aaa&color=fff&size=96`}
                       alt={user.name}
                     />
                     <div>
-                      <p className="font-medium text-[#e8e6e1]">{user.name}</p>
-                      <p className="text-sm text-white/50">{user.email}</p>
+                      <p className="font-medium text-[#e8e6e1] text-sm">{user.name}</p>
+                      <p className="text-xs text-white/40">{user.email}</p>
                     </div>
                   </div>
                 </div>
