@@ -121,7 +121,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
               aria-label="Navigation menu"
             >
               {/* Menu Header */}
-              <div className="flex items-center justify-end p-4 border-b border-white/15 bg-[#542CC8]/20">
+              <div className="flex items-center justify-end p-4">
                 <button
                   onClick={closeMenu}
                   className="p-2 rounded-lg hover:bg-white/20 transition-colors text-white focus:outline-none focus:ring-2 focus:ring-white"
