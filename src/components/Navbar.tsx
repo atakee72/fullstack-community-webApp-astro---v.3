@@ -122,7 +122,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
             >
               {/* Menu Header */}
               <div className="flex items-center justify-between p-4 border-b border-white/10 bg-[#4b9aaa]/20">
-                <span className="text-lg font-bold text-white font-['Plus_Jakarta_Sans',sans-serif]">Menu</span>
+                <span className="text-lg font-bold text-white font-['Manrope',sans-serif]">Menu</span>
                 <button
                   onClick={closeMenu}
                   className="p-2 rounded-lg hover:bg-white/20 transition-colors text-white focus:outline-none focus:ring-2 focus:ring-white"
