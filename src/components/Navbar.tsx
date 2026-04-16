@@ -71,8 +71,8 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
     return (
       <>
         {/* Hamburger placeholder */}
-        <div className="fixed top-4 right-4 md:right-8 z-50 p-2 rounded-lg bg-white/80 shadow-md">
-          <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="fixed top-4 right-4 md:right-8 z-50 p-2 rounded-lg bg-white/10 backdrop-blur-xl border border-white/10 shadow-md">
+          <svg className="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </div>
@@ -85,11 +85,11 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
       {/* Hamburger Button - fixed position top right */}
       <button
         onClick={() => setMenuOpen(true)}
-        className="fixed top-4 right-4 md:right-8 z-50 p-2 rounded-lg bg-white/80 hover:bg-white shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+        className="fixed top-4 right-4 md:right-8 z-50 p-2 rounded-lg bg-white/10 backdrop-blur-xl border border-white/10 hover:bg-white/20 shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]/50"
         aria-label="Open menu"
         aria-expanded={menuOpen}
       >
-        <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
@@ -114,13 +114,13 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed top-0 right-0 h-full w-72 md:w-80 bg-white shadow-2xl z-50"
+              className="fixed top-0 right-0 h-full w-72 md:w-80 bg-[#1e2460]/95 backdrop-blur-xl border-l border-white/10 shadow-2xl z-50"
               role="dialog"
               aria-modal="true"
               aria-label="Navigation menu"
             >
               {/* Menu Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-[#4b9aaa]">
+              <div className="flex items-center justify-between p-4 border-b border-white/10 bg-[#4b9aaa]/20">
                 <span className="text-lg font-bold text-white">Menu</span>
                 <button
                   onClick={closeMenu}
@@ -135,7 +135,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
 
               {/* User Info (if logged in) */}
               {user && (
-                <div className="p-4 bg-gray-50 border-b border-gray-200">
+                <div className="p-4 bg-white/[0.04] border-b border-white/10">
                   <div className="flex items-center gap-3">
                     <img
                       className="w-12 h-12 rounded-full object-cover border-2 border-[#4b9aaa]"
@@ -143,8 +143,8 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
                       alt={user.name}
                     />
                     <div>
-                      <p className="font-medium text-gray-900">{user.name}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
+                      <p className="font-medium text-[#e8e6e1]">{user.name}</p>
+                      <p className="text-sm text-white/50">{user.email}</p>
                     </div>
                   </div>
                 </div>
@@ -163,7 +163,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
                       <a
                         href={item.href}
                         onClick={closeMenu}
-                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-[#4b9aaa]/10 hover:text-[#4b9aaa] transition-colors font-medium"
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-[#4b9aaa] transition-colors font-medium"
                       >
                         <span className="text-xl">{item.icon}</span>
                         <span>{item.label}</span>
@@ -174,7 +174,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
               </nav>
 
               {/* Auth Actions */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50">
+              <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-white/[0.04]">
                 {user ? (
                   <button
                     onClick={handleLogout}
@@ -195,7 +195,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
                     <a
                       href="/register"
                       onClick={closeMenu}
-                      className="block w-full text-center bg-white text-[#4b9aaa] border-2 border-[#4b9aaa] px-4 py-3 rounded-lg font-medium hover:bg-[#4b9aaa]/10 transition-colors"
+                      className="block w-full text-center bg-white/10 text-[#4b9aaa] border-2 border-[#4b9aaa]/50 px-4 py-3 rounded-lg font-medium hover:bg-[#4b9aaa]/20 transition-colors"
                     >
                       Register
                     </a>

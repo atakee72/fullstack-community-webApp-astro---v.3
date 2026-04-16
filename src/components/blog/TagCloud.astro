@@ -21,8 +21,8 @@ const sortedTags = Object.entries(tagCounts)
   .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 ---
 
-<div class="bg-white/90 backdrop-blur rounded-xl shadow-lg p-5">
-  <h3 class="text-lg font-bold text-gray-900 mb-4">Tags</h3>
+<div class="bg-white/[0.06] backdrop-blur-xl border border-white/10 rounded-xl p-5">
+  <h3 class="text-lg font-bold text-[#e8e6e1] mb-4">Tags</h3>
 
   {sortedTags.length > 0 ? (
     <div class="flex flex-wrap gap-2">
@@ -33,7 +33,7 @@ const sortedTags = Object.entries(tagCounts)
             'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
             currentTag === tag
               ? 'bg-[#4b9aaa] text-white'
-              : 'bg-[#4b9aaa]/10 text-[#4b9aaa] hover:bg-[#4b9aaa]/20'
+              : 'bg-[#4b9aaa]/20 text-[#4b9aaa] hover:bg-[#4b9aaa]/30'
           ]}
         >
           {tag}
@@ -42,6 +42,6 @@ const sortedTags = Object.entries(tagCounts)
       ))}
     </div>
   ) : (
-    <p class="text-gray-500 text-sm">No tags yet</p>
+    <p class="text-white/50 text-sm">No tags yet</p>
   )}
 </div>
