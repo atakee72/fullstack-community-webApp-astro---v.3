@@ -142,8 +142,8 @@
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
   {#each paginatedPosts as post, index (post.id)}
     <div class="opacity-0" use:reveal={(index % columnsPerRow) * 0.12}>
-    <article class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl overflow-hidden hover:bg-white/[0.1] hover:border-white/30 transition-all duration-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] group">
-      <a href={`/blog/${post.id}`} class="block">
+    <a href={`/blog/${post.id}`} class="block group">
+    <article class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl overflow-hidden hover:bg-white/[0.1] hover:border-white/30 transition-all duration-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] cursor-pointer">
         {#if post.cover}
           <div class="relative h-48 overflow-hidden">
             <img
@@ -159,7 +159,6 @@
             </svg>
           </div>
         {/if}
-      </a>
 
       <div class="p-5">
         <div class="flex items-center gap-2 text-sm text-white/50 mb-3">
@@ -168,20 +167,20 @@
           <span>{post.author}</span>
         </div>
 
-        <a href={`/blog/${post.id}`} class="block group">
-          <h2 class="text-xl font-bold text-[#e8e6e1] mb-2 group-hover:text-[#4b9aaa] transition-colors line-clamp-2 font-['Manrope',sans-serif]">
-            {post.title}
-          </h2>
-        </a>
+        <h2 class="text-xl font-bold text-[#e8e6e1] mb-2 group-hover:text-[#4b9aaa] transition-colors line-clamp-2 font-['Space_Grotesk',sans-serif]">
+          {post.title}
+        </h2>
 
         <p class="text-white/70 mb-4 line-clamp-3">{post.description}</p>
 
         {#if post.tags && post.tags.length > 0}
           <div class="flex flex-wrap gap-2">
             {#each post.tags.slice(0, 3) as tag}
+              <!-- svelte-ignore a11y_no_static_element_interactions -->
               <a
                 href={`/blog/tag/${tag}`}
-                class="px-2 py-1 bg-[#4b9aaa]/20 text-[#4b9aaa] rounded-full text-xs font-medium hover:bg-[#4b9aaa]/30 transition-colors"
+                class="relative z-10 px-2 py-1 bg-[#4b9aaa]/20 text-[#4b9aaa] rounded-full text-xs font-medium hover:bg-[#4b9aaa]/30 transition-colors"
+                onclick={(e) => e.stopPropagation()}
               >
                 {tag}
               </a>
@@ -193,6 +192,7 @@
         {/if}
       </div>
     </article>
+    </a>
     </div>
   {:else}
     <div class="col-span-full text-center py-12">
