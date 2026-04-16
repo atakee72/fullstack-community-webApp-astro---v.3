@@ -132,6 +132,43 @@ const TURKISH_BLOCKLIST = [
   'lan', // context-dependent, can be rude
 ];
 
+// English swear words and offensive terms
+const ENGLISH_BLOCKLIST = [
+  'fuck', 'fucker', 'fucking', 'motherfucker', 'fck', 'fuk',
+  'shit', 'shitty', 'bullshit',
+  'ass', 'asshole', 'arsehole', 'arse',
+  'bitch', 'bitches',
+  'dick', 'dickhead',
+  'cock', 'cocksucker',
+  'cunt', 'cunts',
+  'penis', 'vagina',
+  'nigger', 'nigga', 'negro',
+  'faggot', 'fag',
+  'retard', 'retarded',
+  'whore', 'slut', 'hoe',
+  'wanker', 'twat', 'prick', 'tosser',
+  'bastard',
+];
+
+// German swear words and offensive terms
+const GERMAN_BLOCKLIST = [
+  'scheiße', 'scheisse', 'scheiß', 'scheiss',
+  'arschloch', 'arsch',
+  'ficken', 'fick', 'ficker',
+  'hurensohn', 'hure', 'nutte',
+  'fotze', 'möse', 'moese',
+  'wichser', 'wichsen',
+  'schwanz', 'schwanzlutscher',
+  'missgeburt', 'miststück', 'miststueck',
+  'drecksau', 'dreckig', 'dreckschwein',
+  'schlampe', 'tussi',
+  'vollidiot', 'idiot', 'depp', 'trottel', 'dummkopf',
+  'spast', 'spasti', 'behindert',
+  'pisser', 'pisse',
+  'kacke', 'kackbratze',
+  'bastard', 'wixer',
+];
+
 /**
  * Check text for Turkish profanity
  * Returns matched words if found, empty array if clean
@@ -139,7 +176,7 @@ const TURKISH_BLOCKLIST = [
 function checkTurkishProfanity(text: string): string[] {
   if (!text) return [];
 
-  const normalizedText = text
+  const normalizedText = normalizeLeetspeak(text)
     .toLowerCase()
     .replace(/[ıİ]/g, 'i')
     .replace(/[şŞ]/g, 's')
@@ -188,6 +225,136 @@ function createTurkishProfanityResult(foundWords: string[]): ModerationResult {
   };
 }
 
+/**
+ * Normalize leetspeak / number-letter substitutions to plain text.
+ * Applied before blocklist matching to catch obfuscated profanity like "m0therfu5ker5".
+ * Multi-char replacements (|<, ph) are processed first, then single-char.
+ */
+function normalizeLeetspeak(text: string): string {
+  return text
+    // Multi-char replacements first
+    .replace(/\|</g, 'k')
+    .replace(/ph/gi, 'f')
+    // Single-char replacements
+    .replace(/0/g, 'o')
+    .replace(/1/g, 'i')
+    .replace(/3/g, 'e')
+    .replace(/4/g, 'a')
+    .replace(/5/g, 's')
+    .replace(/7/g, 't')
+    .replace(/8/g, 'b')
+    .replace(/@/g, 'a')
+    .replace(/\$/g, 's')
+    .replace(/!/g, 'i')
+    .replace(/\(/g, 'c')
+    .replace(/\+/g, 't');
+}
+
+/**
+ * Normalize unicode characters (umlauts, Turkish chars) for blocklist matching
+ */
+function normalizeUnicode(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[äÄ]/g, 'ae')
+    .replace(/[öÖ]/g, 'oe')
+    .replace(/[üÜ]/g, 'ue')
+    .replace(/[ßẞ]/g, 'ss')
+    .replace(/[ıİ]/g, 'i')
+    .replace(/[şŞ]/g, 's')
+    .replace(/[ğĞ]/g, 'g')
+    .replace(/[çÇ]/g, 'c');
+}
+
+/**
+ * Check text against a blocklist (generic helper)
+ * Runs multiple normalization passes to catch leetspeak variants
+ * (e.g. "5" can mean "s" or "c", so we check both)
+ */
+function checkBlocklist(text: string, blocklist: string[]): string[] {
+  if (!text) return [];
+
+  // Generate multiple normalized variants to catch ambiguous leetspeak
+  const variants = [
+    normalizeUnicode(normalizeLeetspeak(text)),
+    // Alternate pass: 5→c instead of 5→s (catches "fu5k" → "fuck")
+    normalizeUnicode(normalizeLeetspeak(text.replace(/5/g, 'c'))),
+  ];
+
+  const foundWords: string[] = [];
+
+  for (const word of blocklist) {
+    const normalizedWord = normalizeUnicode(word);
+
+    for (const normalizedText of variants) {
+      const regex = new RegExp(`\\b${normalizedWord}\\b`, 'gi');
+      if (regex.test(normalizedText)) {
+        foundWords.push(word);
+        break; // found in at least one variant, no need to check others
+      }
+    }
+  }
+
+  return foundWords;
+}
+
+/**
+ * Check username/display name for profanity across all languages.
+ * Also checks for profanity embedded without word boundaries (e.g. "PenisPenisPenis").
+ * Returns { clean: true } or { clean: false, reason: string }
+ */
+export async function checkNameProfanity(name: string): Promise<{ clean: boolean; reason?: string }> {
+  if (!name || name.trim().length < 2 || name.trim().length > 30) {
+    return { clean: false, reason: 'Name must be between 2 and 30 characters' };
+  }
+
+  const allBlocklists = [...TURKISH_BLOCKLIST, ...ENGLISH_BLOCKLIST, ...GERMAN_BLOCKLIST];
+
+  // Standard word-boundary check
+  const wordBoundaryHits = checkBlocklist(name, allBlocklists);
+  if (wordBoundaryHits.length > 0) {
+    return { clean: false, reason: 'Name contains inappropriate language' };
+  }
+
+  // Substring check for concatenated profanity (e.g. "PenisPenisPenis", "m0therfu5ker5")
+  const nameVariants = [
+    normalizeUnicode(normalizeLeetspeak(name)).replace(/[^a-z]/g, ''),
+    normalizeUnicode(normalizeLeetspeak(name.replace(/5/g, 'c'))).replace(/[^a-z]/g, ''),
+  ];
+
+  for (const word of allBlocklists) {
+    const normalizedWord = normalizeUnicode(word);
+    if (normalizedWord.length >= 4) {
+      for (const variant of nameVariants) {
+        if (variant.includes(normalizedWord)) {
+          return { clean: false, reason: 'Name contains inappropriate language' };
+        }
+      }
+    }
+  }
+
+  // OpenAI safety net: Moderation API + GPT hate speech check in parallel
+  try {
+    const apiKey = import.meta.env.OPENAI_API_KEY;
+    if (apiKey) {
+      const [moderationResult, gptResult] = await Promise.all([
+        moderateText(name),
+        checkSpamWithGPT(name, 'user display name')
+      ]);
+      if (moderationResult.decision !== 'approved') {
+        return { clean: false, reason: 'Name contains inappropriate content' };
+      }
+      if (gptResult.decision !== 'approved') {
+        return { clean: false, reason: 'Name contains inappropriate content' };
+      }
+    }
+  } catch {
+    // If OpenAI fails, blocklist checks above are sufficient
+  }
+
+  return { clean: true };
+}
+
 // ============================================================================
 // MAIN MODERATION FUNCTION
 // ============================================================================
@@ -204,12 +371,20 @@ export async function moderateContent(input: ModerationInput): Promise<Moderatio
     return createFailSafeResult('API key not configured');
   }
 
-  // Check for Turkish profanity FIRST (before OpenAI API call)
+  // Check for profanity FIRST (before OpenAI API call)
   if (input.text) {
     const turkishProfanity = checkTurkishProfanity(input.text);
     if (turkishProfanity.length > 0) {
       console.log('[Moderation] Turkish profanity detected:', turkishProfanity);
       return createTurkishProfanityResult(turkishProfanity);
+    }
+
+    const englishHits = checkBlocklist(input.text, ENGLISH_BLOCKLIST);
+    const germanHits = checkBlocklist(input.text, GERMAN_BLOCKLIST);
+    const allHits = [...englishHits, ...germanHits];
+    if (allHits.length > 0) {
+      console.log('[Moderation] Profanity detected:', allHits);
+      return createTurkishProfanityResult(allHits); // reuses same result shape
     }
   }
 
@@ -525,14 +700,15 @@ export function mergeModerationResults(...results: ModerationResult[]): Moderati
 // GPT-4o SPAM / RELEVANCE CHECK
 // ============================================================================
 
-export type SpamClassification = 'legitimate' | 'spam' | 'ad_promotional' | 'scam' | 'irrelevant_nonsense';
+export type SpamClassification = 'legitimate' | 'spam' | 'ad_promotional' | 'scam' | 'irrelevant_nonsense' | 'hate_speech' | 'harassment';
 
 /**
- * Check content for spam, ads, scams, or irrelevant nonsense using GPT-4o.
+ * Check content for spam, ads, scams, hate speech, harassment, or irrelevant nonsense using GPT-4o.
  * Works with any content type — pass a context hint for better classification.
  *
  * This is a SEPARATE check from the safety moderation (moderateContent/moderatePost).
- * Safety moderation catches harmful content; this catches low-quality/spammy content.
+ * Safety moderation catches harmful content via OpenAI Moderation API; this uses GPT-4o
+ * for nuanced classification including hate speech that the Moderation API may miss.
  * Both should pass for content to auto-publish.
  *
  * @param text - The content text to check (title + body concatenated)
@@ -568,7 +744,7 @@ export async function checkSpamWithGPT(
         messages: [
           {
             role: 'system',
-            content: `You are a content moderator for a local neighborhood community platform (Mahalle). Your job is to classify ${contentContext} as one of: legitimate, spam, ad_promotional, scam, irrelevant_nonsense.
+            content: `You are a content moderator for a local neighborhood community platform (Mahalle). Your job is to classify ${contentContext} as one of: legitimate, spam, ad_promotional, scam, irrelevant_nonsense, hate_speech, harassment.
 
 Rules:
 - "legitimate": genuine content appropriate for a neighborhood community
@@ -576,6 +752,8 @@ Rules:
 - "ad_promotional": commercial advertising, affiliate links, business promotions (not genuine peer-to-peer)
 - "scam": deceptive content, phishing, too-good-to-be-true offers, fake urgency
 - "irrelevant_nonsense": gibberish, random characters, completely off-topic, test posts
+- "hate_speech": racism, white supremacy, antisemitism, islamophobia, homophobia, transphobia, sexism, xenophobia, ethnic/religious/national slurs, claims of racial or group superiority/inferiority, dehumanizing language targeting any group
+- "harassment": personal attacks, threats, bullying, intimidation, doxxing, targeted insults
 
 Return JSON only: {"classification": "...", "confidence": 0.0-1.0, "reason": "brief reason"}`
           },
@@ -614,12 +792,12 @@ Return JSON only: {"classification": "...", "confidence": 0.0-1.0, "reason": "br
       return createApprovedResult();
     }
 
-    // Content flagged as spam/ad/scam/nonsense
+    // Content flagged as spam/ad/scam/hate_speech/harassment
     return {
       decision: 'pending_review',
       canPublish: false,
       needsReview: true,
-      isUrgent: result.classification === 'scam', // scams get higher priority
+      isUrgent: result.classification === 'scam' || result.classification === 'hate_speech' || result.classification === 'harassment',
       flaggedCategories: [`spam_check:${result.classification}`],
       scores: { [result.classification]: result.confidence },
       highestCategory: `spam_check:${result.classification}`,
