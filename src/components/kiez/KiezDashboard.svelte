@@ -148,7 +148,7 @@
 
   // Air quality grade → project palette color
   function gradeColor(grade) {
-    if (grade <= 2) return '#4b9aaa'; // teal — gut/sehr gut
+    if (grade <= 2) return '#5cb87a'; // green — gut/sehr gut
     if (grade === 3) return '#eccc6e'; // yellow — mäßig
     if (grade === 4) return '#814256'; // wine — schlecht
     return '#c0392b';                  // red — sehr schlecht
