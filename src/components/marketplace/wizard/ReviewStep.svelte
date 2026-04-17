@@ -66,7 +66,7 @@
     <div class="space-y-6">
       <div>
         <h3 class="font-semibold text-[#e8e6e1] mb-3">Item Details</h3>
-        <div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-white/15 p-6 space-y-4">
+        <div class="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-white/15 p-6 space-y-4">
           <h4 class="text-xl font-bold text-[#814256]">{listing.title}</h4>
 
           <div class="flex flex-wrap gap-2">

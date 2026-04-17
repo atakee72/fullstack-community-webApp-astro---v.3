@@ -21,7 +21,7 @@ const sortedTags = Object.entries(tagCounts)
   .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 ---
 
-<div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] p-5">
+<div class="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] p-5">
   <h3 class="text-lg font-bold text-[#e8e6e1] mb-4 font-['Manrope',sans-serif]">Tags</h3>
 
   {sortedTags.length > 0 ? (

@@ -89,7 +89,7 @@
   <select
     value={filters.listingType || 'all'}
     onchange={handleTypeChange}
-    class="px-4 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50"
+    class="appearance-none pl-4 pr-10 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-sm text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50 bg-no-repeat bg-[right_0.75rem_center] bg-[length:1rem] bg-[url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22%23ffffff99%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M19.5%208.25l-7.5%207.5-7.5-7.5%22%20%2F%3E%3C%2Fsvg%3E')]"
   >
     <option value="all">All Types</option>
     <option value="sell">Buy</option>
@@ -100,7 +100,7 @@
   <select
     value={filters.category || 'all'}
     onchange={handleCategoryChange}
-    class="px-4 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50"
+    class="appearance-none pl-4 pr-10 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-sm text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50 bg-no-repeat bg-[right_0.75rem_center] bg-[length:1rem] bg-[url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22%23ffffff99%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M19.5%208.25l-7.5%207.5-7.5-7.5%22%20%2F%3E%3C%2Fsvg%3E')]"
   >
     <option value="all">All Categories</option>
     {#each LISTING_CATEGORIES as cat}
@@ -112,7 +112,7 @@
   <select
     value={filters.condition || 'all'}
     onchange={handleConditionChange}
-    class="px-4 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50"
+    class="appearance-none pl-4 pr-10 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-sm text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50 bg-no-repeat bg-[right_0.75rem_center] bg-[length:1rem] bg-[url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22%23ffffff99%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M19.5%208.25l-7.5%207.5-7.5-7.5%22%20%2F%3E%3C%2Fsvg%3E')]"
   >
     <option value="all">All Conditions</option>
     {#each LISTING_CONDITIONS as cond}
@@ -125,7 +125,7 @@
     <select
       value={selectedPriceRange}
       onchange={handlePriceChange}
-      class="px-4 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50"
+      class="appearance-none pl-4 pr-10 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-sm text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50 bg-no-repeat bg-[right_0.75rem_center] bg-[length:1rem] bg-[url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22%23ffffff99%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M19.5%208.25l-7.5%207.5-7.5-7.5%22%20%2F%3E%3C%2Fsvg%3E')]"
     >
       {#each priceRanges as range}
         <option value={range.value}>{range.label}</option>
@@ -137,7 +137,7 @@
   <select
     value={filters.sortBy || 'newest'}
     onchange={handleSortChange}
-    class="px-4 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50"
+    class="appearance-none pl-4 pr-10 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-sm text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50 bg-no-repeat bg-[right_0.75rem_center] bg-[length:1rem] bg-[url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22%23ffffff99%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M19.5%208.25l-7.5%207.5-7.5-7.5%22%20%2F%3E%3C%2Fsvg%3E')]"
   >
     {#each sortOptions as opt}
       <option value={opt.value}>{opt.label}</option>

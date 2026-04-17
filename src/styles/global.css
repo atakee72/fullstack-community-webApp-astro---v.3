@@ -53,6 +53,27 @@
   pointer-events: none;
 }
 
+/* Animated variant — subtle light drift via transform (compositor-only).
+   Opt-in by adding `dark-glass-gradient-drift` class instead of the static one. */
+.dark-glass-gradient-drift {
+  position: fixed;
+  inset: -20%;
+  z-index: 0;
+  background: radial-gradient(circle at 30% 30%, #542CC8, rgba(40, 47, 118, 0.20) 60%);
+  pointer-events: none;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dark-glass-gradient-drift {
+    animation: dark-glass-drift 30s ease-in-out infinite;
+  }
+}
+@keyframes dark-glass-drift {
+  0%, 100% { transform: translate(0, 0); }
+  33%      { transform: translate(5%, -3%); }
+  66%      { transform: translate(-4%, 4%); }
+}
+
 /* Google Fonts + utility font classes used across redesigned pages */
 .font-inter {
   font-family: 'Inter', sans-serif;

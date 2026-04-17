@@ -425,7 +425,7 @@ export function NewsCards({
               >
                 {/* Warning overlay (blur until dismissed) */}
                 {showWarningOverlay && (
-                  <div className="absolute inset-0 z-10 backdrop-blur-md bg-white/60 flex flex-col items-center justify-center p-4 text-center">
+                  <div className="absolute inset-0 z-10 backdrop-blur-sm bg-white/60 flex flex-col items-center justify-center p-4 text-center">
                     <span className="text-2xl mb-2">⚠️</span>
                     <p className="text-sm font-medium text-gray-700 mb-1">Content Warning</p>
                     <p className="text-xs text-gray-500 mb-3">

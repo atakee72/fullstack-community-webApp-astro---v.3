@@ -110,7 +110,7 @@ const allPosts = await getCollection('blog', ({ data }) => !data.draft);
           <div class="sticky top-24 space-y-6">
             <TagCloud posts={allPosts} currentTag={tag} />
 
-            <div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] p-5">
+            <div class="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] p-5">
               <a
                 href="/blog"
                 class="inline-flex items-center text-[#4b9aaa] hover:text-[#5bc8d8] font-medium"

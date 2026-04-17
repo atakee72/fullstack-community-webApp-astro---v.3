@@ -150,7 +150,7 @@
       </div>
     </div>
   {:else if error}
-    <div class="text-center py-12 bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+    <div class="text-center py-12 bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
       <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
@@ -190,7 +190,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <!-- Image Gallery -->
       <div class="space-y-4">
-        <div class="relative aspect-square bg-white/[0.04] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+        <div class="relative aspect-square bg-white/[0.04] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
           {#if listing.images && listing.images.length > 0}
             <img
               src={listing.images[selectedImage]}

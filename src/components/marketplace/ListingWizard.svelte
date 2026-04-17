@@ -199,7 +199,7 @@
         <button
           onclick={handleSaveDraft}
           disabled={isSavingDraft}
-          class="inline-flex items-center gap-2 px-5 py-2.5 bg-white/[0.08] backdrop-blur-xl text-[#E79750] border border-[#E79750]/50 rounded-lg hover:bg-[#E79750]/20 transition-colors font-medium disabled:opacity-50"
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-white/[0.08] backdrop-blur-sm text-[#E79750] border border-[#E79750]/50 rounded-lg hover:bg-[#E79750]/20 transition-colors font-medium disabled:opacity-50"
         >
           {isSavingDraft ? 'Saving...' : 'Save as Draft'}
         </button>
@@ -208,7 +208,7 @@
   {:else}
 
   <!-- Progress Steps -->
-  <div class="flex justify-between items-center bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] p-4 border border-white/15">
+  <div class="flex justify-between items-center bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] p-4 border border-white/15">
     {#each steps as step, index}
       <div class="flex items-center">
         <div class="flex flex-col items-center">
@@ -274,7 +274,7 @@
   </div>
 
   <!-- Form Steps -->
-  <div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl p-6 md:p-8 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+  <div class="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl p-6 md:p-8 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
     {#if currentStep === 1}
       <BasicDetailsStep {listing} {updateListing} onNext={() => currentStep = 2} />
     {:else if currentStep === 2}

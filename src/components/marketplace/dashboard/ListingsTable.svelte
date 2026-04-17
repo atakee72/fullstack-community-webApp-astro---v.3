@@ -32,7 +32,7 @@
   }
 </script>
 
-<div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-white/15 overflow-hidden">
+<div class="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-white/15 overflow-hidden">
   <!-- Mobile View -->
   <div class="md:hidden divide-y divide-white/10">
     {#each listings as listing}

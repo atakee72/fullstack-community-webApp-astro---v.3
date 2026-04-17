@@ -155,7 +155,7 @@
   {#if loading}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {#each Array(8) as _}
-        <div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+        <div class="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
           <div class="aspect-square bg-white/10 animate-pulse"></div>
           <div class="p-4 space-y-3">
             <div class="h-4 bg-white/10 rounded animate-pulse"></div>
@@ -169,7 +169,7 @@
       {/each}
     </div>
   {:else if error}
-    <div class="text-center py-12 bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+    <div class="text-center py-12 bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
       <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
       </svg>
@@ -183,7 +183,7 @@
       </button>
     </div>
   {:else if listings.length === 0}
-    <div class="text-center py-12 bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+    <div class="text-center py-12 bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
       <svg class="w-16 h-16 text-[#aca89f] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
       </svg>
@@ -264,12 +264,12 @@
 
   <!-- Login CTA for non-authenticated users -->
   {#if !session?.user && !loading && listings.length > 0}
-    <div class="bg-[#eccc6e]/30 rounded-2xl p-6 text-center">
-      <h3 class="text-lg font-semibold text-[#814256] mb-2">Want to sell something?</h3>
+    <div class="p-6 text-center bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+      <h3 class="text-lg font-semibold text-[#e8e6e1] mb-2 font-['Space_Grotesk',sans-serif]">Want to sell something?</h3>
       <p class="text-white/70 mb-4">Join Mahalle to list your items and connect with your neighbours</p>
       <a
         href="/login?redirect=/marketplace/sell"
-        class="inline-flex items-center gap-2 bg-[#E79750] text-white px-6 py-3 rounded-xl hover:bg-[#f0a85a] transition-colors font-medium"
+        class="inline-flex items-center gap-2 bg-[#E79750]/20 backdrop-blur-sm border border-[#E79750]/40 text-[#E79750] px-6 py-3 rounded-xl hover:bg-[#E79750]/30 hover:border-[#E79750]/60 transition-colors font-medium"
       >
         Sign in to sell
       </a>

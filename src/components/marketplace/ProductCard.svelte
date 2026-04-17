@@ -46,10 +46,10 @@
 </script>
 
 <a href="/marketplace/{listing._id}" class="group block {showWarningOverlay ? 'pointer-events-none' : ''}">
-  <div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl overflow-hidden hover:bg-white/[0.1] hover:border-white/30 transition-all duration-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] relative">
+  <div class="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl overflow-hidden hover:bg-white/[0.1] hover:border-white/30 transition-all duration-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] relative">
     {#if showWarningOverlay}
       <!-- Warning overlay for non-owners -->
-      <div role="alert" class="absolute inset-0 z-10 backdrop-blur-md bg-white/60 flex flex-col items-center justify-center p-4 text-center">
+      <div role="alert" class="absolute inset-0 z-10 backdrop-blur-sm bg-white/60 flex flex-col items-center justify-center p-4 text-center">
         <span class="text-2xl mb-2">&#9888;&#65039;</span>
         <p class="text-sm font-medium text-white/80 mb-1">Content Warning</p>
         {#if listing.warningText}
@@ -115,10 +115,10 @@
       </h3>
 
       <div class="flex items-center gap-2 mt-2 flex-wrap">
-        <span class="text-xs px-2 py-1 rounded-full border {CONDITION_COLORS[listing.condition]}">
+        <span class="text-xs px-2 py-1 rounded-full bg-[#E79750]/10 text-[#E79750]/90">
           {conditionLabel}
         </span>
-        <span class="text-xs px-2 py-1 rounded-full bg-[#aca89f]/20 text-white/70 capitalize">
+        <span class="text-xs px-2 py-1 rounded-full bg-[#E79750]/10 text-[#E79750]/90 capitalize">
           {listing.category.replace(/-/g, ' ')}
         </span>
       </div>
@@ -126,9 +126,9 @@
       <div class="flex items-center justify-between mt-3">
         <div class="flex items-center gap-2">
           {#if listing.listingType === 'exchange'}
-            <span class="text-sm font-semibold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200">Tausch</span>
+            <span class="text-xs px-2 py-1 rounded-full bg-[#E79750]/10 text-[#E79750]/90">Tausch</span>
             {#if listing.exchangeFor}
-              <span class="text-xs text-purple-600 truncate max-w-[120px]" title={listing.exchangeFor}>↔ {listing.exchangeFor}</span>
+              <span class="text-xs text-white/60 truncate max-w-[120px]" title={listing.exchangeFor}>↔ {listing.exchangeFor}</span>
             {/if}
           {:else}
             <span class="text-lg font-bold text-[#814256]">${listing.price.toFixed(2)}</span>

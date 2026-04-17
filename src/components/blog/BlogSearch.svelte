@@ -116,7 +116,7 @@
       type="text"
       bind:value={searchQuery}
       placeholder="Search posts by title, description, or tag..."
-      class="w-full pl-12 pr-12 py-3 bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] focus:ring-2 focus:ring-[#4b9aaa]/50 focus:border-[#4b9aaa]/50 text-[#e8e6e1] placeholder-white/40"
+      class="w-full pl-12 pr-12 py-3 bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] focus:ring-2 focus:ring-[#4b9aaa]/50 focus:border-[#4b9aaa]/50 text-[#e8e6e1] placeholder-white/40"
     />
     {#if searchQuery}
       <button
@@ -143,7 +143,7 @@
   {#each paginatedPosts as post, index (post.id)}
     <div class="opacity-0" use:reveal={(index % columnsPerRow) * 0.12}>
     <a href={`/blog/${post.id}`} class="block group">
-    <article class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl overflow-hidden hover:bg-white/[0.1] hover:border-white/30 transition-all duration-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] cursor-pointer">
+    <article class="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl overflow-hidden hover:bg-white/[0.1] hover:border-white/30 transition-all duration-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] cursor-pointer">
         {#if post.cover}
           <div class="relative h-48 overflow-hidden">
             <img
