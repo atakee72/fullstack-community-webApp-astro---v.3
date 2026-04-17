@@ -168,11 +168,11 @@
       <h1 class="text-2xl md:text-3xl font-bold text-[#814256]">
         Welcome back, {session?.user?.name || 'Seller'}!
       </h1>
-      <p class="text-gray-600">Manage your listings and track your sales</p>
+      <p class="text-white/70">Manage your listings and track your sales</p>
     </div>
     <a
       href="/marketplace/sell"
-      class="inline-flex items-center justify-center gap-2 bg-[#4b9aaa] text-white px-6 py-3 rounded-xl hover:bg-[#3a7a8a] transition-colors font-medium"
+      class="inline-flex items-center justify-center gap-2 bg-[#E79750] text-white px-6 py-3 rounded-xl hover:bg-[#f0a85a] transition-colors font-medium"
     >
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -195,19 +195,19 @@
     <!-- Loading State -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {#each Array(4) as _}
-        <div class="bg-white rounded-xl border border-[#aca89f]/30 p-4 h-20 animate-pulse"></div>
+        <div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-white/15 p-4 h-20 animate-pulse"></div>
       {/each}
     </div>
-    <div class="bg-white rounded-xl border border-[#aca89f]/30 p-8 h-64 animate-pulse"></div>
+    <div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-white/15 p-8 h-64 animate-pulse"></div>
   {:else if error}
     <!-- Error State -->
-    <div class="text-center py-12 bg-white rounded-2xl border border-[#aca89f]/30">
+    <div class="text-center py-12 bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
       <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
       </svg>
-      <h3 class="text-xl font-semibold text-gray-700 mb-2">Failed to load listings</h3>
-      <p class="text-gray-500 mb-4">{error}</p>
-      <button onclick={fetchMyListings} class="text-[#4b9aaa] hover:underline font-medium">
+      <h3 class="text-xl font-semibold text-white/80 mb-2">Failed to load listings</h3>
+      <p class="text-white/60 mb-4">{error}</p>
+      <button onclick={fetchMyListings} class="text-[#E79750] hover:underline font-medium">
         Try again
       </button>
     </div>
@@ -219,39 +219,39 @@
     {#if drafts.length > 0}
       <div>
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-semibold text-gray-800">Drafts</h2>
-          <span class="text-sm text-gray-500">{drafts.length} draft{drafts.length !== 1 ? 's' : ''}</span>
+          <h2 class="text-xl font-semibold text-[#e8e6e1]">Drafts</h2>
+          <span class="text-sm text-white/60">{drafts.length} draft{drafts.length !== 1 ? 's' : ''}</span>
         </div>
-        <div class="bg-white rounded-xl border border-[#aca89f]/30 divide-y divide-[#aca89f]/20">
+        <div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-white/15 divide-y divide-white/10">
           {#each drafts as draft}
             <div class="p-4 flex items-center gap-4">
-              <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+              <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-white/[0.06]">
                 {#if draft.images && draft.images.length > 0}
                   <img src={draft.images[0]} alt={draft.title} class="w-full h-full object-cover" />
                 {:else}
                   <div class="w-full h-full flex items-center justify-center">
-                    <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
                 {/if}
               </div>
               <div class="flex-1 min-w-0">
-                <h3 class="font-medium text-gray-800 truncate">{draft.title}</h3>
+                <h3 class="font-medium text-[#e8e6e1] truncate">{draft.title}</h3>
                 <div class="flex items-center gap-2 mt-1">
                   <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Draft</span>
-                  <span class="text-xs text-gray-400">Last edited {new Date(draft.updatedAt).toLocaleDateString()}</span>
+                  <span class="text-xs text-white/50">Last edited {new Date(draft.updatedAt).toLocaleDateString()}</span>
                 </div>
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
                 <a
                   href="/marketplace/sell?draft={draft._id}"
-                  class="text-[#4b9aaa] text-sm hover:underline"
+                  class="text-[#E79750] text-sm hover:underline"
                 >Edit</a>
                 <button
                   onclick={() => handlePublishDraft(draft._id as string)}
                   disabled={publishingDraftId === (draft._id as string)}
-                  class="text-sm px-3 py-1.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+                  class="text-sm px-3 py-1.5 bg-[#E79750] text-white rounded-lg hover:bg-[#f0a85a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
                 >
                   {#if publishingDraftId === (draft._id as string)}
                     <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -277,21 +277,21 @@
     <!-- Listings Section -->
     <div>
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-semibold text-gray-800">My Listings</h2>
-        <span class="text-sm text-gray-500">{listings.length} items</span>
+        <h2 class="text-xl font-semibold text-[#e8e6e1]">My Listings</h2>
+        <span class="text-sm text-white/60">{listings.length} items</span>
       </div>
 
       {#if listings.length === 0}
         <!-- Empty State -->
-        <div class="text-center py-12 bg-white rounded-2xl border border-[#aca89f]/30">
+        <div class="text-center py-12 bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
           <svg class="w-16 h-16 text-[#aca89f] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
-          <h3 class="text-xl font-semibold text-gray-700 mb-2">No listings yet</h3>
-          <p class="text-gray-500 mb-4">Create your first listing to start selling!</p>
+          <h3 class="text-xl font-semibold text-white/80 mb-2">No listings yet</h3>
+          <p class="text-white/60 mb-4">Create your first listing to start selling!</p>
           <a
             href="/marketplace/sell"
-            class="inline-flex items-center gap-2 bg-[#4b9aaa] text-white px-6 py-3 rounded-xl hover:bg-[#3a7a8a] transition-colors font-medium"
+            class="inline-flex items-center gap-2 bg-[#E79750] text-white px-6 py-3 rounded-xl hover:bg-[#f0a85a] transition-colors font-medium"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -307,7 +307,7 @@
 
   <!-- Quick Links -->
   <div class="flex flex-wrap gap-4 pt-4">
-    <a href="/marketplace" class="text-[#4b9aaa] hover:underline flex items-center gap-1">
+    <a href="/marketplace" class="text-[#E79750] hover:underline flex items-center gap-1">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
       </svg>

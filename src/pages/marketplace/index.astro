@@ -8,9 +8,12 @@ const session = await getSession(Astro.request);
 ---
 
 <BaseLayout title="Mahalle Marketplace">
-  <main class="min-h-[calc(100vh-60px)] py-4 md:py-6">
+  <div class="dark-glass-bg" aria-hidden="true"></div>
+  <div class="dark-glass-gradient" aria-hidden="true"></div>
+
+  <main class="relative z-10 min-h-[calc(100vh-60px)] py-4 md:py-6 font-inter carved-title" style="--carved-accent: #E79750">
     <div class="max-w-7xl mx-auto px-4 md:px-8">
-      <PageHeader title="Mahalle Marketplace" subtitle="Buy and sell within your neighbourhood community" color="#4b9aaa" />
+      <PageHeader title="Mahalle Marketplace" subtitle="Buy and sell within your neighbourhood community" color="#E79750" subtitleClass="text-white/70" />
       <MarketplaceBrowse client:load session={session} />
     </div>
   </main>

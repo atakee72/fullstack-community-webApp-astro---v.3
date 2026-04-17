@@ -170,7 +170,7 @@
   <div>
     <a
       href="/marketplace/my-listings"
-      class="inline-flex items-center gap-2 text-gray-600 hover:text-[#4b9aaa] transition-colors mb-4"
+      class="inline-flex items-center gap-2 text-white/70 hover:text-[#E79750] transition-colors mb-4"
     >
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -178,7 +178,7 @@
       Back to My Listings
     </a>
     <h1 class="text-3xl font-bold text-[#814256]">{draftId ? 'Edit Draft' : 'List Your Item'}</h1>
-    <p class="text-gray-600">{draftId ? 'Continue working on your draft listing' : 'Share items with your Mahalle community'}</p>
+    <p class="text-white/70">{draftId ? 'Continue working on your draft listing' : 'Share items with your Mahalle community'}</p>
   </div>
 
   {#if dailyLimitReached}
@@ -192,14 +192,14 @@
       <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
         <a
           href="/marketplace/my-listings"
-          class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors font-medium"
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E79750] text-white rounded-lg hover:bg-[#f0a85a] transition-colors font-medium"
         >
           Back to My Listings
         </a>
         <button
           onclick={handleSaveDraft}
           disabled={isSavingDraft}
-          class="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-[#4b9aaa] border border-[#4b9aaa] rounded-lg hover:bg-[#4b9aaa]/5 transition-colors font-medium disabled:opacity-50"
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-white/[0.08] backdrop-blur-xl text-[#E79750] border border-[#E79750]/50 rounded-lg hover:bg-[#E79750]/20 transition-colors font-medium disabled:opacity-50"
         >
           {isSavingDraft ? 'Saving...' : 'Save as Draft'}
         </button>
@@ -208,15 +208,15 @@
   {:else}
 
   <!-- Progress Steps -->
-  <div class="flex justify-between items-center bg-white rounded-xl p-4 border border-[#aca89f]/30">
+  <div class="flex justify-between items-center bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] p-4 border border-white/15">
     {#each steps as step, index}
       <div class="flex items-center">
         <div class="flex flex-col items-center">
           <div
             class="flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all
               {currentStep >= step.id
-                ? 'bg-[#4b9aaa] border-[#4b9aaa] text-white'
-                : 'border-gray-300 text-gray-400'}"
+                ? 'bg-[#E79750] border-[#E79750] text-white'
+                : 'border-white/15 text-white/50'}"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={step.icon} />
@@ -224,7 +224,7 @@
           </div>
           <span
             class="mt-2 text-xs font-medium hidden sm:block
-              {currentStep >= step.id ? 'text-[#4b9aaa]' : 'text-gray-400'}"
+              {currentStep >= step.id ? 'text-[#E79750]' : 'text-white/50'}"
           >
             {step.title}
           </span>
@@ -232,7 +232,7 @@
         {#if index < steps.length - 1}
           <div
             class="w-8 sm:w-16 lg:w-24 h-0.5 mx-2 sm:mx-4
-              {currentStep > step.id ? 'bg-[#4b9aaa]' : 'bg-gray-300'}"
+              {currentStep > step.id ? 'bg-[#E79750]' : 'bg-white/15'}"
           ></div>
         {/if}
       </div>
@@ -264,7 +264,7 @@
     <button
       onclick={handleSaveDraft}
       disabled={isSavingDraft || !listing.title.trim()}
-      class="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#4b9aaa] border border-[#4b9aaa]/40 rounded-lg hover:bg-[#4b9aaa]/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      class="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#E79750] border border-[#E79750]/40 rounded-lg hover:bg-[#E79750]/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
@@ -274,7 +274,7 @@
   </div>
 
   <!-- Form Steps -->
-  <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-[#aca89f]/30">
+  <div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl p-6 md:p-8 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
     {#if currentStep === 1}
       <BasicDetailsStep {listing} {updateListing} onNext={() => currentStep = 2} />
     {:else if currentStep === 2}

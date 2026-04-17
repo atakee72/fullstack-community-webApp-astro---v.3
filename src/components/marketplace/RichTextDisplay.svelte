@@ -100,7 +100,7 @@
   </div>
 {:else}
   <!-- Plain text (legacy) -->
-  <p class="text-gray-600 text-sm whitespace-pre-wrap">{content}</p>
+  <p class="text-white/70 text-sm whitespace-pre-wrap">{content}</p>
 {/if}
 
 <style>
@@ -137,7 +137,7 @@
     font-style: italic;
   }
   .rich-text-content :global(a) {
-    color: #4b9aaa;
+    color: #E79750;
     text-decoration: underline;
   }
 </style>

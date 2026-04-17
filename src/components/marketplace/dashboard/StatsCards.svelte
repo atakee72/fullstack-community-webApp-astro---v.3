@@ -33,7 +33,7 @@
 
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
   {#each cards as card}
-    <div class="bg-white rounded-xl border border-[#aca89f]/30 p-4">
+    <div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-white/15 p-4">
       <div class="flex items-center gap-3">
         <div class="p-2 rounded-lg {card.color}">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,8 +41,8 @@
           </svg>
         </div>
         <div>
-          <p class="text-2xl font-bold text-gray-800">{card.value}</p>
-          <p class="text-sm text-gray-500">{card.label}</p>
+          <p class="text-2xl font-bold text-[#e8e6e1]">{card.value}</p>
+          <p class="text-sm text-white/60">{card.label}</p>
         </div>
       </div>
     </div>

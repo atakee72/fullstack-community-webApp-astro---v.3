@@ -39,21 +39,21 @@
 <div class="space-y-6">
   <div>
     <h2 class="text-2xl font-bold text-[#814256] mb-2">Review Your Listing</h2>
-    <p class="text-gray-600">Make sure everything looks good before publishing</p>
+    <p class="text-white/70">Make sure everything looks good before publishing</p>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
     <!-- Photos Preview -->
     <div class="space-y-4">
-      <h3 class="font-semibold text-gray-800">Photos</h3>
+      <h3 class="font-semibold text-[#e8e6e1]">Photos</h3>
       {#if listing.images.length > 0}
-        <div class="aspect-square rounded-xl overflow-hidden border border-[#aca89f]/30">
+        <div class="aspect-square rounded-xl overflow-hidden border border-white/15">
           <img src={listing.images[0]} alt="Main preview of your listing" class="w-full h-full object-cover" />
         </div>
         {#if listing.images.length > 1}
           <div class="grid grid-cols-4 gap-2">
             {#each listing.images.slice(1) as image, index}
-              <div class="aspect-square rounded-lg overflow-hidden border border-[#aca89f]/30">
+              <div class="aspect-square rounded-lg overflow-hidden border border-white/15">
                 <img src={image} alt="Additional preview {index + 1}" class="w-full h-full object-cover" />
               </div>
             {/each}
@@ -65,15 +65,15 @@
     <!-- Details Preview -->
     <div class="space-y-6">
       <div>
-        <h3 class="font-semibold text-gray-800 mb-3">Item Details</h3>
-        <div class="bg-white rounded-xl border border-[#aca89f]/30 p-6 space-y-4">
+        <h3 class="font-semibold text-[#e8e6e1] mb-3">Item Details</h3>
+        <div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-white/15 p-6 space-y-4">
           <h4 class="text-xl font-bold text-[#814256]">{listing.title}</h4>
 
           <div class="flex flex-wrap gap-2">
-            <span class="px-3 py-1 rounded-full border text-sm {CONDITION_COLORS[listing.condition as keyof typeof CONDITION_COLORS] || 'bg-gray-100'}">
+            <span class="px-3 py-1 rounded-full border text-sm {CONDITION_COLORS[listing.condition as keyof typeof CONDITION_COLORS] || 'bg-white/[0.06]'}">
               {conditionLabel}
             </span>
-            <span class="px-3 py-1 rounded-full bg-[#aca89f]/20 text-gray-600 text-sm">
+            <span class="px-3 py-1 rounded-full bg-[#aca89f]/20 text-white/70 text-sm">
               {categoryLabel}
             </span>
           </div>
@@ -87,14 +87,14 @@
             {:else}
               <span class="text-2xl font-bold text-[#814256]">${listing.price.toFixed(2)}</span>
               {#if listing.originalPrice && listing.originalPrice > listing.price}
-                <span class="text-gray-400 line-through">${listing.originalPrice.toFixed(2)}</span>
+                <span class="text-white/50 line-through">${listing.originalPrice.toFixed(2)}</span>
                 <span class="text-green-600 text-sm font-medium">-{discount}%</span>
               {/if}
             {/if}
           </div>
 
           <div>
-            <h5 class="font-medium text-gray-700 mb-1">Description</h5>
+            <h5 class="font-medium text-white/80 mb-1">Description</h5>
             <RichTextDisplay content={listing.description} />
           </div>
         </div>
@@ -109,7 +109,7 @@
     </svg>
     <div>
       <p class="font-medium text-[#814256]">Ready to publish!</p>
-      <p class="text-sm text-gray-600">Your listing will be live immediately and visible to all Mahalle members.</p>
+      <p class="text-sm text-white/70">Your listing will be live immediately and visible to all Mahalle members.</p>
     </div>
   </div>
 
@@ -118,7 +118,7 @@
     <button
       onclick={onPrev}
       disabled={isSubmitting}
-      class="text-gray-600 px-6 py-3 rounded-xl hover:bg-gray-100 transition-colors font-medium flex items-center gap-2 disabled:opacity-50"
+      class="text-white/70 px-6 py-3 rounded-xl hover:bg-white/[0.06] transition-colors font-medium flex items-center gap-2 disabled:opacity-50"
     >
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />

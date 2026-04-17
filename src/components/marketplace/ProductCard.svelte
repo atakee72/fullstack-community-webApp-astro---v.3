@@ -46,16 +46,16 @@
 </script>
 
 <a href="/marketplace/{listing._id}" class="group block {showWarningOverlay ? 'pointer-events-none' : ''}">
-  <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-[#aca89f]/30 relative">
+  <div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl overflow-hidden hover:bg-white/[0.1] hover:border-white/30 transition-all duration-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] relative">
     {#if showWarningOverlay}
       <!-- Warning overlay for non-owners -->
       <div role="alert" class="absolute inset-0 z-10 backdrop-blur-md bg-white/60 flex flex-col items-center justify-center p-4 text-center">
         <span class="text-2xl mb-2">&#9888;&#65039;</span>
-        <p class="text-sm font-medium text-gray-700 mb-1">Content Warning</p>
+        <p class="text-sm font-medium text-white/80 mb-1">Content Warning</p>
         {#if listing.warningText}
           <p class="text-xs font-medium text-orange-700 mb-1">{listing.warningText}</p>
         {/if}
-        <p class="text-xs text-gray-500 mb-3">This listing contains content that some users may find sensitive.</p>
+        <p class="text-xs text-white/60 mb-3">This listing contains content that some users may find sensitive.</p>
         <button
           onclick={revealWarning}
           class="px-3 py-1.5 text-xs bg-[#814256] text-white rounded hover:bg-[#6a3547] transition-colors pointer-events-auto"
@@ -110,7 +110,7 @@
 
     <!-- Content -->
     <div class="p-4">
-      <h3 class="font-semibold text-[#814256] line-clamp-2 group-hover:text-[#4b9aaa] transition-colors min-h-[3rem]">
+      <h3 class="font-semibold text-[#814256] line-clamp-2 group-hover:text-[#E79750] transition-colors min-h-[3rem]">
         {listing.title}
       </h3>
 
@@ -118,7 +118,7 @@
         <span class="text-xs px-2 py-1 rounded-full border {CONDITION_COLORS[listing.condition]}">
           {conditionLabel}
         </span>
-        <span class="text-xs px-2 py-1 rounded-full bg-[#aca89f]/20 text-gray-600 capitalize">
+        <span class="text-xs px-2 py-1 rounded-full bg-[#aca89f]/20 text-white/70 capitalize">
           {listing.category.replace(/-/g, ' ')}
         </span>
       </div>
@@ -133,11 +133,11 @@
           {:else}
             <span class="text-lg font-bold text-[#814256]">${listing.price.toFixed(2)}</span>
             {#if listing.originalPrice && listing.originalPrice > listing.price}
-              <span class="text-sm text-gray-400 line-through">${listing.originalPrice.toFixed(2)}</span>
+              <span class="text-sm text-white/50 line-through">${listing.originalPrice.toFixed(2)}</span>
             {/if}
           {/if}
         </div>
-        <span class="text-xs text-gray-500 flex items-center gap-1">
+        <span class="text-xs text-white/60 flex items-center gap-1">
           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />

@@ -8,7 +8,10 @@ const { id } = Astro.params;
 ---
 
 <BaseLayout title="Product Details - Mahalle Marketplace">
-  <main class="min-h-[calc(100vh-60px)] py-4 md:py-6">
+  <div class="dark-glass-bg" aria-hidden="true"></div>
+  <div class="dark-glass-gradient" aria-hidden="true"></div>
+
+  <main class="relative z-10 min-h-[calc(100vh-60px)] py-4 md:py-6 font-inter">
     <div class="max-w-6xl mx-auto px-4 md:px-8">
       <ProductDetail client:load listingId={id} session={session} />
     </div>

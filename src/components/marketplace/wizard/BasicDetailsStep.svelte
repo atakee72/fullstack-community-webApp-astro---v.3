@@ -82,12 +82,12 @@
 <div class="space-y-6">
   <div>
     <h2 class="text-2xl font-bold text-[#814256] mb-2">Basic Details</h2>
-    <p class="text-gray-600">Tell us about your item</p>
+    <p class="text-white/70">Tell us about your item</p>
   </div>
 
   <!-- Listing Type Toggle -->
   <div>
-    <div id="listing-type-label" class="block text-sm font-medium text-gray-700 mb-3">
+    <div id="listing-type-label" class="block text-sm font-medium text-white/80 mb-3">
       What would you like to do? <span class="text-red-500">*</span>
     </div>
     <div role="group" aria-labelledby="listing-type-label" class="grid grid-cols-2 gap-3">
@@ -96,15 +96,15 @@
         onclick={() => updateListing('listingType', 'sell')}
         class="flex items-center gap-3 p-4 rounded-xl border-2 transition-all
           {listing.listingType === 'sell' || !listing.listingType
-            ? 'border-[#4b9aaa] bg-[#4b9aaa]/5'
-            : 'border-[#aca89f]/30 hover:border-[#4b9aaa]/50'}"
+            ? 'border-[#E79750] bg-[#E79750]/5'
+            : 'border-white/15 hover:border-[#E79750]/50'}"
       >
-        <svg class="w-6 h-6 {listing.listingType === 'sell' || !listing.listingType ? 'text-[#4b9aaa]' : 'text-gray-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-6 h-6 {listing.listingType === 'sell' || !listing.listingType ? 'text-[#E79750]' : 'text-white/50'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <div class="text-left">
-          <span class="font-medium text-gray-800">Sell</span>
-          <p class="text-xs text-gray-500">Set a price for your item</p>
+          <span class="font-medium text-[#e8e6e1]">Sell</span>
+          <p class="text-xs text-white/60">Set a price for your item</p>
         </div>
       </button>
       <button
@@ -112,15 +112,15 @@
         onclick={() => updateListing('listingType', 'exchange')}
         class="flex items-center gap-3 p-4 rounded-xl border-2 transition-all
           {listing.listingType === 'exchange'
-            ? 'border-[#4b9aaa] bg-[#4b9aaa]/5'
-            : 'border-[#aca89f]/30 hover:border-[#4b9aaa]/50'}"
+            ? 'border-[#E79750] bg-[#E79750]/5'
+            : 'border-white/15 hover:border-[#E79750]/50'}"
       >
-        <svg class="w-6 h-6 {listing.listingType === 'exchange' ? 'text-[#4b9aaa]' : 'text-gray-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-6 h-6 {listing.listingType === 'exchange' ? 'text-[#E79750]' : 'text-white/50'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
         </svg>
         <div class="text-left">
-          <span class="font-medium text-gray-800">Exchange</span>
-          <p class="text-xs text-gray-500">Swap / Tausch — no price</p>
+          <span class="font-medium text-[#e8e6e1]">Exchange</span>
+          <p class="text-xs text-white/60">Swap / Tausch — no price</p>
         </div>
       </button>
     </div>
@@ -147,7 +147,7 @@
 
   <!-- Title -->
   <div>
-    <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+    <label for="title" class="block text-sm font-medium text-white/80 mb-2">
       Item Title <span class="text-red-500">*</span>
     </label>
     <input
@@ -158,18 +158,18 @@
       onblur={() => validateField('title')}
       placeholder="e.g., Vintage Oak Coffee Table"
       class="w-full px-4 py-3 rounded-xl border transition-colors
-        {getError('title') ? 'border-red-500 focus:ring-red-500' : 'border-[#aca89f]/30 focus:ring-[#4b9aaa]'}
+        {getError('title') ? 'border-red-500 focus:ring-red-500' : 'border-white/15 focus:ring-[#E79750]'}
         focus:outline-none focus:ring-2 focus:border-transparent"
     />
     {#if getError('title')}
       <p class="text-red-500 text-sm mt-1">{getError('title')}</p>
     {/if}
-    <p class="text-xs text-gray-400 mt-1">{listing.title?.length || 0}/100 characters (min 5)</p>
+    <p class="text-xs text-white/50 mt-1">{listing.title?.length || 0}/100 characters (min 5)</p>
   </div>
 
   <!-- Category -->
   <div>
-    <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
+    <label for="category" class="block text-sm font-medium text-white/80 mb-2">
       Category <span class="text-red-500">*</span>
     </label>
     <select
@@ -177,7 +177,7 @@
       value={listing.category}
       onchange={(e) => { updateListing('category', (e.target as HTMLSelectElement).value); validateField('category'); }}
       class="w-full px-4 py-3 rounded-xl border transition-colors
-        {getError('category') ? 'border-red-500 focus:ring-red-500' : 'border-[#aca89f]/30 focus:ring-[#4b9aaa]'}
+        {getError('category') ? 'border-red-500 focus:ring-red-500' : 'border-white/15 focus:ring-[#E79750]'}
         focus:outline-none focus:ring-2 focus:border-transparent"
     >
       <option value="">Select a category</option>
@@ -192,7 +192,7 @@
 
   <!-- Condition -->
   <div>
-    <label for="condition" class="block text-sm font-medium text-gray-700 mb-3">
+    <label for="condition" class="block text-sm font-medium text-white/80 mb-3">
       Condition <span class="text-red-500">*</span>
     </label>
     <div class="space-y-2">
@@ -200,8 +200,8 @@
         <label
           class="flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all
             {listing.condition === cond.value
-              ? 'border-[#4b9aaa] bg-[#4b9aaa]/5'
-              : getError('condition') ? 'border-red-300' : 'border-[#aca89f]/30 hover:border-[#4b9aaa]/50'}"
+              ? 'border-[#E79750] bg-[#E79750]/5'
+              : getError('condition') ? 'border-red-300' : 'border-white/15 hover:border-[#E79750]/50'}"
         >
           <input
             type="radio"
@@ -209,11 +209,11 @@
             value={cond.value}
             checked={listing.condition === cond.value}
             onchange={() => { updateListing('condition', cond.value); validateField('condition'); }}
-            class="mt-1 w-4 h-4 text-[#4b9aaa] focus:ring-[#4b9aaa]"
+            class="mt-1 w-4 h-4 text-[#E79750] focus:ring-[#E79750]"
           />
           <div>
-            <span class="font-medium text-gray-800">{cond.label}</span>
-            <p class="text-sm text-gray-500">{cond.description}</p>
+            <span class="font-medium text-[#e8e6e1]">{cond.label}</span>
+            <p class="text-sm text-white/60">{cond.description}</p>
           </div>
         </label>
       {/each}
@@ -225,7 +225,7 @@
 
   <!-- Description -->
   <div>
-    <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+    <label for="description" class="block text-sm font-medium text-white/80 mb-2">
       Description <span class="text-red-500">*</span>
     </label>
     <RichTextEditor
@@ -244,7 +244,7 @@
   <div class="flex justify-end pt-4">
     <button
       onclick={handleNext}
-      class="bg-[#4b9aaa] text-white px-8 py-3 rounded-xl hover:bg-[#3a7a8a] transition-colors font-medium flex items-center gap-2"
+      class="bg-[#E79750] text-white px-8 py-3 rounded-xl hover:bg-[#f0a85a] transition-colors font-medium flex items-center gap-2"
     >
       Next: Add Photos
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

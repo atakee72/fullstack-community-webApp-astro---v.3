@@ -91,11 +91,11 @@
 
 <!-- Modal Backdrop -->
 <div class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
+  <div class="bg-[#1a1d4a]/95 backdrop-blur-2xl border border-white/20 border-t-white/30 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
     <!-- Header -->
-    <div class="p-4 border-b border-gray-200">
+    <div class="p-4 border-b border-white/10">
       <h3 class="text-lg font-semibold text-[#814256]">Crop Image</h3>
-      <p class="text-sm text-gray-500">Drag to reposition, scroll to zoom</p>
+      <p class="text-sm text-white/60">Drag to reposition, scroll to zoom</p>
     </div>
 
     <!-- Cropper Area -->
@@ -110,9 +110,9 @@
     </div>
 
     <!-- Zoom Slider -->
-    <div class="p-4 border-t border-gray-200">
+    <div class="p-4 border-t border-white/10">
       <div class="flex items-center gap-4">
-        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
         </svg>
         <input
@@ -121,21 +121,21 @@
           max="3"
           step="0.1"
           bind:value={zoom}
-          class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#4b9aaa]"
+          class="flex-1 h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#E79750]"
         />
-        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
         </svg>
       </div>
     </div>
 
     <!-- Actions -->
-    <div class="p-4 border-t border-gray-200 flex justify-end gap-3">
+    <div class="p-4 border-t border-white/10 flex justify-end gap-3">
       <button
         type="button"
         onclick={onCancel}
         disabled={processing}
-        class="px-6 py-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+        class="px-6 py-2 rounded-xl text-white/70 hover:bg-white/[0.06] transition-colors disabled:opacity-50"
       >
         Cancel
       </button>
@@ -143,7 +143,7 @@
         type="button"
         onclick={handleConfirm}
         disabled={processing}
-        class="px-6 py-2 rounded-xl bg-[#4b9aaa] text-white hover:bg-[#3a7a8a] transition-colors disabled:opacity-50 flex items-center gap-2"
+        class="px-6 py-2 rounded-xl bg-[#E79750] text-white hover:bg-[#f0a85a] transition-colors disabled:opacity-50 flex items-center gap-2"
       >
         {#if processing}
           <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">

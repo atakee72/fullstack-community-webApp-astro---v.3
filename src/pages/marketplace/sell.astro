@@ -31,7 +31,10 @@ if (draftId) {
 ---
 
 <BaseLayout title={draftData ? "Edit Draft - Mahalle Marketplace" : "Sell an Item - Mahalle Marketplace"}>
-  <main class="min-h-[calc(100vh-60px)] py-4 md:py-6">
+  <div class="dark-glass-bg" aria-hidden="true"></div>
+  <div class="dark-glass-gradient" aria-hidden="true"></div>
+
+  <main class="relative z-10 min-h-[calc(100vh-60px)] py-4 md:py-6 font-inter">
     <div class="max-w-4xl mx-auto px-4 md:px-8">
       <ListingWizard client:load session={session} draftData={draftData} />
     </div>

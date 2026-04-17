@@ -93,7 +93,7 @@
     ></button>
 
     <!-- Modal -->
-    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+    <div class="relative bg-[#1a1d4a]/95 backdrop-blur-2xl border border-white/20 border-t-white/30 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
       <!-- Header -->
       <div class="bg-[#814256] px-6 py-4">
         <div class="flex items-center justify-between">
@@ -108,14 +108,14 @@
 
       <div class="px-6 py-5 space-y-5">
           <!-- Content Preview -->
-          <div class="bg-gray-50 rounded-lg p-3">
-            <p class="text-xs text-gray-500 mb-1">Reporting:</p>
-            <p class="text-sm text-gray-800 font-medium truncate">{listingTitle}</p>
+          <div class="bg-white/[0.04] rounded-lg p-3">
+            <p class="text-xs text-white/60 mb-1">Reporting:</p>
+            <p class="text-sm text-[#e8e6e1] font-medium truncate">{listingTitle}</p>
           </div>
 
           <!-- Reason Selection -->
           <fieldset>
-            <legend class="block text-sm font-medium text-gray-700 mb-2">
+            <legend class="block text-sm font-medium text-white/80 mb-2">
               Why are you reporting this? <span class="text-red-500">*</span>
             </legend>
             <div class="space-y-2">
@@ -123,8 +123,8 @@
                 <label
                   class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all
                     {reason === opt.value
-                      ? 'border-[#4b9aaa] bg-[#4b9aaa]/5'
-                      : 'border-gray-200 hover:border-gray-300'}"
+                      ? 'border-[#E79750] bg-[#E79750]/5'
+                      : 'border-white/10 hover:border-white/15'}"
                 >
                   <input
                     type="radio"
@@ -132,9 +132,9 @@
                     value={opt.value}
                     checked={reason === opt.value}
                     onchange={() => reason = opt.value}
-                    class="w-4 h-4 text-[#4b9aaa] focus:ring-[#4b9aaa]"
+                    class="w-4 h-4 text-[#E79750] focus:ring-[#E79750]"
                   />
-                  <span class="text-sm text-gray-700">{opt.label}</span>
+                  <span class="text-sm text-white/80">{opt.label}</span>
                 </label>
               {/each}
             </div>
@@ -142,7 +142,7 @@
 
           <!-- Details -->
           <div>
-            <label for="report-details" class="block text-sm font-medium text-gray-700 mb-2">
+            <label for="report-details" class="block text-sm font-medium text-white/80 mb-2">
               Please explain <span class="text-red-500">*</span>
             </label>
             <textarea
@@ -151,9 +151,9 @@
               placeholder="Provide details about why you're reporting this listing (min 10 characters)..."
               rows="3"
               maxlength="500"
-              class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] focus:border-transparent text-sm resize-none"
+              class="w-full px-3 py-2 rounded-lg border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#E79750] focus:border-transparent text-sm resize-none"
             ></textarea>
-            <p class="text-xs text-gray-400 mt-1">{details.length}/500 characters (min 10)</p>
+            <p class="text-xs text-white/50 mt-1">{details.length}/500 characters (min 10)</p>
           </div>
 
           <!-- Error -->
@@ -167,7 +167,7 @@
           <div class="flex gap-3 pt-2">
             <button
               onclick={close}
-              class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors text-sm font-medium"
+              class="flex-1 px-4 py-2.5 rounded-xl border border-white/10 text-white/70 hover:bg-white/[0.04] transition-colors text-sm font-medium"
             >
               Cancel
             </button>

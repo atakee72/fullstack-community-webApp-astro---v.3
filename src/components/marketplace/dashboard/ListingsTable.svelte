@@ -32,9 +32,9 @@
   }
 </script>
 
-<div class="bg-white rounded-xl border border-[#aca89f]/30 overflow-hidden">
+<div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-white/15 overflow-hidden">
   <!-- Mobile View -->
-  <div class="md:hidden divide-y divide-[#aca89f]/20">
+  <div class="md:hidden divide-y divide-white/10">
     {#each listings as listing}
       <div class="p-4">
         <div class="flex gap-4">
@@ -42,15 +42,15 @@
             {#if listing.images && listing.images.length > 0}
               <img src={listing.images[0]} alt={listing.title} class="w-full h-full object-cover" />
             {:else}
-              <div class="w-full h-full bg-gray-100 flex items-center justify-center">
-                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="w-full h-full bg-white/[0.06] flex items-center justify-center">
+                <svg class="w-8 h-8 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
             {/if}
           </div>
           <div class="flex-1 min-w-0">
-            <h3 class="font-medium text-gray-800 truncate">{listing.title}</h3>
+            <h3 class="font-medium text-[#e8e6e1] truncate">{listing.title}</h3>
             {#if listing.listingType === 'exchange'}
               <span class="text-sm font-semibold text-purple-700">Tausch</span>
             {:else}
@@ -72,12 +72,12 @@
             </div>
           </div>
         </div>
-        <div class="flex items-center justify-between mt-3 pt-3 border-t border-[#aca89f]/20">
-          <span class="text-xs text-gray-500">{formatDate(listing.createdAt)}</span>
+        <div class="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
+          <span class="text-xs text-white/60">{formatDate(listing.createdAt)}</span>
           <div class="flex gap-2">
-            <a href="/marketplace/{listing._id}" class="text-[#4b9aaa] text-sm hover:underline">View</a>
+            <a href="/marketplace/{listing._id}" class="text-[#E79750] text-sm hover:underline">View</a>
             {#if listing.moderationStatus === 'pending' || listing.moderationStatus === 'rejected'}
-              <span class="text-gray-400 text-sm cursor-not-allowed" title="Cannot delete while under moderation review">Delete</span>
+              <span class="text-white/50 text-sm cursor-not-allowed" title="Cannot delete while under moderation review">Delete</span>
             {:else}
               <button onclick={() => onDelete(listing._id as string)} class="text-red-600 text-sm hover:underline">Delete</button>
             {/if}
@@ -91,15 +91,15 @@
   <table class="w-full hidden md:table">
     <thead class="bg-[#aca89f]/10">
       <tr>
-        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Item</th>
-        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Condition</th>
-        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Price</th>
-        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Listed</th>
-        <th class="text-right py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
+        <th class="text-left py-3 px-4 text-sm font-medium text-white/70">Item</th>
+        <th class="text-left py-3 px-4 text-sm font-medium text-white/70">Status</th>
+        <th class="text-left py-3 px-4 text-sm font-medium text-white/70">Condition</th>
+        <th class="text-left py-3 px-4 text-sm font-medium text-white/70">Price</th>
+        <th class="text-left py-3 px-4 text-sm font-medium text-white/70">Listed</th>
+        <th class="text-right py-3 px-4 text-sm font-medium text-white/70">Actions</th>
       </tr>
     </thead>
-    <tbody class="divide-y divide-[#aca89f]/20">
+    <tbody class="divide-y divide-white/10">
       {#each listings as listing}
         <tr class="hover:bg-[#aca89f]/5">
           <td class="py-3 px-4">
@@ -108,10 +108,10 @@
                 {#if listing.images && listing.images.length > 0}
                   <img src={listing.images[0]} alt={listing.title} class="w-full h-full object-cover" />
                 {:else}
-                  <div class="w-full h-full bg-gray-100"></div>
+                  <div class="w-full h-full bg-white/[0.06]"></div>
                 {/if}
               </div>
-              <span class="font-medium text-gray-800 truncate max-w-[200px]">{listing.title}</span>
+              <span class="font-medium text-[#e8e6e1] truncate max-w-[200px]">{listing.title}</span>
             </div>
           </td>
           <td class="py-3 px-4">
@@ -150,12 +150,12 @@
               ${listing.price.toFixed(2)}
             {/if}
           </td>
-          <td class="py-3 px-4 text-sm text-gray-500">{formatDate(listing.createdAt)}</td>
+          <td class="py-3 px-4 text-sm text-white/60">{formatDate(listing.createdAt)}</td>
           <td class="py-3 px-4 text-right">
             <div class="flex items-center justify-end gap-3">
-              <a href="/marketplace/{listing._id}" class="text-[#4b9aaa] hover:underline text-sm">View</a>
+              <a href="/marketplace/{listing._id}" class="text-[#E79750] hover:underline text-sm">View</a>
               {#if listing.moderationStatus === 'pending' || listing.moderationStatus === 'rejected'}
-                <span class="text-gray-400 text-sm cursor-not-allowed" title="Cannot delete while under moderation review">Delete</span>
+                <span class="text-white/50 text-sm cursor-not-allowed" title="Cannot delete while under moderation review">Delete</span>
               {:else}
                 <button onclick={() => onDelete(listing._id as string)} class="text-red-600 hover:underline text-sm">Delete</button>
               {/if}

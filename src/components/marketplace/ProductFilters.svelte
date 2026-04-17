@@ -89,7 +89,7 @@
   <select
     value={filters.listingType || 'all'}
     onchange={handleTypeChange}
-    class="px-4 py-2 rounded-lg border border-[#aca89f]/30 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+    class="px-4 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50"
   >
     <option value="all">All Types</option>
     <option value="sell">Buy</option>
@@ -100,7 +100,7 @@
   <select
     value={filters.category || 'all'}
     onchange={handleCategoryChange}
-    class="px-4 py-2 rounded-lg border border-[#aca89f]/30 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+    class="px-4 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50"
   >
     <option value="all">All Categories</option>
     {#each LISTING_CATEGORIES as cat}
@@ -112,7 +112,7 @@
   <select
     value={filters.condition || 'all'}
     onchange={handleConditionChange}
-    class="px-4 py-2 rounded-lg border border-[#aca89f]/30 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+    class="px-4 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50"
   >
     <option value="all">All Conditions</option>
     {#each LISTING_CONDITIONS as cond}
@@ -125,7 +125,7 @@
     <select
       value={selectedPriceRange}
       onchange={handlePriceChange}
-      class="px-4 py-2 rounded-lg border border-[#aca89f]/30 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+      class="px-4 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50"
     >
       {#each priceRanges as range}
         <option value={range.value}>{range.label}</option>
@@ -137,7 +137,7 @@
   <select
     value={filters.sortBy || 'newest'}
     onchange={handleSortChange}
-    class="px-4 py-2 rounded-lg border border-[#aca89f]/30 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+    class="px-4 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#E79750]/50"
   >
     {#each sortOptions as opt}
       <option value={opt.value}>{opt.label}</option>
@@ -148,7 +148,7 @@
   {#if hasActiveFilters}
     <button
       onclick={clearAllFilters}
-      class="px-4 py-2 text-sm text-[#814256] hover:text-[#4b9aaa] underline transition-colors"
+      class="px-4 py-2 text-sm text-[#814256] hover:text-[#E79750] underline transition-colors"
     >
       Clear all
     </button>

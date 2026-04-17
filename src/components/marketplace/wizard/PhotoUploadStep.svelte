@@ -176,7 +176,7 @@
 <div class="space-y-6">
   <div>
     <h2 class="text-2xl font-bold text-[#814256] mb-2">Add Photos</h2>
-    <p class="text-gray-600">High-quality photos help your item sell faster. Add 1-5 photos.</p>
+    <p class="text-white/70">High-quality photos help your item sell faster. Add 1-5 photos.</p>
   </div>
 
   <!-- Upload Zone -->
@@ -185,7 +185,7 @@
     tabindex="0"
     aria-label="Upload photos — drag and drop files here or use the button below"
     class="border-2 border-dashed rounded-2xl p-8 text-center transition-colors relative
-      {dragOver ? 'border-[#4b9aaa] bg-[#4b9aaa]/5' : 'border-[#aca89f]/50'}
+      {dragOver ? 'border-[#E79750] bg-[#E79750]/5' : 'border-[#aca89f]/50'}
       {listing.images.length >= 5 ? 'opacity-50 pointer-events-none' : ''}"
     ondrop={handleDrop}
     ondragover={handleDragOver}
@@ -197,7 +197,7 @@
     </svg>
 
     {#if uploading}
-      <div class="flex items-center justify-center gap-2 text-[#4b9aaa]">
+      <div class="flex items-center justify-center gap-2 text-[#E79750]">
         <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -205,8 +205,8 @@
         Uploading...
       </div>
     {:else}
-      <p class="text-gray-600 mb-2">Drop photos here or click to browse</p>
-      <p class="text-sm text-gray-400">PNG, JPG up to 10MB each • You'll crop each photo</p>
+      <p class="text-white/70 mb-2">Drop photos here or click to browse</p>
+      <p class="text-sm text-white/50">PNG, JPG up to 10MB each • You'll crop each photo</p>
     {/if}
 
     <input
@@ -220,7 +220,7 @@
 
     <button
       type="button"
-      class="mt-4 bg-[#4b9aaa] text-white px-6 py-2 rounded-xl hover:bg-[#3a7a8a] transition-colors disabled:opacity-50"
+      class="mt-4 bg-[#E79750] text-white px-6 py-2 rounded-xl hover:bg-[#f0a85a] transition-colors disabled:opacity-50"
       disabled={uploading || listing.images.length >= 5}
       onclick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
     >
@@ -234,7 +234,7 @@
 
   <!-- Pending crops indicator -->
   {#if cropQueue.length > 0}
-    <p class="text-sm text-[#4b9aaa]">
+    <p class="text-sm text-[#E79750]">
       {cropQueue.length} more {cropQueue.length === 1 ? 'photo' : 'photos'} waiting to crop...
     </p>
   {/if}
@@ -243,11 +243,11 @@
   {#if listing.images.length > 0}
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
       {#each listing.images as image, index}
-        <div class="relative aspect-square rounded-xl overflow-hidden border border-[#aca89f]/30 group">
+        <div class="relative aspect-square rounded-xl overflow-hidden border border-white/15 group">
           <img src={image} alt="Upload {index + 1}" class="w-full h-full object-cover" />
 
           {#if index === 0}
-            <span class="absolute top-2 left-2 bg-[#4b9aaa] text-white text-xs px-2 py-1 rounded">
+            <span class="absolute top-2 left-2 bg-[#E79750] text-white text-xs px-2 py-1 rounded">
               Main
             </span>
           {/if}
@@ -265,7 +265,7 @@
         </div>
       {/each}
     </div>
-    <p class="text-sm text-gray-500">{listing.images.length}/5 photos added</p>
+    <p class="text-sm text-white/60">{listing.images.length}/5 photos added</p>
   {/if}
 
   {#if validationError}
@@ -276,7 +276,7 @@
   <div class="flex justify-between pt-4">
     <button
       onclick={onPrev}
-      class="text-gray-600 px-6 py-3 rounded-xl hover:bg-gray-100 transition-colors font-medium flex items-center gap-2"
+      class="text-white/70 px-6 py-3 rounded-xl hover:bg-white/[0.06] transition-colors font-medium flex items-center gap-2"
     >
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -286,7 +286,7 @@
     <button
       onclick={handleNext}
       disabled={!canProceed || uploading}
-      class="bg-[#4b9aaa] text-white px-8 py-3 rounded-xl hover:bg-[#3a7a8a] transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      class="bg-[#E79750] text-white px-8 py-3 rounded-xl hover:bg-[#f0a85a] transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {isExchange ? 'Next: Review' : 'Next: Set Price'}
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

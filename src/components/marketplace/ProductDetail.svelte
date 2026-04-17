@@ -132,7 +132,7 @@
   <!-- Back Link -->
   <a
     href="/marketplace"
-    class="inline-flex items-center gap-2 text-gray-600 hover:text-[#4b9aaa] transition-colors mb-6"
+    class="inline-flex items-center gap-2 text-white/70 hover:text-[#E79750] transition-colors mb-6"
   >
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -142,20 +142,20 @@
 
   {#if loading}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div class="aspect-square bg-gray-200 rounded-2xl animate-pulse"></div>
+      <div class="aspect-square bg-white/10 rounded-2xl animate-pulse"></div>
       <div class="space-y-4">
-        <div class="h-8 bg-gray-200 rounded animate-pulse w-3/4"></div>
-        <div class="h-6 bg-gray-200 rounded animate-pulse w-1/4"></div>
-        <div class="h-24 bg-gray-200 rounded animate-pulse"></div>
+        <div class="h-8 bg-white/10 rounded animate-pulse w-3/4"></div>
+        <div class="h-6 bg-white/10 rounded animate-pulse w-1/4"></div>
+        <div class="h-24 bg-white/10 rounded animate-pulse"></div>
       </div>
     </div>
   {:else if error}
-    <div class="text-center py-12 bg-white rounded-2xl border border-[#aca89f]/30">
+    <div class="text-center py-12 bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
       <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <h3 class="text-xl font-semibold text-gray-700 mb-2">{error}</h3>
-      <a href="/marketplace" class="text-[#4b9aaa] hover:underline font-medium">
+      <h3 class="text-xl font-semibold text-white/80 mb-2">{error}</h3>
+      <a href="/marketplace" class="text-[#E79750] hover:underline font-medium">
         Browse other listings
       </a>
     </div>
@@ -190,7 +190,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <!-- Image Gallery -->
       <div class="space-y-4">
-        <div class="relative aspect-square bg-white rounded-2xl overflow-hidden border border-[#aca89f]/30">
+        <div class="relative aspect-square bg-white/[0.04] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
           {#if listing.images && listing.images.length > 0}
             <img
               src={listing.images[selectedImage]}
@@ -218,7 +218,7 @@
             {#each listing.images as image, index}
               <button
                 onclick={() => selectedImage = index}
-                class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all {selectedImage === index ? 'border-[#4b9aaa]' : 'border-transparent'}"
+                class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all {selectedImage === index ? 'border-[#E79750]' : 'border-transparent'}"
               >
                 <img src={image} alt="Thumbnail {index + 1}" class="w-full h-full object-cover" />
               </button>
@@ -231,7 +231,7 @@
       <div class="space-y-6">
         <div>
           <h1 class="text-2xl md:text-3xl font-bold text-[#814256] mb-2">{listing.title}</h1>
-          <p class="text-gray-500">by {listing.sellerName || 'Unknown Seller'}</p>
+          <p class="text-white/60">by {listing.sellerName || 'Unknown Seller'}</p>
         </div>
 
         <!-- Badges -->
@@ -239,7 +239,7 @@
           <span class="px-3 py-1 rounded-full border text-sm {CONDITION_COLORS[listing.condition]}">
             {conditionLabel}
           </span>
-          <span class="px-3 py-1 rounded-full bg-[#aca89f]/20 text-gray-600 text-sm capitalize">
+          <span class="px-3 py-1 rounded-full bg-[#aca89f]/20 text-white/70 text-sm capitalize">
             {listing.category.replace(/-/g, ' ')}
           </span>
         </div>
@@ -256,13 +256,13 @@
             {#if listing.exchangeFor}
               <p class="text-sm text-purple-600 mt-2 font-medium">Looking for: {listing.exchangeFor}</p>
             {:else}
-              <p class="text-sm text-gray-600 mt-1">Contact the owner to arrange a swap</p>
+              <p class="text-sm text-white/70 mt-1">Contact the owner to arrange a swap</p>
             {/if}
           {:else}
             <div class="flex items-baseline gap-3">
               <span class="text-3xl font-bold text-[#814256]">${listing.price.toFixed(2)}</span>
               {#if listing.originalPrice && listing.originalPrice > listing.price}
-                <span class="text-lg text-gray-400 line-through">${listing.originalPrice.toFixed(2)}</span>
+                <span class="text-lg text-white/50 line-through">${listing.originalPrice.toFixed(2)}</span>
               {/if}
             </div>
             {#if savings}
@@ -273,19 +273,19 @@
 
         <!-- Description -->
         <div>
-          <h3 class="font-semibold text-gray-800 mb-2">Description</h3>
+          <h3 class="font-semibold text-[#e8e6e1] mb-2">Description</h3>
           <RichTextDisplay content={listing.description} />
         </div>
 
         <!-- Listed Date -->
-        <p class="text-sm text-gray-500">Listed on {formattedDate}</p>
+        <p class="text-sm text-white/60">Listed on {formattedDate}</p>
 
         <!-- Action Buttons -->
         <div class="space-y-3">
           {#if listing.sellerEmail}
             <a
               href="mailto:{listing.sellerEmail}?subject=Interested in: {listing.title}"
-              class="block w-full text-center bg-[#4b9aaa] text-white px-6 py-4 rounded-xl hover:bg-[#3a7a8a] transition-colors font-semibold text-lg"
+              class="block w-full text-center bg-[#E79750] text-white px-6 py-4 rounded-xl hover:bg-[#f0a85a] transition-colors font-semibold text-lg"
             >
               Contact Seller
             </a>
@@ -295,18 +295,18 @@
             <button
               onclick={toggleSave}
               disabled={!session?.user || savingInProgress}
-              class="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-[#aca89f]/30 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-white/15 hover:bg-white/[0.04] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg class="w-5 h-5 {isSaved ? 'text-red-500 fill-red-500' : 'text-gray-600'}" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 {isSaved ? 'text-red-500 fill-red-500' : 'text-white/70'}" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
               {isSaved ? 'Saved' : 'Save'}
             </button>
             <button
               onclick={() => navigator.share?.({ title: listing?.title, url: window.location.href })}
-              class="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-[#aca89f]/30 hover:bg-gray-50 transition-colors"
+              class="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-white/15 hover:bg-white/[0.04] transition-colors"
             >
-              <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
               Share
@@ -320,8 +320,8 @@
               disabled={alreadyReported}
               class="w-full flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm transition-colors
                 {alreadyReported
-                  ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
-                  : 'text-gray-500 hover:text-red-600 hover:bg-red-50 border border-[#aca89f]/30'}"
+                  ? 'text-white/50 bg-white/[0.04] cursor-not-allowed'
+                  : 'text-white/60 hover:text-red-600 hover:bg-red-50 border border-white/15'}"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm0 0h9" />
@@ -332,8 +332,8 @@
         </div>
 
         {#if !session?.user}
-          <p class="text-sm text-gray-500 text-center">
-            <a href="/login?redirect=/marketplace/{listingId}" class="text-[#4b9aaa] hover:underline">Sign in</a> to save listings and contact sellers
+          <p class="text-sm text-white/60 text-center">
+            <a href="/login?redirect=/marketplace/{listingId}" class="text-[#E79750] hover:underline">Sign in</a> to save listings and contact sellers
           </p>
         {/if}
       </div>

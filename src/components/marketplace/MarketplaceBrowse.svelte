@@ -125,7 +125,7 @@
 
 <div class="space-y-6">
   <!-- Hero Section -->
-  <div class="bg-gradient-to-r from-[#4b9aaa] to-[#3a7a8a] rounded-2xl p-8 text-white text-center">
+  <div class="bg-gradient-to-r from-[#E79750]/30 to-[#f0a85a]/20 backdrop-blur-xl border border-white/15 border-t-white/30 border-l-white/25 rounded-2xl p-8 text-white text-center shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
     <SearchBar onSearch={handleSearch} placeholder="Search by item name or description..." />
   </div>
 
@@ -148,7 +148,7 @@
 
   <!-- Results Count -->
   {#if !loading}
-    <p class="text-sm text-gray-600">
+    <p class="text-sm text-white/70">
       {total} {total === 1 ? 'item' : 'items'} found
     </p>
   {/if}
@@ -157,44 +157,44 @@
   {#if loading}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {#each Array(8) as _}
-        <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-[#aca89f]/30">
-          <div class="aspect-square bg-gray-200 animate-pulse"></div>
+        <div class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+          <div class="aspect-square bg-white/10 animate-pulse"></div>
           <div class="p-4 space-y-3">
-            <div class="h-4 bg-gray-200 rounded animate-pulse"></div>
-            <div class="h-4 bg-gray-200 rounded w-2/3 animate-pulse"></div>
+            <div class="h-4 bg-white/10 rounded animate-pulse"></div>
+            <div class="h-4 bg-white/10 rounded w-2/3 animate-pulse"></div>
             <div class="flex gap-2">
-              <div class="h-6 w-16 bg-gray-200 rounded-full animate-pulse"></div>
-              <div class="h-6 w-16 bg-gray-200 rounded-full animate-pulse"></div>
+              <div class="h-6 w-16 bg-white/10 rounded-full animate-pulse"></div>
+              <div class="h-6 w-16 bg-white/10 rounded-full animate-pulse"></div>
             </div>
           </div>
         </div>
       {/each}
     </div>
   {:else if error}
-    <div class="text-center py-12 bg-white rounded-2xl border border-[#aca89f]/30">
+    <div class="text-center py-12 bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
       <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
       </svg>
-      <h3 class="text-xl font-semibold text-gray-700 mb-2">Oops! Something went wrong</h3>
-      <p class="text-gray-500 mb-4">{error}</p>
+      <h3 class="text-xl font-semibold text-white/80 mb-2">Oops! Something went wrong</h3>
+      <p class="text-white/60 mb-4">{error}</p>
       <button
         onclick={fetchListings}
-        class="text-[#4b9aaa] hover:underline font-medium"
+        class="text-[#E79750] hover:underline font-medium"
       >
         Try again
       </button>
     </div>
   {:else if listings.length === 0}
-    <div class="text-center py-12 bg-white rounded-2xl border border-[#aca89f]/30">
+    <div class="text-center py-12 bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
       <svg class="w-16 h-16 text-[#aca89f] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
       </svg>
-      <h3 class="text-xl font-semibold text-gray-700 mb-2">No listings found</h3>
-      <p class="text-gray-500 mb-4">Try adjusting your filters or check back later</p>
+      <h3 class="text-xl font-semibold text-white/80 mb-2">No listings found</h3>
+      <p class="text-white/60 mb-4">Try adjusting your filters or check back later</p>
       {#if filters.search || filters.category !== 'all' || filters.condition !== 'all'}
         <button
           onclick={() => handleFilterChange({ category: 'all', condition: 'all', search: '', priceMin: undefined, priceMax: undefined })}
-          class="text-[#4b9aaa] hover:underline font-medium"
+          class="text-[#E79750] hover:underline font-medium"
         >
           Clear all filters
         </button>
@@ -214,12 +214,12 @@
   {#if totalPages > 1 || total > 12}
     <div class="flex flex-wrap justify-center items-center gap-4 mt-6">
       <div class="flex items-center gap-2">
-        <label class="text-sm text-gray-500" for="mp-page-size">Show</label>
+        <label class="text-sm text-white/60" for="mp-page-size">Show</label>
         <select
           id="mp-page-size"
           bind:value={pageSize}
           onchange={() => handlePageSizeChange(pageSize)}
-          class="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#4b9aaa]"
+          class="px-2 py-1 border border-white/15 rounded-lg text-sm focus:ring-2 focus:ring-[#E79750]"
         >
           <option value={12}>12</option>
           <option value={24}>24</option>
@@ -231,32 +231,32 @@
         <button
           onclick={() => goToPage(0)}
           disabled={currentPage === 0 || loading}
-          class="hidden sm:inline-flex px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+          class="hidden sm:inline-flex px-3 py-1.5 bg-white/[0.06] text-white/80 rounded-lg hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
         >
           First
         </button>
         <button
           onclick={() => goToPage(currentPage - 1)}
           disabled={currentPage === 0 || loading}
-          class="px-2.5 sm:px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+          class="px-2.5 sm:px-3 py-1.5 bg-white/[0.06] text-white/80 rounded-lg hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
         >
           &larr;<span class="hidden sm:inline"> Prev</span>
         </button>
-        <span class="text-sm text-gray-500 px-1">
+        <span class="text-sm text-white/60 px-1">
           <span class="sm:hidden">{currentPage + 1}/{totalPages}</span>
           <span class="hidden sm:inline">Page {currentPage + 1} of {totalPages} &middot; {total} items</span>
         </span>
         <button
           onclick={() => goToPage(currentPage + 1)}
           disabled={currentPage >= totalPages - 1 || loading}
-          class="px-2.5 sm:px-3 py-1.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a8999] disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+          class="px-2.5 sm:px-3 py-1.5 bg-[#E79750] text-white rounded-lg hover:bg-[#3a8999] disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
         >
           <span class="hidden sm:inline">Next </span>&rarr;
         </button>
         <button
           onclick={() => goToPage(totalPages - 1)}
           disabled={currentPage >= totalPages - 1 || loading}
-          class="hidden sm:inline-flex px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
+          class="hidden sm:inline-flex px-3 py-1.5 bg-white/[0.06] text-white/80 rounded-lg hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium"
         >
           Last
         </button>
@@ -268,10 +268,10 @@
   {#if !session?.user && !loading && listings.length > 0}
     <div class="bg-[#eccc6e]/30 rounded-2xl p-6 text-center">
       <h3 class="text-lg font-semibold text-[#814256] mb-2">Want to sell something?</h3>
-      <p class="text-gray-600 mb-4">Join Mahalle to list your items and connect with your neighbours</p>
+      <p class="text-white/70 mb-4">Join Mahalle to list your items and connect with your neighbours</p>
       <a
         href="/login?redirect=/marketplace/sell"
-        class="inline-flex items-center gap-2 bg-[#4b9aaa] text-white px-6 py-3 rounded-xl hover:bg-[#3a7a8a] transition-colors font-medium"
+        class="inline-flex items-center gap-2 bg-[#E79750] text-white px-6 py-3 rounded-xl hover:bg-[#f0a85a] transition-colors font-medium"
       >
         Sign in to sell
       </a>

@@ -1,3 +1,6 @@
+/* Google Fonts — Inter (body) + Space Grotesk (headings) used by redesigned pages */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
 /* Tailwind base styles */
 @tailwind base;
 @tailwind components;
@@ -30,6 +33,32 @@
 
   /* Carved text default accent (overridden per page) */
   --carved-accent: #4b9aaa;
+}
+
+/* Dark glass page background — fixed position, covers BaseLayout body bg.
+   Add <div class="dark-glass-bg"></div> + <div class="dark-glass-gradient"></div>
+   as siblings at the top of a page, then wrap content with `relative z-10`. */
+.dark-glass-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: #0e1033;
+  pointer-events: none;
+}
+.dark-glass-gradient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(circle, #542CC8, rgba(40, 47, 118, 0.20));
+  pointer-events: none;
+}
+
+/* Google Fonts + utility font classes used across redesigned pages */
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+.font-space-grotesk {
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 /* Carved/beveled glass text effect — Apple-style.

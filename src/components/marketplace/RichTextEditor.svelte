@@ -117,12 +117,12 @@
 
 <div class="rich-text-editor">
   <!-- Toolbar -->
-  <div class="flex items-center gap-1 p-2 border border-[#aca89f]/30 bg-gray-50 rounded-t-xl {!mounted ? 'opacity-50 pointer-events-none' : ''}">
+  <div class="flex items-center gap-1 p-2 border border-white/15 bg-white/[0.04] rounded-t-xl {!mounted ? 'opacity-50 pointer-events-none' : ''}">
     <!-- Bold -->
     <button
       type="button"
       onclick={toggleBold}
-      class="p-2.5 sm:p-2 rounded hover:bg-gray-200 transition-colors {activeFormats.bold ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
+      class="p-2.5 sm:p-2 rounded hover:bg-white/10 transition-colors {activeFormats.bold ? 'bg-[#E79750]/20 text-[#E79750]' : 'text-white/70'}"
       title="Bold (Ctrl+B)"
       aria-label="Bold"
       aria-pressed={!!activeFormats.bold}
@@ -137,7 +137,7 @@
     <button
       type="button"
       onclick={toggleItalic}
-      class="p-2.5 sm:p-2 rounded hover:bg-gray-200 transition-colors {activeFormats.italic ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
+      class="p-2.5 sm:p-2 rounded hover:bg-white/10 transition-colors {activeFormats.italic ? 'bg-[#E79750]/20 text-[#E79750]' : 'text-white/70'}"
       title="Italic (Ctrl+I)"
       aria-label="Italic"
       aria-pressed={!!activeFormats.italic}
@@ -155,7 +155,7 @@
     <button
       type="button"
       onclick={() => toggleHeading(1)}
-      class="p-2.5 sm:p-2 rounded hover:bg-gray-200 transition-colors text-sm font-bold {activeFormats.header === 1 ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
+      class="p-2.5 sm:p-2 rounded hover:bg-white/10 transition-colors text-sm font-bold {activeFormats.header === 1 ? 'bg-[#E79750]/20 text-[#E79750]' : 'text-white/70'}"
       title="Heading 1"
       aria-label="Heading 1"
       aria-pressed={activeFormats.header === 1}
@@ -167,7 +167,7 @@
     <button
       type="button"
       onclick={() => toggleHeading(2)}
-      class="p-2.5 sm:p-2 rounded hover:bg-gray-200 transition-colors text-sm font-bold {activeFormats.header === 2 ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
+      class="p-2.5 sm:p-2 rounded hover:bg-white/10 transition-colors text-sm font-bold {activeFormats.header === 2 ? 'bg-[#E79750]/20 text-[#E79750]' : 'text-white/70'}"
       title="Heading 2"
       aria-label="Heading 2"
       aria-pressed={activeFormats.header === 2}
@@ -181,7 +181,7 @@
     <button
       type="button"
       onclick={toggleBulletList}
-      class="p-2.5 sm:p-2 rounded hover:bg-gray-200 transition-colors {activeFormats.list === 'bullet' ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
+      class="p-2.5 sm:p-2 rounded hover:bg-white/10 transition-colors {activeFormats.list === 'bullet' ? 'bg-[#E79750]/20 text-[#E79750]' : 'text-white/70'}"
       title="Bullet List"
       aria-label="Bullet list"
       aria-pressed={activeFormats.list === 'bullet'}
@@ -200,7 +200,7 @@
     <button
       type="button"
       onclick={toggleNumberedList}
-      class="p-2.5 sm:p-2 rounded hover:bg-gray-200 transition-colors {activeFormats.list === 'ordered' ? 'bg-[#4b9aaa]/20 text-[#4b9aaa]' : 'text-gray-600'}"
+      class="p-2.5 sm:p-2 rounded hover:bg-white/10 transition-colors {activeFormats.list === 'ordered' ? 'bg-[#E79750]/20 text-[#E79750]' : 'text-white/70'}"
       title="Numbered List"
       aria-label="Numbered list"
       aria-pressed={activeFormats.list === 'ordered'}
@@ -220,19 +220,19 @@
   <div
     bind:this={editorRoot}
     data-placeholder={placeholder}
-    class="min-h-[200px] max-h-[400px] overflow-y-auto px-4 py-3 border border-t-0 border-[#aca89f]/30 rounded-b-xl focus-within:ring-2 focus-within:ring-[#4b9aaa] focus-within:border-transparent prose prose-sm max-w-none editor-content bg-white"
+    class="min-h-[200px] max-h-[400px] overflow-y-auto px-4 py-3 border border-t-0 border-white/15 rounded-b-xl focus-within:ring-2 focus-within:ring-[#E79750] focus-within:border-transparent prose prose-sm max-w-none editor-content bg-white"
   >
     {#if !mounted}
       <div class="animate-pulse">
-        <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        <div class="h-4 bg-white/10 rounded w-3/4 mb-2"></div>
+        <div class="h-4 bg-white/10 rounded w-1/2"></div>
       </div>
     {/if}
   </div>
 
   <!-- Character Count -->
   <div class="flex justify-between items-center mt-1 text-xs">
-    <span class="text-gray-400">
+    <span class="text-white/50">
       {charCount}/{maxLength} characters (min {minLength})
     </span>
     {#if charCount > 0 && charCount < minLength}
