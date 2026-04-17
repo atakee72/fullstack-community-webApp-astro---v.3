@@ -17,7 +17,7 @@
   }
 </script>
 
-<form onsubmit={handleSubmit} class="relative w-full max-w-2xl mx-auto">
+<form onsubmit={handleSubmit} class="relative w-full">
   <div class="relative">
     <svg
       class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50"
