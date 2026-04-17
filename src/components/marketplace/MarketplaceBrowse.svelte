@@ -124,10 +124,8 @@
 </script>
 
 <div class="space-y-6">
-  <!-- Hero Section -->
-  <div class="bg-gradient-to-r from-[#E79750]/30 to-[#f0a85a]/20 backdrop-blur-xl border border-white/15 border-t-white/30 border-l-white/25 rounded-2xl p-8 text-white text-center shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
-    <SearchBar onSearch={handleSearch} placeholder="Search by item name or description..." />
-  </div>
+  <!-- Search -->
+  <SearchBar onSearch={handleSearch} placeholder="Search by item name or description..." />
 
   <!-- Action Bar -->
   <div class="flex flex-wrap items-center justify-between gap-4">

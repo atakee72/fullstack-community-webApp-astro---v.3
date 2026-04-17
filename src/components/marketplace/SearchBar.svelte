@@ -32,7 +32,7 @@
       value={query}
       oninput={handleInput}
       {placeholder}
-      class="w-full pl-12 pr-4 py-3 rounded-full border border-white/20 border-t-white/30 bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#E79750]/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
+      class="w-full pl-12 pr-12 py-3 bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] focus:ring-2 focus:ring-[#E79750]/50 focus:border-[#E79750]/50 text-[#e8e6e1] placeholder-white/40"
     />
     {#if query}
       <button
