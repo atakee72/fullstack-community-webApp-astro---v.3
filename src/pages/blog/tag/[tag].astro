@@ -32,7 +32,7 @@ const allPosts = await getCollection('blog', ({ data }) => !data.draft);
 ---
 
 <BlogBaseLayout title={`Posts tagged "${tag}"`} description={`All blog posts tagged with ${tag}`}>
-  <main class="min-h-[calc(100vh-60px)] py-8">
+  <main class="min-h-[calc(100vh-60px)] py-8 carved-title" style="--carved-accent: #4b9aaa">
     <div class="max-w-7xl mx-auto px-4 md:px-8">
       <!-- Breadcrumb -->
       <nav class="mb-6">
