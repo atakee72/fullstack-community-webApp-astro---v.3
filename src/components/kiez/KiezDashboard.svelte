@@ -33,10 +33,10 @@
 
   // Carousel CSS — chart cards (scrollable, tighter padding for more chart space)
   const chartScrollCls = 'flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-4 px-4 md:-mx-8 md:px-8 lg:-mx-12 lg:px-12 scroll-pl-4 md:scroll-pl-8 lg:scroll-pl-12';
-  const chartCardCls = 'snap-start shrink-0 w-[85vw] sm:w-[55%] lg:w-[calc(33.333%-1rem)] min-h-[22rem] bg-white rounded-xl p-4 sm:p-5 shadow-sm';
+  const chartCardCls = 'snap-start shrink-0 w-[85vw] sm:w-[55%] lg:w-[calc(33.333%-1rem)] min-h-[22rem] bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl p-4 sm:p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]';
 
   // Arrow button classes (all screens, scaled)
-  const arrowCls = 'flex absolute top-1/2 -translate-y-1/2 z-10 w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 items-center justify-center rounded-full bg-white/90 shadow-md hover:bg-white hover:shadow-lg active:scale-95 transition-all text-gray-500 hover:text-gray-800 cursor-pointer';
+  const arrowCls = 'flex absolute top-1/2 -translate-y-1/2 z-10 w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 items-center justify-center rounded-full bg-white/10 backdrop-blur-xl border border-white/15 hover:bg-white/20 active:scale-95 transition-all text-white/60 hover:text-white cursor-pointer';
 
   /** Shorten PLR names for compact display */
   function shortName(name) {
@@ -272,26 +272,26 @@
   {/snippet}
 
   {#if data?.lastUpdated}
-    <p use:reveal class="text-sm text-gray-400 -mt-4 mb-4 transition-all duration-700 ease-out">Stand: {data.lastUpdated}</p>
+    <p use:reveal class="text-sm text-white/40 -mt-4 mb-4 transition-all duration-700 ease-out">Stand: {data.lastUpdated}</p>
   {/if}
 
   {#if loading}
     <!-- Loading skeleton -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       {#each Array(6) as _}
-        <div class="bg-white rounded-xl p-5 shadow-sm animate-pulse">
-          <div class="h-4 bg-gray-200 rounded w-2/3 mb-3"></div>
-          <div class="h-8 bg-gray-200 rounded w-1/2"></div>
+        <div class="bg-white/[0.04] backdrop-blur-xl border border-white/[0.1] rounded-xl p-5 animate-pulse">
+          <div class="h-4 bg-white/10 rounded w-2/3 mb-3"></div>
+          <div class="h-8 bg-white/10 rounded w-1/2"></div>
         </div>
       {/each}
     </div>
   {:else if error}
     <!-- Error state -->
     <div class="text-center py-16">
-      <p class="text-gray-600 mb-4">Daten konnten nicht geladen werden: {error}</p>
+      <p class="text-white/70 mb-4">Daten konnten nicht geladen werden: {error}</p>
       <button
         onclick={fetchData}
-        class="px-6 py-2 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors"
+        class="px-6 py-2 bg-[#6aab8e] text-white rounded-lg hover:bg-[#7abb9e] transition-colors"
       >
         Erneut versuchen
       </button>
@@ -299,15 +299,15 @@
   {:else if !data?.demographics && !data?.social}
     <!-- Empty state -->
     <div class="text-center py-16">
-      <p class="text-gray-500 text-lg">Noch keine Daten verfügbar</p>
+      <p class="text-white/60 text-lg">Noch keine Daten verfügbar</p>
     </div>
   {:else}
     <!-- Air Quality (live BLUME data) -->
     {#if airData}
-      <div use:reveal class="bg-white rounded-xl p-6 shadow-sm transition-all duration-700 ease-out">
+      <div use:reveal class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all duration-700 ease-out">
         <div class="flex items-center gap-2 mb-4">
-          <h2 class="text-lg font-bold text-gray-800">Luftqualität</h2>
-          <span class="inline-flex items-center gap-1 text-xs text-gray-400">
+          <h2 class="text-lg font-bold text-[#e8e6e1] font-['Space_Grotesk',sans-serif]">Luftqualität</h2>
+          <span class="inline-flex items-center gap-1 text-xs text-white/40">
             <span class="w-2 h-2 rounded-full bg-green-500 motion-safe:animate-pulse"></span>
             Live · Nansenstraße
           </span>
@@ -317,7 +317,7 @@
           <!-- Overall LQI -->
           <div class="w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)] rounded-lg p-4 text-center"
                style="background: {gradeColor(airData.overallGrade)}15; border: 2px solid {gradeColor(airData.overallGrade)}">
-            <p class="text-xs text-gray-500 font-medium">Gesamt</p>
+            <p class="text-xs text-white/60 font-medium">Gesamt</p>
             <p class="text-3xl font-bold" style="color: {gradeColor(airData.overallGrade)}">
               {airData.overallGrade}
             </p>
@@ -328,18 +328,18 @@
 
           <!-- Per-pollutant cards -->
           {#each airData.pollutants as pol}
-            <div class="w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)] rounded-lg p-3 bg-gray-50 text-center">
-              <p class="text-xs text-gray-400 font-medium">{POLLUTANT_DESCRIPTIONS[pol.component] ?? pol.name}</p>
+            <div class="w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)] rounded-lg p-3 bg-white/[0.04] border border-white/10 text-center">
+              <p class="text-xs text-white/40 font-medium">{POLLUTANT_DESCRIPTIONS[pol.component] ?? pol.name}</p>
               <p class="text-xl font-bold" style="color: {pol.grade != null ? gradeColor(pol.grade) : '#d1d5db'}">{pol.grade ?? '–'}</p>
               <p class="text-xs" style="color: {pol.grade != null ? gradeColor(pol.grade) : '#9ca3af'}">{pol.gradeLabel}</p>
-              <p class="text-[10px] text-gray-300 mt-0.5">{pol.name}</p>
+              <p class="text-[10px] text-white/30 mt-0.5">{pol.name}</p>
             </div>
           {/each}
         </div>
 
         <!-- Grade scale legend -->
-        <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400">
-          <span class="font-medium text-gray-500">Skala:</span>
+        <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/40">
+          <span class="font-medium text-white/60">Skala:</span>
           {#each [{ g: 1, l: 'sehr gut' }, { g: 2, l: 'gut' }, { g: 3, l: 'mäßig' }, { g: 4, l: 'schlecht' }, { g: 5, l: 'sehr schlecht' }] as item}
             <span class="inline-flex items-center gap-1">
               <span class="w-2.5 h-2.5 rounded-sm" style="background: {gradeColor(item.g)}"></span>
@@ -348,10 +348,10 @@
           {/each}
         </div>
 
-        <p class="mt-2 text-xs text-gray-400">
+        <p class="mt-2 text-xs text-white/40">
           Messung: {new Date(airData.datetime).toLocaleString('de-DE')}
           · <a href="https://luftdaten.berlin.de/station/mc042" target="_blank" rel="noopener"
-               class="text-[#4b9aaa] hover:underline">Quelle: BLUME-Messnetz</a>
+               class="text-[#6aab8e] hover:underline">Quelle: BLUME-Messnetz</a>
         </p>
       </div>
     {/if}
@@ -363,7 +363,7 @@
       {#if data.demographics}
         {@const maxCount = Math.max(...data.demographics.ageDistribution.map(a => a.count))}
         <div use:reveal class="transition-all duration-700 ease-out">
-          <h2 class="text-lg font-bold text-gray-800 mb-3">Altersverteilung</h2>
+          <h2 class="text-lg font-bold text-[#e8e6e1] font-['Space_Grotesk',sans-serif] mb-3">Altersverteilung</h2>
           <div class="relative">
             {#if canScroll.age.left}
               <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(ageScroll, -1)} aria-label="Zurück">
@@ -373,41 +373,41 @@
             <div class={chartScrollCls} bind:this={ageScroll} onscroll={handleScroll('age')}>
               <div class={chartCardCls} data-card>
                 <div class="flex items-start justify-between mb-3">
-                  <h3 class="text-sm font-semibold text-gray-500">Gesamt · Schillerkiez</h3>
+                  <h3 class="text-sm font-semibold text-white/60">Gesamt · Schillerkiez</h3>
                   {@render plrMiniMap('all')}
                 </div>
                 <svg viewBox="0 0 400 240" class="w-full" role="img" aria-label="Altersverteilung Gesamt">
                   {#each data.demographics.ageDistribution as age, i}
                     {@const barWidth = maxCount > 0 ? (age.count / maxCount) * 260 : 0}
                     {@const y = i * 32 + 10}
-                    <text x="55" y={y + 16} text-anchor="end" fill="#4a5568" font-size="12" font-weight="500">{age.group}</text>
+                    <text x="55" y={y + 16} text-anchor="end" fill="rgba(232,230,225,0.9)" font-size="12" font-weight="500">{age.group}</text>
                     <rect x="65" y={y + 2} width={barWidth} height="20" rx="4" fill={AGE_COLORS[i]} opacity="0.85" />
-                    <text x={65 + barWidth + 6} y={y + 16} fill="#4a5568" font-size="11">
+                    <text x={65 + barWidth + 6} y={y + 16} fill="rgba(232,230,225,0.9)" font-size="11">
                       {fmt(age.count)} ({age.percentage}%)
                     </text>
                   {/each}
                 </svg>
-                <p class="text-xs text-gray-400 mt-1 text-right">Einwohner: {fmt(data.demographics.population.total)}</p>
+                <p class="text-xs text-white/40 mt-1 text-right">Einwohner: {fmt(data.demographics.population.total)}</p>
               </div>
               {#each data.plrAreas as area}
                 {@const plrMax = Math.max(...area.ageDistribution.map(a => a.count))}
                 <div class={chartCardCls} data-card>
                   <div class="flex items-start justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-gray-500">{shortName(area.name)}</h3>
+                    <h3 class="text-sm font-semibold text-white/60">{shortName(area.name)}</h3>
                     {@render plrMiniMap(area.code)}
                   </div>
                   <svg viewBox="0 0 400 240" class="w-full" role="img" aria-label="Altersverteilung {area.name}">
                     {#each area.ageDistribution as age, i}
                       {@const barWidth = plrMax > 0 ? (age.count / plrMax) * 260 : 0}
                       {@const y = i * 32 + 10}
-                      <text x="55" y={y + 16} text-anchor="end" fill="#4a5568" font-size="12" font-weight="500">{age.group}</text>
+                      <text x="55" y={y + 16} text-anchor="end" fill="rgba(232,230,225,0.9)" font-size="12" font-weight="500">{age.group}</text>
                       <rect x="65" y={y + 2} width={barWidth} height="20" rx="4" fill={AGE_COLORS[i]} opacity="0.85" />
-                      <text x={65 + barWidth + 6} y={y + 16} fill="#4a5568" font-size="11">
+                      <text x={65 + barWidth + 6} y={y + 16} fill="rgba(232,230,225,0.9)" font-size="11">
                         {fmt(age.count)} ({age.percentage}%)
                       </text>
                     {/each}
                   </svg>
-                  <p class="text-xs text-gray-400 mt-1 text-right">Einwohner: {fmt(area.population.total)}</p>
+                  <p class="text-xs text-white/40 mt-1 text-right">Einwohner: {fmt(area.population.total)}</p>
                 </div>
               {/each}
             </div>
@@ -429,7 +429,7 @@
           { label: 'Ohne MH', value: mig.withoutMigBg, color: MIGRATION_COLORS[2] },
         ], mig.totalPopulation)}
         <div use:reveal class="transition-all duration-700 ease-out">
-          <h2 class="text-lg font-bold text-gray-800 mb-3">Vielfalt</h2>
+          <h2 class="text-lg font-bold text-[#e8e6e1] font-['Space_Grotesk',sans-serif] mb-3">Vielfalt</h2>
           <div class="relative">
             {#if canScroll.mig.left}
               <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(migScroll, -1)} aria-label="Zurück">
@@ -439,7 +439,7 @@
             <div class={chartScrollCls} bind:this={migScroll} onscroll={handleScroll('mig')}>
               <div class={chartCardCls} data-card>
                 <div class="flex items-start justify-between mb-3">
-                  <h3 class="text-sm font-semibold text-gray-500">Gesamt · Schillerkiez</h3>
+                  <h3 class="text-sm font-semibold text-white/60">Gesamt · Schillerkiez</h3>
                   {@render plrMiniMap('all')}
                 </div>
                 <div class="flex flex-col items-center gap-3">
@@ -448,14 +448,14 @@
                       <circle cx="60" cy="60" r="40" fill="none" stroke={seg.color} stroke-width="18"
                         stroke-dasharray={seg.dashArray} stroke-dashoffset={-seg.offset} transform="rotate(-90 60 60)" />
                     {/each}
-                    <text x="60" y="58" text-anchor="middle" fill="#4a5568" font-size="10" font-weight="600">{fmt(mig.totalPopulation)}</text>
-                    <text x="60" y="70" text-anchor="middle" fill="#9ca3af" font-size="7">Gesamt</text>
+                    <text x="60" y="58" text-anchor="middle" fill="rgba(232,230,225,0.9)" font-size="10" font-weight="600">{fmt(mig.totalPopulation)}</text>
+                    <text x="60" y="70" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="7">Gesamt</text>
                   </svg>
                   <div class="space-y-1 text-sm">
                     {#each aggSegments as seg}
                       <div class="flex items-center gap-2">
                         <span class="w-3 h-3 rounded-full shrink-0" style="background: {seg.color}"></span>
-                        <span class="text-gray-700">{seg.label}: <strong>{fmt(seg.value)}</strong> ({seg.percentage}%)</span>
+                        <span class="text-white/80">{seg.label}: <strong>{fmt(seg.value)}</strong> ({seg.percentage}%)</span>
                       </div>
                     {/each}
                   </div>
@@ -469,7 +469,7 @@
                 ], area.migration.totalPopulation)}
                 <div class={chartCardCls} data-card>
                   <div class="flex items-start justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-gray-500">{shortName(area.name)}</h3>
+                    <h3 class="text-sm font-semibold text-white/60">{shortName(area.name)}</h3>
                     {@render plrMiniMap(area.code)}
                   </div>
                   <div class="flex flex-col items-center gap-3">
@@ -478,14 +478,14 @@
                         <circle cx="60" cy="60" r="40" fill="none" stroke={seg.color} stroke-width="18"
                           stroke-dasharray={seg.dashArray} stroke-dashoffset={-seg.offset} transform="rotate(-90 60 60)" />
                       {/each}
-                      <text x="60" y="58" text-anchor="middle" fill="#4a5568" font-size="10" font-weight="600">{fmt(area.migration.totalPopulation)}</text>
-                      <text x="60" y="70" text-anchor="middle" fill="#9ca3af" font-size="7">{shortName(area.name)}</text>
+                      <text x="60" y="58" text-anchor="middle" fill="rgba(232,230,225,0.9)" font-size="10" font-weight="600">{fmt(area.migration.totalPopulation)}</text>
+                      <text x="60" y="70" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="7">{shortName(area.name)}</text>
                     </svg>
                     <div class="space-y-1 text-sm">
                       {#each plrSegs as seg}
                         <div class="flex items-center gap-2">
                           <span class="w-3 h-3 rounded-full shrink-0" style="background: {seg.color}"></span>
-                          <span class="text-gray-700">{seg.label}: <strong>{fmt(seg.value)}</strong> ({seg.percentage}%)</span>
+                          <span class="text-white/80">{seg.label}: <strong>{fmt(seg.value)}</strong> ({seg.percentage}%)</span>
                         </div>
                       {/each}
                     </div>
@@ -510,7 +510,7 @@
           { label: 'Weiblich', value: pop.female, color: COLORS.wine },
         ], pop.total)}
         <div use:reveal class="transition-all duration-700 ease-out">
-          <h2 class="text-lg font-bold text-gray-800 mb-3">Geschlecht</h2>
+          <h2 class="text-lg font-bold text-[#e8e6e1] font-['Space_Grotesk',sans-serif] mb-3">Geschlecht</h2>
           <div class="relative">
             {#if canScroll.gender.left}
               <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(genderScroll, -1)} aria-label="Zurück">
@@ -520,7 +520,7 @@
             <div class={chartScrollCls} bind:this={genderScroll} onscroll={handleScroll('gender')}>
               <div class={chartCardCls} data-card>
                 <div class="flex items-start justify-between mb-3">
-                  <h3 class="text-sm font-semibold text-gray-500">Gesamt · Schillerkiez</h3>
+                  <h3 class="text-sm font-semibold text-white/60">Gesamt · Schillerkiez</h3>
                   {@render plrMiniMap('all')}
                 </div>
                 <div class="flex flex-col items-center gap-3">
@@ -534,7 +534,7 @@
                     {#each aggGenderSegs as seg}
                       <div class="flex items-center gap-2">
                         <span class="w-3 h-3 rounded-full shrink-0" style="background: {seg.color}"></span>
-                        <span class="text-gray-700">{seg.label}: <strong>{fmt(seg.value)}</strong> ({seg.percentage}%)</span>
+                        <span class="text-white/80">{seg.label}: <strong>{fmt(seg.value)}</strong> ({seg.percentage}%)</span>
                       </div>
                     {/each}
                   </div>
@@ -547,7 +547,7 @@
                 ], area.population.total)}
                 <div class={chartCardCls} data-card>
                   <div class="flex items-start justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-gray-500">{shortName(area.name)}</h3>
+                    <h3 class="text-sm font-semibold text-white/60">{shortName(area.name)}</h3>
                     {@render plrMiniMap(area.code)}
                   </div>
                   <div class="flex flex-col items-center gap-3">
@@ -561,7 +561,7 @@
                       {#each plrGenderSegs as seg}
                         <div class="flex items-center gap-2">
                           <span class="w-3 h-3 rounded-full shrink-0" style="background: {seg.color}"></span>
-                          <span class="text-gray-700">{seg.label}: <strong>{fmt(seg.value)}</strong> ({seg.percentage}%)</span>
+                          <span class="text-white/80">{seg.label}: <strong>{fmt(seg.value)}</strong> ({seg.percentage}%)</span>
                         </div>
                       {/each}
                     </div>
@@ -587,7 +587,7 @@
           { label: 'Transferleistungen', value: social.transferBenefitRate, color: COLORS.yellow },
         ]}
         <div use:reveal class="transition-all duration-700 ease-out">
-          <h2 class="text-lg font-bold text-gray-800 mb-3">Soziale Lage</h2>
+          <h2 class="text-lg font-bold text-[#e8e6e1] font-['Space_Grotesk',sans-serif] mb-3">Soziale Lage</h2>
           <div class="relative">
             {#if canScroll.social.left}
               <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(socialScroll, -1)} aria-label="Zurück">
@@ -597,31 +597,31 @@
             <div class={chartScrollCls} bind:this={socialScroll} onscroll={handleScroll('social')}>
               <div class={chartCardCls} data-card>
                 <div class="flex items-start justify-between mb-3">
-                  <h3 class="text-sm font-semibold text-gray-500">Gesamt · Schillerkiez</h3>
+                  <h3 class="text-sm font-semibold text-white/60">Gesamt · Schillerkiez</h3>
                   {@render plrMiniMap('all')}
                 </div>
                 <svg viewBox="0 0 300 195" class="w-full" role="img" aria-label="Soziale Lage Gesamt">
                   {#each aggIndicators as ind, i}
                     {@const barWidth = Math.min(ind.value, 100) / 100 * 240}
                     {@const y = i * 60 + 5}
-                    <text x="10" y={y + 14} fill="#4a5568" font-size="13" font-weight="500">{ind.label}</text>
-                    <rect x="10" y={y + 22} width="240" height="22" rx="4" fill="#f3f4f6" />
+                    <text x="10" y={y + 14} fill="rgba(232,230,225,0.9)" font-size="13" font-weight="500">{ind.label}</text>
+                    <rect x="10" y={y + 22} width="240" height="22" rx="4" fill="rgba(255,255,255,0.08)" />
                     <rect x="10" y={y + 22} width={barWidth} height="22" rx="4" fill={ind.color} opacity="0.8" />
-                    <text x={10 + barWidth + 6} y={y + 38} fill="#4a5568" font-size="12" font-weight="600">{ind.value}%</text>
+                    <text x={10 + barWidth + 6} y={y + 38} fill="rgba(232,230,225,0.9)" font-size="12" font-weight="600">{ind.value}%</text>
                   {/each}
                 </svg>
                 {#if social.statusIndex || social.dynamikIndex}
-                  <div class="mt-3 flex flex-wrap gap-4 text-sm text-gray-600">
+                  <div class="mt-3 flex flex-wrap gap-4 text-sm text-white/70">
                     <span>Status-Index: <strong>{social.statusIndex}</strong></span>
                     <span>Dynamik-Index: <strong>{social.dynamikIndex}</strong></span>
-                    <span class="text-gray-400">(*)</span>
+                    <span class="text-white/40">(*)</span>
                   </div>
                 {/if}
               </div>
               {#each data.plrAreas as area}
                 <div class={chartCardCls} data-card>
                   <div class="flex items-start justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-gray-500">{shortName(area.name)}</h3>
+                    <h3 class="text-sm font-semibold text-white/60">{shortName(area.name)}</h3>
                     {@render plrMiniMap(area.code)}
                   </div>
                   {#if area.social}
@@ -634,21 +634,21 @@
                       {#each plrIndicators as ind, i}
                         {@const barWidth = Math.min(ind.value, 100) / 100 * 240}
                         {@const y = i * 60 + 5}
-                        <text x="10" y={y + 14} fill="#4a5568" font-size="13" font-weight="500">{ind.label}</text>
-                        <rect x="10" y={y + 22} width="240" height="22" rx="4" fill="#f3f4f6" />
+                        <text x="10" y={y + 14} fill="rgba(232,230,225,0.9)" font-size="13" font-weight="500">{ind.label}</text>
+                        <rect x="10" y={y + 22} width="240" height="22" rx="4" fill="rgba(255,255,255,0.08)" />
                         <rect x="10" y={y + 22} width={barWidth} height="22" rx="4" fill={ind.color} opacity="0.8" />
-                        <text x={10 + barWidth + 6} y={y + 38} fill="#4a5568" font-size="12" font-weight="600">{ind.value}%</text>
+                        <text x={10 + barWidth + 6} y={y + 38} fill="rgba(232,230,225,0.9)" font-size="12" font-weight="600">{ind.value}%</text>
                       {/each}
                     </svg>
                     {#if area.social.statusIndex || area.social.dynamikIndex}
-                      <div class="mt-3 flex flex-wrap gap-4 text-sm text-gray-600">
+                      <div class="mt-3 flex flex-wrap gap-4 text-sm text-white/70">
                         <span>Status-Index: <strong>{area.social.statusIndex}</strong></span>
                         <span>Dynamik-Index: <strong>{area.social.dynamikIndex}</strong></span>
-                        <span class="text-gray-400">(*)</span>
+                        <span class="text-white/40">(*)</span>
                       </div>
                     {/if}
                   {:else}
-                    <div class="flex items-center justify-center h-32 text-gray-400">
+                    <div class="flex items-center justify-center h-32 text-white/40">
                       Keine Sozialdaten verfügbar
                     </div>
                   {/if}
@@ -692,7 +692,7 @@
       {@const aggPoints = trend.map(t => `${toX(t.date)},${toY(t.population)}`).join(' ')}
       {@const gridLines = Array.from({ length: 5 }, (_, i) => yMin + (yRange / 4) * i)}
       <div use:reveal class="transition-all duration-700 ease-out">
-        <h2 class="text-lg font-bold text-gray-800 mb-3">Bevölkerungsentwicklung</h2>
+        <h2 class="text-lg font-bold text-[#e8e6e1] font-['Space_Grotesk',sans-serif] mb-3">Bevölkerungsentwicklung</h2>
         <div class="relative">
           {#if canScroll.trend.left}
             <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(trendScroll, -1)} aria-label="Zurück">
@@ -703,17 +703,17 @@
             <!-- Aggregate trend card -->
             <div class={chartCardCls} data-card>
               <div class="flex items-start justify-between mb-3">
-                <h3 class="text-sm font-semibold text-gray-500">Gesamt · Schillerkiez</h3>
+                <h3 class="text-sm font-semibold text-white/60">Gesamt · Schillerkiez</h3>
                 {@render plrMiniMap('all')}
               </div>
               <svg viewBox="0 0 400 270" class="w-full" role="img" aria-label="Bevölkerungsentwicklung Gesamt">
                 {#each gridLines as gl}
-                  <line x1={chartL} y1={toY(gl)} x2={chartR} y2={toY(gl)} stroke="#e5e7eb" stroke-width="1" />
-                  <text x={chartL - 4} y={toY(gl) + 4} text-anchor="end" fill="#9ca3af" font-size="9">{fmt(Math.round(gl))}</text>
+                  <line x1={chartL} y1={toY(gl)} x2={chartR} y2={toY(gl)} stroke="rgba(255,255,255,0.15)" stroke-width="1" />
+                  <text x={chartL - 4} y={toY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="9">{fmt(Math.round(gl))}</text>
                 {/each}
-                <line x1={chartL} y1={chartB} x2={chartR} y2={chartB} stroke="#d1d5db" stroke-width="1" />
+                <line x1={chartL} y1={chartB} x2={chartR} y2={chartB} stroke="rgba(255,255,255,0.2)" stroke-width="1" />
                 {#each trend as t}
-                  <text x={toX(t.date)} y={chartB + 16} text-anchor="middle" fill="#6b7280" font-size="10">{formatPeriod(t.period)}</text>
+                  <text x={toX(t.date)} y={chartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="10">{formatPeriod(t.period)}</text>
                 {/each}
                 <polyline points={aggPoints} fill="none" stroke={COLORS.teal} stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
                 {#each trend as t}
@@ -740,17 +740,17 @@
               {@const plrGridLines = Array.from({ length: 5 }, (_, i) => plrYMin + ((plrYMax - plrYMin) / 4) * i)}
               <div class={chartCardCls} data-card>
                 <div class="flex items-start justify-between mb-3">
-                  <h3 class="text-sm font-semibold text-gray-500">Nach Planungsraum</h3>
+                  <h3 class="text-sm font-semibold text-white/60">Nach Planungsraum</h3>
                   {@render plrMiniMap('all')}
                 </div>
                 <svg viewBox="0 0 400 270" class="w-full" role="img" aria-label="Bevölkerungsentwicklung nach PLR">
                   {#each plrGridLines as gl}
-                    <line x1={chartL} y1={plrToY(gl)} x2={chartR} y2={plrToY(gl)} stroke="#e5e7eb" stroke-width="1" />
-                    <text x={chartL - 4} y={plrToY(gl) + 4} text-anchor="end" fill="#9ca3af" font-size="9">{fmt(Math.round(gl))}</text>
+                    <line x1={chartL} y1={plrToY(gl)} x2={chartR} y2={plrToY(gl)} stroke="rgba(255,255,255,0.15)" stroke-width="1" />
+                    <text x={chartL - 4} y={plrToY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="9">{fmt(Math.round(gl))}</text>
                   {/each}
-                  <line x1={chartL} y1={chartB} x2={chartR} y2={chartB} stroke="#d1d5db" stroke-width="1" />
+                  <line x1={chartL} y1={chartB} x2={chartR} y2={chartB} stroke="rgba(255,255,255,0.2)" stroke-width="1" />
                   {#each trend as t}
-                    <text x={toX(t.date)} y={chartB + 16} text-anchor="middle" fill="#6b7280" font-size="10">{formatPeriod(t.period)}</text>
+                    <text x={toX(t.date)} y={chartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="10">{formatPeriod(t.period)}</text>
                   {/each}
                   {#each plrCodes as code, ci}
                     {@const pts = plrTrend.filter(d => d.plr_code === code)}
@@ -764,7 +764,7 @@
                 <div class="flex flex-wrap gap-x-3 gap-y-1 mt-2">
                   {#each plrCodes as code, ci}
                     {@const name = plrTrend.find(d => d.plr_code === code)?.plr_name ?? code}
-                    <div class="flex items-center gap-1.5 text-xs text-gray-600">
+                    <div class="flex items-center gap-1.5 text-xs text-white/70">
                       <span class="w-3 h-0.5 rounded-full shrink-0" style="background: {PLR_LINE_COLORS[ci % PLR_LINE_COLORS.length]}"></span>
                       {shortName(name)}
                     </div>
@@ -797,17 +797,17 @@
               {@const latestMig = migData[migData.length - 1]}
               <div class={chartCardCls} data-card>
                 <div class="flex items-start justify-between mb-3">
-                  <h3 class="text-sm font-semibold text-gray-500">Vielfalt im Zeitverlauf</h3>
+                  <h3 class="text-sm font-semibold text-white/60">Vielfalt im Zeitverlauf</h3>
                   {@render plrMiniMap('all')}
                 </div>
                 <svg viewBox="0 0 400 270" class="w-full" role="img" aria-label="Vielfalt im Zeitverlauf">
                   {#each mGridLines as gl}
-                    <line x1={chartL} y1={mToY(gl)} x2={chartR} y2={mToY(gl)} stroke="#e5e7eb" stroke-width="1" />
-                    <text x={chartL - 4} y={mToY(gl) + 4} text-anchor="end" fill="#9ca3af" font-size="9">{gl}%</text>
+                    <line x1={chartL} y1={mToY(gl)} x2={chartR} y2={mToY(gl)} stroke="rgba(255,255,255,0.15)" stroke-width="1" />
+                    <text x={chartL - 4} y={mToY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="9">{gl}%</text>
                   {/each}
-                  <line x1={chartL} y1={chartB} x2={chartR} y2={chartB} stroke="#d1d5db" stroke-width="1" />
+                  <line x1={chartL} y1={chartB} x2={chartR} y2={chartB} stroke="rgba(255,255,255,0.2)" stroke-width="1" />
                   {#each trend as t}
-                    <text x={toX(t.date)} y={chartB + 16} text-anchor="middle" fill="#6b7280" font-size="10">{formatPeriod(t.period)}</text>
+                    <text x={toX(t.date)} y={chartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="10">{formatPeriod(t.period)}</text>
                   {/each}
                   {#each migLines as line}
                     {@const pts = migData.map(d => `${d.x},${mToY(d[line.key])}`).join(' ')}
@@ -819,7 +819,7 @@
                 </svg>
                 <div class="flex flex-wrap gap-x-3 gap-y-1 mt-2">
                   {#each migLines as line}
-                    <div class="flex items-center gap-1.5 text-xs text-gray-600">
+                    <div class="flex items-center gap-1.5 text-xs text-white/70">
                       <span class="w-3 h-0.5 rounded-full shrink-0" style="background: {line.color}"></span>
                       {line.label} ({latestMig[line.key].toFixed(1)}%)
                     </div>
@@ -868,7 +868,7 @@
       {@const sGridStep = sYMax <= 30 ? 5 : 10}
       {@const sGridLines = Array.from({ length: Math.floor(sYMax / sGridStep) + 1 }, (_, i) => i * sGridStep)}
       <div use:reveal class="transition-all duration-700 ease-out">
-        <h2 class="text-lg font-bold text-gray-800 mb-3">Soziale Entwicklung</h2>
+        <h2 class="text-lg font-bold text-[#e8e6e1] font-['Space_Grotesk',sans-serif] mb-3">Soziale Entwicklung</h2>
         <div class="relative">
           {#if canScroll.socialTrend.left}
             <button class="{arrowCls} -left-1 lg:-left-5" onclick={() => scrollCarousel(socialTrendScroll, -1)} aria-label="Zurück">
@@ -879,17 +879,17 @@
             <!-- Card 1: Gesamt — all 3 indicators -->
             <div class={chartCardCls} data-card>
               <div class="flex items-start justify-between mb-3">
-                <h3 class="text-sm font-semibold text-gray-500">Gesamt · Schillerkiez</h3>
+                <h3 class="text-sm font-semibold text-white/60">Gesamt · Schillerkiez</h3>
                 {@render plrMiniMap('all')}
               </div>
               <svg viewBox="0 0 400 270" class="w-full" role="img" aria-label="Soziale Entwicklung Gesamt">
                 {#each sGridLines as gl}
-                  <line x1={sChartL} y1={sToY(gl)} x2={sChartR} y2={sToY(gl)} stroke="#e5e7eb" stroke-width="1" />
-                  <text x={sChartL - 4} y={sToY(gl) + 4} text-anchor="end" fill="#9ca3af" font-size="9">{gl}%</text>
+                  <line x1={sChartL} y1={sToY(gl)} x2={sChartR} y2={sToY(gl)} stroke="rgba(255,255,255,0.15)" stroke-width="1" />
+                  <text x={sChartL - 4} y={sToY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="9">{gl}%</text>
                 {/each}
-                <line x1={sChartL} y1={sChartB} x2={sChartR} y2={sChartB} stroke="#d1d5db" stroke-width="1" />
+                <line x1={sChartL} y1={sChartB} x2={sChartR} y2={sChartB} stroke="rgba(255,255,255,0.2)" stroke-width="1" />
                 {#each sTrend as t}
-                  <text x={sToX(t.date)} y={sChartB + 16} text-anchor="middle" fill="#6b7280" font-size="10">{formatSocialPeriod(t.period)}</text>
+                  <text x={sToX(t.date)} y={sChartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="10">{formatSocialPeriod(t.period)}</text>
                 {/each}
                 {#each indicatorCards as line}
                   {@const pts = sTrend.map(d => `${sToX(d.date)},${sToY(d[line.key])}`).join(' ')}
@@ -901,7 +901,7 @@
               </svg>
               <div class="flex flex-wrap gap-x-3 gap-y-1 mt-2">
                 {#each indicatorCards as line}
-                  <div class="flex items-center gap-1.5 text-xs text-gray-600">
+                  <div class="flex items-center gap-1.5 text-xs text-white/70">
                     <span class="w-3 h-0.5 rounded-full shrink-0" style="background: {line.color}"></span>
                     {line.label} ({latestS[line.key]}%)
                   </div>
@@ -923,17 +923,17 @@
               {@const aggPts = sTrend.map(d => `${sToX(d.date)},${iToY(d[ind.key])}`).join(' ')}
               <div class={chartCardCls} data-card>
                 <div class="flex items-start justify-between mb-3">
-                  <h3 class="text-sm font-semibold text-gray-500">{ind.label}</h3>
+                  <h3 class="text-sm font-semibold text-white/60">{ind.label}</h3>
                   {@render plrMiniMap('all')}
                 </div>
                 <svg viewBox="0 0 400 270" class="w-full" role="img" aria-label="{ind.label} Entwicklung">
                   {#each iGridLines as gl}
-                    <line x1={sChartL} y1={iToY(gl)} x2={sChartR} y2={iToY(gl)} stroke="#e5e7eb" stroke-width="1" />
-                    <text x={sChartL - 4} y={iToY(gl) + 4} text-anchor="end" fill="#9ca3af" font-size="9">{gl}%</text>
+                    <line x1={sChartL} y1={iToY(gl)} x2={sChartR} y2={iToY(gl)} stroke="rgba(255,255,255,0.15)" stroke-width="1" />
+                    <text x={sChartL - 4} y={iToY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="9">{gl}%</text>
                   {/each}
-                  <line x1={sChartL} y1={sChartB} x2={sChartR} y2={sChartB} stroke="#d1d5db" stroke-width="1" />
+                  <line x1={sChartL} y1={sChartB} x2={sChartR} y2={sChartB} stroke="rgba(255,255,255,0.2)" stroke-width="1" />
                   {#each sTrend as t}
-                    <text x={sToX(t.date)} y={sChartB + 16} text-anchor="middle" fill="#6b7280" font-size="10">{formatSocialPeriod(t.period)}</text>
+                    <text x={sToX(t.date)} y={sChartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="10">{formatSocialPeriod(t.period)}</text>
                   {/each}
                   <!-- Merged PLR lines (thin, continuous across LOR boundary) -->
                   {#each mergedPlrSeries as series, ci}
@@ -950,12 +950,12 @@
                   {/each}
                 </svg>
                 <div class="flex flex-wrap gap-x-3 gap-y-1 mt-2">
-                  <div class="flex items-center gap-1.5 text-xs text-gray-600">
+                  <div class="flex items-center gap-1.5 text-xs text-white/70">
                     <span class="w-3 h-0.5 rounded-full shrink-0" style="background: {ind.color}"></span>
                     Gesamt ({latestS[ind.key]}%)
                   </div>
                   {#each mergedPlrSeries as series, ci}
-                    <div class="flex items-center gap-1.5 text-xs text-gray-400">
+                    <div class="flex items-center gap-1.5 text-xs text-white/40">
                       <span class="w-3 h-0.5 rounded-full shrink-0 opacity-50" style="background: {PLR_LINE_COLORS[ci % PLR_LINE_COLORS.length]}"></span>
                       {shortName(series.name)}
                     </div>
@@ -970,18 +970,18 @@
             </button>
           {/if}
         </div>
-        <p class="text-xs text-gray-400 mt-2 italic">Ab 2021 neue Gebietseinteilung: Schillerpromenade vereint Nord + Süd, Silbersteinstr. vereint Wartheplatz + Silbersteinstr.</p>
+        <p class="text-xs text-white/40 mt-2 italic">Ab 2021 neue Gebietseinteilung: Schillerpromenade vereint Nord + Süd, Silbersteinstr. vereint Wartheplatz + Silbersteinstr.</p>
       </div>
     {/if}
 
     <!-- Footer / Sources -->
-    <div use:reveal class="bg-white/60 rounded-xl p-6 text-sm text-gray-500 space-y-2 transition-all duration-700 ease-out">
+    <div use:reveal class="bg-white/[0.06] backdrop-blur-xl border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl p-6 text-sm text-white/60 space-y-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all duration-700 ease-out">
       <p>
         <strong>Quellen:</strong> Amt für Statistik Berlin-Brandenburg (Demografie, halbjährlich) · Monitoring Soziale Stadtentwicklung Berlin (Sozialindex, alle 2 Jahre, 2013–2023)
       </p>
       <p>
         <strong>Lizenz:</strong>
-        <a href="https://creativecommons.org/licenses/by/3.0/de/" target="_blank" rel="noopener" class="text-[#4b9aaa] hover:underline">
+        <a href="https://creativecommons.org/licenses/by/3.0/de/" target="_blank" rel="noopener" class="text-[#6aab8e] hover:underline">
           CC BY 3.0 DE
         </a>
       </p>
@@ -989,19 +989,19 @@
         <p>
           <strong>Luftdaten:</strong>
           <a href="https://luftdaten.berlin.de/station/mc042" target="_blank" rel="noopener"
-             class="text-[#4b9aaa] hover:underline">Berliner Luftgüte-Messnetz (BLUME)</a>, Station MC042 Nansenstraße
+             class="text-[#6aab8e] hover:underline">Berliner Luftgüte-Messnetz (BLUME)</a>, Station MC042 Nansenstraße
         </p>
       {/if}
-      <p class="text-xs text-gray-400">
+      <p class="text-xs text-white/40">
         Die Daten beziehen sich auf den Schillerkiez (4 Planungsräume im LOR-System 2021):
         Schillerpromenade Nord, Schillerpromenade Süd, Wartheplatz und Silbersteinstraße.
       </p>
       <hr class="border-gray-300/50 my-2" />
-      <p class="text-xs text-gray-400 italic">
+      <p class="text-xs text-white/40 italic">
         <strong class="font-semibold">Gebietsreform 2021:</strong> Vor 2021 bestand der Schillerkiez aus 2 Planungsräumen (Schillerpromenade, Silbersteinstraße). Ab 2021 wurden diese in 4 aufgeteilt. In den Trendcharts werden die alten Gebiete mit den neuen zusammengeführt, um durchgängige Linien zu ermöglichen.
       </p>
       <hr class="border-gray-300/50 my-2" />
-      <p class="text-xs text-gray-400 italic">
+      <p class="text-xs text-white/40 italic">
         (*) <strong class="font-semibold">Status-Index:</strong> Zusammengesetzter Wert aus Arbeitslosigkeit, Kinderarmut und Transferleistungen — je niedriger, desto besser die soziale Lage.
         <strong class="font-semibold">Dynamik-Index:</strong> Zeigt die Entwicklung über die Zeit — positiv = Verbesserung, negativ = Verschlechterung, 0 = stabil.
       </p>
