@@ -33,10 +33,10 @@
 
   // Carousel CSS — chart cards (scrollable, tighter padding for more chart space)
   const chartScrollCls = 'flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-4 px-4 md:-mx-8 md:px-8 lg:-mx-12 lg:px-12 scroll-pl-4 md:scroll-pl-8 lg:scroll-pl-12';
-  const chartCardCls = 'snap-start shrink-0 w-[85vw] sm:w-[55%] lg:w-[calc(33.333%-1rem)] min-h-[22rem] bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl p-4 sm:p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]';
+  const chartCardCls = 'snap-start shrink-0 w-[85vw] sm:w-[55%] lg:w-[calc(33.333%-1rem)] min-h-[22rem] rounded-xl p-4 sm:p-5 border border-transparent transition-all duration-300 hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]';
 
   // Arrow button classes (all screens, scaled)
-  const arrowCls = 'flex absolute top-1/2 -translate-y-1/2 z-10 w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm border border-white/15 hover:bg-white/20 active:scale-95 transition-all text-white/60 hover:text-white cursor-pointer';
+  const arrowCls = 'flex absolute top-1/2 -translate-y-1/2 z-10 w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 items-center justify-center rounded-full bg-white/10 hover:backdrop-blur-md border border-white/15 hover:bg-white/20 active:scale-95 transition-all text-white/60 hover:text-white cursor-pointer';
 
   /** Shorten PLR names for compact display */
   function shortName(name) {
@@ -279,7 +279,7 @@
     <!-- Loading skeleton -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       {#each Array(6) as _}
-        <div class="bg-white/[0.04] backdrop-blur-sm border border-white/[0.1] rounded-xl p-5 animate-pulse">
+        <div class="bg-white/[0.04] hover:backdrop-blur-md border border-white/[0.1] rounded-xl p-5 animate-pulse">
           <div class="h-4 bg-white/10 rounded w-2/3 mb-3"></div>
           <div class="h-8 bg-white/10 rounded w-1/2"></div>
         </div>
@@ -304,7 +304,7 @@
   {:else}
     <!-- Air Quality (live BLUME data) -->
     {#if airData}
-      <div use:reveal class="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all duration-700 ease-out">
+      <div use:reveal class="rounded-xl p-6 border border-transparent transition-all duration-300 hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
         <div class="flex items-center gap-2 mb-4">
           <h2 class="text-lg font-bold text-[#e8e6e1] font-['Space_Grotesk',sans-serif]">Luftqualität</h2>
           <span class="inline-flex items-center gap-1 text-xs text-white/40">
@@ -328,7 +328,7 @@
 
           <!-- Per-pollutant cards -->
           {#each airData.pollutants as pol}
-            <div class="w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)] rounded-lg p-3 bg-white/[0.04] border border-white/10 text-center">
+            <div class="w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)] rounded-lg p-3 text-center border border-transparent transition-all duration-300 hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
               <p class="text-xs text-white/40 font-medium">{POLLUTANT_DESCRIPTIONS[pol.component] ?? pol.name}</p>
               <p class="text-xl font-bold" style="color: {pol.grade != null ? gradeColor(pol.grade) : '#d1d5db'}">{pol.grade ?? '–'}</p>
               <p class="text-xs" style="color: {pol.grade != null ? gradeColor(pol.grade) : '#9ca3af'}">{pol.gradeLabel}</p>
@@ -975,7 +975,7 @@
     {/if}
 
     <!-- Footer / Sources -->
-    <div use:reveal class="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl p-6 text-sm text-white/60 space-y-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] transition-all duration-700 ease-out">
+    <div use:reveal class="rounded-xl p-6 text-sm text-white/60 space-y-2 border border-transparent transition-all duration-300 hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
       <p>
         <strong>Quellen:</strong> Amt für Statistik Berlin-Brandenburg (Demografie, halbjährlich) · Monitoring Soziale Stadtentwicklung Berlin (Sozialindex, alle 2 Jahre, 2013–2023)
       </p>
