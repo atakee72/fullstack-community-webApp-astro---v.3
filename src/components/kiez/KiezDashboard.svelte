@@ -20,7 +20,7 @@
 
   // Chart colors for age distribution bars
   const AGE_COLORS = [
-    COLORS.teal, COLORS.wine, COLORS.yellow, '#6aab8e',
+    COLORS.teal, COLORS.wine, COLORS.yellow, '#5cb87a',
     COLORS.tealLight, COLORS.wineLight, COLORS.gray,
   ];
 
@@ -136,7 +136,7 @@
   }
 
   /** PLR line chart colors — match project palette */
-  const PLR_LINE_COLORS = [COLORS.teal, COLORS.wine, COLORS.yellow, '#6aab8e'];
+  const PLR_LINE_COLORS = [COLORS.teal, COLORS.wine, COLORS.yellow, '#5cb87a'];
 
   // Human-readable German descriptions for pollutant abbreviations
   const POLLUTANT_DESCRIPTIONS = {
@@ -291,7 +291,7 @@
       <p class="text-white/70 mb-4">Daten konnten nicht geladen werden: {error}</p>
       <button
         onclick={fetchData}
-        class="px-6 py-2 bg-[#6aab8e] text-white rounded-lg hover:bg-[#7abb9e] transition-colors"
+        class="px-6 py-2 bg-[#5cb87a] text-white rounded-lg hover:bg-[#70cc8e] transition-colors"
       >
         Erneut versuchen
       </button>
@@ -351,7 +351,7 @@
         <p class="mt-2 text-xs text-white/40">
           Messung: {new Date(airData.datetime).toLocaleString('de-DE')}
           · <a href="https://luftdaten.berlin.de/station/mc042" target="_blank" rel="noopener"
-               class="text-[#6aab8e] hover:underline">Quelle: BLUME-Messnetz</a>
+               class="text-[#5cb87a] hover:underline">Quelle: BLUME-Messnetz</a>
         </p>
       </div>
     {/if}
@@ -981,7 +981,7 @@
       </p>
       <p>
         <strong>Lizenz:</strong>
-        <a href="https://creativecommons.org/licenses/by/3.0/de/" target="_blank" rel="noopener" class="text-[#6aab8e] hover:underline">
+        <a href="https://creativecommons.org/licenses/by/3.0/de/" target="_blank" rel="noopener" class="text-[#5cb87a] hover:underline">
           CC BY 3.0 DE
         </a>
       </p>
@@ -989,7 +989,7 @@
         <p>
           <strong>Luftdaten:</strong>
           <a href="https://luftdaten.berlin.de/station/mc042" target="_blank" rel="noopener"
-             class="text-[#6aab8e] hover:underline">Berliner Luftgüte-Messnetz (BLUME)</a>, Station MC042 Nansenstraße
+             class="text-[#5cb87a] hover:underline">Berliner Luftgüte-Messnetz (BLUME)</a>, Station MC042 Nansenstraße
         </p>
       {/if}
       <p class="text-xs text-white/40">
