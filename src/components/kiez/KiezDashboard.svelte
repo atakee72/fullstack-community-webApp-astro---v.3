@@ -1,5 +1,4 @@
 <script>
-  import { onMount } from 'svelte';
   import { PLR_PATHS, PLR_CODES, PLR_VIEWBOX } from './plrPaths';
 
   /** @type {import('../../types/kiezStats').KiezStatsResponse | null} */
@@ -76,7 +75,7 @@
     }
   }
 
-  onMount(() => {
+  $effect(() => {
     fetchData();
     fetchAirData();
   });
@@ -272,7 +271,7 @@
   {/snippet}
 
   {#if data?.lastUpdated}
-    <p use:reveal class="text-sm text-white/40 -mt-4 mb-4 transition-all duration-700 ease-out">Stand: {data.lastUpdated}</p>
+    <p use:reveal class="text-sm text-white/60 -mt-4 mb-4 transition-all duration-700 ease-out">Stand: {data.lastUpdated}</p>
   {/if}
 
   {#if loading}
@@ -307,7 +306,7 @@
       <div use:reveal class="rounded-xl p-6 border border-transparent transition-all duration-300 hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
         <div class="flex items-center gap-2 mb-4">
           <h2 class="text-lg font-bold text-[#e8e6e1] font-['Space_Grotesk',sans-serif]">Luftqualität</h2>
-          <span class="inline-flex items-center gap-1 text-xs text-white/40">
+          <span class="inline-flex items-center gap-1 text-xs text-white/60">
             <span class="w-2 h-2 rounded-full bg-green-500 motion-safe:animate-pulse"></span>
             Live · Nansenstraße
           </span>
@@ -329,16 +328,16 @@
           <!-- Per-pollutant cards -->
           {#each airData.pollutants as pol}
             <div class="w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(20%-10px)] rounded-lg p-3 text-center border border-transparent transition-all duration-300 hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
-              <p class="text-xs text-white/40 font-medium">{POLLUTANT_DESCRIPTIONS[pol.component] ?? pol.name}</p>
+              <p class="text-xs text-white/60 font-medium">{POLLUTANT_DESCRIPTIONS[pol.component] ?? pol.name}</p>
               <p class="text-xl font-bold" style="color: {pol.grade != null ? gradeColor(pol.grade) : '#d1d5db'}">{pol.grade ?? '–'}</p>
               <p class="text-xs" style="color: {pol.grade != null ? gradeColor(pol.grade) : '#9ca3af'}">{pol.gradeLabel}</p>
-              <p class="text-[10px] text-white/30 mt-0.5">{pol.name}</p>
+              <p class="text-[10px] text-white/50 mt-0.5">{pol.name}</p>
             </div>
           {/each}
         </div>
 
         <!-- Grade scale legend -->
-        <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/40">
+        <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/60">
           <span class="font-medium text-white/60">Skala:</span>
           {#each [{ g: 1, l: 'sehr gut' }, { g: 2, l: 'gut' }, { g: 3, l: 'mäßig' }, { g: 4, l: 'schlecht' }, { g: 5, l: 'sehr schlecht' }] as item}
             <span class="inline-flex items-center gap-1">
@@ -348,7 +347,7 @@
           {/each}
         </div>
 
-        <p class="mt-2 text-xs text-white/40">
+        <p class="mt-2 text-xs text-white/60">
           Messung: {new Date(airData.datetime).toLocaleString('de-DE')}
           · <a href="https://luftdaten.berlin.de/station/mc042" target="_blank" rel="noopener"
                class="text-[#5cb87a] hover:underline">Quelle: BLUME-Messnetz</a>
@@ -380,14 +379,14 @@
                   {#each data.demographics.ageDistribution as age, i}
                     {@const barWidth = maxCount > 0 ? (age.count / maxCount) * 260 : 0}
                     {@const y = i * 32 + 10}
-                    <text x="55" y={y + 16} text-anchor="end" fill="rgba(232,230,225,0.9)" font-size="12" font-weight="500">{age.group}</text>
+                    <text x="55" y={y + 16} text-anchor="end" fill="rgba(232,230,225,1)" font-size="12" font-weight="500">{age.group}</text>
                     <rect x="65" y={y + 2} width={barWidth} height="20" rx="4" fill={AGE_COLORS[i]} opacity="0.85" />
-                    <text x={65 + barWidth + 6} y={y + 16} fill="rgba(232,230,225,0.9)" font-size="11">
+                    <text x={65 + barWidth + 6} y={y + 16} fill="rgba(232,230,225,1)" font-size="11">
                       {fmt(age.count)} ({age.percentage}%)
                     </text>
                   {/each}
                 </svg>
-                <p class="text-xs text-white/40 mt-1 text-right">Einwohner: {fmt(data.demographics.population.total)}</p>
+                <p class="text-xs text-white/60 mt-1 text-right">Einwohner: {fmt(data.demographics.population.total)}</p>
               </div>
               {#each data.plrAreas as area}
                 {@const plrMax = Math.max(...area.ageDistribution.map(a => a.count))}
@@ -400,14 +399,14 @@
                     {#each area.ageDistribution as age, i}
                       {@const barWidth = plrMax > 0 ? (age.count / plrMax) * 260 : 0}
                       {@const y = i * 32 + 10}
-                      <text x="55" y={y + 16} text-anchor="end" fill="rgba(232,230,225,0.9)" font-size="12" font-weight="500">{age.group}</text>
+                      <text x="55" y={y + 16} text-anchor="end" fill="rgba(232,230,225,1)" font-size="12" font-weight="500">{age.group}</text>
                       <rect x="65" y={y + 2} width={barWidth} height="20" rx="4" fill={AGE_COLORS[i]} opacity="0.85" />
-                      <text x={65 + barWidth + 6} y={y + 16} fill="rgba(232,230,225,0.9)" font-size="11">
+                      <text x={65 + barWidth + 6} y={y + 16} fill="rgba(232,230,225,1)" font-size="11">
                         {fmt(age.count)} ({age.percentage}%)
                       </text>
                     {/each}
                   </svg>
-                  <p class="text-xs text-white/40 mt-1 text-right">Einwohner: {fmt(area.population.total)}</p>
+                  <p class="text-xs text-white/60 mt-1 text-right">Einwohner: {fmt(area.population.total)}</p>
                 </div>
               {/each}
             </div>
@@ -448,8 +447,8 @@
                       <circle cx="60" cy="60" r="40" fill="none" stroke={seg.color} stroke-width="18"
                         stroke-dasharray={seg.dashArray} stroke-dashoffset={-seg.offset} transform="rotate(-90 60 60)" />
                     {/each}
-                    <text x="60" y="58" text-anchor="middle" fill="rgba(232,230,225,0.9)" font-size="10" font-weight="600">{fmt(mig.totalPopulation)}</text>
-                    <text x="60" y="70" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="7">Gesamt</text>
+                    <text x="60" y="58" text-anchor="middle" fill="rgba(232,230,225,1)" font-size="10" font-weight="600">{fmt(mig.totalPopulation)}</text>
+                    <text x="60" y="70" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="7">Gesamt</text>
                   </svg>
                   <div class="space-y-1 text-sm">
                     {#each aggSegments as seg}
@@ -478,8 +477,8 @@
                         <circle cx="60" cy="60" r="40" fill="none" stroke={seg.color} stroke-width="18"
                           stroke-dasharray={seg.dashArray} stroke-dashoffset={-seg.offset} transform="rotate(-90 60 60)" />
                       {/each}
-                      <text x="60" y="58" text-anchor="middle" fill="rgba(232,230,225,0.9)" font-size="10" font-weight="600">{fmt(area.migration.totalPopulation)}</text>
-                      <text x="60" y="70" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="7">{shortName(area.name)}</text>
+                      <text x="60" y="58" text-anchor="middle" fill="rgba(232,230,225,1)" font-size="10" font-weight="600">{fmt(area.migration.totalPopulation)}</text>
+                      <text x="60" y="70" text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="7">{shortName(area.name)}</text>
                     </svg>
                     <div class="space-y-1 text-sm">
                       {#each plrSegs as seg}
@@ -604,17 +603,17 @@
                   {#each aggIndicators as ind, i}
                     {@const barWidth = Math.min(ind.value, 100) / 100 * 240}
                     {@const y = i * 60 + 5}
-                    <text x="10" y={y + 14} fill="rgba(232,230,225,0.9)" font-size="13" font-weight="500">{ind.label}</text>
+                    <text x="10" y={y + 14} fill="rgba(232,230,225,1)" font-size="13" font-weight="500">{ind.label}</text>
                     <rect x="10" y={y + 22} width="240" height="22" rx="4" fill="rgba(255,255,255,0.08)" />
                     <rect x="10" y={y + 22} width={barWidth} height="22" rx="4" fill={ind.color} opacity="0.8" />
-                    <text x={10 + barWidth + 6} y={y + 38} fill="rgba(232,230,225,0.9)" font-size="12" font-weight="600">{ind.value}%</text>
+                    <text x={10 + barWidth + 6} y={y + 38} fill="rgba(232,230,225,1)" font-size="12" font-weight="600">{ind.value}%</text>
                   {/each}
                 </svg>
                 {#if social.statusIndex || social.dynamikIndex}
                   <div class="mt-3 flex flex-wrap gap-4 text-sm text-white/70">
                     <span>Status-Index: <strong>{social.statusIndex}</strong></span>
                     <span>Dynamik-Index: <strong>{social.dynamikIndex}</strong></span>
-                    <span class="text-white/40">(*)</span>
+                    <span class="text-white/60">(*)</span>
                   </div>
                 {/if}
               </div>
@@ -634,21 +633,21 @@
                       {#each plrIndicators as ind, i}
                         {@const barWidth = Math.min(ind.value, 100) / 100 * 240}
                         {@const y = i * 60 + 5}
-                        <text x="10" y={y + 14} fill="rgba(232,230,225,0.9)" font-size="13" font-weight="500">{ind.label}</text>
+                        <text x="10" y={y + 14} fill="rgba(232,230,225,1)" font-size="13" font-weight="500">{ind.label}</text>
                         <rect x="10" y={y + 22} width="240" height="22" rx="4" fill="rgba(255,255,255,0.08)" />
                         <rect x="10" y={y + 22} width={barWidth} height="22" rx="4" fill={ind.color} opacity="0.8" />
-                        <text x={10 + barWidth + 6} y={y + 38} fill="rgba(232,230,225,0.9)" font-size="12" font-weight="600">{ind.value}%</text>
+                        <text x={10 + barWidth + 6} y={y + 38} fill="rgba(232,230,225,1)" font-size="12" font-weight="600">{ind.value}%</text>
                       {/each}
                     </svg>
                     {#if area.social.statusIndex || area.social.dynamikIndex}
                       <div class="mt-3 flex flex-wrap gap-4 text-sm text-white/70">
                         <span>Status-Index: <strong>{area.social.statusIndex}</strong></span>
                         <span>Dynamik-Index: <strong>{area.social.dynamikIndex}</strong></span>
-                        <span class="text-white/40">(*)</span>
+                        <span class="text-white/60">(*)</span>
                       </div>
                     {/if}
                   {:else}
-                    <div class="flex items-center justify-center h-32 text-white/40">
+                    <div class="flex items-center justify-center h-32 text-white/60">
                       Keine Sozialdaten verfügbar
                     </div>
                   {/if}
@@ -709,11 +708,11 @@
               <svg viewBox="0 0 400 270" class="w-full" role="img" aria-label="Bevölkerungsentwicklung Gesamt">
                 {#each gridLines as gl}
                   <line x1={chartL} y1={toY(gl)} x2={chartR} y2={toY(gl)} stroke="rgba(255,255,255,0.15)" stroke-width="1" />
-                  <text x={chartL - 4} y={toY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="9">{fmt(Math.round(gl))}</text>
+                  <text x={chartL - 4} y={toY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.75)" font-size="9">{fmt(Math.round(gl))}</text>
                 {/each}
                 <line x1={chartL} y1={chartB} x2={chartR} y2={chartB} stroke="rgba(255,255,255,0.2)" stroke-width="1" />
                 {#each trend as t}
-                  <text x={toX(t.date)} y={chartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="10">{formatPeriod(t.period)}</text>
+                  <text x={toX(t.date)} y={chartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="10">{formatPeriod(t.period)}</text>
                 {/each}
                 <polyline points={aggPoints} fill="none" stroke={COLORS.teal} stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
                 {#each trend as t}
@@ -746,11 +745,11 @@
                 <svg viewBox="0 0 400 270" class="w-full" role="img" aria-label="Bevölkerungsentwicklung nach PLR">
                   {#each plrGridLines as gl}
                     <line x1={chartL} y1={plrToY(gl)} x2={chartR} y2={plrToY(gl)} stroke="rgba(255,255,255,0.15)" stroke-width="1" />
-                    <text x={chartL - 4} y={plrToY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="9">{fmt(Math.round(gl))}</text>
+                    <text x={chartL - 4} y={plrToY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.75)" font-size="9">{fmt(Math.round(gl))}</text>
                   {/each}
                   <line x1={chartL} y1={chartB} x2={chartR} y2={chartB} stroke="rgba(255,255,255,0.2)" stroke-width="1" />
                   {#each trend as t}
-                    <text x={toX(t.date)} y={chartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="10">{formatPeriod(t.period)}</text>
+                    <text x={toX(t.date)} y={chartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="10">{formatPeriod(t.period)}</text>
                   {/each}
                   {#each plrCodes as code, ci}
                     {@const pts = plrTrend.filter(d => d.plr_code === code)}
@@ -803,11 +802,11 @@
                 <svg viewBox="0 0 400 270" class="w-full" role="img" aria-label="Vielfalt im Zeitverlauf">
                   {#each mGridLines as gl}
                     <line x1={chartL} y1={mToY(gl)} x2={chartR} y2={mToY(gl)} stroke="rgba(255,255,255,0.15)" stroke-width="1" />
-                    <text x={chartL - 4} y={mToY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="9">{gl}%</text>
+                    <text x={chartL - 4} y={mToY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.75)" font-size="9">{gl}%</text>
                   {/each}
                   <line x1={chartL} y1={chartB} x2={chartR} y2={chartB} stroke="rgba(255,255,255,0.2)" stroke-width="1" />
                   {#each trend as t}
-                    <text x={toX(t.date)} y={chartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="10">{formatPeriod(t.period)}</text>
+                    <text x={toX(t.date)} y={chartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="10">{formatPeriod(t.period)}</text>
                   {/each}
                   {#each migLines as line}
                     {@const pts = migData.map(d => `${d.x},${mToY(d[line.key])}`).join(' ')}
@@ -885,11 +884,11 @@
               <svg viewBox="0 0 400 270" class="w-full" role="img" aria-label="Soziale Entwicklung Gesamt">
                 {#each sGridLines as gl}
                   <line x1={sChartL} y1={sToY(gl)} x2={sChartR} y2={sToY(gl)} stroke="rgba(255,255,255,0.15)" stroke-width="1" />
-                  <text x={sChartL - 4} y={sToY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="9">{gl}%</text>
+                  <text x={sChartL - 4} y={sToY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.75)" font-size="9">{gl}%</text>
                 {/each}
                 <line x1={sChartL} y1={sChartB} x2={sChartR} y2={sChartB} stroke="rgba(255,255,255,0.2)" stroke-width="1" />
                 {#each sTrend as t}
-                  <text x={sToX(t.date)} y={sChartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="10">{formatSocialPeriod(t.period)}</text>
+                  <text x={sToX(t.date)} y={sChartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="10">{formatSocialPeriod(t.period)}</text>
                 {/each}
                 {#each indicatorCards as line}
                   {@const pts = sTrend.map(d => `${sToX(d.date)},${sToY(d[line.key])}`).join(' ')}
@@ -929,11 +928,11 @@
                 <svg viewBox="0 0 400 270" class="w-full" role="img" aria-label="{ind.label} Entwicklung">
                   {#each iGridLines as gl}
                     <line x1={sChartL} y1={iToY(gl)} x2={sChartR} y2={iToY(gl)} stroke="rgba(255,255,255,0.15)" stroke-width="1" />
-                    <text x={sChartL - 4} y={iToY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.5)" font-size="9">{gl}%</text>
+                    <text x={sChartL - 4} y={iToY(gl) + 4} text-anchor="end" fill="rgba(255,255,255,0.75)" font-size="9">{gl}%</text>
                   {/each}
                   <line x1={sChartL} y1={sChartB} x2={sChartR} y2={sChartB} stroke="rgba(255,255,255,0.2)" stroke-width="1" />
                   {#each sTrend as t}
-                    <text x={sToX(t.date)} y={sChartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="10">{formatSocialPeriod(t.period)}</text>
+                    <text x={sToX(t.date)} y={sChartB + 16} text-anchor="middle" fill="rgba(255,255,255,0.75)" font-size="10">{formatSocialPeriod(t.period)}</text>
                   {/each}
                   <!-- Merged PLR lines (thin, continuous across LOR boundary) -->
                   {#each mergedPlrSeries as series, ci}
@@ -955,7 +954,7 @@
                     Gesamt ({latestS[ind.key]}%)
                   </div>
                   {#each mergedPlrSeries as series, ci}
-                    <div class="flex items-center gap-1.5 text-xs text-white/40">
+                    <div class="flex items-center gap-1.5 text-xs text-white/60">
                       <span class="w-3 h-0.5 rounded-full shrink-0 opacity-50" style="background: {PLR_LINE_COLORS[ci % PLR_LINE_COLORS.length]}"></span>
                       {shortName(series.name)}
                     </div>
@@ -970,7 +969,7 @@
             </button>
           {/if}
         </div>
-        <p class="text-xs text-white/40 mt-2 italic">Ab 2021 neue Gebietseinteilung: Schillerpromenade vereint Nord + Süd, Silbersteinstr. vereint Wartheplatz + Silbersteinstr.</p>
+        <p class="text-xs text-white/60 mt-2 italic">Ab 2021 neue Gebietseinteilung: Schillerpromenade vereint Nord + Süd, Silbersteinstr. vereint Wartheplatz + Silbersteinstr.</p>
       </div>
     {/if}
 
@@ -993,16 +992,16 @@
              class="text-[#5cb87a] hover:underline">Berliner Luftgüte-Messnetz (BLUME)</a>, Station MC042 Nansenstraße
         </p>
       {/if}
-      <p class="text-xs text-white/40">
+      <p class="text-xs text-white/60">
         Die Daten beziehen sich auf den Schillerkiez (4 Planungsräume im LOR-System 2021):
         Schillerpromenade Nord, Schillerpromenade Süd, Wartheplatz und Silbersteinstraße.
       </p>
       <hr class="border-gray-300/50 my-2" />
-      <p class="text-xs text-white/40 italic">
+      <p class="text-xs text-white/60 italic">
         <strong class="font-semibold">Gebietsreform 2021:</strong> Vor 2021 bestand der Schillerkiez aus 2 Planungsräumen (Schillerpromenade, Silbersteinstraße). Ab 2021 wurden diese in 4 aufgeteilt. In den Trendcharts werden die alten Gebiete mit den neuen zusammengeführt, um durchgängige Linien zu ermöglichen.
       </p>
       <hr class="border-gray-300/50 my-2" />
-      <p class="text-xs text-white/40 italic">
+      <p class="text-xs text-white/60 italic">
         (*) <strong class="font-semibold">Status-Index:</strong> Zusammengesetzter Wert aus Arbeitslosigkeit, Kinderarmut und Transferleistungen — je niedriger, desto besser die soziale Lage.
         <strong class="font-semibold">Dynamik-Index:</strong> Zeigt die Entwicklung über die Zeit — positiv = Verbesserung, negativ = Verschlechterung, 0 = stabil.
       </p>
