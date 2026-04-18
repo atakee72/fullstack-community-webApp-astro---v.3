@@ -975,6 +975,7 @@
     {/if}
 
     <!-- Footer / Sources -->
+    <div class="mt-16 border-t border-white/10 pt-8">
     <div use:reveal class="rounded-xl p-6 text-sm text-white/60 space-y-2 border border-transparent transition-all duration-300 hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
       <p>
         <strong>Quellen:</strong> Amt für Statistik Berlin-Brandenburg (Demografie, halbjährlich) · Monitoring Soziale Stadtentwicklung Berlin (Sozialindex, alle 2 Jahre, 2013–2023)
@@ -1006,6 +1007,7 @@
         <strong class="font-semibold">Dynamik-Index:</strong> Zeigt die Entwicklung über die Zeit — positiv = Verbesserung, negativ = Verschlechterung, 0 = stabil.
       </p>
       <hr class="border-gray-300/50 my-2" />
+    </div>
     </div>
   {/if}
 </div>

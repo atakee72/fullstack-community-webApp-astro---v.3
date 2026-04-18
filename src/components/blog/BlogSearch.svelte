@@ -143,7 +143,7 @@
   {#each paginatedPosts as post, index (post.id)}
     <div class="opacity-0" use:reveal={(index % columnsPerRow) * 0.12}>
     <a href={`/blog/${post.id}`} class="block group">
-    <article class="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl overflow-hidden hover:bg-white/[0.1] hover:border-white/30 transition-all duration-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] cursor-pointer">
+    <article class="rounded-xl overflow-hidden border border-transparent transition-all duration-300 cursor-pointer hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
         {#if post.cover}
           <div class="relative h-48 overflow-hidden">
             <img
