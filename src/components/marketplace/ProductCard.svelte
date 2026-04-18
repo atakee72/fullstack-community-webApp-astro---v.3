@@ -46,7 +46,7 @@
 </script>
 
 <a href="/marketplace/{listing._id}" class="group block {showWarningOverlay ? 'pointer-events-none' : ''}">
-  <div class="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl overflow-hidden hover:bg-white/[0.1] hover:border-white/30 transition-all duration-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] relative">
+  <div class="rounded-2xl overflow-hidden border border-transparent transition-all duration-300 relative hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
     {#if showWarningOverlay}
       <!-- Warning overlay for non-owners -->
       <div role="alert" class="absolute inset-0 z-10 backdrop-blur-sm bg-white/60 flex flex-col items-center justify-center p-4 text-center">
