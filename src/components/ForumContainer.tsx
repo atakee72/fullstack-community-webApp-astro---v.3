@@ -288,7 +288,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
       <div className="w-full">
         <div className="text-center py-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b border-[#4b9aaa]"></div>
-          <p className="text-gray-600 mt-2">Loading forum...</p>
+          <p className="text-white/70 mt-2">Loading forum...</p>
         </div>
       </div>
     );
@@ -377,12 +377,12 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                 placeholder={`Search in ${collectionType === 'topics' ? 'discussions' : collectionType}...`}
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
-                className="w-full py-1.5 px-2 md:py-2 md:px-3 pr-8 border-2 border-gray-200 rounded-md text-sm md:text-base focus:outline-none focus:border-[#4b9aaa] transition-colors"
+                className="w-full py-1.5 px-2 md:py-2 md:px-3 pr-8 bg-white/[0.08] backdrop-blur-xl border-2 border-white/15 rounded-md text-sm md:text-base text-[#e8e6e1] placeholder-white/40 focus:outline-none focus:border-[#6F2F59]/70 focus:ring-2 focus:ring-[#6F2F59]/30 transition-colors"
               />
               {searchValue && (
                 <button
                   onClick={() => setSearchValue('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors"
                   aria-label="Clear search"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -404,7 +404,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
       <div className="mt-3 md:mt-4">
           {pagedItems.length === 0 ? (
             <div className="bg-white rounded-lg shadow-md p-6 md:p-8 text-center">
-              <p className="text-gray-600 text-base md:text-lg">No {collectionType} found. Be the first to create one!</p>
+              <p className="text-white/70 text-base md:text-lg">No {collectionType} found. Be the first to create one!</p>
             </div>
           ) : (
             <AnimatePresence mode="wait">
@@ -421,7 +421,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                   <div
                     key={item._id}
                     className={cn(
-                      "bg-[#c9c4b9] rounded-lg shadow-xl overflow-hidden flex flex-col h-[340px] md:h-[400px] transition-all duration-400 ease-out border border-[#4b9aaa]/40",
+                      "bg-[#c9c4b9] rounded-lg shadow-xl overflow-hidden flex flex-col h-[340px] md:h-[400px] transition-all duration-300 ease-out border border-[#4b9aaa]/40 hover:ring-2 hover:ring-white/30 hover:shadow-[0_0_24px_rgba(255,255,255,0.12)]",
                       !item.images?.length && "p-4 md:p-6",
                       item.moderationStatus === 'pending' && !item.isUserReported && isOwner(item.author, user) && "ring-2 ring-amber-300",
                       item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && "ring-2 ring-orange-300",
@@ -773,8 +773,8 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                 }}
                 pageSizeOptions={[12, 24, 48]}
                 onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(0); }}
-                accentColor="bg-[#814256]"
-                accentHover="hover:bg-[#6b3548]"
+                accentColor="bg-[#6F2F59]"
+                accentHover="hover:bg-[#5a2548]"
                 itemLabel={collectionType === 'topics' ? 'discussions' : collectionType}
               />
             </div>
