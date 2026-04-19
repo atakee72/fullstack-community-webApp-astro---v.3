@@ -315,7 +315,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     <div className="w-full max-w-4xl mx-auto">
       {/* Header Section with Collection Selector — sticky so tabs + search stay at top on scroll.
           bg-[#4b9aaa] matches the teal parent box (index.astro:14) so it blends seamlessly. */}
-      <div className="sticky top-4 z-30 w-full mb-4 md:mb-6 bg-[#4b9aaa]">
+      <div className="sticky top-4 z-30 w-full mb-4 md:mb-6">
         {/* Tab row + Plus button grouped together; plus stays visible even when search collapses. */}
         <div className="flex items-end gap-2 mt-0 md:mt-1 mb-1 md:mb-2 ml-2 md:ml-6">
         {/* Collection Type Buttons - Lifted Tab Style */}
@@ -326,7 +326,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
               'px-2 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm md:text-lg font-semibold transition-all duration-300 ease-out rounded-t-lg whitespace-nowrap',
               collectionType === 'topics'
                 ? 'h-9 sm:h-12 md:h-14 bg-[#814256] text-white border-b border-[#814256] shadow-md'
-                : 'h-8 sm:h-10 md:h-11 bg-[#4b9aaa] text-white hover:bg-[#3a8a9a] opacity-80 blur-[0.1px] border-b border-[#eccc6e]'
+                : 'h-8 sm:h-10 md:h-11 bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/25 border-l-white/20 text-white/80 hover:bg-white/[0.1] hover:text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]'
             )}
           >
             Discussions
@@ -337,7 +337,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
               'px-2 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm md:text-lg font-semibold transition-all duration-300 ease-out rounded-t-lg whitespace-nowrap',
               collectionType === 'announcements'
                 ? 'h-9 sm:h-12 md:h-14 bg-[#814256] text-white border-b border-[#814256] shadow-md'
-                : 'h-8 sm:h-10 md:h-11 bg-[#4b9aaa] text-white hover:bg-[#3a8a9a] opacity-80 blur-[0.1px] border-b border-[#eccc6e]'
+                : 'h-8 sm:h-10 md:h-11 bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/25 border-l-white/20 text-white/80 hover:bg-white/[0.1] hover:text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]'
             )}
           >
             Announcements
@@ -348,7 +348,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
               'px-2 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-3 text-xs sm:text-sm md:text-lg font-semibold transition-all duration-300 ease-out rounded-t-lg whitespace-nowrap',
               collectionType === 'recommendations'
                 ? 'h-9 sm:h-12 md:h-14 bg-[#814256] text-white border-b border-[#814256] shadow-md'
-                : 'h-8 sm:h-10 md:h-11 bg-[#4b9aaa] text-white hover:bg-[#3a8a9a] opacity-80 blur-[0.1px] border-b border-[#eccc6e]'
+                : 'h-8 sm:h-10 md:h-11 bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/25 border-l-white/20 text-white/80 hover:bg-white/[0.1] hover:text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]'
             )}
           >
             Recommendations
@@ -424,7 +424,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                   <div
                     key={item._id}
                     className={cn(
-                      "bg-[#c9c4b9] rounded-lg shadow-xl overflow-hidden flex flex-col h-[340px] md:h-[400px] transition-all duration-300 ease-out border border-[#4b9aaa]/40 hover:ring-2 hover:ring-white/30 hover:shadow-[0_0_24px_rgba(255,255,255,0.12)]",
+                      "bg-[#c9c4b9]/75 backdrop-blur-sm rounded-lg shadow-xl overflow-hidden flex flex-col h-[340px] md:h-[400px] transition-all duration-300 ease-out border border-[#4b9aaa]/40 hover:ring-2 hover:ring-white/30 hover:shadow-[0_0_24px_rgba(255,255,255,0.12)]",
                       !item.images?.length && "p-4 md:p-6",
                       item.moderationStatus === 'pending' && !item.isUserReported && isOwner(item.author, user) && "ring-2 ring-amber-300",
                       item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && "ring-2 ring-orange-300",
@@ -555,7 +555,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                       item.images?.length && "w-1/2 p-4 md:p-6 overflow-hidden"
                     )}>
                     {/* Card Header Strip — Title + Edit/Delete Icons */}
-                    <div className="bg-[#c9c4b9] -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-3 md:px-6 py-3 mb-1">
+                    <div className="bg-[#c9c4b9]/75 backdrop-blur-sm -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-3 md:px-6 py-3 mb-1">
                       <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
                         <span className="inline-block whitespace-nowrap font-[550] italic text-sm md:text-base text-gray-900 px-1 pt-4 font-['Consolas',_monospace]">
                           {item.title}
@@ -747,7 +747,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                     </div>
                     </div>{/* close content side */}
                     {item.images?.length > 0 && (
-                      <div className="w-1/2 flex-shrink-0 bg-[#c9c4b9] relative cursor-pointer" onClick={() => handleReadMore(item)}>
+                      <div className="w-1/2 flex-shrink-0 bg-[#c9c4b9]/75 backdrop-blur-sm relative cursor-pointer" onClick={() => handleReadMore(item)}>
                         <img
                           src={item.images[0].url}
                           alt=""
