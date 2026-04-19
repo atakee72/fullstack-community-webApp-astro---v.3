@@ -305,13 +305,13 @@ export function NewsCards({
 
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 md:p-6 text-gray-800">
+    <div className="w-full max-w-6xl mx-auto p-4 md:p-6 text-[#e8e6e1]">
       {/* Submit News Button */}
       {user && (
         <div className="flex justify-end mb-4">
           <button
             onClick={() => setShowSubmitForm(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors font-medium shrink-0"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#3b5ce0] text-white rounded-lg hover:bg-[#2e48b8] transition-colors font-medium shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Submit News</span>
@@ -322,24 +322,24 @@ export function NewsCards({
       {/* Search & Filter Bar */}
       <div className="mb-6 space-y-3">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
           <input
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search news..."
-            className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] focus:border-transparent"
+            className="w-full pl-10 pr-10 py-2 bg-white/[0.08] backdrop-blur-xl border border-white/15 text-[#e8e6e1] placeholder-white/40 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3b5ce0]/50 focus:border-[#3b5ce0]/50"
           />
           {searchInput && (
             <button
               onClick={clearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/70"
             >
               <X className="w-4 h-4" />
             </button>
           )}
           {isLoading && debouncedSearch && (
-            <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4b9aaa] animate-spin" />
+            <Loader2 className="absolute right-10 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3b5ce0] animate-spin" />
           )}
         </div>
 
@@ -359,15 +359,15 @@ export function NewsCards({
               className={cn(
                 "px-3 py-1.5 text-sm font-medium rounded-lg transition-colors",
                 dateFilter === opt.value
-                  ? "bg-[#814256] text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  ? "bg-[#3b5ce0] text-white"
+                  : "bg-white/10 text-white/70 hover:bg-gray-200"
               )}
             >
               {opt.label}
             </button>
           ))}
           {pagination && (
-            <span className="flex items-center text-sm text-gray-400 ml-auto">
+            <span className="flex items-center text-sm text-white/50 ml-auto">
               {pagination.total} {pagination.total === 1 ? 'article' : 'articles'}
             </span>
           )}
@@ -377,7 +377,7 @@ export function NewsCards({
       {/* Loading State */}
       {isLoading && newsItems.length === 0 && (
         <div className="flex justify-center py-16">
-          <Loader2 className="w-8 h-8 text-[#4b9aaa] animate-spin" />
+          <Loader2 className="w-8 h-8 text-[#3b5ce0] animate-spin" />
         </div>
       )}
 
@@ -391,8 +391,8 @@ export function NewsCards({
       {/* Empty State */}
       {!isLoading && !error && newsItems.length === 0 && (
         <div className="text-center py-16">
-          <p className="text-gray-500 text-lg mb-2">No news yet</p>
-          <p className="text-gray-400">
+          <p className="text-white/60 text-lg mb-2">No news yet</p>
+          <p className="text-white/50">
             {user ? 'Be the first to submit a news story!' : 'Check back later for community news.'}
           </p>
         </div>
@@ -411,9 +411,9 @@ export function NewsCards({
             const showWarningOverlay = hasWarning && !warningDismissed && !isItemAuthor;
 
             const cardClassName = cn(
-              "bg-white border border-gray-200 rounded-lg overflow-hidden group relative",
-              "transition-[transform,box-shadow] duration-300",
-              !isRejected && "cursor-pointer hover:-translate-y-1 hover:scale-[1.01] hover:shadow-lg",
+              "rounded-xl overflow-hidden border border-transparent group relative",
+              "transition-all duration-300",
+              !isRejected && "cursor-pointer hover:-translate-y-1 hover:scale-[1.01] hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]",
               isPending && "opacity-60 border-amber-300",
               isRejected && "opacity-50 border-red-300 grayscale"
             );
@@ -427,15 +427,15 @@ export function NewsCards({
                 {showWarningOverlay && (
                   <div className="absolute inset-0 z-10 backdrop-blur-sm bg-white/60 flex flex-col items-center justify-center p-4 text-center">
                     <span className="text-2xl mb-2">⚠️</span>
-                    <p className="text-sm font-medium text-gray-700 mb-1">Content Warning</p>
-                    <p className="text-xs text-gray-500 mb-3">
+                    <p className="text-sm font-medium text-white/80 mb-1">Content Warning</p>
+                    <p className="text-xs text-white/60 mb-3">
                       {isAuthor(item)
                         ? (item.warningText || 'Your submission was approved with a warning.')
                         : GENERIC_WARNING}
                     </p>
                     <button
                       onClick={(e) => dismissWarning(itemId, e)}
-                      className="px-3 py-1.5 text-xs bg-[#814256] text-white rounded hover:bg-[#6a3547] transition-colors"
+                      className="px-3 py-1.5 text-xs bg-[#3b5ce0] text-white rounded hover:bg-[#2e48b8] transition-colors"
                     >
                       Show content anyway
                     </button>
@@ -443,7 +443,7 @@ export function NewsCards({
                 )}
 
                 {/* Image */}
-                <div className="relative h-48 md:h-56 overflow-hidden bg-gray-100">
+                <div className="relative h-48 md:h-56 overflow-hidden bg-white/10">
                   {item.imageUrl ? (
                     <img
                       src={item.imageUrl}
@@ -493,7 +493,7 @@ export function NewsCards({
                     </span>
                   )}
                   {dateFilter === 'archive' && (
-                    <span className="absolute top-3 right-12 px-2 py-1 text-xs font-medium bg-gray-500/80 text-white rounded">
+                    <span className="absolute top-3 right-12 px-2 py-1 text-xs font-medium bg-white/[0.04]0/80 text-white rounded">
                       Archived
                     </span>
                   )}
@@ -507,11 +507,11 @@ export function NewsCards({
 
                 {/* Title */}
                 <div className="p-4 md:p-5">
-                  <h3 className="font-semibold text-base md:text-lg leading-tight line-clamp-3 text-gray-800 group-hover:text-[#4b9aaa] transition-colors">
+                  <h3 className="font-semibold text-base md:text-lg leading-tight line-clamp-3 text-[#e8e6e1] group-hover:text-[#3b5ce0] transition-colors">
                     {item.title}
                   </h3>
                   {item.source === 'user_submitted' && item.submittedBy && typeof item.submittedBy === 'object' && (
-                    <p className="text-xs text-gray-400 mt-2">
+                    <p className="text-xs text-white/50 mt-2">
                       Submitted by {(item.submittedBy as any).userName || (item.submittedBy as any).name || 'Member'}
                     </p>
                   )}
@@ -549,8 +549,8 @@ export function NewsCards({
         onPageChange={setPage}
         pageSizeOptions={[12, 24, 48]}
         onPageSizeChange={(size) => { setPageSize(size); setPage(0); }}
-        accentColor="bg-[#814256]"
-        accentHover="hover:bg-[#6b3548]"
+        accentColor="bg-[#3b5ce0]"
+        accentHover="hover:bg-[#2e48b8]"
         itemLabel="articles"
       />
 
@@ -562,12 +562,12 @@ export function NewsCards({
             onClick={closeItem}
           />
 
-          <div className="fixed inset-4 md:inset-8 lg:inset-16 bg-white border border-gray-200 rounded-xl overflow-hidden z-50 animate-slideUp">
+          <div className="fixed inset-4 md:inset-8 lg:inset-16 bg-[#1a1d4a]/95 backdrop-blur-xl border border-white/20 border-t-white/30 rounded-xl shadow-2xl overflow-hidden z-50 animate-slideUp">
             <button
               className="absolute top-4 right-4 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center z-10 shadow-md transition-transform duration-200 hover:scale-110 active:scale-90"
               onClick={closeItem}
             >
-              <X className="w-4 h-4 text-gray-700" />
+              <X className="w-4 h-4 text-white/80" />
             </button>
 
             {/* Navigation Arrows */}
@@ -576,7 +576,7 @@ export function NewsCards({
                 className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center z-10 shadow-md transition-all duration-200 hover:scale-110 active:scale-90"
                 onClick={(e) => { e.stopPropagation(); navigateItem('prev'); }}
               >
-                <span className="text-gray-700 text-lg">←</span>
+                <span className="text-white/80 text-lg">←</span>
               </button>
             )}
             {selectedIndex < newsItems.length - 1 && (
@@ -584,12 +584,12 @@ export function NewsCards({
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center z-10 shadow-md transition-all duration-200 hover:scale-110 active:scale-90"
                 onClick={(e) => { e.stopPropagation(); navigateItem('next'); }}
               >
-                <span className="text-gray-700 text-lg">→</span>
+                <span className="text-white/80 text-lg">→</span>
               </button>
             )}
 
             {/* Article counter */}
-            <div className="absolute top-4 left-4 z-10 px-2 py-1 bg-white/90 rounded text-xs text-gray-500 shadow-sm">
+            <div className="absolute top-4 left-4 z-10 px-2 py-1 bg-white/90 rounded text-xs text-white/60 shadow-sm">
               {selectedIndex + 1} / {newsItems.length}
             </div>
 
@@ -636,19 +636,19 @@ export function NewsCards({
                   </div>
                 )}
 
-                <h1 className="text-2xl md:text-3xl font-bold mb-4 text-[#814256]">
+                <h1 className="text-2xl md:text-3xl font-bold mb-4 text-[#3b5ce0] font-['Space_Grotesk',sans-serif]">
                   {selectedItem.title}
                 </h1>
 
-                <p className="text-gray-600 text-lg mb-6 leading-relaxed">
+                <p className="text-white/70 text-lg mb-6 leading-relaxed">
                   {selectedItem.description}
                 </p>
 
                 {/* Submitter comment */}
                 {selectedItem.submitterComment && (
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-                    <p className="text-sm text-gray-500 font-medium mb-1">Community note:</p>
-                    <p className="text-gray-700 italic">"{selectedItem.submitterComment}"</p>
+                  <div className="bg-white/[0.04] border border-white/10 rounded-lg p-4 mb-6">
+                    <p className="text-sm text-white/60 font-medium mb-1">Community note:</p>
+                    <p className="text-white/80 italic">"{selectedItem.submitterComment}"</p>
                   </div>
                 )}
 
@@ -657,7 +657,7 @@ export function NewsCards({
                   href={selectedItem.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors font-medium"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#3b5ce0] text-white rounded-lg hover:bg-[#2e48b8] transition-colors font-medium"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <ExternalLink className="w-4 h-4" />
@@ -677,8 +677,8 @@ export function NewsCards({
             onClick={() => setShowSubmitForm(false)}
           />
 
-          <div className="fixed inset-4 md:inset-x-auto md:inset-y-8 md:max-w-lg md:mx-auto bg-white border border-gray-200 rounded-xl overflow-hidden z-50 animate-slideUp">
-            <div className="bg-[#4b9aaa] px-6 py-4 flex items-center justify-between">
+          <div className="fixed inset-4 md:inset-x-auto md:inset-y-8 md:max-w-lg md:mx-auto bg-[#1a1d4a]/95 backdrop-blur-xl border border-white/20 border-t-white/30 rounded-xl shadow-2xl overflow-hidden z-50 animate-slideUp">
+            <div className="bg-[#3b5ce0] px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-white">Submit News</h2>
               <button
                 onClick={() => setShowSubmitForm(false)}
@@ -691,21 +691,21 @@ export function NewsCards({
             <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[calc(100vh-12rem)]">
               {/* URL Input — primary field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Article URL *</label>
+                <label className="block text-sm font-medium text-white/80 mb-1">Article URL *</label>
                 <div className="flex gap-2">
                   <input
                     type="url"
                     required
                     value={formData.sourceUrl}
                     onChange={(e) => setFormData(prev => ({ ...prev, sourceUrl: e.target.value }))}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+                    className="flex-1 px-3 py-2 bg-white/[0.08] backdrop-blur-xl border border-white/15 text-[#e8e6e1] placeholder-white/40 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3b5ce0]/50 focus:border-[#3b5ce0]/50"
                     placeholder="Paste article link here..."
                   />
                   <button
                     type="button"
                     onClick={() => fetchPreview(formData.sourceUrl)}
                     disabled={previewLoading || !formData.sourceUrl}
-                    className="px-4 py-2 bg-[#eccc6e] text-gray-800 rounded-lg hover:bg-[#d4b85e] transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-2 shrink-0"
+                    className="px-4 py-2 bg-[#3b5ce0]/20 text-[#3b5ce0] border border-[#3b5ce0]/40 hover:bg-[#3b5ce0]/30 backdrop-blur-xl rounded-lg transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-2 shrink-0"
                   >
                     {previewLoading ? (
                       <>
@@ -724,15 +724,15 @@ export function NewsCards({
 
               {/* Loading indicator for preview */}
               {previewLoading && (
-                <div className="flex items-center gap-3 p-3 bg-[#4b9aaa]/10 rounded-lg">
-                  <Loader2 className="w-5 h-5 text-[#4b9aaa] animate-spin" />
-                  <span className="text-sm text-[#4b9aaa] font-medium">Fetching article info...</span>
+                <div className="flex items-center gap-3 p-3 bg-[#3b5ce0]/10 rounded-lg">
+                  <Loader2 className="w-5 h-5 text-[#3b5ce0] animate-spin" />
+                  <span className="text-sm text-[#3b5ce0] font-medium">Fetching article info...</span>
                 </div>
               )}
 
               {/* Image preview */}
               {formData.imageUrl && !previewLoading && (
-                <div className="relative h-32 rounded-lg overflow-hidden bg-gray-100">
+                <div className="relative h-32 rounded-lg overflow-hidden bg-white/10">
                   <img
                     src={formData.imageUrl}
                     alt="Article preview"
@@ -750,32 +750,32 @@ export function NewsCards({
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Article Title *</label>
+                <label className="block text-sm font-medium text-white/80 mb-1">Article Title *</label>
                 <input
                   required
                   minLength={5}
                   maxLength={200}
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+                  className="w-full px-3 py-2 bg-white/[0.08] backdrop-blur-xl border border-white/15 text-[#e8e6e1] placeholder-white/40 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3b5ce0]/50 focus:border-[#3b5ce0]/50"
                   placeholder="Title of the news article"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Source Name *</label>
+                <label className="block text-sm font-medium text-white/80 mb-1">Source Name *</label>
                 <input
                   required
                   maxLength={100}
                   value={formData.sourceName}
                   onChange={(e) => setFormData(prev => ({ ...prev, sourceName: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+                  className="w-full px-3 py-2 bg-white/[0.08] backdrop-blur-xl border border-white/15 text-[#e8e6e1] placeholder-white/40 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3b5ce0]/50 focus:border-[#3b5ce0]/50"
                   placeholder="e.g. Tagesspiegel, Berliner Zeitung"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                <label className="block text-sm font-medium text-white/80 mb-1">Description *</label>
                 <textarea
                   required
                   minLength={10}
@@ -783,30 +783,30 @@ export function NewsCards({
                   rows={3}
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] resize-none"
+                  className="w-full px-3 py-2 bg-white/[0.08] backdrop-blur-xl border border-white/15 text-[#e8e6e1] placeholder-white/40 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3b5ce0]/50 focus:border-[#3b5ce0]/50 resize-none"
                   placeholder="Brief summary of the article"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL (optional)</label>
+                <label className="block text-sm font-medium text-white/80 mb-1">Image URL (optional)</label>
                 <input
                   type="url"
                   value={formData.imageUrl}
                   onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa]"
+                  className="w-full px-3 py-2 bg-white/[0.08] backdrop-blur-xl border border-white/15 text-[#e8e6e1] placeholder-white/40 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3b5ce0]/50 focus:border-[#3b5ce0]/50"
                   placeholder="https://... (auto-filled from article)"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Your Comment (optional)</label>
+                <label className="block text-sm font-medium text-white/80 mb-1">Your Comment (optional)</label>
                 <textarea
                   maxLength={500}
                   rows={2}
                   value={formData.submitterComment}
                   onChange={(e) => setFormData(prev => ({ ...prev, submitterComment: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] resize-none"
+                  className="w-full px-3 py-2 bg-white/[0.08] backdrop-blur-xl border border-white/15 text-[#e8e6e1] placeholder-white/40 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3b5ce0]/50 focus:border-[#3b5ce0]/50 resize-none"
                   placeholder="Why is this relevant to the community?"
                 />
               </div>
@@ -818,7 +818,7 @@ export function NewsCards({
               <button
                 type="submit"
                 disabled={submitMutation.isPending || previewLoading}
-                className="w-full py-3 bg-[#4b9aaa] text-white rounded-lg hover:bg-[#3a7a8a] transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-[#3b5ce0] text-white rounded-lg hover:bg-[#2e48b8] transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {submitMutation.isPending ? (
                   <>
@@ -830,7 +830,7 @@ export function NewsCards({
                 )}
               </button>
 
-              <p className="text-xs text-gray-400 text-center">
+              <p className="text-xs text-white/50 text-center">
                 Your submission will be reviewed by an admin before appearing on the newsboard.
               </p>
             </form>

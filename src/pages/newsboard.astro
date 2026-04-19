@@ -8,9 +8,17 @@ const session = await getSession(Astro.request);
 ---
 
 <BaseLayout title="Newsboard - Mahalle">
-  <main class="min-h-[calc(100vh-60px)] py-2 md:py-3">
+  <div class="dark-glass-bg" aria-hidden="true"></div>
+  <div class="dark-glass-gradient" aria-hidden="true"></div>
+
+  <main class="relative z-10 min-h-[calc(100vh-60px)] py-2 md:py-3 font-inter carved-title" style="--carved-accent: #3b5ce0">
     <div class="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
-      <PageHeader title="Neighbourhood News" subtitle="Stories from your community" />
+      <PageHeader
+        title="Neighbourhood News"
+        subtitle="Stories from your community"
+        color="#3b5ce0"
+        subtitleClass="text-white/70"
+      />
       <NewsCardsWrapper client:load session={session} />
     </div>
   </main>
