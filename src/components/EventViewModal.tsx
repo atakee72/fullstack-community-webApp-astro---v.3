@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { Calendar, MapPin, AlignLeft, User, MessageCircle } from 'lucide-react';
 import type { Event } from '../types';
 import { generateGoogleCalendarUrl, downloadIcsFile } from '../utils/calendarExport';
 
@@ -210,7 +211,7 @@ export default function EventViewModal({
             {/* Date & Time + Report Button */}
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-start gap-2">
-                <div className="text-[#d4af37] text-xl">📅</div>
+                <Calendar className="w-5 h-5 text-[#d4af37] flex-shrink-0 mt-0.5" strokeWidth={1.75} />
                 <div>
                   <p className="font-semibold text-white/80 text-sm">
                     {format(startDate, 'EEEE, MMMM d, yyyy')}
@@ -259,7 +260,7 @@ export default function EventViewModal({
             {/* Location */}
             {event.location && (
               <div className="flex items-start gap-2">
-                <div className="text-[#d4af37] text-xl">📍</div>
+                <MapPin className="w-5 h-5 text-[#d4af37] flex-shrink-0 mt-0.5" strokeWidth={1.75} />
                 <div>
                   <p className="font-semibold text-white/80 text-sm">Location</p>
                   <p className="text-xs text-white/70">{event.location}</p>
@@ -284,7 +285,7 @@ export default function EventViewModal({
               </div>
             ) : (
               <div className="flex items-start gap-2">
-                <div className="text-[#d4af37] text-xl">📝</div>
+                <AlignLeft className="w-5 h-5 text-[#d4af37] flex-shrink-0 mt-0.5" strokeWidth={1.75} />
                 <div className="flex-1">
                   <p className="font-semibold text-white/80 text-sm mb-1">Description</p>
                   {event.hasWarningLabel && (
@@ -311,7 +312,7 @@ export default function EventViewModal({
 
             {/* Author */}
             <div className="flex items-start gap-2">
-              <div className="text-[#d4af37] text-xl">👤</div>
+              <User className="w-5 h-5 text-[#d4af37] flex-shrink-0 mt-0.5" strokeWidth={1.75} />
               <div>
                 <p className="font-semibold text-white/80 text-sm">Organized by</p>
                 <p className="text-xs text-white/70">
@@ -325,7 +326,7 @@ export default function EventViewModal({
             {/* Stats Bar */}
             <div className="flex items-center pt-2 border-t border-white/10">
               <div className="flex items-center gap-1.5 text-xs text-white/70">
-                <span>💬</span>
+                <MessageCircle className="w-3.5 h-3.5" strokeWidth={1.75} />
                 <span>{event.comments?.length || 0} comments</span>
               </div>
             </div>

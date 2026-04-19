@@ -25,6 +25,7 @@ interface CalendarGridViewProps {
   events: Event[];
   currentMonth: Date;
   onMonthChange: (newMonth: Date) => void;
+  onClearSelection?: () => void;
   onDateClick: (date: Date) => void;
   selectedDate?: Date;
   rangeStart?: Date;
@@ -55,6 +56,7 @@ export default function CalendarGridView({
   events,
   currentMonth,
   onMonthChange,
+  onClearSelection,
   onDateClick,
   selectedDate,
   rangeStart,
@@ -165,6 +167,7 @@ export default function CalendarGridView({
     const today = new Date();
     direction.current = today > currentMonth ? 1 : -1;
     onMonthChange(today);
+    onClearSelection?.();
   };
 
   // Get localized weekday names starting with Monday
@@ -194,7 +197,7 @@ export default function CalendarGridView({
   }
 
   return (
-    <div className="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] rounded-lg p-2 md:p-3 lg:p-4" {...swipeHandlers}>
+    <div className="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] rounded-lg p-2 md:p-3 lg:p-4 pb-5 md:pb-6 lg:pb-7" {...swipeHandlers}>
       {/* Calendar Header with Month Navigation */}
       <div className="mb-2 md:mb-3">
         <div className="flex items-center justify-between gap-1.5 md:gap-2 mb-1">
@@ -246,7 +249,7 @@ export default function CalendarGridView({
       <div
         role="grid"
         aria-label={`Event Calendar for ${format(currentMonth, 'MMMM yyyy')}`}
-        className="calendar-grid overflow-x-hidden"
+        className="calendar-grid overflow-x-clip"
         onKeyDown={handleKeyboardNav}
       >
         {/* Week day headers */}
@@ -313,12 +316,12 @@ export default function CalendarGridView({
                         : isSelected
                           ? 'bg-[#d4af37] text-[#0e1033] border-[#d4af37]'
                           : day.isCurrentMonth
-                            ? (isPastDate ? 'bg-transparent text-white/30 cursor-not-allowed border-transparent' : 'bg-white/[0.04] border-white/10 text-white/90 hover:bg-white/[0.08]')
-                            : (isPastDate ? 'bg-transparent text-white/30 border-transparent' : 'bg-transparent text-white/30 border-transparent')
+                            ? (isPastDate ? 'bg-transparent text-white/30 pointer-events-none border-transparent' : 'bg-white/[0.04] border-white/10 text-white/90 hover:bg-white/[0.08]')
+                            : (isPastDate ? 'bg-transparent text-white/30 pointer-events-none border-transparent' : 'bg-transparent text-white/30 border-transparent')
                     }
                     ${day.isToday && !(hasRange && isInRange) && !(!rangeEnd && isRangeStart) ? 'border-[#d4af37] ring-2 ring-[#d4af37]/60' : (day.isToday ? 'ring-2 ring-[#d4af37]/60' : '')}
                     ${isFocused ? 'ring-2 ring-offset-1 ring-[#d4af37]' : ''}
-                    ${isPastDate ? 'cursor-not-allowed'
+                    ${isPastDate ? ''
                       : (hasRange && isInRange) || (!rangeEnd && isRangeStart)
                         ? 'hover:bg-[#d4af37]/40 hover:border-[#d4af37] cursor-pointer'
                         : 'hover:border-[#d4af37]/50 cursor-pointer'

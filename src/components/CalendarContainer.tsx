@@ -491,6 +491,11 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
             rangeStart={rangeStart}
             rangeEnd={rangeEnd}
             onCreateFromRange={handleCreateFromRange}
+            onClearSelection={() => {
+              setSelectedDate(new Date());
+              setRangeStart(undefined);
+              setRangeEnd(undefined);
+            }}
             isLoggedIn={!!user}
             locale={de}
           />
