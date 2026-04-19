@@ -67,38 +67,22 @@ export default function ReadMoreModal({
   const createComment = useCreateComment();
   const deleteComment = useDeleteComment(postId || '');
 
-  // Lock body scroll when modal is open (robust: works on mobile touch too)
+  // Lock body scroll when modal is open.
+  // NOTE: using only overflow:hidden (not position:fixed on body).
+  // position:fixed on body breaks position:fixed descendants' viewport positioning
+  // in Firefox when the page has other fixed elements (e.g. our .dark-glass-bg).
   useEffect(() => {
     if (!isOpen) return;
-    const scrollY = window.scrollY;
     const htmlElement = document.documentElement;
+    const prevHtmlOverflow = htmlElement.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
 
-    const applyLock = () => {
-      htmlElement.style.setProperty('overflow', 'hidden', 'important');
-      htmlElement.style.setProperty('touch-action', 'none', 'important');
-      htmlElement.style.setProperty('scroll-behavior', 'auto', 'important');
-      document.body.style.setProperty('position', 'fixed', 'important');
-      document.body.style.setProperty('top', `-${scrollY}px`, 'important');
-      document.body.style.setProperty('width', '100%', 'important');
-      document.body.style.setProperty('overflow', 'hidden', 'important');
-      document.body.style.setProperty('touch-action', 'none', 'important');
-    };
-
-    applyLock();
-    // Re-apply after a tick in case something overrides it
-    setTimeout(applyLock, 0);
-    setTimeout(applyLock, 10);
+    htmlElement.style.setProperty('overflow', 'hidden', 'important');
+    document.body.style.setProperty('overflow', 'hidden', 'important');
 
     return () => {
-      htmlElement.style.overflow = '';
-      htmlElement.style.touchAction = '';
-      htmlElement.style.scrollBehavior = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-      window.scrollTo(0, scrollY);
+      htmlElement.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
     };
   }, [isOpen]);
 

@@ -315,7 +315,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     <div className="w-full max-w-4xl mx-auto">
       {/* Header Section with Collection Selector — sticky so tabs + search stay at top on scroll.
           bg-[#4b9aaa] matches the teal parent box (index.astro:14) so it blends seamlessly. */}
-      <div className="sticky top-4 z-30 w-full mb-4 md:mb-6">
+      <div className="w-full mb-4 md:mb-6">
         {/* Tab row + Plus button grouped together; plus stays visible even when search collapses. */}
         <div className="flex items-end gap-2 mt-0 md:mt-1 mb-1 md:mb-2 ml-2 md:ml-6">
         {/* Collection Type Buttons - Lifted Tab Style */}
@@ -424,7 +424,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                   <div
                     key={item._id}
                     className={cn(
-                      "bg-[#c9c4b9]/75 backdrop-blur-sm rounded-lg shadow-xl overflow-hidden flex flex-col h-[340px] md:h-[400px] transition-all duration-300 ease-out border border-[#4b9aaa]/40 hover:ring-2 hover:ring-white/30 hover:shadow-[0_0_24px_rgba(255,255,255,0.12)]",
+                      "bg-[#c9c4b9]/75 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden flex flex-col h-[340px] md:h-[400px] transition-all duration-300 ease-out border border-[#4b9aaa]/40 hover:ring-2 hover:ring-white/30 hover:shadow-[0_0_24px_rgba(255,255,255,0.12)]",
                       !item.images?.length && "p-4 md:p-6",
                       item.moderationStatus === 'pending' && !item.isUserReported && isOwner(item.author, user) && "ring-2 ring-amber-300",
                       item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && "ring-2 ring-orange-300",
@@ -555,7 +555,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                       item.images?.length && "w-1/2 p-4 md:p-6 overflow-hidden"
                     )}>
                     {/* Card Header Strip — Title + Edit/Delete Icons */}
-                    <div className="bg-[#c9c4b9]/75 backdrop-blur-sm -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-3 md:px-6 py-3 mb-1">
+                    <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 px-3 md:px-6 py-3 mb-1">
                       <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
                         <span className="inline-block whitespace-nowrap font-[550] italic text-sm md:text-base text-gray-900 px-1 pt-4 font-['Consolas',_monospace]">
                           {item.title}
@@ -747,11 +747,11 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                     </div>
                     </div>{/* close content side */}
                     {item.images?.length > 0 && (
-                      <div className="w-1/2 flex-shrink-0 bg-[#c9c4b9]/75 backdrop-blur-sm relative cursor-pointer" onClick={() => handleReadMore(item)}>
+                      <div className="w-1/2 flex-shrink-0 relative cursor-pointer" onClick={() => handleReadMore(item)}>
                         <img
                           src={item.images[0].url}
                           alt=""
-                          className="absolute inset-0 w-full h-full object-contain"
+                          className="absolute inset-0 w-full h-full object-cover"
                           loading="lazy"
                         />
                       </div>
