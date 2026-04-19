@@ -369,34 +369,37 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
           )}
         </div>
 
-        <div className="bg-[#4b9aaa]/10 rounded-lg shadow-md">
-          <div className="pt-1 pb-3 px-3 md:pt-1 md:pb-4 md:px-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder={`Search in ${collectionType === 'topics' ? 'discussions' : collectionType}...`}
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                className="w-full py-1.5 px-2 md:py-2 md:px-3 pr-8 bg-white/[0.08] backdrop-blur-xl border-2 border-white/15 rounded-md text-sm md:text-base text-[#e8e6e1] placeholder-white/40 focus:outline-none focus:border-[#6F2F59]/70 focus:ring-2 focus:ring-[#6F2F59]/30 transition-colors"
-              />
-              {searchValue && (
-                <button
-                  onClick={() => setSearchValue('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors"
-                  aria-label="Clear search"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
+        <div className="pt-1 pb-3 md:pt-1 md:pb-4">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+              <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
+            <input
+              type="text"
+              placeholder={`Search in ${collectionType === 'topics' ? 'discussions' : collectionType}...`}
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              className="w-full pl-12 pr-12 py-3 bg-white/[0.06] backdrop-blur-md border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] text-[#e8e6e1] placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#6F2F59]/50 focus:border-[#6F2F59]/50 transition-colors"
+            />
             {searchValue && (
-              <p className="text-xs text-white mt-1 px-1">
-                {filteredItems.length} {filteredItems.length === 1 ? 'result' : 'results'}
-              </p>
+              <button
+                onClick={() => setSearchValue('')}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/40 hover:text-white/70 transition-colors"
+                aria-label="Clear search"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             )}
           </div>
+          {searchValue && (
+            <p className="mt-3 text-white/70 text-sm">
+              {filteredItems.length} {filteredItems.length === 1 ? 'result' : 'results'} found
+            </p>
+          )}
         </div>
       </div>
 
