@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { format, isSameDay } from 'date-fns';
 import type { Locale } from 'date-fns';
+import { CalendarDays, CalendarX2 } from 'lucide-react';
 import type { Event } from '../types';
 import { confirmAction } from '../utils/toast';
 
@@ -87,7 +88,7 @@ export default function DayEventsList({
     return (
       <div className="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] rounded-lg p-2 md:p-3 lg:p-4">
         <div className="text-center py-4 md:py-6">
-          <div className="inline-block animate-spin rounded-full h-5 w-5 md:h-6 md:w-6 border-b-2 border-[#eccc6e]"></div>
+          <div className="inline-block animate-spin rounded-full h-5 w-5 md:h-6 md:w-6 border-b-2 border-[#d4af37]"></div>
           <p className="text-white/70 text-xs md:text-sm mt-2">Loading...</p>
         </div>
       </div>
@@ -98,7 +99,7 @@ export default function DayEventsList({
     return (
       <div className="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] rounded-lg p-2 md:p-3 lg:p-4">
         <div className="text-center py-6 md:py-8">
-          <div className="text-3xl md:text-4xl mb-2 md:mb-3">📅</div>
+          <CalendarDays className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-2 md:mb-3 text-white/40" strokeWidth={1.5} />
           <p className="text-white/70 text-xs md:text-sm">
             Select a date to view events
           </p>
@@ -119,7 +120,7 @@ export default function DayEventsList({
             placeholder="Search events..."
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full px-2 md:px-3 py-1.5 md:py-2 pr-8 md:pr-10 bg-white/[0.08] backdrop-blur-xl border border-white/15 rounded-md text-xs md:text-sm text-[#e8e6e1] placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50 transition-colors"
+            className="w-full px-2 md:px-3 py-1.5 md:py-2 pr-8 md:pr-10 bg-white/[0.08] backdrop-blur-xl border border-white/15 rounded-md text-xs md:text-sm text-[#e8e6e1] placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 focus:border-[#d4af37]/50 transition-colors"
           />
           {searchValue && (
             <button
@@ -138,7 +139,7 @@ export default function DayEventsList({
       {/* Header - Different for search mode vs day mode */}
       {searchValue.trim() ? (
         // Search Results Header
-        <div className="border-l-4 border-[#eccc6e] px-2 md:px-3 py-1.5 md:py-2 mb-2 md:mb-3 rounded-lg bg-[#eccc6e]/10">
+        <div className="border-l-4 border-[#d4af37] px-2 md:px-3 py-1.5 md:py-2 mb-2 md:mb-3 rounded-lg bg-[#d4af37]/10">
           <h3 className="text-sm md:text-base lg:text-lg font-bold text-[#e8e6e1]">
             Search Results
           </h3>
@@ -150,18 +151,18 @@ export default function DayEventsList({
         // Day Header
         <div className={`
           border-l-4 px-2 md:px-3 py-1.5 md:py-2 mb-2 md:mb-3 rounded-lg
-          ${isToday ? 'border-[#eccc6e] bg-[#eccc6e]/15' : 'border-[#eccc6e]/60 bg-[#eccc6e]/10'}
+          ${isToday ? 'border-[#d4af37] bg-[#d4af37]/15' : 'border-[#d4af37]/60 bg-[#d4af37]/10'}
         `}>
-          <div className="flex items-center gap-1.5 md:gap-2 mb-0.5 md:mb-1">
+          <div className="flex items-center gap-2 mb-0.5 md:mb-1 flex-wrap">
+            <h3 className="text-sm md:text-base lg:text-lg font-bold text-[#e8e6e1]">
+              {format(selectedDate, 'EEEE', { locale })}
+            </h3>
             {isToday && (
-              <span className="px-1.5 md:px-2 py-0.5 bg-[#eccc6e] text-[#0e1033] text-[10px] md:text-xs font-semibold rounded">
+              <span className="px-1.5 md:px-2 py-0.5 bg-[#d4af37] text-[#0e1033] text-[10px] md:text-xs font-semibold rounded">
                 Today
               </span>
             )}
           </div>
-          <h3 className="text-sm md:text-base lg:text-lg font-bold text-[#e8e6e1]">
-            {format(selectedDate, 'EEEE', { locale })}
-          </h3>
           <p className="text-xs md:text-sm text-white/70">
             {format(selectedDate, 'MMMM d, yyyy', { locale })}
           </p>
@@ -174,7 +175,7 @@ export default function DayEventsList({
       {/* Events List */}
       {filteredEvents.length === 0 ? (
         <div className="text-center py-4 md:py-6">
-          <div className="text-2xl md:text-3xl mb-1.5 md:mb-2">🗓️</div>
+          <CalendarX2 className="w-7 h-7 md:w-9 md:h-9 mx-auto mb-1.5 md:mb-2 text-white/40" strokeWidth={1.5} />
           <p className="text-white/60 text-xs md:text-sm">
             {searchValue.trim() ? 'No events found matching your search' : 'No events on this date'}
           </p>
@@ -254,19 +255,19 @@ export default function DayEventsList({
                   {/* Date & Time - Show full date in search mode */}
                   <div className="flex items-center gap-1 md:gap-2 mb-0.5 md:mb-1">
                     {searchValue.trim() && (
-                      <span className="text-[8px] md:text-[10px] px-1 md:px-1.5 py-0.5 bg-[#eccc6e]/20 text-[#eccc6e] rounded font-medium">
+                      <span className="text-[8px] md:text-[10px] px-1 md:px-1.5 py-0.5 bg-[#d4af37]/20 text-[#d4af37] rounded font-medium">
                         {format(new Date(event.startDate), 'MMM d', { locale })}
                       </span>
                     )}
-                    <span className="text-[10px] md:text-xs font-semibold text-[#eccc6e]">
+                    <span className="text-[10px] md:text-xs font-semibold text-[#d4af37]">
                       {startTime}
                     </span>
                     {isSameDate ? (
-                      <span className="text-[8px] md:text-[10px] px-1 md:px-1.5 py-0.5 bg-[#eccc6e] text-[#0e1033] rounded font-medium">
+                      <span className="text-[8px] md:text-[10px] px-1 md:px-1.5 py-0.5 border border-[#d4af37] text-[#d4af37] rounded font-medium">
                         Single-day
                       </span>
                     ) : (
-                      <span className="text-[8px] md:text-[10px] px-1 md:px-1.5 py-0.5 bg-white/10 text-white/70 rounded">
+                      <span className="text-[8px] md:text-[10px] px-1 md:px-1.5 py-0.5 border border-[#a86b7e] text-[#a86b7e] rounded font-medium">
                         Multi-day
                       </span>
                     )}
@@ -287,8 +288,8 @@ export default function DayEventsList({
                   {/* Category Badge */}
                   <div className="flex items-center gap-1.5 md:gap-2">
                     <span
-                      className="inline-block px-1.5 md:px-2 py-0.5 text-[8px] md:text-[10px] font-medium text-white rounded"
-                      style={{ backgroundColor: categoryColors[event.category || 'other'] }}
+                      className="inline-block px-1.5 md:px-2 py-0.5 text-[8px] md:text-[10px] font-medium rounded border"
+                      style={{ color: categoryColors[event.category || 'other'], borderColor: categoryColors[event.category || 'other'] }}
                     >
                       {event.category?.replace('-', ' ') || 'other'}
                     </span>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { CalendarPlus, CalendarCog } from 'lucide-react';
 import TagSelector from './TagSelector';
 
 interface EventModalProps {
@@ -247,15 +248,19 @@ export default function EventModal({
       <div className="fixed inset-0 flex items-center justify-center z-50 p-2 md:p-4" onClick={handleClose}>
         <div className="bg-[#1a1d4a]/95 backdrop-blur-xl border border-white/20 border-t-white/30 rounded-xl shadow-2xl max-w-2xl w-full max-h-[95vh] overflow-hidden animate-fade-in" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
-          <div className="bg-[#eccc6e]/15 border-b border-white/10 p-3 md:p-4 relative">
+          <div className="bg-[#d4af37]/15 border-b border-white/10 p-3 md:p-4 relative">
             <button
               onClick={handleClose}
-              className="absolute top-3 right-3 md:top-4 md:right-4 text-white/70 hover:text-[#eccc6e] transition-colors text-xl md:text-2xl"
+              className="absolute top-3 right-3 md:top-4 md:right-4 text-white/70 hover:text-[#d4af37] transition-colors text-xl md:text-2xl"
             >
               ✕
             </button>
             <div className="flex items-center gap-2 md:gap-3">
-              <span className="text-2xl md:text-3xl">📅</span>
+              {editMode ? (
+                <CalendarCog className="w-6 h-6 md:w-7 md:h-7 text-[#d4af37]" strokeWidth={1.5} />
+              ) : (
+                <CalendarPlus className="w-6 h-6 md:w-7 md:h-7 text-[#d4af37]" strokeWidth={1.5} />
+              )}
               <h2 className="text-xl md:text-2xl font-bold text-[#e8e6e1] font-['Space_Grotesk',sans-serif]">
                 {editMode ? 'Edit Event' : 'Create New Event'}
               </h2>
@@ -279,7 +284,7 @@ export default function EventModal({
                   }}
                   className={`w-full px-3 py-2 rounded-lg border text-sm bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] placeholder-white/40 ${
                     errors.title ? 'border-red-400/60' : 'border-white/15'
-                  } focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50 transition-all`}
+                  } focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 focus:border-[#d4af37]/50 transition-all`}
                   placeholder="Give your event a descriptive title... (min 5 characters)"
                   autoFocus
                 />
@@ -310,7 +315,7 @@ export default function EventModal({
                     }}
                     className={`w-full px-3 py-2 rounded-lg border text-sm bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] ${
                       errors.startDate ? 'border-red-400/60' : 'border-white/15'
-                    } focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50 transition-all`}
+                    } focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 focus:border-[#d4af37]/50 transition-all`}
                   />
                   {errors.startDate && (
                     <p className="text-red-300 text-xs mt-1 bg-red-500/20 border border-red-400/30 px-2 py-0.5 rounded">
@@ -334,7 +339,7 @@ export default function EventModal({
                     }}
                     className={`w-full px-3 py-2 rounded-lg border text-sm bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] ${
                       errors.endDate ? 'border-red-400/60' : 'border-white/15'
-                    } focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50 transition-all`}
+                    } focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 focus:border-[#d4af37]/50 transition-all`}
                   />
                   {errors.endDate && (
                     <p className="text-red-300 text-xs mt-1 bg-red-500/20 border border-red-400/30 px-2 py-0.5 rounded">
@@ -358,7 +363,7 @@ export default function EventModal({
                   }}
                   className={`w-full px-3 py-2 rounded-lg border text-sm bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] placeholder-white/40 ${
                     errors.location ? 'border-red-400/60' : 'border-white/15'
-                  } focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50 transition-all`}
+                  } focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 focus:border-[#d4af37]/50 transition-all`}
                   placeholder="Where will this event take place?"
                 />
                 {errors.location && (
@@ -379,7 +384,7 @@ export default function EventModal({
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50 transition-all"
+                  className="w-full px-3 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 focus:border-[#d4af37]/50 transition-all"
                 >
                   <option value="other">Other</option>
                   <option value="community">Community</option>
@@ -401,7 +406,7 @@ export default function EventModal({
                   }}
                   className={`w-full px-3 py-2 rounded-lg border text-sm bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] placeholder-white/40 ${
                     errors.body ? 'border-red-400/60' : 'border-white/15'
-                  } focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50 transition-all resize-none`}
+                  } focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 focus:border-[#d4af37]/50 transition-all resize-none`}
                   rows={4}
                   placeholder="Describe your event... (min 10 characters)"
                 />
@@ -438,7 +443,7 @@ export default function EventModal({
                 <button
                   type="submit"
                   disabled={isSubmitting || !title.trim() || !body.trim() || !startDate || !endDate}
-                  className="flex-1 py-2 px-4 text-sm bg-[#eccc6e] text-[#0e1033] font-bold rounded-lg hover:bg-[#d4b85e] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 py-2 px-4 text-sm bg-[#d4af37] text-[#0e1033] font-bold rounded-lg hover:bg-[#b89030] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center justify-center gap-2">

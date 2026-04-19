@@ -26,7 +26,7 @@ export default function EventListView({
   if (isLoading) {
     return (
       <div className="text-center py-8">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#eccc6e]"></div>
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#d4af37]"></div>
         <p className="text-white/70 mt-2">Loading events...</p>
       </div>
     );

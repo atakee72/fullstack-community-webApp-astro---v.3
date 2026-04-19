@@ -145,22 +145,22 @@ export default function EventViewModal({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="sticky top-0 bg-[#eccc6e]/15 backdrop-blur-xl border-b border-white/10 px-4 pt-3 pb-3.5 flex items-start justify-between">
+          <div className="sticky top-0 bg-[#d4af37]/15 backdrop-blur-xl border-b border-white/10 px-4 pt-3 pb-3.5 flex items-start justify-between">
             <div className="flex-1 pr-3">
               <h2 className="text-xl font-bold text-[#e8e6e1] mb-1 leading-tight font-['Space_Grotesk',sans-serif]">
                 {event.title}
               </h2>
               <div className="flex items-center gap-1.5">
                 <span
-                  className="inline-block px-3 py-1 text-xs font-semibold text-white rounded-full"
-                  style={{ backgroundColor: categoryColors[event.category || 'other'] }}
+                  className="inline-block px-3 py-1 text-xs font-semibold rounded-full border"
+                  style={{ color: categoryColors[event.category || 'other'], borderColor: categoryColors[event.category || 'other'] }}
                 >
                   {event.category?.replace('-', ' ') || 'other'}
                 </span>
                 {event.tags?.map((tag, idx) => (
                   <span
                     key={idx}
-                    className="inline-block px-2 py-0.5 text-xs bg-[#eccc6e] text-[#0e1033] rounded font-medium shadow-sm"
+                    className="inline-block px-2 py-0.5 text-xs bg-[#6F2F59]/20 border border-[#a86b7e]/40 text-[#a86b7e] rounded font-medium"
                   >
                     #{tag}
                   </span>
@@ -210,7 +210,7 @@ export default function EventViewModal({
             {/* Date & Time + Report Button */}
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-start gap-2">
-                <div className="text-[#eccc6e] text-xl">📅</div>
+                <div className="text-[#d4af37] text-xl">📅</div>
                 <div>
                   <p className="font-semibold text-white/80 text-sm">
                     {format(startDate, 'EEEE, MMMM d, yyyy')}
@@ -244,13 +244,13 @@ export default function EventViewModal({
             <div className="flex gap-2 pl-7">
               <button
                 onClick={() => window.open(generateGoogleCalendarUrl(event), '_blank', 'noopener')}
-                className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded border border-[#eccc6e]/50 text-[#eccc6e] hover:bg-[#eccc6e] hover:text-[#0e1033] transition-colors"
+                className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded border border-[#d4af37]/50 text-[#d4af37] hover:bg-[#d4af37] hover:text-[#0e1033] transition-colors"
               >
                 Google Calendar
               </button>
               <button
                 onClick={() => downloadIcsFile(event)}
-                className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded border border-[#eccc6e]/50 text-[#eccc6e] hover:bg-[#eccc6e] hover:text-[#0e1033] transition-colors"
+                className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded border border-[#d4af37]/50 text-[#d4af37] hover:bg-[#d4af37] hover:text-[#0e1033] transition-colors"
               >
                 Download .ics
               </button>
@@ -259,7 +259,7 @@ export default function EventViewModal({
             {/* Location */}
             {event.location && (
               <div className="flex items-start gap-2">
-                <div className="text-[#eccc6e] text-xl">📍</div>
+                <div className="text-[#d4af37] text-xl">📍</div>
                 <div>
                   <p className="font-semibold text-white/80 text-sm">Location</p>
                   <p className="text-xs text-white/70">{event.location}</p>
@@ -284,7 +284,7 @@ export default function EventViewModal({
               </div>
             ) : (
               <div className="flex items-start gap-2">
-                <div className="text-[#eccc6e] text-xl">📝</div>
+                <div className="text-[#d4af37] text-xl">📝</div>
                 <div className="flex-1">
                   <p className="font-semibold text-white/80 text-sm mb-1">Description</p>
                   {event.hasWarningLabel && (
@@ -311,7 +311,7 @@ export default function EventViewModal({
 
             {/* Author */}
             <div className="flex items-start gap-2">
-              <div className="text-[#eccc6e] text-xl">👤</div>
+              <div className="text-[#d4af37] text-xl">👤</div>
               <div>
                 <p className="font-semibold text-white/80 text-sm">Organized by</p>
                 <p className="text-xs text-white/70">
@@ -344,13 +344,13 @@ export default function EventViewModal({
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     placeholder="Add a comment..."
-                    className="flex-1 px-2 py-1.5 bg-white/[0.08] backdrop-blur-xl border border-white/15 rounded-md text-sm text-[#e8e6e1] placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50"
+                    className="flex-1 px-2 py-1.5 bg-white/[0.08] backdrop-blur-xl border border-white/15 rounded-md text-sm text-[#e8e6e1] placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 focus:border-[#d4af37]/50"
                     disabled={isAddingComment}
                   />
                   <button
                     type="submit"
                     disabled={isAddingComment || !commentText.trim()}
-                    className="px-3 py-1.5 bg-[#eccc6e] text-[#0e1033] rounded-md hover:bg-[#d4b85e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+                    className="px-3 py-1.5 bg-[#d4af37] text-[#0e1033] rounded-md hover:bg-[#b89030] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
                   >
                     {isAddingComment ? 'Posting...' : 'Post'}
                   </button>
@@ -479,7 +479,7 @@ export default function EventViewModal({
           </div>
 
           {/* Footer */}
-          <div className="sticky bottom-0 bg-[#eccc6e]/20 h-1"></div>
+          <div className="sticky bottom-0 bg-[#d4af37]/20 h-1"></div>
         </div>
       </div>
     </>

@@ -71,8 +71,8 @@ export default function EventCard({
         {/* Category Badge */}
         <div className="flex items-start justify-between mb-2">
           <span
-            className="text-xs px-2 py-1 rounded-md text-white font-medium"
-            style={{ backgroundColor: categoryColor }}
+            className="text-xs px-2 py-1 rounded-md border font-medium"
+            style={{ color: categoryColor, borderColor: categoryColor }}
           >
             {categoryLabel}
           </span>
@@ -138,8 +138,8 @@ export default function EventCard({
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2 flex-wrap">
           <span
-            className="text-xs md:text-sm px-3 py-1 rounded-md text-white font-medium"
-            style={{ backgroundColor: categoryColor }}
+            className="text-xs md:text-sm px-3 py-1 rounded-md border font-medium"
+            style={{ color: categoryColor, borderColor: categoryColor }}
           >
             {categoryLabel}
           </span>
@@ -179,13 +179,13 @@ export default function EventCard({
       </div>
 
       {/* Title */}
-      <h3 className="text-lg md:text-xl font-bold text-[#eccc6e] mb-3">
+      <h3 className="text-lg md:text-xl font-bold text-[#d4af37] mb-3">
         {event.title}
       </h3>
 
       {/* Author Info */}
       <div className="bg-white/[0.08] backdrop-blur-xl border border-white/15 text-[#e8e6e1] px-3 py-2 rounded-md mb-3 flex items-center gap-3">
-        <div className="w-8 h-8 bg-[#eccc6e] rounded-full flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 bg-[#d4af37] rounded-full flex items-center justify-center flex-shrink-0">
           <span className="text-[#0e1033] font-bold text-sm">
             {typeof event.author === 'object' && event.author !== null
               ? (event.author as any).name?.charAt(0)?.toUpperCase() || 'A'
@@ -243,7 +243,7 @@ export default function EventCard({
           {event.tags.map((tag) => (
             <span
               key={tag}
-              className="px-3 py-1 bg-[#eccc6e]/20 border border-[#eccc6e]/30 text-[#eccc6e] text-xs md:text-sm rounded-md"
+              className="px-3 py-1 bg-[#6F2F59]/20 border border-[#a86b7e]/40 text-[#a86b7e] text-xs md:text-sm rounded-md"
             >
               {tag}
             </span>
@@ -258,7 +258,7 @@ export default function EventCard({
           disabled={!user}
           className={`text-sm md:text-base ${
             user
-              ? 'text-[#eccc6e] hover:text-[#d4b85e] font-medium'
+              ? 'text-[#d4af37] hover:text-[#b89030] font-medium'
               : 'text-white/50 cursor-not-allowed'
           }`}
         >

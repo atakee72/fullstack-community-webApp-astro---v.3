@@ -10,6 +10,7 @@ import DayEventsList from './DayEventsList';
 import EventViewModal from './EventViewModal';
 import ReportModal from './ReportModal';
 import { cn } from '../lib/utils';
+import { CalendarPlus } from 'lucide-react';
 import type { Event } from '../types';
 
 interface CalendarContainerProps {
@@ -393,7 +394,7 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
     return (
       <div className="w-full">
         <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#eccc6e]"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#d4af37]"></div>
           <p className="text-white/70 mt-2">Loading calendar...</p>
         </div>
       </div>
@@ -408,7 +409,7 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
           <p className="text-red-400">Failed to load calendar data</p>
           <button
             onClick={() => refetch()}
-            className="mt-2 px-4 py-2 bg-[#eccc6e] text-[#0e1033] rounded hover:bg-[#d4b85e]"
+            className="mt-2 px-4 py-2 bg-[#d4af37] text-[#0e1033] rounded hover:bg-[#b89030]"
           >
             Retry
           </button>
@@ -451,7 +452,7 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
               <div className="px-5 py-4 bg-white/[0.04] border-t border-white/10 flex justify-end">
                 <button
                   onClick={() => setShowModerationModal(false)}
-                  className="px-6 py-2 bg-[#eccc6e] text-[#0e1033] font-medium rounded-lg hover:bg-[#d4b85e] transition-colors"
+                  className="px-6 py-2 bg-[#d4af37] text-[#0e1033] font-medium rounded-lg hover:bg-[#b89030] transition-colors"
                 >
                   I Understand
                 </button>
@@ -468,9 +469,10 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
           <div className="flex justify-center">
             <button
               onClick={() => setShowEventModal(true)}
-              className="w-full md:w-2/3 lg:w-1/2 px-3 md:px-6 py-2 md:py-3 text-xs sm:text-sm md:text-base bg-[#eccc6e] text-[#0e1033] rounded-md hover:bg-[#d4b85e] transition-all shadow-md font-medium"
+              className="w-full md:w-2/3 lg:w-1/2 px-3 md:px-6 py-2.5 md:py-3 text-xs sm:text-sm md:text-base border-2 border-[#d4af37] text-[#d4af37] bg-[#d4af37]/10 rounded-md shadow-[0_0_14px_rgba(212,175,55,0.25)] hover:bg-[#d4af37]/20 hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all font-semibold flex items-center justify-center gap-2"
             >
-              <span className="text-[#0e1033]/60 text-sm md:text-base">✎</span> Create Event
+              <CalendarPlus className="w-4 h-4 md:w-5 md:h-5" strokeWidth={1.75} />
+              Create Event
             </button>
           </div>
         )}

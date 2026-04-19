@@ -62,7 +62,7 @@ export default function AgendaView({
   if (isLoading) {
     return (
       <div className="text-center py-8">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#eccc6e]"></div>
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#d4af37]"></div>
         <p className="text-white/70 mt-2">Loading events...</p>
       </div>
     );
@@ -91,11 +91,11 @@ export default function AgendaView({
             {/* Date Header */}
             <div className={`
               sticky top-0 z-10 bg-[#0e1033]/80 backdrop-blur-xl border-l-4 px-4 py-2 rounded-r-lg shadow-sm
-              ${isToday ? 'border-[#eccc6e] bg-[#eccc6e]/10' : 'border-white/15'}
+              ${isToday ? 'border-[#d4af37] bg-[#d4af37]/10' : 'border-white/15'}
             `}>
               <div className="flex items-center gap-2">
                 {isToday && (
-                  <span className="px-2 py-0.5 bg-[#eccc6e] text-[#0e1033] text-xs font-semibold rounded">
+                  <span className="px-2 py-0.5 bg-[#d4af37] text-[#0e1033] text-xs font-semibold rounded">
                     Today
                   </span>
                 )}
@@ -122,7 +122,7 @@ export default function AgendaView({
                   <div key={event._id as string} className="relative">
                     {/* Time indicator */}
                     <div className="absolute -left-4 md:-left-6 top-4 text-right">
-                      <div className="text-xs md:text-sm font-medium text-[#eccc6e] whitespace-nowrap">
+                      <div className="text-xs md:text-sm font-medium text-[#d4af37] whitespace-nowrap">
                         {startTime}
                       </div>
                       {!isSameDate && (
