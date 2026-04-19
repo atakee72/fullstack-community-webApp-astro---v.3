@@ -45,9 +45,9 @@ interface CalendarDay {
 
 const categoryColors: Record<string, string> = {
   'community': '#4b9aaa',
-  'sports-health': '#28a745',
-  'culture-education': '#6f42c1',
-  'other': '#6c757d'
+  'sports-health': '#3ed77a',
+  'culture-education': '#9775e8',
+  'other': '#9ca3af'
 };
 
 export default function CalendarGridView({
@@ -193,19 +193,19 @@ export default function CalendarGridView({
   }
 
   return (
-    <div className="bg-[#c9c4b9] rounded-lg shadow-lg p-2 md:p-3 lg:p-4" {...swipeHandlers}>
+    <div className="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] rounded-lg p-2 md:p-3 lg:p-4" {...swipeHandlers}>
       {/* Calendar Header with Month Navigation */}
       <div className="mb-2 md:mb-3">
         <div className="flex items-center justify-between gap-1.5 md:gap-2 mb-1">
           <button
             onClick={handlePrevMonth}
-            className="p-1 md:p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1 md:p-2 bg-white/10 backdrop-blur-xl border border-white/15 hover:bg-white/20 rounded-lg transition-colors"
             aria-label="Previous month"
           >
-            <span className="text-lg md:text-xl lg:text-2xl text-[#4b9aaa]">◀</span>
+            <span className="text-lg md:text-xl lg:text-2xl text-white/70 hover:text-white">◀</span>
           </button>
 
-          <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-[#814256] overflow-hidden">
+          <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-[#eccc6e] overflow-hidden font-['Space_Grotesk',sans-serif]">
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span
                 key={format(currentMonth, 'yyyy-MM')}
@@ -222,17 +222,17 @@ export default function CalendarGridView({
 
           <button
             onClick={handleNextMonth}
-            className="p-1 md:p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1 md:p-2 bg-white/10 backdrop-blur-xl border border-white/15 hover:bg-white/20 rounded-lg transition-colors"
             aria-label="Next month"
           >
-            <span className="text-lg md:text-xl lg:text-2xl text-[#4b9aaa]">▶</span>
+            <span className="text-lg md:text-xl lg:text-2xl text-white/70 hover:text-white">▶</span>
           </button>
         </div>
 
         <div className="flex justify-center">
           <button
             onClick={handleToday}
-            className="px-2 md:px-3 py-1 text-xs md:text-sm font-medium bg-[#4b9aaa] text-white rounded-md hover:bg-[#3a7a8a] transition-colors flex items-center gap-1"
+            className="px-2 md:px-3 py-1 text-xs md:text-sm font-medium bg-[#eccc6e] text-[#0e1033] rounded-md hover:bg-[#d4b85e] transition-colors flex items-center gap-1"
             aria-label="Jump to today"
           >
             <span className="text-xs md:text-sm">📍</span>
@@ -254,7 +254,7 @@ export default function CalendarGridView({
             <div
               key={day}
               role="columnheader"
-              className="text-center text-[10px] md:text-xs lg:text-sm font-semibold text-gray-600 py-1 md:py-2"
+              className="text-center text-[10px] md:text-xs lg:text-sm font-semibold text-white/70 py-1 md:py-2"
             >
               {day}
             </div>
@@ -306,31 +306,31 @@ export default function CalendarGridView({
                   className={`
                     relative min-h-[40px] md:min-h-[55px] lg:min-h-[65px] p-0.5 md:p-1 lg:p-2 rounded-md md:rounded-lg border-2 transition-all
                     ${hasRange && isInRange
-                      ? (isRangeStart || isRangeEnd ? 'bg-[#4b9aaa]/30 border-[#4b9aaa]' : 'bg-[#4b9aaa]/15 border-[#4b9aaa]/30')
+                      ? (isRangeStart || isRangeEnd ? 'bg-[#eccc6e]/30 border-[#eccc6e]' : 'bg-[#eccc6e]/15 border-[#eccc6e]/30')
                       : (!rangeEnd && isRangeStart)
-                        ? 'bg-[#4b9aaa]/30 border-[#4b9aaa]'
+                        ? 'bg-[#eccc6e]/30 border-[#eccc6e]'
                         : isSelected
-                          ? 'bg-[#eccc6e] border-[#eccc6e]'
+                          ? 'bg-[#eccc6e] text-[#0e1033] border-[#eccc6e]'
                           : day.isCurrentMonth
-                            ? (isPastDate ? 'bg-white' : 'bg-[#eccc6e]/70')
-                            : (isPastDate ? 'bg-gray-50' : 'bg-[#eccc6e]/30')
+                            ? (isPastDate ? 'bg-transparent text-white/30 cursor-not-allowed border-transparent' : 'bg-white/[0.04] border-white/10 text-white/90 hover:bg-white/[0.08]')
+                            : (isPastDate ? 'bg-transparent text-white/30 border-transparent' : 'bg-transparent text-white/30 border-transparent')
                     }
-                    ${day.isToday && !(hasRange && isInRange) && !(!rangeEnd && isRangeStart) ? 'border-[#4b9aaa] ring-2 ring-[#4b9aaa]/30' : (day.isToday ? 'ring-2 ring-[#4b9aaa]/30' : '')}
-                    ${isFocused ? 'ring-2 ring-offset-1 ring-[#814256]' : ''}
-                    ${isPastDate ? 'opacity-60 cursor-default'
+                    ${day.isToday && !(hasRange && isInRange) && !(!rangeEnd && isRangeStart) ? 'border-[#eccc6e] ring-2 ring-[#eccc6e]/60' : (day.isToday ? 'ring-2 ring-[#eccc6e]/60' : '')}
+                    ${isFocused ? 'ring-2 ring-offset-1 ring-[#eccc6e]' : ''}
+                    ${isPastDate ? 'cursor-not-allowed'
                       : (hasRange && isInRange) || (!rangeEnd && isRangeStart)
-                        ? 'hover:bg-[#4b9aaa]/40 hover:border-[#4b9aaa] cursor-pointer'
-                        : 'hover:bg-[#eccc6e]/85 hover:border-[#4b9aaa]/50 cursor-pointer'
+                        ? 'hover:bg-[#eccc6e]/40 hover:border-[#eccc6e] cursor-pointer'
+                        : 'hover:border-[#eccc6e]/50 cursor-pointer'
                     }
-                    focus:outline-none focus:ring-2 focus:ring-[#814256]
+                    focus:outline-none focus:ring-2 focus:ring-[#eccc6e]
                   `}
                 >
                   {/* Day number */}
                   <div
                     className={`
                       text-xs md:text-sm lg:text-base font-medium mb-0.5 md:mb-1
-                      ${day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
-                      ${day.isToday ? 'text-[#4b9aaa] font-bold' : ''}
+                      ${day.isCurrentMonth ? (isSelected ? 'text-[#0e1033]' : 'text-[#e8e6e1]') : 'text-white/40'}
+                      ${day.isToday && !isSelected ? 'text-[#eccc6e] font-bold' : ''}
                     `}
                   >
                     {day.dayNumber}
@@ -384,7 +384,7 @@ export default function CalendarGridView({
                         {day.events.filter(event => {
                           return !isSameDay(new Date(event.startDate), new Date(event.endDate));
                         }).length > 3 && (
-                          <span className="text-[8px] md:text-[10px] lg:text-xs text-gray-600 font-medium">
+                          <span className="text-[8px] md:text-[10px] lg:text-xs text-white/60 font-medium">
                             +{day.events.filter(event => {
                               return !isSameDay(new Date(event.startDate), new Date(event.endDate));
                             }).length - 3}
@@ -405,10 +405,10 @@ export default function CalendarGridView({
                           e.stopPropagation();
                           onCreateFromRange();
                         }}
-                        className="bg-[#814256] text-white rounded-lg
+                        className="bg-[#eccc6e] text-[#0e1033] rounded-lg
                                    px-2 py-0.5 md:px-2.5 md:py-1
                                    text-[10px] md:text-xs font-semibold
-                                   hover:bg-[#6a3646] transition-colors
+                                   hover:bg-[#d4b85e] transition-colors
                                    shadow-lg whitespace-nowrap
                                    flex items-center gap-0.5"
                         aria-label="Create event on selected date"
@@ -420,7 +420,7 @@ export default function CalendarGridView({
                       <div className="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-0 h-0
                                       border-l-[6px] border-l-transparent
                                       border-r-[6px] border-r-transparent
-                                      border-t-[6px] border-t-[#814256]" />
+                                      border-t-[6px] border-t-[#eccc6e]" />
                     </div>
                   )}
 

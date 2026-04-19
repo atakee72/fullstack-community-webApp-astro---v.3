@@ -62,18 +62,18 @@ export default function AgendaView({
   if (isLoading) {
     return (
       <div className="text-center py-8">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#4b9aaa]"></div>
-        <p className="text-gray-600 mt-2">Loading events...</p>
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#eccc6e]"></div>
+        <p className="text-white/70 mt-2">Loading events...</p>
       </div>
     );
   }
 
   if (events.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 md:p-8 text-center">
+      <div className="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] rounded-lg shadow-md p-6 md:p-8 text-center">
         <div className="text-6xl mb-4">📅</div>
-        <h3 className="text-xl font-bold text-gray-700 mb-2">No Events Found</h3>
-        <p className="text-gray-600">
+        <h3 className="text-xl font-bold text-[#e8e6e1] mb-2">No Events Found</h3>
+        <p className="text-white/70">
           Be the first to create an event for your neighbourhood!
         </p>
       </div>
@@ -90,19 +90,19 @@ export default function AgendaView({
           <div key={dateString} className="space-y-3">
             {/* Date Header */}
             <div className={`
-              sticky top-0 z-10 bg-white border-l-4 px-4 py-2 rounded-r-lg shadow-sm
-              ${isToday ? 'border-[#4b9aaa] bg-[#4b9aaa]/5' : 'border-gray-300'}
+              sticky top-0 z-10 bg-[#0e1033]/80 backdrop-blur-xl border-l-4 px-4 py-2 rounded-r-lg shadow-sm
+              ${isToday ? 'border-[#eccc6e] bg-[#eccc6e]/10' : 'border-white/15'}
             `}>
               <div className="flex items-center gap-2">
                 {isToday && (
-                  <span className="px-2 py-0.5 bg-[#4b9aaa] text-white text-xs font-semibold rounded">
+                  <span className="px-2 py-0.5 bg-[#eccc6e] text-[#0e1033] text-xs font-semibold rounded">
                     Today
                   </span>
                 )}
-                <h3 className="text-lg md:text-xl font-bold text-gray-800">
+                <h3 className="text-lg md:text-xl font-bold text-[#e8e6e1]">
                   {format(date, 'EEEE, MMMM d, yyyy', { locale })}
                 </h3>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-white/60">
                   ({dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''})
                 </span>
               </div>
@@ -122,11 +122,11 @@ export default function AgendaView({
                   <div key={event._id as string} className="relative">
                     {/* Time indicator */}
                     <div className="absolute -left-4 md:-left-6 top-4 text-right">
-                      <div className="text-xs md:text-sm font-medium text-[#814256] whitespace-nowrap">
+                      <div className="text-xs md:text-sm font-medium text-[#eccc6e] whitespace-nowrap">
                         {startTime}
                       </div>
                       {!isSameDate && (
-                        <div className="text-[10px] md:text-xs text-gray-500">
+                        <div className="text-[10px] md:text-xs text-white/60">
                           Multi-day
                         </div>
                       )}

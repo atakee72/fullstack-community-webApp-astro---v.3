@@ -245,29 +245,29 @@ export default function EventModal({
 
       {/* Modal */}
       <div className="fixed inset-0 flex items-center justify-center z-50 p-2 md:p-4" onClick={handleClose}>
-        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[95vh] overflow-hidden animate-fade-in" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-[#1a1d4a]/95 backdrop-blur-xl border border-white/20 border-t-white/30 rounded-xl shadow-2xl max-w-2xl w-full max-h-[95vh] overflow-hidden animate-fade-in" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#814256] to-[#6a3646] p-3 md:p-4 relative">
+          <div className="bg-[#eccc6e]/15 border-b border-white/10 p-3 md:p-4 relative">
             <button
               onClick={handleClose}
-              className="absolute top-3 right-3 md:top-4 md:right-4 text-white hover:text-[#eccc6e] transition-colors text-xl md:text-2xl"
+              className="absolute top-3 right-3 md:top-4 md:right-4 text-white/70 hover:text-[#eccc6e] transition-colors text-xl md:text-2xl"
             >
               ✕
             </button>
             <div className="flex items-center gap-2 md:gap-3">
               <span className="text-2xl md:text-3xl">📅</span>
-              <h2 className="text-xl md:text-2xl font-bold text-white">
+              <h2 className="text-xl md:text-2xl font-bold text-[#e8e6e1] font-['Space_Grotesk',sans-serif]">
                 {editMode ? 'Edit Event' : 'Create New Event'}
               </h2>
             </div>
           </div>
 
           {/* Body */}
-          <div className="bg-[#c9c4b9] p-3 md:p-4 overflow-y-auto max-h-[calc(95vh-80px)]">
+          <div className="p-3 md:p-4 overflow-y-auto max-h-[calc(95vh-80px)]">
             <form onSubmit={handleSubmit} className="space-y-3">
               {/* Title Input */}
               <div>
-                <label className="block text-[#814256] font-semibold mb-1 text-sm">
+                <label className="block text-white/80 font-semibold mb-1 text-sm">
                   Event Title
                 </label>
                 <input
@@ -277,18 +277,18 @@ export default function EventModal({
                     setTitle(e.target.value);
                     if (errors.title) setErrors({ ...errors, title: undefined });
                   }}
-                  className={`w-full px-3 py-2 rounded-lg border-2 text-sm ${
-                    errors.title ? 'border-red-400 bg-red-50' : 'border-white/20 bg-white/90'
-                  } focus:bg-white focus:outline-none focus:border-[#eccc6e] transition-all`}
+                  className={`w-full px-3 py-2 rounded-lg border text-sm bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] placeholder-white/40 ${
+                    errors.title ? 'border-red-400/60' : 'border-white/15'
+                  } focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50 transition-all`}
                   placeholder="Give your event a descriptive title... (min 5 characters)"
                   autoFocus
                 />
                 {errors.title && (
-                  <p className="text-white text-xs mt-1 bg-[#4b9aaa] px-2 py-0.5 rounded">
+                  <p className="text-red-300 text-xs mt-1 bg-red-500/20 border border-red-400/30 px-2 py-0.5 rounded">
                     ⚠️ {errors.title}
                   </p>
                 )}
-                <p className="text-[#814256]/70 text-xs mt-0.5">
+                <p className="text-white/50 text-xs mt-0.5">
                   {title.length}/200 characters
                 </p>
               </div>
@@ -297,7 +297,7 @@ export default function EventModal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* Start Date/Time */}
                 <div>
-                  <label className="block text-[#814256] font-semibold mb-1 text-sm">
+                  <label className="block text-white/80 font-semibold mb-1 text-sm">
                     Start Date & Time
                   </label>
                   <input
@@ -308,12 +308,12 @@ export default function EventModal({
                       setStartDate(e.target.value);
                       if (errors.startDate) setErrors({ ...errors, startDate: undefined });
                     }}
-                    className={`w-full px-3 py-2 rounded-lg border-2 text-sm ${
-                      errors.startDate ? 'border-red-400 bg-red-50' : 'border-white/20 bg-white/90'
-                    } focus:bg-white focus:outline-none focus:border-[#eccc6e] transition-all`}
+                    className={`w-full px-3 py-2 rounded-lg border text-sm bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] ${
+                      errors.startDate ? 'border-red-400/60' : 'border-white/15'
+                    } focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50 transition-all`}
                   />
                   {errors.startDate && (
-                    <p className="text-white text-xs mt-1 bg-[#4b9aaa] px-2 py-0.5 rounded">
+                    <p className="text-red-300 text-xs mt-1 bg-red-500/20 border border-red-400/30 px-2 py-0.5 rounded">
                       ⚠️ {errors.startDate}
                     </p>
                   )}
@@ -321,7 +321,7 @@ export default function EventModal({
 
                 {/* End Date/Time */}
                 <div>
-                  <label className="block text-[#814256] font-semibold mb-1 text-sm">
+                  <label className="block text-white/80 font-semibold mb-1 text-sm">
                     End Date & Time
                   </label>
                   <input
@@ -332,12 +332,12 @@ export default function EventModal({
                       setEndDate(e.target.value);
                       if (errors.endDate) setErrors({ ...errors, endDate: undefined });
                     }}
-                    className={`w-full px-3 py-2 rounded-lg border-2 text-sm ${
-                      errors.endDate ? 'border-red-400 bg-red-50' : 'border-white/20 bg-white/90'
-                    } focus:bg-white focus:outline-none focus:border-[#eccc6e] transition-all`}
+                    className={`w-full px-3 py-2 rounded-lg border text-sm bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] ${
+                      errors.endDate ? 'border-red-400/60' : 'border-white/15'
+                    } focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50 transition-all`}
                   />
                   {errors.endDate && (
-                    <p className="text-white text-xs mt-1 bg-[#4b9aaa] px-2 py-0.5 rounded">
+                    <p className="text-red-300 text-xs mt-1 bg-red-500/20 border border-red-400/30 px-2 py-0.5 rounded">
                       ⚠️ {errors.endDate}
                     </p>
                   )}
@@ -346,7 +346,7 @@ export default function EventModal({
 
               {/* Location Input */}
               <div>
-                <label className="block text-[#814256] font-semibold mb-1 text-sm">
+                <label className="block text-white/80 font-semibold mb-1 text-sm">
                   Location (Optional)
                 </label>
                 <input
@@ -356,30 +356,30 @@ export default function EventModal({
                     setLocation(e.target.value);
                     if (errors.location) setErrors({ ...errors, location: undefined });
                   }}
-                  className={`w-full px-3 py-2 rounded-lg border-2 text-sm ${
-                    errors.location ? 'border-red-400 bg-red-50' : 'border-white/20 bg-white/90'
-                  } focus:bg-white focus:outline-none focus:border-[#eccc6e] transition-all`}
+                  className={`w-full px-3 py-2 rounded-lg border text-sm bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] placeholder-white/40 ${
+                    errors.location ? 'border-red-400/60' : 'border-white/15'
+                  } focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50 transition-all`}
                   placeholder="Where will this event take place?"
                 />
                 {errors.location && (
-                  <p className="text-white text-xs mt-1 bg-[#4b9aaa] px-2 py-0.5 rounded">
+                  <p className="text-red-300 text-xs mt-1 bg-red-500/20 border border-red-400/30 px-2 py-0.5 rounded">
                     ⚠️ {errors.location}
                   </p>
                 )}
-                <p className="text-[#814256]/70 text-xs mt-0.5">
+                <p className="text-white/50 text-xs mt-0.5">
                   {location.length}/200 characters
                 </p>
               </div>
 
               {/* Category Dropdown */}
               <div>
-                <label className="block text-[#814256] font-semibold mb-1 text-sm">
+                <label className="block text-white/80 font-semibold mb-1 text-sm">
                   Category
                 </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-lg border-2 border-white/20 bg-white/90 text-sm focus:bg-white focus:outline-none focus:border-[#eccc6e] transition-all"
+                  className="w-full px-3 py-2 rounded-lg border border-white/15 bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] text-sm focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50 transition-all"
                 >
                   <option value="other">Other</option>
                   <option value="community">Community</option>
@@ -390,7 +390,7 @@ export default function EventModal({
 
               {/* Description Textarea */}
               <div>
-                <label className="block text-[#814256] font-semibold mb-1 text-sm">
+                <label className="block text-white/80 font-semibold mb-1 text-sm">
                   Event Description
                 </label>
                 <textarea
@@ -399,25 +399,25 @@ export default function EventModal({
                     setBody(e.target.value);
                     if (errors.body) setErrors({ ...errors, body: undefined });
                   }}
-                  className={`w-full px-3 py-2 rounded-lg border-2 text-sm ${
-                    errors.body ? 'border-red-400 bg-red-50' : 'border-white/20 bg-white/90'
-                  } focus:bg-white focus:outline-none focus:border-[#eccc6e] transition-all resize-none`}
+                  className={`w-full px-3 py-2 rounded-lg border text-sm bg-white/[0.08] backdrop-blur-xl text-[#e8e6e1] placeholder-white/40 ${
+                    errors.body ? 'border-red-400/60' : 'border-white/15'
+                  } focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50 transition-all resize-none`}
                   rows={4}
                   placeholder="Describe your event... (min 10 characters)"
                 />
                 {errors.body && (
-                  <p className="text-white text-xs mt-1 bg-[#4b9aaa] px-2 py-0.5 rounded">
+                  <p className="text-red-300 text-xs mt-1 bg-red-500/20 border border-red-400/30 px-2 py-0.5 rounded">
                     ⚠️ {errors.body}
                   </p>
                 )}
-                <p className="text-[#814256]/70 text-xs mt-0.5">
+                <p className="text-white/50 text-xs mt-0.5">
                   {body.length}/5000 characters
                 </p>
               </div>
 
               {/* Tags Section */}
-              <div className="bg-[#4b9aaa] rounded-lg p-3">
-                <label className="block text-white font-semibold mb-2 text-sm">
+              <div className="bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-lg p-3">
+                <label className="block text-[#e8e6e1] font-semibold mb-2 text-sm">
                   🏷️ Add Tags (Optional)
                 </label>
                 <TagSelector
@@ -431,14 +431,14 @@ export default function EventModal({
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="flex-1 py-2 px-4 text-sm bg-white/50 text-[#814256] font-semibold rounded-lg hover:bg-white/70 transition-all"
+                  className="flex-1 py-2 px-4 text-sm bg-white/10 backdrop-blur-xl border border-white/15 text-white/80 font-semibold rounded-lg hover:bg-white/20 transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || !title.trim() || !body.trim() || !startDate || !endDate}
-                  className="flex-1 py-2 px-4 text-sm bg-gradient-to-r from-[#814256] to-[#6a3646] text-white font-bold rounded-lg hover:from-[#6a3646] hover:to-[#5a2c3c] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
+                  className="flex-1 py-2 px-4 text-sm bg-[#eccc6e] text-[#0e1033] font-bold rounded-lg hover:bg-[#d4b85e] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center justify-center gap-2">

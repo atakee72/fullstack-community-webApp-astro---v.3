@@ -85,10 +85,10 @@ export default function DayEventsList({
 
   if (isLoading) {
     return (
-      <div className="bg-[#c9c4b9] rounded-lg shadow-lg p-2 md:p-3 lg:p-4">
+      <div className="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] rounded-lg p-2 md:p-3 lg:p-4">
         <div className="text-center py-4 md:py-6">
-          <div className="inline-block animate-spin rounded-full h-5 w-5 md:h-6 md:w-6 border-b-2 border-[#4b9aaa]"></div>
-          <p className="text-gray-600 text-xs md:text-sm mt-2">Loading...</p>
+          <div className="inline-block animate-spin rounded-full h-5 w-5 md:h-6 md:w-6 border-b-2 border-[#eccc6e]"></div>
+          <p className="text-white/70 text-xs md:text-sm mt-2">Loading...</p>
         </div>
       </div>
     );
@@ -96,10 +96,10 @@ export default function DayEventsList({
 
   if (!selectedDate) {
     return (
-      <div className="bg-[#c9c4b9] rounded-lg shadow-lg p-2 md:p-3 lg:p-4">
+      <div className="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] rounded-lg p-2 md:p-3 lg:p-4">
         <div className="text-center py-6 md:py-8">
           <div className="text-3xl md:text-4xl mb-2 md:mb-3">📅</div>
-          <p className="text-gray-600 text-xs md:text-sm">
+          <p className="text-white/70 text-xs md:text-sm">
             Select a date to view events
           </p>
         </div>
@@ -110,7 +110,7 @@ export default function DayEventsList({
   const isToday = isSameDay(selectedDate, new Date());
 
   return (
-    <div className="bg-[#c9c4b9] rounded-lg shadow-lg p-2 md:p-3 lg:p-4 h-full">
+    <div className="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] rounded-lg p-2 md:p-3 lg:p-4 h-full">
       {/* Search Box */}
       {onSearchChange && (
         <div className="mb-2 md:mb-3 relative">
@@ -119,12 +119,12 @@ export default function DayEventsList({
             placeholder="Search events..."
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full px-2 md:px-3 py-1.5 md:py-2 pr-8 md:pr-10 border-2 border-gray-200 rounded-md text-xs md:text-sm bg-gray-100 focus:bg-gray-50 focus:outline-none focus:border-[#4b9aaa] transition-colors"
+            className="w-full px-2 md:px-3 py-1.5 md:py-2 pr-8 md:pr-10 bg-white/[0.08] backdrop-blur-xl border border-white/15 rounded-md text-xs md:text-sm text-[#e8e6e1] placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50 transition-colors"
           />
           {searchValue && (
             <button
               onClick={() => onSearchChange('')}
-              className="absolute right-1.5 md:right-2 top-1/2 -translate-y-1/2 p-0.5 md:p-1 text-gray-500 hover:text-gray-700 transition-colors"
+              className="absolute right-1.5 md:right-2 top-1/2 -translate-y-1/2 p-0.5 md:p-1 text-white/60 hover:text-white/80 transition-colors"
               aria-label="Clear search"
             >
               <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -138,11 +138,11 @@ export default function DayEventsList({
       {/* Header - Different for search mode vs day mode */}
       {searchValue.trim() ? (
         // Search Results Header
-        <div className="border-l-4 border-[#4b9aaa] px-2 md:px-3 py-1.5 md:py-2 mb-2 md:mb-3 rounded-lg bg-[#4b9aaa]/10">
-          <h3 className="text-sm md:text-base lg:text-lg font-bold text-gray-800">
+        <div className="border-l-4 border-[#eccc6e] px-2 md:px-3 py-1.5 md:py-2 mb-2 md:mb-3 rounded-lg bg-[#eccc6e]/10">
+          <h3 className="text-sm md:text-base lg:text-lg font-bold text-[#e8e6e1]">
             Search Results
           </h3>
-          <p className="text-[10px] md:text-xs text-gray-600 mt-0.5 md:mt-1">
+          <p className="text-[10px] md:text-xs text-white/70 mt-0.5 md:mt-1">
             {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} found for "{searchValue}"
           </p>
         </div>
@@ -150,22 +150,22 @@ export default function DayEventsList({
         // Day Header
         <div className={`
           border-l-4 px-2 md:px-3 py-1.5 md:py-2 mb-2 md:mb-3 rounded-lg
-          ${isToday ? 'border-[#4b9aaa] bg-[#eccc6e]' : 'border-[#eccc6e] bg-[#eccc6e]'}
+          ${isToday ? 'border-[#eccc6e] bg-[#eccc6e]/15' : 'border-[#eccc6e]/60 bg-[#eccc6e]/10'}
         `}>
           <div className="flex items-center gap-1.5 md:gap-2 mb-0.5 md:mb-1">
             {isToday && (
-              <span className="px-1.5 md:px-2 py-0.5 bg-[#4b9aaa] text-white text-[10px] md:text-xs font-semibold rounded">
+              <span className="px-1.5 md:px-2 py-0.5 bg-[#eccc6e] text-[#0e1033] text-[10px] md:text-xs font-semibold rounded">
                 Today
               </span>
             )}
           </div>
-          <h3 className="text-sm md:text-base lg:text-lg font-bold text-gray-800">
+          <h3 className="text-sm md:text-base lg:text-lg font-bold text-[#e8e6e1]">
             {format(selectedDate, 'EEEE', { locale })}
           </h3>
-          <p className="text-xs md:text-sm text-gray-600">
+          <p className="text-xs md:text-sm text-white/70">
             {format(selectedDate, 'MMMM d, yyyy', { locale })}
           </p>
-          <p className="text-[10px] md:text-xs text-gray-500 mt-0.5 md:mt-1">
+          <p className="text-[10px] md:text-xs text-white/60 mt-0.5 md:mt-1">
             {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -175,7 +175,7 @@ export default function DayEventsList({
       {filteredEvents.length === 0 ? (
         <div className="text-center py-4 md:py-6">
           <div className="text-2xl md:text-3xl mb-1.5 md:mb-2">🗓️</div>
-          <p className="text-gray-500 text-xs md:text-sm">
+          <p className="text-white/60 text-xs md:text-sm">
             {searchValue.trim() ? 'No events found matching your search' : 'No events on this date'}
           </p>
         </div>
@@ -203,9 +203,9 @@ export default function DayEventsList({
 
             const categoryColors: Record<string, string> = {
               'community': '#4b9aaa',
-              'sports-health': '#28a745',
-              'culture-education': '#6f42c1',
-              'other': '#6c757d'
+              'sports-health': '#3ed77a',
+              'culture-education': '#9775e8',
+              'other': '#9ca3af'
             };
 
             // Moderation status checks
@@ -216,19 +216,19 @@ export default function DayEventsList({
 
             // Determine border color based on moderation status
             const getBorderClass = () => {
-              if (!isAuthor) return 'border-gray-200';
-              if (isRejected) return 'border-red-300 bg-red-50/50';
-              if (isPending) return 'border-amber-300 bg-amber-50/50';
-              if (isReported) return 'border-orange-300 bg-orange-50/50';
-              return 'border-gray-200';
+              if (!isAuthor) return 'border-transparent';
+              if (isRejected) return 'border-red-400/50 bg-red-500/10';
+              if (isPending) return 'border-amber-400/50 bg-amber-500/10';
+              if (isReported) return 'border-orange-400/50 bg-orange-500/10';
+              return 'border-transparent';
             };
 
             return (
               <div
                 key={event._id as string}
                 className={`
-                  group relative border-2 rounded-md md:rounded-lg p-1.5 md:p-2 transition-all
-                  ${isDeleting ? 'opacity-50 pointer-events-none' : 'hover:border-[#4b9aaa] hover:shadow-md cursor-pointer'}
+                  group relative border rounded-xl p-1.5 md:p-2 transition-all duration-300
+                  ${isDeleting ? 'opacity-50 pointer-events-none' : 'hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] cursor-pointer'}
                   ${getBorderClass()}
                 `}
               >
@@ -254,31 +254,31 @@ export default function DayEventsList({
                   {/* Date & Time - Show full date in search mode */}
                   <div className="flex items-center gap-1 md:gap-2 mb-0.5 md:mb-1">
                     {searchValue.trim() && (
-                      <span className="text-[8px] md:text-[10px] px-1 md:px-1.5 py-0.5 bg-[#4b9aaa]/20 text-[#4b9aaa] rounded font-medium">
+                      <span className="text-[8px] md:text-[10px] px-1 md:px-1.5 py-0.5 bg-[#eccc6e]/20 text-[#eccc6e] rounded font-medium">
                         {format(new Date(event.startDate), 'MMM d', { locale })}
                       </span>
                     )}
-                    <span className="text-[10px] md:text-xs font-semibold text-[#814256]">
+                    <span className="text-[10px] md:text-xs font-semibold text-[#eccc6e]">
                       {startTime}
                     </span>
                     {isSameDate ? (
-                      <span className="text-[8px] md:text-[10px] px-1 md:px-1.5 py-0.5 bg-[#eccc6e] text-[#814256] rounded font-medium">
+                      <span className="text-[8px] md:text-[10px] px-1 md:px-1.5 py-0.5 bg-[#eccc6e] text-[#0e1033] rounded font-medium">
                         Single-day
                       </span>
                     ) : (
-                      <span className="text-[8px] md:text-[10px] px-1 md:px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded">
+                      <span className="text-[8px] md:text-[10px] px-1 md:px-1.5 py-0.5 bg-white/10 text-white/70 rounded">
                         Multi-day
                       </span>
                     )}
                   </div>
 
                   {/* Title */}
-                  <h4 className="font-semibold text-xs md:text-sm text-gray-800 mb-0.5 line-clamp-2">
+                  <h4 className="font-semibold text-xs md:text-sm text-[#e8e6e1] mb-0.5 line-clamp-2">
                     {event.title}
                   </h4>
 
                   {/* Author */}
-                  <p className="text-[10px] md:text-xs text-gray-500 mb-0.5 md:mb-1">
+                  <p className="text-[10px] md:text-xs text-white/60 mb-0.5 md:mb-1">
                     by {typeof event.author === 'object'
                       ? (event.author?.userName || event.author?.name || 'Unknown')
                       : 'Unknown'}
@@ -294,7 +294,7 @@ export default function DayEventsList({
                     </span>
 
                     {/* Stats */}
-                    <div className="flex items-center gap-1.5 md:gap-2 text-[8px] md:text-[10px] text-gray-500">
+                    <div className="flex items-center gap-1.5 md:gap-2 text-[8px] md:text-[10px] text-white/60">
                       <span>💬 {event.comments?.length || 0}</span>
                     </div>
                   </div>
@@ -308,7 +308,7 @@ export default function DayEventsList({
                         e.stopPropagation();
                         onEventEdit(event);
                       }}
-                      className="p-0.5 md:p-1 text-gray-500 hover:text-gray-700 rounded transition-all bg-white/80"
+                      className="p-0.5 md:p-1 text-white/60 hover:text-white/90 rounded transition-all bg-white/10 backdrop-blur-xl border border-white/15"
                       title="Edit event"
                       disabled={isDeleting}
                     >
@@ -323,7 +323,7 @@ export default function DayEventsList({
                           onEventDelete(event._id as string);
                         }
                       }}
-                      className="p-0.5 md:p-1 text-gray-500 hover:text-red-600 rounded transition-all bg-white/80"
+                      className="p-0.5 md:p-1 text-white/60 hover:text-red-400 rounded transition-all bg-white/10 backdrop-blur-xl border border-white/15"
                       title="Delete event"
                       disabled={isDeleting}
                     >
@@ -336,7 +336,7 @@ export default function DayEventsList({
 
                 {/* Deleting indicator */}
                 {isDeleting && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg">
+                  <div className="absolute inset-0 flex items-center justify-center bg-[#0e1033]/70 backdrop-blur-sm rounded-lg">
                     <div className="inline-block animate-spin rounded-full h-3 w-3 md:h-4 md:w-4 border-b-2 border-red-500"></div>
                   </div>
                 )}

@@ -22,9 +22,9 @@ interface EventViewModalProps {
 
 const categoryColors: Record<string, string> = {
   'community': '#4b9aaa',
-  'sports-health': '#28a745',
-  'culture-education': '#6f42c1',
-  'other': '#6c757d'
+  'sports-health': '#3ed77a',
+  'culture-education': '#9775e8',
+  'other': '#9ca3af'
 };
 
 export default function EventViewModal({
@@ -141,13 +141,13 @@ export default function EventViewModal({
         onClick={onClose}
       >
         <div
-          className="bg-[#c9c4b9] rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-slideUp"
+          className="bg-[#1a1d4a]/95 backdrop-blur-xl border border-white/20 border-t-white/30 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-slideUp"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="sticky top-0 bg-[#814256] border-b border-gray-200 px-4 pt-3 pb-3.5 flex items-start justify-between">
+          <div className="sticky top-0 bg-[#eccc6e]/15 backdrop-blur-xl border-b border-white/10 px-4 pt-3 pb-3.5 flex items-start justify-between">
             <div className="flex-1 pr-3">
-              <h2 className="text-xl font-bold text-white mb-1 leading-tight">
+              <h2 className="text-xl font-bold text-[#e8e6e1] mb-1 leading-tight font-['Space_Grotesk',sans-serif]">
                 {event.title}
               </h2>
               <div className="flex items-center gap-1.5">
@@ -160,7 +160,7 @@ export default function EventViewModal({
                 {event.tags?.map((tag, idx) => (
                   <span
                     key={idx}
-                    className="inline-block px-2 py-0.5 text-xs bg-[#eccc6e] text-[#814256] rounded font-medium shadow-sm"
+                    className="inline-block px-2 py-0.5 text-xs bg-[#eccc6e] text-[#0e1033] rounded font-medium shadow-sm"
                   >
                     #{tag}
                   </span>
@@ -169,7 +169,7 @@ export default function EventViewModal({
             </div>
             <button
               onClick={onClose}
-              className="text-white hover:text-gray-200 transition-colors flex-shrink-0"
+              className="text-white/70 hover:text-white transition-colors flex-shrink-0"
               aria-label="Close"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,12 +210,12 @@ export default function EventViewModal({
             {/* Date & Time + Report Button */}
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-start gap-2">
-                <div className="text-[#4b9aaa] text-xl">📅</div>
+                <div className="text-[#eccc6e] text-xl">📅</div>
                 <div>
-                  <p className="font-semibold text-gray-700 text-sm">
+                  <p className="font-semibold text-white/80 text-sm">
                     {format(startDate, 'EEEE, MMMM d, yyyy')}
                   </p>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-white/70">
                     {isSameDay ? (
                       <>
                         {format(startDate, 'h:mm a')} - {format(endDate, 'h:mm a')}
@@ -232,7 +232,7 @@ export default function EventViewModal({
               {user && !isEventAuthor() && onReportEvent && (
                 <button
                   onClick={() => onReportEvent(event)}
-                  className="text-gray-400 hover:text-red-500 transition-colors text-lg"
+                  className="text-white/50 hover:text-red-400 transition-colors text-lg"
                   title="Report this event"
                 >
                   🚩
@@ -244,13 +244,13 @@ export default function EventViewModal({
             <div className="flex gap-2 pl-7">
               <button
                 onClick={() => window.open(generateGoogleCalendarUrl(event), '_blank', 'noopener')}
-                className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded border border-[#4b9aaa]/50 text-[#4b9aaa] hover:bg-[#4b9aaa] hover:text-white transition-colors"
+                className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded border border-[#eccc6e]/50 text-[#eccc6e] hover:bg-[#eccc6e] hover:text-[#0e1033] transition-colors"
               >
                 Google Calendar
               </button>
               <button
                 onClick={() => downloadIcsFile(event)}
-                className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded border border-[#4b9aaa]/50 text-[#4b9aaa] hover:bg-[#4b9aaa] hover:text-white transition-colors"
+                className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded border border-[#eccc6e]/50 text-[#eccc6e] hover:bg-[#eccc6e] hover:text-[#0e1033] transition-colors"
               >
                 Download .ics
               </button>
@@ -259,10 +259,10 @@ export default function EventViewModal({
             {/* Location */}
             {event.location && (
               <div className="flex items-start gap-2">
-                <div className="text-[#4b9aaa] text-xl">📍</div>
+                <div className="text-[#eccc6e] text-xl">📍</div>
                 <div>
-                  <p className="font-semibold text-gray-700 text-sm">Location</p>
-                  <p className="text-xs text-gray-600">{event.location}</p>
+                  <p className="font-semibold text-white/80 text-sm">Location</p>
+                  <p className="text-xs text-white/70">{event.location}</p>
                 </div>
               </div>
             )}
@@ -284,9 +284,9 @@ export default function EventViewModal({
               </div>
             ) : (
               <div className="flex items-start gap-2">
-                <div className="text-[#4b9aaa] text-xl">📝</div>
+                <div className="text-[#eccc6e] text-xl">📝</div>
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-700 text-sm mb-1">Description</p>
+                  <p className="font-semibold text-white/80 text-sm mb-1">Description</p>
                   {event.hasWarningLabel && (
                     <div className="bg-yellow-50 border border-yellow-300 rounded px-2 py-1 mb-2">
                       <div className="flex items-center gap-1.5">
@@ -302,7 +302,7 @@ export default function EventViewModal({
                       )}
                     </div>
                   )}
-                  <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
+                  <p className="text-xs text-white/70 whitespace-pre-wrap leading-relaxed">
                     {event.body}
                   </p>
                 </div>
@@ -311,10 +311,10 @@ export default function EventViewModal({
 
             {/* Author */}
             <div className="flex items-start gap-2">
-              <div className="text-[#4b9aaa] text-xl">👤</div>
+              <div className="text-[#eccc6e] text-xl">👤</div>
               <div>
-                <p className="font-semibold text-gray-700 text-sm">Organized by</p>
-                <p className="text-xs text-gray-600">
+                <p className="font-semibold text-white/80 text-sm">Organized by</p>
+                <p className="text-xs text-white/70">
                   {typeof event.author === 'object'
                     ? (event.author?.userName || event.author?.name || 'Unknown')
                     : 'Unknown'}
@@ -323,16 +323,16 @@ export default function EventViewModal({
             </div>
 
             {/* Stats Bar */}
-            <div className="flex items-center pt-2 border-t border-gray-200">
-              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+            <div className="flex items-center pt-2 border-t border-white/10">
+              <div className="flex items-center gap-1.5 text-xs text-white/70">
                 <span>💬</span>
                 <span>{event.comments?.length || 0} comments</span>
               </div>
             </div>
 
             {/* Comments Section */}
-            <div className="border-t border-gray-200 pt-3 mt-3">
-              <h3 className="text-base font-semibold text-gray-800 mb-2">
+            <div className="border-t border-white/10 pt-3 mt-3">
+              <h3 className="text-base font-semibold text-[#e8e6e1] mb-2">
                 Comments ({event.comments?.length || 0})
               </h3>
 
@@ -344,19 +344,19 @@ export default function EventViewModal({
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     placeholder="Add a comment..."
-                    className="flex-1 px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-gray-100 focus:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#4b9aaa] focus:border-transparent"
+                    className="flex-1 px-2 py-1.5 bg-white/[0.08] backdrop-blur-xl border border-white/15 rounded-md text-sm text-[#e8e6e1] placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#eccc6e]/50 focus:border-[#eccc6e]/50"
                     disabled={isAddingComment}
                   />
                   <button
                     type="submit"
                     disabled={isAddingComment || !commentText.trim()}
-                    className="px-3 py-1.5 bg-[#4b9aaa] text-white rounded-md hover:bg-[#3a7a8a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+                    className="px-3 py-1.5 bg-[#eccc6e] text-[#0e1033] rounded-md hover:bg-[#d4b85e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
                   >
                     {isAddingComment ? 'Posting...' : 'Post'}
                   </button>
                 </form>
               ) : (
-                <p className="text-xs text-gray-500 mb-3 italic">Please log in to comment.</p>
+                <p className="text-xs text-white/60 mb-3 italic">Please log in to comment.</p>
               )}
 
               {/* Moderation Feedback Message - Not dismissable, clears when modal closes */}
@@ -375,13 +375,13 @@ export default function EventViewModal({
                     const commentId = comment._id?.toString() || idx.toString();
 
                     return (
-                      <div key={idx} className="bg-gray-100 rounded-lg p-1.5 flex items-center gap-1.5">
+                      <div key={idx} className="bg-white/[0.04] backdrop-blur-sm border border-white/10 rounded-lg p-1.5 flex items-center gap-1.5">
                         <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className="font-semibold text-xs text-gray-800">
+                          <span className="font-semibold text-xs text-[#e8e6e1]">
                             {comment.author?.userName || comment.author?.name || 'Anonymous'}
                           </span>
-                          <span className="text-[10px] text-gray-500">
+                          <span className="text-[10px] text-white/60">
                             {comment.createdAt ? format(new Date(comment.createdAt), 'MMM d, h:mm a') : ''}
                           </span>
                         </div>
@@ -449,7 +449,7 @@ export default function EventViewModal({
                                 )}
                               </div>
                             )}
-                            <p className="text-xs text-gray-700 leading-snug">{comment.body || comment.comment}</p>
+                            <p className="text-xs text-white/80 leading-snug">{comment.body || comment.comment}</p>
                           </>
                         )}
                         </div>
@@ -460,8 +460,8 @@ export default function EventViewModal({
                             disabled={reportedComments.has(comment._id as string)}
                             className={`flex-shrink-0 text-xs transition-colors ${
                               reportedComments.has(comment._id as string)
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-gray-400 hover:text-red-500'
+                                ? 'text-white/40 cursor-not-allowed'
+                                : 'text-white/50 hover:text-red-400'
                             }`}
                             title={reportedComments.has(comment._id as string) ? "Already reported" : "Report comment"}
                           >
@@ -473,13 +473,13 @@ export default function EventViewModal({
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-gray-500 italic">No comments yet. Be the first to comment!</p>
+                <p className="text-xs text-white/60 italic">No comments yet. Be the first to comment!</p>
               )}
             </div>
           </div>
 
           {/* Footer */}
-          <div className="sticky bottom-0 bg-[#814256] h-1"></div>
+          <div className="sticky bottom-0 bg-[#eccc6e]/20 h-1"></div>
         </div>
       </div>
     </>

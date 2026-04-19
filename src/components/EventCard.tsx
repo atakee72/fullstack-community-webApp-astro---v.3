@@ -20,9 +20,9 @@ interface EventCardProps {
 
 const categoryColors: Record<string, string> = {
   'community': '#4b9aaa',
-  'sports-health': '#28a745',
-  'culture-education': '#6f42c1',
-  'other': '#6c757d'
+  'sports-health': '#3ed77a',
+  'culture-education': '#9775e8',
+  'other': '#9ca3af'
 };
 
 const categoryLabels: Record<string, string> = {
@@ -66,7 +66,7 @@ export default function EventCard({
     return (
       <div
         onClick={() => onEventClick?.(event)}
-        className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-all cursor-pointer h-full flex flex-col"
+        className="rounded-xl border border-transparent p-3 transition-all duration-300 cursor-pointer h-full flex flex-col hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
       >
         {/* Category Badge */}
         <div className="flex items-start justify-between mb-2">
@@ -83,7 +83,7 @@ export default function EventCard({
                   e.stopPropagation();
                   onEdit?.(event);
                 }}
-                className="text-gray-500 hover:text-gray-700 text-lg"
+                className="text-white/60 hover:text-white/90 text-lg"
                 title="Edit event"
               >
                 ✎
@@ -95,7 +95,7 @@ export default function EventCard({
                     onDelete?.(event._id as string);
                   }
                 }}
-                className="text-gray-500 hover:text-red-600 text-lg"
+                className="text-white/60 hover:text-red-400 text-lg"
                 title="Delete event"
                 disabled={isDeleting}
               >
@@ -106,24 +106,24 @@ export default function EventCard({
         </div>
 
         {/* Title */}
-        <h3 className="text-sm font-bold text-gray-800 mb-2 line-clamp-2">
+        <h3 className="text-sm font-bold text-[#e8e6e1] mb-2 line-clamp-2">
           {event.title}
         </h3>
 
         {/* Date/Time */}
-        <div className="text-xs text-gray-600 mb-1">
+        <div className="text-xs text-white/70 mb-1">
           📅 {format(startDate, 'MMM d, h:mm a')}
         </div>
 
         {/* Location */}
         {event.location && (
-          <div className="text-xs text-gray-600 mb-2 truncate">
+          <div className="text-xs text-white/70 mb-2 truncate">
             📍 {event.location}
           </div>
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between text-xs text-gray-500 mt-auto pt-2 border-t border-gray-200">
+        <div className="flex items-center justify-between text-xs text-white/60 mt-auto pt-2 border-t border-white/10">
           <span>💬 {event.comments?.length || 0}</span>
           <span>❤️ {event.likes || 0}</span>
         </div>
@@ -133,7 +133,7 @@ export default function EventCard({
 
   // Full card for list view
   return (
-    <div className="bg-[#c9c4b9] rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-all">
+    <div className="rounded-xl border border-transparent p-4 md:p-6 transition-all duration-300 hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
       {/* Header with Category and Actions */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2 flex-wrap">
@@ -145,7 +145,7 @@ export default function EventCard({
           </span>
           {event.isEdited && (
             <span
-              className="text-xs text-gray-600"
+              className="text-xs text-white/70"
               title={event.lastEditedAt ? `Last edited: ${new Date(event.lastEditedAt).toLocaleString()}` : 'Edited'}
             >
               (edited)
@@ -157,7 +157,7 @@ export default function EventCard({
           <div className="flex gap-2">
             <button
               onClick={() => onEdit?.(event)}
-              className="text-gray-500 hover:text-gray-700 text-xl md:text-2xl"
+              className="text-white/60 hover:text-white/90 text-xl md:text-2xl"
               title="Edit event"
             >
               ✎
@@ -168,7 +168,7 @@ export default function EventCard({
                   onDelete?.(event._id as string);
                 }
               }}
-              className="text-gray-500 hover:text-red-600 text-xl md:text-2xl"
+              className="text-white/60 hover:text-red-400 text-xl md:text-2xl"
               title="Delete event"
               disabled={isDeleting}
             >
@@ -179,14 +179,14 @@ export default function EventCard({
       </div>
 
       {/* Title */}
-      <h3 className="text-lg md:text-xl font-bold text-[#814256] mb-3">
+      <h3 className="text-lg md:text-xl font-bold text-[#eccc6e] mb-3">
         {event.title}
       </h3>
 
       {/* Author Info */}
-      <div className="bg-[#4b9aaa] text-white px-3 py-2 rounded-md mb-3 flex items-center gap-3">
-        <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-          <span className="text-[#4b9aaa] font-bold text-sm">
+      <div className="bg-white/[0.08] backdrop-blur-xl border border-white/15 text-[#e8e6e1] px-3 py-2 rounded-md mb-3 flex items-center gap-3">
+        <div className="w-8 h-8 bg-[#eccc6e] rounded-full flex items-center justify-center flex-shrink-0">
+          <span className="text-[#0e1033] font-bold text-sm">
             {typeof event.author === 'object' && event.author !== null
               ? (event.author as any).name?.charAt(0)?.toUpperCase() || 'A'
               : 'A'}
@@ -212,11 +212,11 @@ export default function EventCard({
 
       {/* Date/Time */}
       <div className="mb-3 space-y-1">
-        <div className="flex items-center gap-2 text-sm md:text-base text-gray-700">
+        <div className="flex items-center gap-2 text-sm md:text-base text-white/80">
           <span className="text-lg">📅</span>
           <span className="font-medium">{dateDisplay}</span>
         </div>
-        <div className="flex items-center gap-2 text-sm md:text-base text-gray-700">
+        <div className="flex items-center gap-2 text-sm md:text-base text-white/80">
           <span className="text-lg">🕐</span>
           <span>{timeDisplay}</span>
         </div>
@@ -224,7 +224,7 @@ export default function EventCard({
 
       {/* Location */}
       {event.location && (
-        <div className="flex items-center gap-2 text-sm md:text-base text-gray-700 mb-3">
+        <div className="flex items-center gap-2 text-sm md:text-base text-white/80 mb-3">
           <span className="text-lg">📍</span>
           <span>{event.location}</span>
         </div>
@@ -232,7 +232,7 @@ export default function EventCard({
 
       {/* Description */}
       <div className="mb-4">
-        <p className="text-gray-700 text-sm md:text-base leading-relaxed whitespace-pre-wrap">
+        <p className="text-white/80 text-sm md:text-base leading-relaxed whitespace-pre-wrap">
           {event.body}
         </p>
       </div>
@@ -243,7 +243,7 @@ export default function EventCard({
           {event.tags.map((tag) => (
             <span
               key={tag}
-              className="px-3 py-1 bg-[#4b9aaa] text-white text-xs md:text-sm rounded-md"
+              className="px-3 py-1 bg-[#eccc6e]/20 border border-[#eccc6e]/30 text-[#eccc6e] text-xs md:text-sm rounded-md"
             >
               {tag}
             </span>
@@ -252,14 +252,14 @@ export default function EventCard({
       )}
 
       {/* Footer - Comments */}
-      <div className="flex items-center justify-between pt-3 border-t border-gray-400">
+      <div className="flex items-center justify-between pt-3 border-t border-white/10">
         <button
           onClick={() => onCommentClick?.(event)}
           disabled={!user}
           className={`text-sm md:text-base ${
             user
-              ? 'text-[#4b9aaa] hover:text-[#3a7a8a] font-medium'
-              : 'text-gray-400 cursor-not-allowed'
+              ? 'text-[#eccc6e] hover:text-[#d4b85e] font-medium'
+              : 'text-white/50 cursor-not-allowed'
           }`}
         >
           💬 {event.comments?.length || 0} Comments

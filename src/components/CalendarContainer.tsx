@@ -393,8 +393,8 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
     return (
       <div className="w-full">
         <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#4b9aaa]"></div>
-          <p className="text-gray-600 mt-2">Loading calendar...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#eccc6e]"></div>
+          <p className="text-white/70 mt-2">Loading calendar...</p>
         </div>
       </div>
     );
@@ -405,10 +405,10 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
     return (
       <div className="w-full">
         <div className="text-center py-8">
-          <p className="text-red-600">Failed to load calendar data</p>
+          <p className="text-red-400">Failed to load calendar data</p>
           <button
             onClick={() => refetch()}
-            className="mt-2 px-4 py-2 bg-[#4b9aaa] text-white rounded hover:bg-[#3a7a8a]"
+            className="mt-2 px-4 py-2 bg-[#eccc6e] text-[#0e1033] rounded hover:bg-[#d4b85e]"
           >
             Retry
           </button>
@@ -428,30 +428,30 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-              className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-slideUp"
+              className="bg-[#1a1d4a]/95 backdrop-blur-xl border border-white/20 border-t-white/30 rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-slideUp"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="bg-amber-500 px-5 py-4">
+              <div className="bg-amber-500/20 border-b border-white/10 px-5 py-4">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">⏳</span>
-                  <h2 className="text-xl font-bold text-white">Event Under Review</h2>
+                  <h2 className="text-xl font-bold text-[#e8e6e1]">Event Under Review</h2>
                 </div>
               </div>
               {/* Body */}
               <div className="px-5 py-6">
-                <p className="text-gray-700 text-base leading-relaxed mb-4">
+                <p className="text-white/80 text-base leading-relaxed mb-4">
                   {eventModerationMessage}
                 </p>
-                <p className="text-gray-500 text-sm">
+                <p className="text-white/60 text-sm">
                   You can view your event in the calendar, but it won't be visible to others until approved.
                 </p>
               </div>
               {/* Footer */}
-              <div className="px-5 py-4 bg-gray-50 flex justify-end">
+              <div className="px-5 py-4 bg-white/[0.04] border-t border-white/10 flex justify-end">
                 <button
                   onClick={() => setShowModerationModal(false)}
-                  className="px-6 py-2 bg-[#4b9aaa] text-white font-medium rounded-lg hover:bg-[#3a7a8a] transition-colors"
+                  className="px-6 py-2 bg-[#eccc6e] text-[#0e1033] font-medium rounded-lg hover:bg-[#d4b85e] transition-colors"
                 >
                   I Understand
                 </button>
@@ -462,15 +462,15 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
       )}
 
       {/* Controls Section */}
-      <div className="bg-[#4b9aaa]/10 rounded-lg shadow-md p-4 md:p-6 mb-4">
+      <div className="bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-lg shadow-md p-4 md:p-6 mb-4">
         {/* Create Event Button */}
         {user && (
           <div className="flex justify-center">
             <button
               onClick={() => setShowEventModal(true)}
-              className="w-full md:w-2/3 lg:w-1/2 px-3 md:px-6 py-2 md:py-3 text-xs sm:text-sm md:text-base bg-[#814256] text-white rounded-md hover:bg-[#6a3646] transition-all shadow-md font-medium"
+              className="w-full md:w-2/3 lg:w-1/2 px-3 md:px-6 py-2 md:py-3 text-xs sm:text-sm md:text-base bg-[#eccc6e] text-[#0e1033] rounded-md hover:bg-[#d4b85e] transition-all shadow-md font-medium"
             >
-              <span className="text-gray-400 text-sm md:text-base">✎</span> Create Event
+              <span className="text-[#0e1033]/60 text-sm md:text-base">✎</span> Create Event
             </button>
           </div>
         )}
