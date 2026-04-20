@@ -531,7 +531,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           {Array.isArray(item.tags) && item.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 pt-2">
                               {item.tags.map((tag) => (
-                                <button key={tag} onClick={() => setSearchValue(tag)} className="px-2 py-0.5 bg-[#4b9aaa] text-white text-[10px] rounded-md hover:bg-[#3a7a8a] transition-colors cursor-pointer">{tag}</button>
+                                <button key={tag} onClick={() => setSearchValue(tag)} className="px-2 py-0.5 bg-transparent text-[#4b9aaa] border border-[#4b9aaa] text-[10px] rounded-md hover:bg-[#4b9aaa]/10 transition-colors cursor-pointer">{tag}</button>
                               ))}
                             </div>
                           )}
@@ -734,7 +734,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           {Array.isArray(item.tags) && item.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1.5 md:gap-2 pt-4 px-2 md:px-4">
                               {item.tags.map((tag) => (
-                                <button key={tag} onClick={() => setSearchValue(tag)} className="px-2 md:px-3 py-0.5 md:py-1 bg-[#4b9aaa] text-white text-xs rounded-md underline hover:bg-[#3a7a8a] transition-colors cursor-pointer">{tag}</button>
+                                <button key={tag} onClick={() => setSearchValue(tag)} className="px-2 md:px-3 py-0.5 md:py-1 bg-transparent text-[#4b9aaa] border border-[#4b9aaa] text-xs rounded-md hover:bg-[#4b9aaa]/10 transition-colors cursor-pointer">{tag}</button>
                               ))}
                             </div>
                           )}
