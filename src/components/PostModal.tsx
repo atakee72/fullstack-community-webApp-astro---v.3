@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import TagSelector from './TagSelector';
+import { useModalHistory } from '../hooks/useModalHistory';
 
 interface PostImage {
   url: string;
@@ -25,6 +26,9 @@ const MAX_IMAGES = 5;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export default function PostModal({ show, handleClose, collectionType, onSubmit, editMode = false, initialData }: PostModalProps) {
+  // Back button / iOS swipe-back / Android back gesture → close modal (don't leave page).
+  useModalHistory(show, handleClose);
+
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);

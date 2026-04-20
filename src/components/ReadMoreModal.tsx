@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCommentsQuery, useCreateComment, useDeleteComment } from '../hooks/api/useCommentsQuery';
+import { useModalHistory } from '../hooks/useModalHistory';
 import { confirmAction } from '../utils/toast';
 import { format } from 'date-fns';
 import { BookmarkIcon, Flag } from 'lucide-react';
@@ -68,6 +69,9 @@ export default function ReadMoreModal({
   const { data: comments = [], isLoading: commentsLoading } = useCommentsQuery(postId || '');
   const createComment = useCreateComment();
   const deleteComment = useDeleteComment(postId || '');
+
+  // Back button / iOS swipe-back / Android back gesture → close modal (don't leave page).
+  useModalHistory(isOpen, onClose);
 
   // Lock body scroll when modal is open.
   // NOTE: using only overflow:hidden (not position:fixed on body).

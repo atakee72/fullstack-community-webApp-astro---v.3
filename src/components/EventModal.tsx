@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { CalendarPlus, CalendarCog } from 'lucide-react';
 import TagSelector from './TagSelector';
+import { useModalHistory } from '../hooks/useModalHistory';
 
 interface EventModalProps {
   show: boolean;
@@ -37,6 +38,9 @@ export default function EventModal({
   initialData,
   prefillDates
 }: EventModalProps) {
+  // Back button / iOS swipe-back / Android back gesture → close modal (don't leave page).
+  useModalHistory(show, handleClose);
+
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [startDate, setStartDate] = useState('');

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Flag } from 'lucide-react';
+import { useModalHistory } from '../hooks/useModalHistory';
 
 type ReportReason = 'spam' | 'harassment' | 'hate_speech' | 'violence' | 'inappropriate' | 'misinformation' | 'other';
 
@@ -48,6 +49,10 @@ export default function ReportModal({
 }: ReportModalProps) {
   // Support both handleClose and onClose props
   const closeModal = handleClose || onClose || (() => {});
+
+  // Back button / iOS swipe-back / Android back gesture → close modal (don't leave page).
+  useModalHistory(show, closeModal);
+
   const [reason, setReason] = useState<ReportReason | ''>('');
   const [details, setDetails] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);

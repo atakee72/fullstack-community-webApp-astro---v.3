@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { Calendar, MapPin, AlignLeft, User, MessageCircle, Flag } from 'lucide-react';
 import type { Event } from '../types';
 import { generateGoogleCalendarUrl, downloadIcsFile } from '../utils/calendarExport';
+import { useModalHistory } from '../hooks/useModalHistory';
 
 const REVEALED_WARNINGS_KEY = 'mahalle_revealed_event_comment_warnings';
 const REVEALED_EVENT_WARNINGS_KEY = 'mahalle_revealed_event_warnings';
@@ -42,6 +43,9 @@ export default function EventViewModal({
   reportedComments = new Set()
 }: EventViewModalProps) {
   const [commentText, setCommentText] = useState('');
+
+  // Back button / iOS swipe-back / Android back gesture → close modal (don't leave page).
+  useModalHistory(show, onClose);
 
   // Track which warned comments have been revealed by the user (persisted to localStorage)
   const [revealedWarnings, setRevealedWarnings] = useState<Set<string>>(() => {
