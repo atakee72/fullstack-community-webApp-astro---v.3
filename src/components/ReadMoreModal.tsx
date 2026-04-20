@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useCommentsQuery, useCreateComment, useDeleteComment } from '../hooks/api/useCommentsQuery';
 import { confirmAction } from '../utils/toast';
 import { format } from 'date-fns';
-import { BookmarkIcon } from 'lucide-react';
+import { BookmarkIcon, Flag } from 'lucide-react';
 import HeartBtn from './HeartBtn';
 import type { User } from '../types';
 
@@ -25,6 +25,7 @@ interface ReadMoreModalProps {
   onToggleLike?: () => void;
   isSaved?: boolean;
   onToggleSave?: () => void;
+  isReportedByMe?: boolean;
 }
 
 export default function ReadMoreModal({
@@ -45,7 +46,8 @@ export default function ReadMoreModal({
   likeCount = 0,
   onToggleLike,
   isSaved = false,
-  onToggleSave
+  onToggleSave,
+  isReportedByMe = false
 }: ReadMoreModalProps) {
   const [commentText, setCommentText] = useState('');
   const [isAddingComment, setIsAddingComment] = useState(false);
@@ -176,9 +178,15 @@ export default function ReadMoreModal({
         <div className="bg-white/[0.04] border-b border-white/10 text-white p-4 rounded-t-lg flex justify-between items-start">
           <div className="flex-1 pr-4">
             <h2 className="text-xl font-bold mb-2">{title}</h2>
-            <div className="flex items-center gap-4 text-sm opacity-90">
+            <div className="flex items-center gap-3 text-sm opacity-90 flex-wrap">
               {author && <span>By {author}</span>}
               {date && <span>{formatDate(date)}</span>}
+              {isReportedByMe && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-500/15 border border-red-500/40 text-red-400">
+                  <Flag className="w-3 h-3 fill-red-400" strokeWidth={1.75} />
+                  You reported this
+                </span>
+              )}
             </div>
           </div>
           <button
@@ -404,8 +412,8 @@ export default function ReadMoreModal({
                               disabled={reportedComments.has(comment._id as string)}
                               className={`text-xs transition-colors ${
                                 reportedComments.has(comment._id as string)
-                                  ? 'text-[#814256]/40 cursor-not-allowed'
-                                  : 'text-[#814256] hover:text-red-500'
+                                  ? 'text-white/30 cursor-not-allowed'
+                                  : 'text-white/50 hover:text-red-400'
                               }`}
                               title={reportedComments.has(comment._id as string) ? "Already reported" : "Report comment"}
                             >
@@ -419,8 +427,8 @@ export default function ReadMoreModal({
                               disabled={comment.moderationStatus === 'pending' || comment.moderationStatus === 'rejected'}
                               className={`text-xs transition-colors ${
                                 comment.moderationStatus === 'pending' || comment.moderationStatus === 'rejected'
-                                  ? 'text-[#814256]/40 cursor-not-allowed'
-                                  : 'text-[#814256] hover:text-red-500'
+                                  ? 'text-white/30 cursor-not-allowed'
+                                  : 'text-white/50 hover:text-red-400'
                               }`}
                               title={comment.moderationStatus === 'pending' ? 'Cannot delete during review' : comment.moderationStatus === 'rejected' ? 'Comment was removed' : 'Delete comment'}
                             >

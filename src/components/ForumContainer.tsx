@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTopicsQuery, useCreatePost, useDeletePost, useEditPost, useSavePostMutation, useSavedPostsQuery } from '../hooks/api/useTopicsQuery';
-import { BookmarkIcon } from 'lucide-react';
+import { BookmarkIcon, Flag } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLikeMutation } from '../hooks/api/useLikeMutation';
 import PostModal from './PostModal';
@@ -518,11 +518,17 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                               disabled={!user || item.moderationStatus === 'pending' || item.moderationStatus === 'rejected'}
                             />
                             {user && !isOwner(item.author, user) && (
-                              <button
-                                onClick={() => openReportModal(item)}
-                                disabled={reportedItems.has(item._id) || reportCheckLoading === item._id}
-                                className={cn("p-1 transition-colors text-xl", reportedItems.has(item._id) ? "text-[#814256]/50 cursor-not-allowed" : "text-[#814256] hover:text-red-500")}
-                              >{reportCheckLoading === item._id ? '\u231B' : '\u{1F6A9}'}</button>
+                              <div className="relative group">
+                                <button
+                                  onClick={() => openReportModal(item)}
+                                  disabled={reportedItems.has(item._id) || reportCheckLoading === item._id}
+                                  className={cn("p-1 transition-colors text-[#6F2F59]", reportedItems.has(item._id) ? "cursor-not-allowed" : "hover:text-red-500")}
+                                  aria-label={reportedItems.has(item._id) ? "Already reported" : "Report this post"}
+                                >{reportCheckLoading === item._id ? <span className="text-xl">⌛</span> : <Flag className={cn("w-5 h-5", reportedItems.has(item._id) && "fill-red-500")} strokeWidth={1.75} />}</button>
+                                <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 rounded-md bg-[#1a1d4a]/95 border border-white/15 text-white/90 text-[11px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-lg z-20">
+                                  {reportedItems.has(item._id) ? 'Already reported' : 'Report this post'}
+                                </span>
+                              </div>
                             )}
                             {isOwner(item.author, user) && (
                               <>
@@ -723,7 +729,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                                 <button
                                   onClick={() => openReportModal(item)}
                                   disabled={reportedItems.has(item._id) || reportCheckLoading === item._id}
-                                  className={cn("p-1 transition-colors text-xl", reportedItems.has(item._id) ? "text-[#814256]/50 cursor-not-allowed" : "text-[#814256] hover:text-red-500")}
+                                  className={cn("p-1 transition-colors text-xl", reportedItems.has(item._id) ? "text-gray-400 cursor-not-allowed" : "text-gray-400 hover:text-red-500")}
                                   title={reportedItems.has(item._id) ? "Already reported" : "Report this post"}
                                 >{reportCheckLoading === item._id ? '\u231B' : '\u{1F6A9}'}</button>
                               )}
@@ -831,6 +837,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
         onToggleLike={selectedPost ? () => handleLikeToggle(selectedPost._id, selectedPost.likedBy?.includes(user?.id)) : undefined}
         isSaved={selectedPost ? savedPosts.has(selectedPost._id) : false}
         onToggleSave={selectedPost ? () => { const action = savedPosts.has(selectedPost._id) ? 'unsave' : 'save'; savePost.mutate({ postId: selectedPost._id, action }); } : undefined}
+        isReportedByMe={selectedPost ? reportedItems.has(selectedPost._id) : false}
       />
 
       {/* Report Modal */}
