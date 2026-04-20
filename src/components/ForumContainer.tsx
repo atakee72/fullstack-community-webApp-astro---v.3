@@ -531,7 +531,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           {Array.isArray(item.tags) && item.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 pt-2">
                               {item.tags.map((tag) => (
-                                <button key={tag} onClick={() => setSearchValue(tag)} className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#4b9aaa]/30 border border-[#4b9aaa] text-white hover:bg-[#4b9aaa]/50 transition-colors cursor-pointer">{tag}</button>
+                                <button key={tag} onClick={() => setSearchValue(tag)} className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#4b9aaa]/30 border border-[#4b9aaa] text-[#d4f0f4] hover:bg-[#4b9aaa]/50 transition-colors cursor-pointer">{tag}</button>
                               ))}
                             </div>
                           )}
@@ -734,7 +734,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           {Array.isArray(item.tags) && item.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1.5 md:gap-2 pt-4 px-2 md:px-4">
                               {item.tags.map((tag) => (
-                                <button key={tag} onClick={() => setSearchValue(tag)} className="inline-flex items-center px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[11px] md:text-xs font-medium bg-[#4b9aaa]/30 border border-[#4b9aaa] text-white hover:bg-[#4b9aaa]/50 transition-colors cursor-pointer">{tag}</button>
+                                <button key={tag} onClick={() => setSearchValue(tag)} className="inline-flex items-center px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[11px] md:text-xs font-medium bg-[#4b9aaa]/30 border border-[#4b9aaa] text-[#d4f0f4] hover:bg-[#4b9aaa]/50 transition-colors cursor-pointer">{tag}</button>
                               ))}
                             </div>
                           )}
