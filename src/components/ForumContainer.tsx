@@ -572,7 +572,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                     {/* User Reported Banner - Only visible to the post author */}
                     {item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && (
                       <div className="bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 mb-4 flex items-start gap-3">
-                        <span className="text-orange-500 text-xl flex-shrink-0">🚩</span>
+                        <Flag className="w-5 h-5 text-orange-500 flex-shrink-0" strokeWidth={1.75} />
                         <div>
                           <p className="text-orange-800 font-medium text-sm">Your post has been reported by the community</p>
                           <p className="text-orange-700 text-xs mt-0.5">It is currently under review. Editing and deletion are disabled until the review is complete.</p>

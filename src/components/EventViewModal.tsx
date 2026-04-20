@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar, MapPin, AlignLeft, User, MessageCircle } from 'lucide-react';
+import { Calendar, MapPin, AlignLeft, User, MessageCircle, Flag } from 'lucide-react';
 import type { Event } from '../types';
 import { generateGoogleCalendarUrl, downloadIcsFile } from '../utils/calendarExport';
 
@@ -189,7 +189,7 @@ export default function EventViewModal({
 
           {event.moderationStatus === 'pending' && event.isUserReported && isEventAuthor() && (
             <div className="mx-4 mt-3 bg-orange-50 border border-orange-200 rounded px-3 py-2 flex items-center gap-2">
-              <span className="text-orange-500">🚩</span>
+              <Flag className="w-4 h-4 text-orange-500 flex-shrink-0" strokeWidth={1.75} />
               <p className="text-orange-800 text-sm">Your event has been reported and is under review.</p>
             </div>
           )}
@@ -232,11 +232,16 @@ export default function EventViewModal({
               {/* Report Button - only for logged-in users who are not the author */}
               {user && !isEventAuthor() && onReportEvent && (
                 <button
-                  onClick={() => onReportEvent(event)}
-                  className="text-white/50 hover:text-red-400 transition-colors text-lg"
-                  title="Report this event"
+                  onClick={() => !reportedComments.has(event._id as string) && onReportEvent(event)}
+                  disabled={reportedComments.has(event._id as string)}
+                  className={`transition-colors ${
+                    reportedComments.has(event._id as string)
+                      ? 'text-white/30 cursor-not-allowed'
+                      : 'text-white/50 hover:text-red-400'
+                  }`}
+                  title={reportedComments.has(event._id as string) ? "Already reported" : "Report this event"}
                 >
-                  🚩
+                  <Flag className={`w-5 h-5 ${reportedComments.has(event._id as string) ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.75} />
                 </button>
               )}
             </div>
@@ -398,7 +403,7 @@ export default function EventViewModal({
                         {/* User Reported Banner - Only visible to comment author */}
                         {comment.moderationStatus === 'pending' && comment.isUserReported && isAuthor && (
                           <div className="bg-orange-50 border border-orange-200 rounded px-2 py-1 mb-1 flex items-center gap-1.5">
-                            <span className="text-orange-500 text-xs">🚩</span>
+                            <Flag className="w-3 h-3 text-orange-500 flex-shrink-0" strokeWidth={1.75} />
                             <p className="text-orange-800 text-[10px]">Your comment has been reported</p>
                           </div>
                         )}
@@ -459,14 +464,14 @@ export default function EventViewModal({
                           <button
                             onClick={() => onReportComment(comment._id as string, (comment.body || comment.comment || '').substring(0, 50) + ((comment.body || comment.comment || '').length > 50 ? '...' : ''))}
                             disabled={reportedComments.has(comment._id as string)}
-                            className={`flex-shrink-0 text-xs transition-colors ${
+                            className={`flex-shrink-0 transition-colors ${
                               reportedComments.has(comment._id as string)
-                                ? 'text-white/40 cursor-not-allowed'
+                                ? 'text-white/30 cursor-not-allowed'
                                 : 'text-white/50 hover:text-red-400'
                             }`}
                             title={reportedComments.has(comment._id as string) ? "Already reported" : "Report comment"}
                           >
-                            🚩
+                            <Flag className={`w-4 h-4 ${reportedComments.has(comment._id as string) ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.75} />
                           </button>
                         )}
                       </div>

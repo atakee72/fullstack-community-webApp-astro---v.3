@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { format, isSameDay } from 'date-fns';
 import type { Locale } from 'date-fns';
-import { CalendarDays, CalendarX2 } from 'lucide-react';
+import { CalendarDays, CalendarX2, Flag } from 'lucide-react';
 import type { Event } from '../types';
 import { confirmAction } from '../utils/toast';
 
@@ -242,7 +242,7 @@ export default function DayEventsList({
                     ${isReported ? 'bg-orange-100 text-orange-700' : ''}
                   `}>
                     {isPending && <><span>⏳</span><span className="font-medium">Under review</span></>}
-                    {isReported && <><span>🚩</span><span className="font-medium">Reported - under review</span></>}
+                    {isReported && <><Flag className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.75} /><span className="font-medium">Reported - under review</span></>}
                     {isRejected && <><span>✕</span><span className="font-medium">Removed by moderation</span></>}
                   </div>
                 )}

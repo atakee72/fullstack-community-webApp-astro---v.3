@@ -346,7 +346,7 @@ export default function ReadMoreModal({
                           {/* User Reported Banner - Only visible to comment author */}
                           {comment.moderationStatus === 'pending' && comment.isUserReported && isAuthor && (
                             <div className="bg-orange-50 border border-orange-200 rounded px-2 py-1 mb-1 flex items-center gap-1.5">
-                              <span className="text-orange-500 text-xs">🚩</span>
+                              <Flag className="w-3 h-3 text-orange-500 flex-shrink-0" strokeWidth={1.75} />
                               <p className="text-orange-800 text-[10px]">Your comment has been reported</p>
                             </div>
                           )}
@@ -417,7 +417,7 @@ export default function ReadMoreModal({
                               }`}
                               title={reportedComments.has(comment._id as string) ? "Already reported" : "Report comment"}
                             >
-                              🚩
+                              <Flag className={`w-4 h-4 ${reportedComments.has(comment._id as string) ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.75} />
                             </button>
                           )}
                           {/* Delete button */}

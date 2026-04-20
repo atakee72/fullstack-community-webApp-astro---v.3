@@ -3,6 +3,7 @@ import { format, startOfMonth, endOfMonth, addMonths, subMonths, isBefore, isSam
 import { de } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEventsQuery, useCreateEvent, useEditEvent, useDeleteEvent, useEventLikeMutation } from '../hooks/api/useEventsQuery';
+import { useMyReportedIdsQuery, useMarkAsReported } from '../hooks/api/useReportsQuery';
 import { useCreateComment } from '../hooks/api/useCommentsQuery';
 import EventModal from './EventModal';
 import CalendarGridView from './CalendarGridView';
@@ -51,7 +52,11 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
     preview: string;
   } | null>(null);
   const [showReportToast, setShowReportToast] = useState(false);
-  const [reportedItems, setReportedItems] = useState<Set<string>>(new Set());
+
+  // Eager-load user's reported IDs (mirrors save/like pattern)
+  const { data: reportedIdsData } = useMyReportedIdsQuery(!!user);
+  const reportedItems = new Set(reportedIdsData?.reportedIds || []);
+  const markAsReported = useMarkAsReported();
 
   // Filter state
   const [searchValue, setSearchValue] = useState('');
@@ -352,7 +357,7 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
 
       setShowReportModal(false);
       setReportContent(null);
-      setReportedItems(prev => new Set([...prev, data.contentId]));
+      markAsReported(data.contentId);
 
       // Show success toast
       setShowReportToast(true);

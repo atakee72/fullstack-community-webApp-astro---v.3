@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Flag } from 'lucide-react';
 
 type ReportReason = 'spam' | 'harassment' | 'hate_speech' | 'violence' | 'inappropriate' | 'misinformation' | 'other';
 
@@ -170,7 +171,7 @@ export default function ReportModal({
               ✕
             </button>
             <div className="flex items-center gap-2 md:gap-3">
-              <span className="text-2xl md:text-3xl">🚩</span>
+              <Flag className="w-6 h-6 md:w-7 md:h-7 text-white" strokeWidth={1.75} />
               <h2 className="text-xl md:text-2xl font-bold text-white">
                 Report {getContentTypeLabel(contentType)}
               </h2>

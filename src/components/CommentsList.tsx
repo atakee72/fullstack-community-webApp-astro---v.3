@@ -3,6 +3,7 @@ import { useCommentsQuery, useDeleteComment } from '../hooks/api/useCommentsQuer
 import type { Comment, User } from '../types';
 import { isOwner as checkIsOwner, getUserDisplayName } from '../utils/authHelpers';
 import { confirmAction } from '../utils/toast';
+import { Flag } from 'lucide-react';
 
 const REVEALED_WARNINGS_KEY = 'mahalle_revealed_comment_warnings';
 
@@ -126,7 +127,7 @@ export default function CommentsList({ postId, collectionType, postTitle, onAddC
                           }`}
                           title={reportedComments.has(comment._id as string) ? "Already reported" : "Report comment"}
                         >
-                          🚩
+                          <Flag className={`w-4 h-4 ${reportedComments.has(comment._id as string) ? 'fill-red-500 text-red-500' : ''}`} strokeWidth={1.75} />
                         </button>
                       )}
                       {/* Delete button - only shown for comment owner, disabled during moderation */}
@@ -167,7 +168,7 @@ export default function CommentsList({ postId, collectionType, postTitle, onAddC
                       {/* User Reported Banner - Only visible to comment author */}
                       {comment.moderationStatus === 'pending' && comment.isUserReported && isCommentOwner && (
                         <div className="bg-orange-50 border border-orange-200 rounded px-3 py-2 mb-3 flex items-start gap-2">
-                          <span className="text-orange-500">🚩</span>
+                          <Flag className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" strokeWidth={1.75} />
                           <div>
                             <p className="text-orange-800 font-medium text-sm">Your comment has been reported</p>
                             <p className="text-orange-700 text-xs">It is under review. Deletion is disabled until review is complete.</p>
