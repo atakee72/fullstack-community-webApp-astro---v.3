@@ -641,7 +641,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           item.hasWarningLabel && !isOwner(item.author, user) && !revealedWarnings.has(item._id) && "blur-sm pointer-events-none select-none"
                         )}>
                           {/* Author Info Header */}
-                          <div className="bg-[#4b9aaa] text-white px-1.5 md:px-2 py-0 rounded-md mt-0 mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs">
+                          <div className="bg-[#4b9aaa]/70 text-white px-1.5 md:px-2 py-0 rounded-md mt-0 mb-2 md:mb-3 flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs">
                             <div className="w-8 h-8 md:w-9 md:h-9 bg-white rounded-full flex items-center justify-center flex-shrink-0 -my-1">
                               <span className="text-[#4b9aaa] font-bold text-xs md:text-sm">
                                 {item.author?.name?.charAt(0)?.toUpperCase() || item.author?.userName?.charAt(0)?.toUpperCase() || 'A'}
