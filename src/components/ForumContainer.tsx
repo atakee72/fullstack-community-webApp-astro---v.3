@@ -471,13 +471,10 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
 
                         {/* Title + icons + tags below image */}
                         <div className="p-3 flex flex-col flex-1">
-                          <h3 className="font-semibold text-sm leading-tight line-clamp-2 text-gray-900">{item.title}</h3>
-                          <button
+                          <h3
                             onClick={() => handleReadMore(item)}
-                            className="mt-1 self-start text-[#d4f0f4] hover:text-white font-medium italic text-[11px] underline"
-                          >
-                            Read & Comment
-                          </button>
+                            className="font-semibold text-sm leading-tight line-clamp-2 text-gray-900 cursor-pointer hover:underline"
+                          >{item.title}</h3>
 
                           {/* Icon row — all icons evenly distributed */}
                           <div className="flex items-center justify-evenly mt-2">
