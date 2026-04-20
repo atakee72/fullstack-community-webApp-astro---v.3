@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTopicsQuery, useCreatePost, useDeletePost, useEditPost, useSavePostMutation, useSavedPostsQuery } from '../hooks/api/useTopicsQuery';
+import { useMyReportedIdsQuery, useMarkAsReported } from '../hooks/api/useReportsQuery';
 import { BookmarkIcon, Flag } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLikeMutation } from '../hooks/api/useLikeMutation';
@@ -35,8 +36,6 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   const [revealedWarnings, setRevealedWarnings] = useState<Set<string>>(new Set());
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportingItem, setReportingItem] = useState<{ id: string; type: 'topic' | 'comment'; preview?: string } | null>(null);
-  const [reportedItems, setReportedItems] = useState<Set<string>>(new Set());
-  const [reportCheckLoading, setReportCheckLoading] = useState<string | null>(null);
   const [reportToastItemId, setReportToastItemId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(12);
@@ -58,6 +57,11 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   const savePost = useSavePostMutation();
   const { data: savedPostsData } = useSavedPostsQuery(!!user);
   const savedPosts = new Set(savedPostsData?.savedIds || []);
+
+  // Eager-load user's reported content IDs so flag buttons render filled-red on mount
+  const { data: reportedIdsData } = useMyReportedIdsQuery(!!user);
+  const reportedItems = new Set(reportedIdsData?.reportedIds || []);
+  const markAsReported = useMarkAsReported();
 
   const queryClient = useQueryClient();
 
@@ -232,8 +236,8 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
       const result = await response.json();
 
       if (response.ok) {
-        // Mark item as reported locally
-        setReportedItems(prev => new Set([...prev, data.contentId]));
+        // Mark item as reported in the query cache so the flag flips immediately
+        markAsReported(data.contentId);
         return { success: true };
       } else {
         return { success: false, error: result.error, alreadyReported: result.alreadyReported };
@@ -244,50 +248,27 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     }
   };
 
-  // Check if already reported, then open modal
-  const checkAndOpenReportModal = async (contentId: string, contentType: 'topic' | 'comment', preview: string) => {
-    // If already known to be reported, show tooltip
+  // Open report modal (state is eager-loaded via useMyReportedIdsQuery, so no network check needed).
+  // If already reported, show a brief tooltip toast instead of opening the modal.
+  const openReportFor = (contentId: string, contentType: 'topic' | 'comment' | 'announcement' | 'recommendation', preview: string) => {
     if (reportedItems.has(contentId)) {
       setReportToastItemId(contentId);
       setTimeout(() => setReportToastItemId(null), 2000);
       return;
     }
-
-    setReportCheckLoading(contentId);
-    try {
-      const response = await fetch(`/api/reports/check?contentId=${contentId}&contentType=${contentType}`);
-      const result = await response.json();
-
-      if (result.alreadyReported) {
-        // Mark as reported locally and show tooltip
-        setReportedItems(prev => new Set([...prev, contentId]));
-        setReportToastItemId(contentId);
-        setTimeout(() => setReportToastItemId(null), 2000);
-      } else {
-        // Open the modal
-        setReportingItem({ id: contentId, type: contentType, preview });
-        setShowReportModal(true);
-      }
-    } catch (error) {
-      console.error('Failed to check report status:', error);
-      // On error, still open modal - server will handle duplicate check
-      setReportingItem({ id: contentId, type: contentType, preview });
-      setShowReportModal(true);
-    } finally {
-      setReportCheckLoading(null);
-    }
+    setReportingItem({ id: contentId, type: contentType as 'topic' | 'comment', preview });
+    setShowReportModal(true);
   };
 
   // Open report modal for a post (use correct contentType based on current collection)
   const openReportModal = (item: any) => {
-    // Map collection name to singular content type: topics -> topic, announcements -> announcement, etc.
     const contentType = collectionType.slice(0, -1) as 'topic' | 'announcement' | 'recommendation';
-    checkAndOpenReportModal(item._id, contentType, item.title);
+    openReportFor(item._id, contentType, item.title);
   };
 
   // Open report modal for a comment
   const openCommentReportModal = (commentId: string, preview: string) => {
-    checkAndOpenReportModal(commentId, 'comment', preview);
+    openReportFor(commentId, 'comment', preview);
   };
 
   // Show loading state during SSR or data fetching
@@ -521,10 +502,10 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                               <div className="relative group">
                                 <button
                                   onClick={() => openReportModal(item)}
-                                  disabled={reportedItems.has(item._id) || reportCheckLoading === item._id}
+                                  disabled={reportedItems.has(item._id)}
                                   className={cn("p-1 transition-colors text-[#6F2F59]", reportedItems.has(item._id) ? "cursor-not-allowed" : "hover:text-red-500")}
                                   aria-label={reportedItems.has(item._id) ? "Already reported" : "Report this post"}
-                                >{reportCheckLoading === item._id ? <span className="text-xl">⌛</span> : <Flag className={cn("w-5 h-5", reportedItems.has(item._id) && "fill-red-500")} strokeWidth={1.75} />}</button>
+                                ><Flag className={cn("w-5 h-5", reportedItems.has(item._id) && "fill-red-500")} strokeWidth={1.75} /></button>
                                 <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 rounded-md bg-[#1a1d4a]/95 border border-white/15 text-white/90 text-[11px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-lg z-20">
                                   {reportedItems.has(item._id) ? 'Already reported' : 'Report this post'}
                                 </span>
@@ -728,10 +709,10 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                               {user && !isOwner(item.author, user) && (
                                 <button
                                   onClick={() => openReportModal(item)}
-                                  disabled={reportedItems.has(item._id) || reportCheckLoading === item._id}
-                                  className={cn("p-1 transition-colors text-xl", reportedItems.has(item._id) ? "text-gray-400 cursor-not-allowed" : "text-gray-400 hover:text-red-500")}
+                                  disabled={reportedItems.has(item._id)}
+                                  className={cn("p-1 transition-colors", reportedItems.has(item._id) ? "text-[#6F2F59] cursor-not-allowed" : "text-[#6F2F59] hover:text-red-500")}
                                   title={reportedItems.has(item._id) ? "Already reported" : "Report this post"}
-                                >{reportCheckLoading === item._id ? '\u231B' : '\u{1F6A9}'}</button>
+                                ><Flag className={cn("w-5 h-5", reportedItems.has(item._id) && "fill-red-500")} strokeWidth={1.75} /></button>
                               )}
                               {isOwner(item.author, user) && (
                                 <>
