@@ -301,3 +301,18 @@ body {
     display: none !important;
   }
 }
+
+/* Native <select> open-list styling — matches dark glass palette.
+   Only bg + text are reliably stylable cross-browser; the selected-row
+   highlight and list chrome are OS-controlled. Mobile uses OS picker. */
+option {
+  background-color: #0e1033;
+  color: #e8e6e1;
+}
+option:checked {
+  background-color: #2d2a5c;
+  color: #ffffff;
+}
+option:disabled {
+  color: rgba(255, 255, 255, 0.35);
+}
