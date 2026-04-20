@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { CalendarPlus, CalendarCog } from 'lucide-react';
+import { RemoveScroll } from 'react-remove-scroll';
 import TagSelector from './TagSelector';
 import { useModalHistory } from '../hooks/useModalHistory';
 
@@ -69,61 +70,15 @@ export default function EventModal({
       setSelectedTags([]);
       setIsSubmitting(false);
       setErrors({});
-      // Re-enable html and body scroll
-      const htmlElement = document.documentElement;
-      htmlElement.style.overflow = '';
-      htmlElement.style.touchAction = '';
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.touchAction = '';
-    } else {
-      // Disable body AND html scroll when modal opens
-      const scrollY = window.scrollY;
-
-      // Lock BOTH html and body elements
-      const htmlElement = document.documentElement;
-
-      const applyLock = () => {
-        htmlElement.style.setProperty('overflow', 'hidden', 'important');
-        htmlElement.style.setProperty('touch-action', 'none', 'important');
-        htmlElement.style.setProperty('scroll-behavior', 'auto', 'important');
-
-        document.body.style.setProperty('position', 'fixed', 'important');
-        document.body.style.setProperty('top', `-${scrollY}px`, 'important');
-        document.body.style.setProperty('width', '100%', 'important');
-        document.body.style.setProperty('overflow', 'hidden', 'important');
-        document.body.style.setProperty('touch-action', 'none', 'important');
-      };
-
-      applyLock();
-      // Re-apply after a tick in case something overrides it
-      setTimeout(applyLock, 0);
-      setTimeout(applyLock, 10);
-
-      // Add escape key listener when modal is open
-      const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          handleClose();
-        }
-      };
-      document.addEventListener('keydown', handleEscape);
-      return () => {
-        document.removeEventListener('keydown', handleEscape);
-        // Clean up: re-enable html and body scroll when component unmounts
-        const scrollY = document.body.style.top;
-        const htmlElement = document.documentElement;
-        htmlElement.style.overflow = '';
-        htmlElement.style.touchAction = '';
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        document.body.style.touchAction = '';
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      };
+      return;
     }
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+    // Body scroll lock is handled by the <RemoveScroll> wrapper in the return JSX.
   }, [show, handleClose]);
 
   // Separate useEffect for populating form in edit mode or prefilling dates from range selection
@@ -241,7 +196,7 @@ export default function EventModal({
   if (!show) return null;
 
   return (
-    <>
+    <RemoveScroll enabled={show}>
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black bg-opacity-50 z-40"
@@ -462,6 +417,6 @@ export default function EventModal({
           </div>
         </div>
       </div>
-    </>
+    </RemoveScroll>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Calendar, MapPin, AlignLeft, User, MessageCircle, Flag } from 'lucide-react';
+import { RemoveScroll } from 'react-remove-scroll';
 import type { Event } from '../types';
 import { generateGoogleCalendarUrl, downloadIcsFile } from '../utils/calendarExport';
 import { useModalHistory } from '../hooks/useModalHistory';
@@ -133,7 +134,7 @@ export default function EventViewModal({
   const isSameDay = format(startDate, 'yyyy-MM-dd') === format(endDate, 'yyyy-MM-dd');
 
   return (
-    <>
+    <RemoveScroll enabled={show}>
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 z-40 animate-fadeIn"
@@ -492,6 +493,6 @@ export default function EventViewModal({
           <div className="sticky bottom-0 bg-[#d4af37]/20 h-1"></div>
         </div>
       </div>
-    </>
+    </RemoveScroll>
   );
 }

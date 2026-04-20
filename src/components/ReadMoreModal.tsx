@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { RemoveScroll } from 'react-remove-scroll';
 import { useCommentsQuery, useCreateComment, useDeleteComment } from '../hooks/api/useCommentsQuery';
 import { useModalHistory } from '../hooks/useModalHistory';
 import { confirmAction } from '../utils/toast';
@@ -73,24 +74,7 @@ export default function ReadMoreModal({
   // Back button / iOS swipe-back / Android back gesture → close modal (don't leave page).
   useModalHistory(isOpen, onClose);
 
-  // Lock body scroll when modal is open.
-  // NOTE: using only overflow:hidden (not position:fixed on body).
-  // position:fixed on body breaks position:fixed descendants' viewport positioning
-  // in Firefox when the page has other fixed elements (e.g. our .dark-glass-bg).
-  useEffect(() => {
-    if (!isOpen) return;
-    const htmlElement = document.documentElement;
-    const prevHtmlOverflow = htmlElement.style.overflow;
-    const prevBodyOverflow = document.body.style.overflow;
-
-    htmlElement.style.setProperty('overflow', 'hidden', 'important');
-    document.body.style.setProperty('overflow', 'hidden', 'important');
-
-    return () => {
-      htmlElement.style.overflow = prevHtmlOverflow;
-      document.body.style.overflow = prevBodyOverflow;
-    };
-  }, [isOpen]);
+  // Body scroll lock is handled by the <RemoveScroll> wrapper in the return JSX.
 
   // Close on Escape key
   useEffect(() => {
@@ -167,15 +151,10 @@ export default function ReadMoreModal({
   };
 
   return (
+    <RemoveScroll enabled={isOpen}>
     <div
       className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-3 overscroll-contain"
       onClick={handleBackdropClick}
-      onTouchMove={(e) => {
-        // Prevent background scroll on touch devices
-        if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-          e.preventDefault();
-        }
-      }}
     >
       <div ref={modalRef} className="bg-[#2d2a5c]/85 backdrop-blur-xl border border-white/15 border-t-white/25 rounded-lg w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl">
         {/* Modal Header */}
@@ -480,5 +459,6 @@ export default function ReadMoreModal({
         </div>
       </div>
     </div>
+    </RemoveScroll>
   );
 }

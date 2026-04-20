@@ -45,6 +45,7 @@
     "next-auth": "5.0.0-beta.30",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-remove-scroll": "^2.7.2",
     "react-swipeable": "^7.0.2",
     "sonner": "^2.0.7",
     "svelte": "^5.46.3",

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Flag } from 'lucide-react';
+import { RemoveScroll } from 'react-remove-scroll';
 import { useModalHistory } from '../hooks/useModalHistory';
 
 type ReportReason = 'spam' | 'harassment' | 'hate_speech' | 'violence' | 'inappropriate' | 'misinformation' | 'other';
@@ -67,53 +68,15 @@ export default function ReportModal({
       setIsSubmitting(false);
       setError(null);
       setSuccess(false);
-      // Re-enable scroll
-      const htmlElement = document.documentElement;
-      htmlElement.style.overflow = '';
-      htmlElement.style.touchAction = '';
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.touchAction = '';
-    } else {
-      // Disable scroll when modal opens
-      const scrollY = window.scrollY;
-      const htmlElement = document.documentElement;
-      const applyLock = () => {
-        htmlElement.style.setProperty('overflow', 'hidden', 'important');
-        htmlElement.style.setProperty('touch-action', 'none', 'important');
-        htmlElement.style.setProperty('scroll-behavior', 'auto', 'important');
-        document.body.style.setProperty('position', 'fixed', 'important');
-        document.body.style.setProperty('top', `-${scrollY}px`, 'important');
-        document.body.style.setProperty('width', '100%', 'important');
-        document.body.style.setProperty('overflow', 'hidden', 'important');
-        document.body.style.setProperty('touch-action', 'none', 'important');
-      };
-      applyLock();
-      setTimeout(applyLock, 0);
-      setTimeout(applyLock, 10);
-
-      const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          closeModal();
-        }
-      };
-      document.addEventListener('keydown', handleEscape);
-      return () => {
-        document.removeEventListener('keydown', handleEscape);
-        const scrollY = document.body.style.top;
-        const htmlElement = document.documentElement;
-        htmlElement.style.overflow = '';
-        htmlElement.style.touchAction = '';
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        document.body.style.touchAction = '';
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      };
+      return;
     }
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeModal();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+    // Body scroll lock is handled by the <RemoveScroll> wrapper in the return JSX.
   }, [show, closeModal]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -157,7 +120,7 @@ export default function ReportModal({
   if (!show) return null;
 
   return (
-    <>
+    <RemoveScroll enabled={show}>
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black bg-opacity-50 z-40"
@@ -288,6 +251,6 @@ export default function ReportModal({
           </div>
         </div>
       </div>
-    </>
+    </RemoveScroll>
   );
 }
