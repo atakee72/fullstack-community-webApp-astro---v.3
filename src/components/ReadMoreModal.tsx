@@ -189,7 +189,7 @@ export default function ReadMoreModal({
             {tags.map((tag, index) => (
               <span
                 key={index}
-                className="px-2 py-0.5 bg-[#eccc6e] text-[#814256] rounded-full text-xs font-medium"
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#4b9aaa]/30 border border-[#4b9aaa] text-[#d4f0f4]"
               >
                 {tag}
               </span>
