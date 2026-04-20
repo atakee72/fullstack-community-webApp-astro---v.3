@@ -322,5 +322,17 @@ When I say yellow, red, green, I always mean the default variants of the project
 - **If sticky stops working anywhere in the project**, check `global.css` and any container components for `overflow-x: hidden` on the axis-scroll ancestors. Use `getComputedStyle(el).overflowY` in devtools to verify — the "upgraded" value shows as `auto` even if you wrote `visible`.
 - **This was a real latent bug discovered in March 2026.** The fix preserves sticky positioning globally (sticky headers, blog sidebars, calendar agenda headers, and any future sticky usage).
 
+### `backdrop-filter` creates a containing block for `position: fixed` descendants
+- **Any element with `backdrop-filter: blur(*)` (or `filter`, `transform`, `will-change`, `perspective`, `contain: paint/layout/strict`) creates a containing block for its `position: fixed` descendants.** This means a modal with `position: fixed inset-0` inside a glass container with `backdrop-blur-*` will position relative to the container, not the viewport — rendering off-screen or partially visible.
+- Symptom: modal opens (DOM is there, hydration works, backdrop darkens the page) but the modal content renders at weird coordinates (`rect.top` way above or below viewport). Often looks like "the modal doesn't open" because content is invisible.
+- **Fix:** remove `backdrop-filter` from any ancestor of a fixed-positioned modal/overlay. On forum/blog/marketplace/etc., the outer glass container uses bg + borders only (no backdrop-blur). Cards inside can still have backdrop-blur on hover since they don't contain fixed descendants.
+- **Known offenders to watch:** `.dark-glass-gradient` (fine — it's a sibling, not ancestor), any `bg-*/[n] backdrop-blur-*` wrapper that has a modal-opening action inside. If you add a new glass wrapper, audit whether any descendant can open a fixed overlay.
+- **Unlike the sticky/overflow gotcha, this one was masked by working tests** — the modal works when opened from a non-glass-wrapped page, fails on forum/calendar/etc. First hit: forum ReadMoreModal in April 2026.
+
+### Modal scroll-lock: use `overflow: hidden`, not `position: fixed` on body
+- Classic iOS scroll-lock via `body { position: fixed; top: -scrollY }` has edge cases with fixed descendants (see above). Switched forum's ReadMoreModal to simpler `overflow: hidden` on html/body.
+- Drawback: minor desktop scrollbar jump on modal open (~15px content shift). Acceptable. Future: compensate with `scrollbar-gutter: stable` or padding-right adjustment.
+- Pattern lives in ReadMoreModal.tsx — copy for new modals if scroll-lock needed.
+
 ## TODO / Reminders
 - [ ] Create a pre-commit hook for automatic credentials/secrets check before git add (husky + custom grep script)
