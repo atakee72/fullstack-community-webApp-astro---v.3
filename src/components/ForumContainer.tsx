@@ -534,7 +534,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           {Array.isArray(item.tags) && item.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 pt-2">
                               {item.tags.slice(0, 3).map((tag) => (
-                                <button key={tag} onClick={() => setSearchValue(tag)} className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#4b9aaa]/30 border border-[#4b9aaa] text-[#d4f0f4] hover:bg-[#4b9aaa]/50 transition-colors cursor-pointer">{tag}</button>
+                                <button key={tag} onClick={() => setSearchValue(tag)} title={tag} className="inline-flex items-center max-w-[100px] truncate px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#4b9aaa]/30 border border-[#4b9aaa] text-[#d4f0f4] hover:bg-[#4b9aaa]/50 transition-colors cursor-pointer">{tag}</button>
                               ))}
                               {item.tags.length > 3 && (
                                 <button onClick={() => handleReadMore(item)} className="px-2 py-0.5 text-[11px] text-gray-500 italic hover:text-gray-700">+{item.tags.length - 3} more</button>
@@ -740,7 +740,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                           {Array.isArray(item.tags) && item.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1.5 md:gap-2 pt-4 px-2 md:px-4">
                               {item.tags.slice(0, 3).map((tag) => (
-                                <button key={tag} onClick={() => setSearchValue(tag)} className="inline-flex items-center px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[11px] md:text-xs font-medium bg-[#4b9aaa]/30 border border-[#4b9aaa] text-[#d4f0f4] hover:bg-[#4b9aaa]/50 transition-colors cursor-pointer">{tag}</button>
+                                <button key={tag} onClick={() => setSearchValue(tag)} title={tag} className="inline-flex items-center max-w-[120px] truncate px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[11px] md:text-xs font-medium bg-[#4b9aaa]/30 border border-[#4b9aaa] text-[#d4f0f4] hover:bg-[#4b9aaa]/50 transition-colors cursor-pointer">{tag}</button>
                               ))}
                               {item.tags.length > 3 && (
                                 <button onClick={() => handleReadMore(item)} className="px-2 py-0.5 text-[11px] md:text-xs text-gray-500 italic hover:text-gray-700">+{item.tags.length - 3} more</button>
