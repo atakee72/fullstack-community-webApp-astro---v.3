@@ -28,7 +28,9 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   const [searchValue, setSearchValue] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showReadMoreModal, setShowReadMoreModal] = useState(false);
-  const [selectedPost, setSelectedPost] = useState<any>(null);
+  // Store just the ID; derive the live selectedPost from the query data each render so
+  // optimistic updates from like/edit/delete mutations flow into the modal immediately.
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<any>(null);
   const [revealedWarnings, setRevealedWarnings] = useState<Set<string>>(new Set());
   const [showReportModal, setShowReportModal] = useState(false);
@@ -110,6 +112,12 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
     });
   }, [queryClient, collectionType]);
 
+  // Live selectedPost derived from the current items list so React Query cache updates
+  // (e.g. like toggled) reflect in the open modal without needing to close/reopen.
+  const selectedPost = selectedPostId
+    ? (items as any[]).find(i => i._id === selectedPostId) || null
+    : null;
+
   const filteredItems = (items as any[]).filter(item => {
     const q = searchValue.toLowerCase();
     return (item.title?.toLowerCase() || '').includes(q) ||
@@ -182,7 +190,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
 
   // Handle read more click
   const handleReadMore = (item: any) => {
-    setSelectedPost(item);
+    setSelectedPostId(item._id);
     setShowReadMoreModal(true);
     // Increment views when read more is clicked (only if not the author)
     if (!isOwner(item.author, user)) {
@@ -513,7 +521,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                               <button
                                 onClick={() => openReportModal(item)}
                                 disabled={reportedItems.has(item._id) || reportCheckLoading === item._id}
-                                className={cn("p-1 transition-colors text-xl", reportedItems.has(item._id) ? "text-gray-400 cursor-not-allowed" : "text-gray-400 hover:text-red-500")}
+                                className={cn("p-1 transition-colors text-xl", reportedItems.has(item._id) ? "text-[#814256]/50 cursor-not-allowed" : "text-[#814256] hover:text-red-500")}
                               >{reportCheckLoading === item._id ? '\u231B' : '\u{1F6A9}'}</button>
                             )}
                             {isOwner(item.author, user) && (
@@ -715,7 +723,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                                 <button
                                   onClick={() => openReportModal(item)}
                                   disabled={reportedItems.has(item._id) || reportCheckLoading === item._id}
-                                  className={cn("p-1 transition-colors text-xl", reportedItems.has(item._id) ? "text-gray-400 cursor-not-allowed" : "text-gray-400 hover:text-red-500")}
+                                  className={cn("p-1 transition-colors text-xl", reportedItems.has(item._id) ? "text-[#814256]/50 cursor-not-allowed" : "text-[#814256] hover:text-red-500")}
                                   title={reportedItems.has(item._id) ? "Already reported" : "Report this post"}
                                 >{reportCheckLoading === item._id ? '\u231B' : '\u{1F6A9}'}</button>
                               )}
