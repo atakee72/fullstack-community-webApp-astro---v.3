@@ -671,7 +671,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
                             {/* Read & Comment link — always visible, under post text */}
                             <button
                               onClick={() => handleReadMore(item)}
-                              className="mt-4 md:mt-5 text-[#d4f0f4] hover:text-white font-medium text-sm md:text-base underline"
+                              className="mt-4 md:mt-5 text-[#d4f0f4] hover:text-white font-medium text-[11px] md:text-xs underline"
                             >
                               Read & Comment
                             </button>
