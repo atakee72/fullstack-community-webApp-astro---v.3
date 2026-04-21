@@ -4,12 +4,13 @@ import CalendarContainer from './CalendarContainer';
 
 interface CalendarWrapperProps {
   session?: any;
+  initialEvents?: any[];
 }
 
-export default function CalendarWrapper({ session }: CalendarWrapperProps) {
+export default function CalendarWrapper({ session, initialEvents }: CalendarWrapperProps) {
   return (
     <QueryProvider>
-      <CalendarContainer initialSession={session} />
+      <CalendarContainer initialSession={session} initialEvents={initialEvents} />
     </QueryProvider>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { format, startOfMonth, endOfMonth, addMonths, subMonths, isBefore, isSameDay, startOfDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, addMonths, subMonths, isBefore, isSameDay, startOfDay, isSameMonth } from 'date-fns';
+import { getDefaultCalendarQueryOptions } from '../lib/calendarQueryOptions';
 import { de } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEventsQuery, useCreateEvent, useEditEvent, useDeleteEvent, useEventLikeMutation } from '../hooks/api/useEventsQuery';
@@ -16,11 +17,12 @@ import type { Event } from '../types';
 
 interface CalendarContainerProps {
   initialSession?: any;
+  initialEvents?: any[];
 }
 
 type SortBy = 'startDate' | 'likes' | 'views' | 'comments';
 
-export default function CalendarContainer({ initialSession }: CalendarContainerProps) {
+export default function CalendarContainer({ initialSession, initialEvents }: CalendarContainerProps) {
   const [isClient, setIsClient] = useState(false);
   const user = initialSession?.user;
   const queryClient = useQueryClient();
@@ -64,20 +66,35 @@ export default function CalendarContainer({ initialSession }: CalendarContainerP
   const [sortBy, setSortBy] = useState<SortBy>('startDate');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  // Build query options - Always filter by current month for calendar view
+  // Build query options - Always filter by current month for calendar view.
+  // Use UTC month boundaries so the queryKey serialized by react-query matches
+  // the SSR prefetch exactly (see src/lib/calendarQueryOptions.ts).
+  const defaultsForMonth = getDefaultCalendarQueryOptions(currentMonth);
   const queryOptions = {
     sortBy,
     sortOrder,
     search: searchValue || undefined,
     category: categoryFilter !== 'all' ? categoryFilter : undefined,
-    // Date range filter for current month view
-    dateFrom: startOfMonth(currentMonth),
-    dateTo: endOfMonth(currentMonth)
+    dateFrom: defaultsForMonth.dateFrom,
+    dateTo: defaultsForMonth.dateTo,
   };
+
+  // Only apply SSR initialData when the current view matches the default
+  // (current month, no search/category filter, default sort). When the user
+  // navigates or filters, the queryKey diverges and a normal fetch runs.
+  const isInitialView =
+    !searchValue &&
+    categoryFilter === 'all' &&
+    sortBy === 'startDate' &&
+    sortOrder === 'asc' &&
+    isSameMonth(currentMonth, new Date());
 
   // React Query hooks with placeholderData to keep previous month visible
   const { data: events = [], isLoading, error, refetch } = useEventsQuery(queryOptions, {
-    placeholderData: (previousData) => previousData, // Keep showing previous month data during fetch
+    placeholderData: (previousData: any) => previousData, // Keep showing previous month data during fetch
+    ...(isInitialView && initialEvents && initialEvents.length > 0
+      ? { initialData: initialEvents, initialDataUpdatedAt: Date.now() }
+      : {}),
   });
   const createEvent = useCreateEvent();
   const editEvent = useEditEvent();

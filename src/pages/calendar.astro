@@ -3,8 +3,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHeader from '../components/ui/PageHeader.astro';
 import { getSession } from 'auth-astro/server';
 import CalendarWrapper from '../components/CalendarWrapper';
+import { fetchEventsForSSR } from '../lib/eventsQuery';
 
 const session = await getSession(Astro.request);
+
+let initialEvents: any[] = [];
+try {
+  initialEvents = await fetchEventsForSSR(session?.user?.id);
+} catch (err) {
+  console.error('[calendar.astro] SSR events prefetch failed:', err);
+}
 ---
 
 <BaseLayout title="Neighbourhood Calendar - Mahalle">
@@ -19,7 +27,7 @@ const session = await getSession(Astro.request);
         color="#d4af37"
         subtitleClass="text-white/70"
       />
-      <CalendarWrapper client:load session={session} />
+      <CalendarWrapper client:load session={session} initialEvents={initialEvents} />
     </div>
   </main>
 </BaseLayout>
