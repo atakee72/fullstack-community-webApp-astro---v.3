@@ -8,6 +8,9 @@ import {
   buildPaginationMeta,
   parseQueryParams,
 } from './queryUtils';
+import { FORUM_QUERY_OPTIONS } from './forumQueryOptions';
+
+export { FORUM_QUERY_OPTIONS };
 
 export interface FetchCollectionResult<T> {
   items: T[];
@@ -138,39 +141,6 @@ export async function fetchCollectionWithAuthors<T extends Document>(
 
   return { items: populated as T[], pagination };
 }
-
-/**
- * Shared query options used by both SSR (index.astro) and the client
- * useTopicsQuery hook on the forum. These MUST stay identical so the
- * react-query `queryKey: [type, options]` matches exactly and initialData
- * hydrates the client cache without triggering a refetch.
- *
- * If you change this, change the matching call site in ForumContainer.tsx
- * (or better, import from here on both sides).
- */
-export const FORUM_QUERY_OPTIONS = {
-  fields: [
-    '_id',
-    'title',
-    'body',
-    'description',
-    'author',
-    'tags',
-    'images',
-    'comments',
-    'date',
-    'likes',
-    'likedBy',
-    'views',
-    'moderationStatus',
-    'isUserReported',
-    'rejectionReason',
-    'hasWarningLabel',
-    'warningText',
-  ],
-  sortBy: 'date' as const,
-  sortOrder: 'desc' as const,
-};
 
 /**
  * Server-side fetch helper for hydrating the forum with initialData.

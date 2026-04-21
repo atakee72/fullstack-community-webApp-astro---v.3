@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTopicsQuery, useCreatePost, useDeletePost, useEditPost, useSavePostMutation, useSavedPostsQuery } from '../hooks/api/useTopicsQuery';
-import { FORUM_QUERY_OPTIONS } from '../lib/topicsQuery';
+import { FORUM_QUERY_OPTIONS } from '../lib/forumQueryOptions';
 import { useMyReportedIdsQuery, useMarkAsReported } from '../hooks/api/useReportsQuery';
 import { BookmarkIcon, Flag } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
