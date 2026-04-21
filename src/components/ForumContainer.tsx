@@ -53,7 +53,7 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   const createPost = useCreatePost(collectionType);
   const deletePost = useDeletePost(collectionType);
   const editPost = useEditPost(collectionType);
-  const likeMutation = useLikeMutation(collectionType);
+  const likeMutation = useLikeMutation(collectionType, user?.id);
   const savePost = useSavePostMutation();
   const { data: savedPostsData } = useSavedPostsQuery(!!user);
   const savedPosts = new Set(savedPostsData?.savedIds || []);

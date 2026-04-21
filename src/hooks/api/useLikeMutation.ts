@@ -31,7 +31,10 @@ const toggleLike = async (params: LikeToggleParams): Promise<LikeToggleResponse>
   return response.json();
 };
 
-export function useLikeMutation(collectionType: 'topics' | 'announcements' | 'recommendations') {
+export function useLikeMutation(
+  collectionType: 'topics' | 'announcements' | 'recommendations',
+  userId?: string
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -39,39 +42,40 @@ export function useLikeMutation(collectionType: 'topics' | 'announcements' | 're
 
     // Optimistic update for immediate UI feedback
     onMutate: async ({ postId, action }) => {
-      // Cancel any outgoing refetches
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({ queryKey: [collectionType] });
 
-      // Get all query variations that might contain this data
+      // Snapshot all query variations for rollback
       const queries = queryClient.getQueriesData({ queryKey: [collectionType] });
-
-      // Store all previous data for potential rollback
-      const previousQueries = queries.map(([queryKey, data]) => ({
-        queryKey,
-        data
-      }));
+      const previousQueries = queries.map(([queryKey, data]) => ({ queryKey, data }));
 
       // Update all matching queries optimistically
-      queries.forEach(([queryKey, oldData]) => {
+      queries.forEach(([queryKey]) => {
         queryClient.setQueryData(queryKey, (old: any) => {
           if (!old) return old;
 
-          // Handle different data structures
           const posts = Array.isArray(old) ? old : (old[collectionType] || []);
           const updatedPosts = posts.map((post: any) => {
-            if (post._id === postId) {
-              return {
-                ...post,
-                likes: action === 'like' ? (post.likes || 0) + 1 : Math.max((post.likes || 0) - 1, 0),
-                likedBy: action === 'like'
-                  ? [...(post.likedBy || []), 'optimistic-user-id']
-                  : (post.likedBy || []).filter((id: string) => id !== 'optimistic-user-id')
-              };
-            }
-            return post;
+            if (post._id !== postId) return post;
+            const currentLikedBy: string[] = post.likedBy || [];
+            const nextLikedBy =
+              action === 'like'
+                ? userId && !currentLikedBy.includes(userId)
+                  ? [...currentLikedBy, userId]
+                  : currentLikedBy
+                : userId
+                ? currentLikedBy.filter((id) => id !== userId)
+                : currentLikedBy;
+            return {
+              ...post,
+              likes:
+                action === 'like'
+                  ? (post.likes || 0) + 1
+                  : Math.max((post.likes || 0) - 1, 0),
+              likedBy: nextLikedBy,
+            };
           });
 
-          // Return data in the same structure
           return Array.isArray(old) ? updatedPosts : { ...old, [collectionType]: updatedPosts };
         });
       });
@@ -79,7 +83,7 @@ export function useLikeMutation(collectionType: 'topics' | 'announcements' | 're
       return { previousQueries };
     },
 
-    // On error, rollback all queries
+    // Rollback on error
     onError: (_err, _variables, context) => {
       if (context?.previousQueries) {
         context.previousQueries.forEach(({ queryKey, data }) => {
@@ -88,22 +92,9 @@ export function useLikeMutation(collectionType: 'topics' | 'announcements' | 're
       }
     },
 
-    // Force immediate refetch after success
-    onSuccess: async () => {
-      // Immediately invalidate and refetch
-      await queryClient.invalidateQueries({
-        queryKey: [collectionType],
-        refetchType: 'all'
-      });
-    },
-
-    // Ensure data is fresh after mutation
-    onSettled: async () => {
-      // Final invalidation to ensure consistency
-      await queryClient.invalidateQueries({
-        queryKey: [collectionType],
-        refetchType: 'active'
-      });
+    // Single eventual-consistency invalidation (canonical TanStack v5 pattern)
+    onSettled: () => {
+      return queryClient.invalidateQueries({ queryKey: [collectionType] });
     },
   });
 }
