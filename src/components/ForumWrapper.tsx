@@ -4,12 +4,13 @@ import ForumContainer from './ForumContainer';
 
 interface ForumWrapperProps {
   session?: any;
+  initialTopics?: any[];
 }
 
-export default function ForumWrapper({ session }: ForumWrapperProps) {
+export default function ForumWrapper({ session, initialTopics }: ForumWrapperProps) {
   return (
     <QueryProvider>
-      <ForumContainer initialSession={session} />
+      <ForumContainer initialSession={session} initialTopics={initialTopics} />
     </QueryProvider>
   );
 }

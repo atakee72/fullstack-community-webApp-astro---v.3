@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTopicsQuery, useCreatePost, useDeletePost, useEditPost, useSavePostMutation, useSavedPostsQuery } from '../hooks/api/useTopicsQuery';
+import { FORUM_QUERY_OPTIONS } from '../lib/topicsQuery';
 import { useMyReportedIdsQuery, useMarkAsReported } from '../hooks/api/useReportsQuery';
 import { BookmarkIcon, Flag } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -19,9 +20,10 @@ import type { Topic, Announcement, Recommendation } from '../types';
 
 interface ForumContainerProps {
   initialSession?: any;
+  initialTopics?: any[];
 }
 
-export default function ForumContainer({ initialSession }: ForumContainerProps) {
+export default function ForumContainer({ initialSession, initialTopics }: ForumContainerProps) {
   const [isClient, setIsClient] = useState(false);
   const user = initialSession?.user;
 
@@ -42,12 +44,17 @@ export default function ForumContainer({ initialSession }: ForumContainerProps) 
   // localStorage key for persisting revealed warnings
   const REVEALED_WARNINGS_KEY = 'mahalle_revealed_warnings';
 
-  // Use React Query for data fetching with field selection
-  const { data: items = [], isLoading, error, refetch } = useTopicsQuery(collectionType, {
-    fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'images', 'comments', 'date', 'likes', 'likedBy', 'views', 'moderationStatus', 'isUserReported', 'rejectionReason', 'hasWarningLabel', 'warningText'],
-    sortBy: 'date',
-    sortOrder: 'desc',
-  });
+  // Use React Query for data fetching with field selection.
+  // Use the shared FORUM_QUERY_OPTIONS constant so the queryKey matches the
+  // SSR prefetch in index.astro exactly (critical for initialData hydration).
+  const { data: items = [], isLoading, error, refetch } = useTopicsQuery(
+    collectionType,
+    FORUM_QUERY_OPTIONS,
+    // Only hydrate for the default 'topics' tab (the one fetched server-side)
+    collectionType === 'topics' && initialTopics && initialTopics.length > 0
+      ? { initialData: initialTopics }
+      : {}
+  );
 
   // Mutations
   const createPost = useCreatePost(collectionType);

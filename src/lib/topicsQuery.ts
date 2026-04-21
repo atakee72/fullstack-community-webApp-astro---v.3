@@ -139,3 +139,60 @@ export async function fetchCollectionWithAuthors<T extends Document>(
   return { items: populated as T[], pagination };
 }
 
+/**
+ * Shared query options used by both SSR (index.astro) and the client
+ * useTopicsQuery hook on the forum. These MUST stay identical so the
+ * react-query `queryKey: [type, options]` matches exactly and initialData
+ * hydrates the client cache without triggering a refetch.
+ *
+ * If you change this, change the matching call site in ForumContainer.tsx
+ * (or better, import from here on both sides).
+ */
+export const FORUM_QUERY_OPTIONS = {
+  fields: [
+    '_id',
+    'title',
+    'body',
+    'description',
+    'author',
+    'tags',
+    'images',
+    'comments',
+    'date',
+    'likes',
+    'likedBy',
+    'views',
+    'moderationStatus',
+    'isUserReported',
+    'rejectionReason',
+    'hasWarningLabel',
+    'warningText',
+  ],
+  sortBy: 'date' as const,
+  sortOrder: 'desc' as const,
+};
+
+/**
+ * Server-side fetch helper for hydrating the forum with initialData.
+ * Builds a synthetic URL from the shared options and reuses
+ * fetchCollectionWithAuthors so the shape matches the client hook's fetch.
+ */
+export async function fetchForumItemsForSSR(
+  type: 'topics' | 'announcements' | 'recommendations',
+  currentUserId: string | undefined,
+  opts: { fields?: string[]; sortBy?: string; sortOrder?: string } = FORUM_QUERY_OPTIONS
+) {
+  const db = await connectDB();
+  const collection = db.collection(type) as unknown as Collection<Document>;
+
+  const params = new URLSearchParams();
+  if (opts.fields?.length) params.set('fields', opts.fields.join(','));
+  if (opts.sortBy) params.set('sortBy', opts.sortBy);
+  if (opts.sortOrder) params.set('sortOrder', opts.sortOrder);
+
+  const url = new URL(`http://ssr.local/api/${type}?${params.toString()}`);
+  const result = await fetchCollectionWithAuthors(collection, url, currentUserId);
+  // Serialize for client hydration: Date/ObjectId → string
+  return JSON.parse(JSON.stringify(result.items));
+}
+

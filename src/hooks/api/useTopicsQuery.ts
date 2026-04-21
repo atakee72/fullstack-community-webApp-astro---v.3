@@ -63,7 +63,8 @@ async function fetchTopics(
 // Hook for fetching topics/announcements/recommendations
 export function useTopicsQuery(
   type: 'topics' | 'announcements' | 'recommendations',
-  options: QueryOptions = {}
+  options: QueryOptions = {},
+  extras: { initialData?: any[] } = {}
 ) {
   return useQuery({
     queryKey: [type, options],
@@ -72,6 +73,14 @@ export function useTopicsQuery(
     staleTime: 60 * 1000,
     // Refetch when window regains focus
     refetchOnWindowFocus: true,
+    // SSR hydration: when initialData is provided (e.g. from fetchForumItemsForSSR
+    // in index.astro), treat it as fresh at hydration time so no immediate refetch.
+    ...(extras.initialData
+      ? {
+          initialData: extras.initialData as any,
+          initialDataUpdatedAt: Date.now(),
+        }
+      : {}),
   });
 }
 
