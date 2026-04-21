@@ -208,6 +208,12 @@ Complex React components use a wrapper pattern:
 - **Pagination**: Client-side slicing of `filteredItems` into pages of 12 (configurable 12/24/48). Uses the shared `Pagination` component (`src/components/ui/Pagination.tsx`) with wine accent (`#814256`). Page resets to 0 on tab switch or search. Scroll-to-top on page change.
 - **Applies to all 3 forums** (Topics, Announcements, Recommendations) via the shared `collectionType` prop.
 
+### Forum Performance (SSR prefetch + batched author lookup)
+- **Shared server util**: `src/lib/topicsQuery.ts` exports `fetchCollectionWithAuthors(collection, url, currentUserId)` — applies the standard moderation filter, paginates, and populates authors via a **single `$in` lookup** (replaces the old N+1 `findOne`-per-topic). Used by `/api/topics`, `/api/announcements`, `/api/recommendations`.
+- **SSR initialData**: `src/pages/index.astro` calls `fetchForumItemsForSSR('topics', userId)` in frontmatter and threads it as `initialTopics` through `ForumWrapper → ForumContainer`. The default tab hydrates with data already in react-query cache — no `/api/topics` round-trip on first paint. Other tabs fetch normally on click.
+- **queryKey match**: `src/lib/forumQueryOptions.ts` exports `FORUM_QUERY_OPTIONS` (fields, sortBy, sortOrder). Imported by both SSR fetch and the client `useTopicsQuery` call so the `queryKey: [type, options]` matches byte-for-byte — critical for initialData to hit. The constant lives in its own dependency-free file because `topicsQuery.ts` pulls in `connectDB` (see "Server-only modules bleeding" below).
+- **initialData plumbing**: `useTopicsQuery(type, options, extras?)` accepts `extras.initialData`. When present, it sets `initialDataUpdatedAt: Date.now()` so the hydrated data counts as fresh for the 60s `staleTime` window (no immediate refetch).
+
 ### Forum Post Images
 - **Upload**: Up to 5 images per post (topics, announcements, recommendations), 5MB each. Uploaded to Cloudinary via `POST /api/posts/upload` (session auth, folder `mahalle/posts`, transform 1200x800 limit).
 - **Data model**: `images?: { url: string; publicId: string }[]` on Topic, Announcement, Recommendation types. Validated by `PostImageSchema` in `forum.schema.ts`.
@@ -230,8 +236,15 @@ Complex React components use a wrapper pattern:
 - **Tab switch animation**: `AnimatePresence` + `motion.div` keyed by `collectionType + searchValue` — slide-up animation on tab switch and search changes. Smooth scroll to top on tab switch only; search preserves scroll position.
 
 ### Forum Card Interactions
-- **Clickable content**: Post text and cover image are clickable to open ReadMoreModal (both mobile and desktop).
+- **Clickable content**: Post text and cover image are clickable to open ReadMoreModal (both mobile and desktop). On mobile image cards the **title is also tappable** (Read & Comment link omitted there to save space).
 - **EyeIcon / HeartBtn**: Accept optional `color` prop for white-on-image variants (mobile overlay). Default wine-red `#814256`.
+- **Author ribbon**: Semi-transparent teal `bg-[#4b9aaa]/70` (not solid).
+- **Read & Comment link**: Whitish `text-[#d4f0f4] hover:text-white`, italic, small (`text-[11px] md:text-xs`), underlined. Omitted on mobile image cards.
+- **Tag pills (cards + modal)**: `bg-[#4b9aaa]/30 border border-[#4b9aaa] text-[#d4f0f4]` (greenish-white outline). Card tags clickable → set search. Capped at **3 per card**; overflow shown as `+N more` button that opens the modal (full tag list there). Long single tags truncate at `max-w-[100px]` with `title=` tooltip on hover.
+
+### TanStack Query — optimistic updates (gotchas)
+- **Use real userId, not placeholders**: optimistic `setQueryData` that mutates `likedBy: [...ids, 'optimistic-user-id']` will not match the real user id in subsequent `.includes(user.id)` checks, so UI state (heart filled/unfilled) won't flip until server refetch. Pass the actual `user?.id` into the mutation hook. See `useLikeMutation.ts`.
+- **Don't stack `onSuccess` + `onSettled` invalidations** with `refetchType: 'all'` — the double refetch overwrites the optimistic state and causes visible flicker/delay. Canonical v5 pattern: `onMutate` does the optimistic write + snapshot, `onError` rolls back, `onSettled` runs a single `invalidateQueries`. Drop `onSuccess` entirely.
 
 ### Calendar Date Range Selection
 - **Click-to-select**: Click a future day to select it (teal highlight + speech-bubble tooltip), click another future day to select a range (teal highlight across days)
@@ -329,10 +342,18 @@ When I say yellow, red, green, I always mean the default variants of the project
 - **Known offenders to watch:** `.dark-glass-gradient` (fine — it's a sibling, not ancestor), any `bg-*/[n] backdrop-blur-*` wrapper that has a modal-opening action inside. If you add a new glass wrapper, audit whether any descendant can open a fixed overlay.
 - **Unlike the sticky/overflow gotcha, this one was masked by working tests** — the modal works when opened from a non-glass-wrapped page, fails on forum/calendar/etc. First hit: forum ReadMoreModal in April 2026.
 
-### Modal scroll-lock: use `overflow: hidden`, not `position: fixed` on body
-- Classic iOS scroll-lock via `body { position: fixed; top: -scrollY }` has edge cases with fixed descendants (see above). Switched forum's ReadMoreModal to simpler `overflow: hidden` on html/body.
-- Drawback: minor desktop scrollbar jump on modal open (~15px content shift). Acceptable. Future: compensate with `scrollbar-gutter: stable` or padding-right adjustment.
-- Pattern lives in ReadMoreModal.tsx — copy for new modals if scroll-lock needed.
+### Modal scroll-lock: wrap in `<RemoveScroll>` from `react-remove-scroll`
+- All 5 modals (ReportModal, EventModal, PostModal, ReadMoreModal, EventViewModal) use `<RemoveScroll enabled={isOpen}>` as the outermost wrapper. Battle-tested lib (used by Radix, Headless UI) that handles iOS touch-scroll, desktop scrollbar-gutter compensation, and nested-scroller preservation.
+- Replaced earlier `overflow: hidden` on html/body and `position: fixed; top: -scrollY` patterns — both had edge cases (iOS touch leaks, fixed-descendant conflicts with `backdrop-filter` containing blocks).
+- For new modals: just wrap in `<RemoveScroll enabled={isOpen}>` and drop any bespoke scroll-lock `useEffect`.
+
+### Server-only modules bleeding into client bundles
+- **The server/client boundary in Astro is enforced by what you TRANSITIVELY import, not by file location.** If a React component with `client:only="react"` (or `client:load`) imports anything from a module that in turn imports `mongodb`, `fs`, `auth-astro/server`, etc., Vite pulls that entire module graph into the browser chunk. Node built-ins (`net`, `tls`, ...) get silently externalized and the chunk fails to evaluate at runtime — the component just never mounts.
+- **Symptom**: page renders, hydration slot is empty, no obvious error in build output. `pnpm build` goes green because Vite doesn't error on unresolved Node built-ins in client bundles — it just produces a broken bundle. You only see it when you load the page in a browser.
+- **Rule**: any file imported from both server (`.astro` frontmatter, `/api/*` routes) and client (React components, `.svelte` with `client:*`) must be **dependency-pure** — constants, types, pure functions. The moment it imports `mongodb`/`fs`/etc., it becomes server-only for import purposes.
+- **Pattern**: split shared constants into a standalone file. Example: `src/lib/forumQueryOptions.ts` (pure, imported by both) vs `src/lib/topicsQuery.ts` (server, imports `connectDB`). The server file can re-export the constant for convenience; the client imports from the pure file directly.
+- **Prevention**: after any SSR-touching change (new `Astro.locals` data threaded through, new shared util between page and component), **actually load the page in a browser** before declaring done. `pnpm build` is necessary but not sufficient.
+- **First hit**: April 2026 — `FORUM_QUERY_OPTIONS` lived in `topicsQuery.ts`, which imports `connectDB`. ForumContainer's browser chunk included MongoDB, forum never hydrated.
 
 ## TODO / Reminders
 - [ ] Create a pre-commit hook for automatic credentials/secrets check before git add (husky + custom grep script)
