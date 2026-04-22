@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { persistQueryClient } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 
 // `gcTime` must be >= persist `maxAge` or queries are evicted before restore.
@@ -25,49 +25,40 @@ const queryClient = new QueryClient({
   },
 });
 
-// SSR guard — localStorage is undefined during Astro server render.
-const persister =
-  typeof window !== 'undefined'
-    ? createSyncStoragePersister({
-        storage: window.localStorage,
-        key: 'mahalle-rq-cache',
-        throttleTime: 1000,
-      })
-    : null;
-
 interface QueryProviderProps {
   children: React.ReactNode;
 }
 
+// We always render the same JSX tree on SSR and client — otherwise React
+// throws hydration-mismatch errors. The cache persister attaches imperatively
+// in a client-only useEffect, so it doesn't affect the rendered markup.
 export function QueryProvider({ children }: QueryProviderProps) {
-  // On the server (and any edge case where window is missing), use a plain
-  // QueryClientProvider so useQuery calls still find a client. On the
-  // client, upgrade to PersistQueryClientProvider which hydrates the cache
-  // from localStorage before rendering children.
-  if (!persister) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
-    );
-  }
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const persister = createSyncStoragePersister({
+      storage: window.localStorage,
+      key: 'mahalle-rq-cache',
+      throttleTime: 1000,
+    });
+    const [unsubscribe] = persistQueryClient({
+      queryClient,
+      persister,
+      maxAge: 24 * 60 * 60 * 1000,
+      buster: 'v1',
+      dehydrateOptions: {
+        shouldDehydrateQuery: (q) => q.state.status === 'success',
+      },
+    });
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
 
   return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{
-        persister,
-        maxAge: 24 * 60 * 60 * 1000, // match gcTime
-        // Bump the buster to invalidate all persisted caches on schema changes.
-        buster: 'v1',
-        dehydrateOptions: {
-          shouldDehydrateQuery: (q) => q.state.status === 'success',
-        },
-      }}
-    >
+    <QueryClientProvider client={queryClient}>
       {children}
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
-    </PersistQueryClientProvider>
+    </QueryClientProvider>
   );
 }
 
