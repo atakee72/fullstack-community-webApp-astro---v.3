@@ -122,21 +122,11 @@ export function useCreateEvent() {
 
   return useMutation({
     mutationFn: createEvent,
-    onSuccess: async () => {
-      // Immediately invalidate and refetch all related queries
-      await queryClient.invalidateQueries({
-        queryKey: ['events'],
-        refetchType: 'all'
-      });
+    // Canonical v5: single invalidation in onSettled (runs on success + error).
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
     },
-    onSettled: async () => {
-      // Final refresh to ensure consistency
-      await queryClient.invalidateQueries({
-        queryKey: ['events'],
-        refetchType: 'active'
-      });
-    },
-    retry: false, // Disable automatic retries
+    retry: false,
   });
 }
 
@@ -231,19 +221,8 @@ export function useEditEvent() {
   return useMutation({
     mutationFn: ({ eventId, data }: { eventId: string; data: Parameters<typeof editEvent>[1] }) =>
       editEvent(eventId, data),
-    onSuccess: async () => {
-      // Immediately invalidate and refetch all related queries
-      await queryClient.invalidateQueries({
-        queryKey: ['events'],
-        refetchType: 'all'
-      });
-    },
-    onSettled: async () => {
-      // Final refresh to ensure consistency
-      await queryClient.invalidateQueries({
-        queryKey: ['events'],
-        refetchType: 'active'
-      });
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
     },
   });
 }

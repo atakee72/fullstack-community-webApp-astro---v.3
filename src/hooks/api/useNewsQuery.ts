@@ -94,11 +94,9 @@ export function useSubmitNews() {
 
   return useMutation({
     mutationFn: submitNews,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ['news'],
-        refetchType: 'all'
-      });
+    // Canonical v5: single invalidation in onSettled (runs on success + error).
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['news'] });
     },
     retry: false,
   });

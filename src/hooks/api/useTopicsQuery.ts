@@ -116,21 +116,12 @@ export function useCreatePost(type: 'topics' | 'announcements' | 'recommendation
 
   return useMutation({
     mutationFn: (data: Parameters<typeof createPost>[1]) => createPost(type, data),
-    onSuccess: async () => {
-      // Immediately invalidate and refetch all related queries
-      await queryClient.invalidateQueries({
-        queryKey: [type],
-        refetchType: 'all'
-      });
+    // Canonical v5: single invalidation in onSettled (runs on success + error).
+    // Previously did both onSuccess + onSettled, which caused a double-refetch flicker.
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: [type] });
     },
-    onSettled: async () => {
-      // Final refresh to ensure consistency
-      await queryClient.invalidateQueries({
-        queryKey: [type],
-        refetchType: 'active'
-      });
-    },
-    retry: false, // Disable automatic retries
+    retry: false,
   });
 }
 
@@ -222,19 +213,8 @@ export function useEditPost(type: 'topics' | 'announcements' | 'recommendations'
   return useMutation({
     mutationFn: ({ postId, data }: { postId: string; data: { title: string; body: string; tags: string[]; images?: { url: string; publicId: string }[] } }) =>
       editPost(postId, type, data),
-    onSuccess: async () => {
-      // Immediately invalidate and refetch all related queries
-      await queryClient.invalidateQueries({
-        queryKey: [type],
-        refetchType: 'all'
-      });
-    },
-    onSettled: async () => {
-      // Final refresh to ensure consistency
-      await queryClient.invalidateQueries({
-        queryKey: [type],
-        refetchType: 'active'
-      });
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: [type] });
     },
   });
 }

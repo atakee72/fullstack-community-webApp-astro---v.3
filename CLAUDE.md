@@ -9,8 +9,8 @@ Mahalle - A Fullstack Community Web App for Local Neighborhoods. The name means 
 - **Framework**: Astro 5.x with React 18.2 (hybrid SSR/SSG)
 - **Styling**: Tailwind CSS 3.4
 - **Animation**: Motion 12.x (`motion/react` for React, Web Animations API for Astro inline scripts)
-- **State Management**: Zustand 4.4
-- **Data Fetching**: TanStack Query 5.17
+- **State Management**: TanStack Query for server state + local `useState` for UI (no Zustand/Redux)
+- **Data Fetching**: TanStack Query 5.17 (with `@tanstack/react-query-devtools` in dev)
 - **Authentication**: auth-astro with NextAuth (Credentials provider)
 - **Database**: MongoDB 6.3 (direct driver, no Mongoose)
 - **Deployment**: Vercel (serverless)
@@ -56,7 +56,6 @@ src/
 │   ├── reviewAction.ts # Shared moderation review logic (single + bulk)
 │   └── queryUtils.ts # Query helpers
 ├── schemas/          # Zod validation schemas
-├── stores/           # Zustand stores
 ├── styles/           # Global CSS
 ├── types/            # TypeScript types
 └── utils/            # Helper functions
@@ -93,8 +92,9 @@ export const POST: APIRoute = async ({ request }) => {
 - QueryProvider wrapper in `src/providers/QueryProvider.tsx`
 
 ### State Management
-- Zustand for UI state (forumStore.ts)
-- React Query for server state
+- TanStack Query for server state (hooks in `src/hooks/api/*`)
+- Local `useState` in container components for UI state — no Zustand/Redux
+- Canonical v5 mutation pattern: optimistic `onMutate` + `onError` rollback + single `onSettled` invalidation. Never stack `onSuccess` + `onSettled` invalidations (causes double-refetch flicker).
 
 ### Content Moderation
 - **AI moderation**: OpenAI `omni-moderation-latest` scans all content types (topics, comments, events, announcements, recommendations, marketplace listings) on submission
