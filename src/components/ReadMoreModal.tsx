@@ -6,6 +6,7 @@ import { confirmAction } from '../utils/toast';
 import { format } from 'date-fns';
 import { BookmarkIcon, Flag } from 'lucide-react';
 import HeartBtn from './HeartBtn';
+import { optimizeCloudinary } from '../utils/cloudinary';
 import type { User } from '../types';
 
 interface ReadMoreModalProps {
@@ -213,7 +214,7 @@ export default function ReadMoreModal({
                     className={`snap-start shrink-0 rounded-lg overflow-hidden ${images.length === 1 ? 'w-full' : 'w-[65%]'}`}
                   >
                     <img
-                      src={img.url}
+                      src={optimizeCloudinary(img.url)}
                       alt={`Image ${i + 1}`}
                       className="w-full max-h-64 sm:max-h-80 object-contain"
                       loading="lazy"

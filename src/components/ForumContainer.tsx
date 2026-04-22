@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { confirmAction } from '../utils/toast';
 import { cn } from '../lib/utils';
 import { isOwner } from '../utils/authHelpers';
+import { optimizeCloudinary } from '../utils/cloudinary';
 import { Pagination } from './ui/Pagination';
 import type { Topic, Announcement, Recommendation } from '../types';
 
@@ -435,7 +436,7 @@ export default function ForumContainer({ initialSession, initialTopics }: ForumC
                       <div className="md:hidden flex flex-col flex-1">
                         {/* Image hero area */}
                         <div className="relative h-48 overflow-hidden flex-shrink-0 cursor-pointer" onClick={() => handleReadMore(item)}>
-                          <img src={item.images[0].url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                          <img src={optimizeCloudinary(item.images[0].url)} alt="" className="w-full h-full object-cover" loading="lazy" />
                           {/* Gradient overlay */}
                           <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
 
@@ -764,7 +765,7 @@ export default function ForumContainer({ initialSession, initialTopics }: ForumC
                     {item.images?.length > 0 && (
                       <div className="w-1/2 flex-shrink-0 relative cursor-pointer" onClick={() => handleReadMore(item)}>
                         <img
-                          src={item.images[0].url}
+                          src={optimizeCloudinary(item.images[0].url)}
                           alt=""
                           className="absolute inset-0 w-full h-full object-cover"
                           loading="lazy"

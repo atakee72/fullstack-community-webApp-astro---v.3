@@ -3,6 +3,7 @@ import { useTopicsQuery } from '../hooks/api/useTopicsQuery';
 import ImageUpload from './ImageUpload';
 import { signOut } from 'auth-astro/client';
 import { isOwner } from '../utils/authHelpers';
+import { optimizeCloudinary } from '../utils/cloudinary';
 
 interface UserProfileProps {
   user?: any;
@@ -148,7 +149,7 @@ export default function UserProfile({ user: initialUser }: UserProfileProps) {
                 />
               ) : (
                 <img
-                  src={profileData.userPicture || `https://ui-avatars.com/api/?name=${profileData.userName}&background=814256&color=fff&size=200`}
+                  src={optimizeCloudinary(profileData.userPicture) || `https://ui-avatars.com/api/?name=${profileData.userName}&background=814256&color=fff&size=200`}
                   alt={profileData.userName}
                   className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border-4 border-white shadow-xl"
                 />
