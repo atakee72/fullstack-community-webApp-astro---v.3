@@ -7,6 +7,7 @@ import { useMyReportedIdsQuery, useMarkAsReported } from '../hooks/api/useReport
 import { BookmarkIcon, Flag } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLikeMutation } from '../hooks/api/useLikeMutation';
+import { usePrefetchComments } from '../hooks/api/useCommentsQuery';
 import PostModal from './PostModal';
 import ReadMoreModal from './ReadMoreModal';
 import ReportModal from './ReportModal';
@@ -44,6 +45,10 @@ export default function ForumContainer({ initialSession, initialTopics }: ForumC
   const [pageSize, setPageSize] = useState(12);
   // localStorage key for persisting revealed warnings
   const REVEALED_WARNINGS_KEY = 'mahalle_revealed_warnings';
+
+  // Hover-prefetch: warm the comments cache when the user hovers a card so
+  // opening the ReadMoreModal feels instant.
+  const prefetchComments = usePrefetchComments();
 
   // Use React Query for data fetching with field selection.
   // Use the shared FORUM_QUERY_OPTIONS constant so the queryKey matches the
@@ -416,6 +421,8 @@ export default function ForumContainer({ initialSession, initialTopics }: ForumC
                 return (
                   <div
                     key={item._id}
+                    onMouseEnter={() => prefetchComments(item._id)}
+                    onFocus={() => prefetchComments(item._id)}
                     className={cn(
                       "bg-[#c9c4b9]/75 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden flex flex-col h-[340px] md:h-[400px] transition-all duration-300 ease-out border border-[#4b9aaa]/40 hover:ring-2 hover:ring-white/30 hover:shadow-[0_0_24px_rgba(255,255,255,0.12)]",
                       !item.images?.length && "p-4 md:p-6",

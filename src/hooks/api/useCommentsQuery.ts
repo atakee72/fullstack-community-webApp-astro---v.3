@@ -27,6 +27,22 @@ export function useCommentsQuery(postId: string) {
   });
 }
 
+// Hover-prefetch helper: returns a callback that warms the comments cache
+// for a postId. Used by card onMouseEnter/onFocus handlers so clicking the
+// card opens the modal with comments already loaded. Debounced via
+// react-query's internal dedup — multiple rapid hovers issue a single fetch.
+export function usePrefetchComments() {
+  const queryClient = useQueryClient();
+  return (postId: string) => {
+    if (!postId) return;
+    queryClient.prefetchQuery({
+      queryKey: qk.comments(postId),
+      queryFn: () => fetchComments(postId),
+      staleTime: 30 * 1000,
+    });
+  };
+}
+
 // Response type for creating a comment
 export interface CreateCommentResponse {
   comment: Comment;

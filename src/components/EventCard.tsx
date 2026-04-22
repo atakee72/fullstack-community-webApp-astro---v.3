@@ -5,6 +5,7 @@ import EyeIcon from './EyeIcon';
 import { isOwner } from '../utils/authHelpers';
 import { confirmAction } from '../utils/toast';
 import type { Event } from '../types';
+import { usePrefetchComments } from '../hooks/api/useCommentsQuery';
 
 interface EventCardProps {
   event: Event;
@@ -45,6 +46,10 @@ export default function EventCard({
 }: EventCardProps) {
   const isUserOwner = isOwner(event.author, user);
   const isLiked = user ? event.likedBy?.includes(user.id) || false : false;
+
+  // Hover-prefetch comments for this event so EventViewModal opens instantly.
+  const prefetchComments = usePrefetchComments();
+  const handleHover = () => prefetchComments(event._id?.toString() || '');
   const categoryColor = categoryColors[event.category || 'other'];
   const categoryLabel = categoryLabels[event.category || 'other'];
 
@@ -66,6 +71,8 @@ export default function EventCard({
     return (
       <div
         onClick={() => onEventClick?.(event)}
+        onMouseEnter={handleHover}
+        onFocus={handleHover}
         className="rounded-xl border border-transparent p-3 transition-all duration-300 cursor-pointer h-full flex flex-col hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
       >
         {/* Category Badge */}
@@ -133,7 +140,10 @@ export default function EventCard({
 
   // Full card for list view
   return (
-    <div className="rounded-xl border border-transparent p-4 md:p-6 transition-all duration-300 hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+    <div
+      onMouseEnter={handleHover}
+      onFocus={handleHover}
+      className="rounded-xl border border-transparent p-4 md:p-6 transition-all duration-300 hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/[0.15] hover:border-t-white/30 hover:border-l-white/25 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
       {/* Header with Category and Actions */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2 flex-wrap">
