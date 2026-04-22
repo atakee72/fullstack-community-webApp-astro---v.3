@@ -273,13 +273,18 @@ Complex React components use a wrapper pattern:
 - **Used on**: `/blog` (index) and `/blog/tag/[tag]` pages
 
 ### Splash Screen
-- `SplashScreen.astro` — plays logo video with fade-in/out and 3D CSS effect
-- **Page allowlist**: Only shows on main nav pages (`/`, `/blog`, `/newsboard`, `/calendar`, `/marketplace`, `/profile`). Sub-pages (e.g. `/blog/my-post`, `/login`) skip it entirely via pathname check.
-- No session gating — splash shows on every visit/reload of a main page
+- `SplashScreen.astro` — plays logo video with fade-out and 3D CSS effect
+- **Page allowlist**: Only shows on main nav pages (`/`, `/blog`, `/newsboard`, `/calendar`, `/marketplace`, `/profile`, `/schillerkiez`). Sub-pages (e.g. `/blog/my-post`, `/login`) skip it entirely via pathname check.
+- **Session-gated**: `sessionStorage['mahalle-splash-shown']` — shows once per session, skipped on subsequent main-page visits/reloads. Also skipped if `prefers-reduced-motion: reduce`.
 - Included in both `BaseLayout.astro` and `BlogBaseLayout.astro`
 - Uses `<script is:inline data-astro-rerun>` for synchronous execution and ViewTransitions compatibility
 - Hidden by default (`display: none` in CSS) — JS shows it only on allowed pages to prevent flash-of-overlay
-- Dual-gate dismiss: waits for both video end AND `window.load` before fading out
+- Dual-gate dismiss: waits for both video end AND `window.load` before fading out. Safety timeout bumped to 4s.
+- **No blob flash**: `<video>` has `visibility: hidden` + dark bg (`#0e1033`) until `loadeddata` fires (first frame decoded), then JS adds `.ready` class to reveal. Prevents empty blob-shape showing before frames paint.
+- **Autoplay fallback**: `video.play()` catch → dismiss after 600ms. Covers mobile Firefox where muted autoplay still blocks.
+- **Overlay**: transparent bg, `backdrop-filter: blur(2px)` — just softens the page behind, no dark tint.
+- **Body bg**: `BaseLayout` uses `bg-[#0e1033]` (dark indigo) to match dark-glass redesign pages — no yellow flash behind glass divs.
+- **Video**: compressed to ~56 KB (H.264 720x720 CRF 30, `+faststart`, no audio). `fetchpriority="high"` on `<video>` for early download.
 - Uses native Web Animations API (not Motion) because `is:inline` scripts can't use ES imports
 - `astro:before-swap` listener (commented out, available if needed) strips overlay from incoming pages
 
@@ -288,6 +293,10 @@ Complex React components use a wrapper pattern:
 - **Confirm dialog**: Custom `<dialog>`-based modal replaces all `window.confirm()` calls. Uses `CustomEvent` bridge (`app:confirm`) with `confirmAction()` returning `Promise<boolean>`. Works across React and Svelte.
 - Both are mounted globally in `ToastProvider.tsx` (rendered in layouts) — no per-component state needed
 - `confirmAction(message, { title, confirmLabel, variant })` — `variant: 'danger'` shows red confirm button
+
+### Cloudinary URL Optimization
+- **Utility**: `src/utils/cloudinary.ts` exports `optimizeCloudinary(url)` — rewrites any Cloudinary URL to inject `f_auto,q_auto` (auto format + auto quality) for ~30-60% smaller transfers. No-op for non-Cloudinary URLs or URLs that already have those transforms.
+- **Applied in**: `Navbar.tsx` (user avatar), `UserProfile.tsx` (profile picture), `ForumContainer.tsx` (post cover images), `ReadMoreModal.tsx` (post gallery images). Apply anywhere you render user-uploaded Cloudinary images.
 
 ### Page Header
 - **Component**: `src/components/ui/PageHeader.astro` — animated title with fade-in + sweeping status bars
@@ -316,6 +325,8 @@ When I say yellow, red, green, I always mean the default variants of the project
 ### SSR Compatibility
 - `typewriter-editor` requires dynamic import inside `onMount()` to avoid SSR errors - it accesses browser globals (KeyboardEvent) at module load time
 - **Prerendered pages + auth**: Middleware uses `context.isPrerendered` to skip `getSession()` on prerendered routes (avoids `Astro.request.headers` warning). `BlogBaseLayout` reads session from `Astro.locals.session` (populated by middleware) instead of calling `getSession` directly.
+- **Navbar on prerendered pages**: `BaseLayout` calls `getSession(Astro.request)` which returns `null` at build time, so `user={undefined}` is baked into static HTML. `Navbar.tsx` compensates by fetching `/api/auth/session` client-side in `useEffect` when `initialUser` is undefined — ensures login state reflects reality on prerendered routes (e.g. `/schillerkiez`).
+- **QueryProvider hydration**: `src/providers/QueryProvider.tsx` renders the same JSX tree on SSR and client (`<QueryClientProvider>` only). The cache persister attaches imperatively via `persistQueryClient` in a client-only `useEffect` — if you wrap with `<PersistQueryClientProvider>` instead, the SSR/client trees differ and React hydration crashes, which cascades to Svelte `effect_orphan` errors on any `client:only="svelte"` island.
 
 ### Astro Script + ViewTransitions
 - Module `<script>` tags are deferred and only execute once — they do NOT re-run on ViewTransitions navigation

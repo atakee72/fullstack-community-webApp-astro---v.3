@@ -5,10 +5,11 @@ A modern, performant community web application built with Astro, TypeScript, and
 ## 🚀 Tech Stack
 
 - **Framework**: Astro 5.x with Hybrid SSR/SSG
-- **UI**: React 18.2 for interactive components
-- **Styling**: Tailwind CSS 3.4 with custom design system
-- **State Management**: Zustand 4.4
-- **Data Fetching**: TanStack Query 5.17
+- **UI**: React 18.2 + Svelte 5 for interactive islands
+- **Styling**: Tailwind CSS 3.4 with custom design system (dark glass redesign)
+- **Animation**: Motion 12.x (`motion/react`) + Web Animations API for `is:inline` scripts
+- **State Management**: TanStack Query for server state, local `useState` for UI (no Zustand/Redux)
+- **Data Fetching**: TanStack Query 5.17 with localStorage persistence (24h)
 - **Database**: MongoDB 6.3 (direct driver, no Mongoose)
 - **Authentication**: auth-astro with NextAuth (Credentials provider, JWT strategy)
 - **Deployment**: Vercel (serverless)
@@ -46,19 +47,31 @@ src/
 │   ├── moderation.ts # AI moderation + profanity filters (TR/EN/DE) + leetspeak
 │   └── queryUtils.ts # Query helpers
 ├── schemas/          # Zod validation schemas
-├── stores/           # Zustand stores
-├── styles/           # Global CSS
+├── styles/           # Global CSS (dark-glass utilities, carved titles)
 ├── types/            # TypeScript types
 └── utils/            # Helper functions
 ```
 
 ## 🎨 Design System
 
-The app uses a custom color palette:
-- Primary Teal: `#4b9aaa`
-- Burgundy: `#814256`
+The app uses a dark glass aesthetic on a deep indigo base (`#0e1033`) with a purple radial gradient (`#542CC8`). Each main page has its own carved-title accent color:
+
+| Page | Accent |
+|------|--------|
+| Forum (`/`) | Plum `#6F2F59` |
+| Blog (`/blog`) | White on dark |
+| Newsboard | Wine `#814256` |
+| Calendar | Teal `#4b9aaa` |
+| Marketplace | Teal `#4b9aaa` |
+| Schillerkiez | Green `#6aab8e` |
+
+Original palette (still used for accents, ribbons, tags):
+- Teal: `#4b9aaa`
+- Wine/Burgundy: `#814256`
 - Gold: `#eccc6e`
 - Beige: `#aca89f`
+
+Utilities in `global.css`: `.dark-glass-bg`, `.dark-glass-gradient` (fixed background divs), `.carved-title` (beveled text with `--carved-accent` CSS var).
 
 ## 🛠️ Setup
 
@@ -117,7 +130,7 @@ Vercel will automatically:
 
 - **Hybrid Rendering**: SSG for static pages, SSR for dynamic content
 - **Type Safety**: Full TypeScript with Zod validation
-- **State Management**: Zustand for UI state, TanStack Query for server state
+- **State Management**: Local `useState` for UI, TanStack Query for server state (with 24h localStorage persistence)
 - **MongoDB Integration**: Type-safe database operations (direct driver)
 - **NextAuth Authentication**: Credentials provider with bcrypt + JWT strategy
 - **Responsive Design**: Mobile-first approach
@@ -132,6 +145,8 @@ Vercel will automatically:
 - **Forum post images**: Up to 5 images per post (topics, announcements, recommendations) with Cloudinary upload, GPT-4o vision moderation, news-style hero card on mobile, 50/50 split on desktop, and scroll-snap carousel with arrow nav in the detail modal
 - **Forum bookmarks**: Save/bookmark posts with server-side persistence, optimistic UI updates, and bookmark icon in card toolbar + modal footer
 - **Forum search**: Client-side search by title, body, author name, and tags. Clickable tags for instant filtering. Result count display. Search persists across forum tabs
+- **Splash screen**: One-per-session logo video intro (compressed to ~56 KB H.264). Skips on sub-pages, reduced-motion users, and subsequent visits. Dual-gate dismiss (video end + `window.load`) with 4s safety timeout and autoplay-blocked fallback for mobile Firefox.
+- **Performance**: Cloudinary `f_auto,q_auto` URL rewriter (`src/utils/cloudinary.ts`) applied to all user-uploaded images, SSR prefetch for forum default tab, batched `$in` author lookups, and localStorage-persisted React Query cache for instant page switches.
 
 ## 🛡️ Content Moderation
 
@@ -340,8 +355,8 @@ Required environment variables:
 
 For more information:
 - [Astro Documentation](https://docs.astro.build)
-- [Zustand Documentation](https://github.com/pmndrs/zustand)
 - [TanStack Query](https://tanstack.com/query/latest)
+- [Motion Documentation](https://motion.dev)
 - [auth-astro](https://github.com/nowatica/auth-astro)
 - [MongoDB Node Driver](https://www.mongodb.com/docs/drivers/node/)
 - [Vercel Deployment](https://vercel.com/docs)
