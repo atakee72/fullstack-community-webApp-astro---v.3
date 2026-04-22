@@ -30,7 +30,6 @@ export default defineConfig({
 
   vite: {
     optimizeDeps: {
-      include: ['zustand', 'zustand/middleware'],
       exclude: ['mongodb', 'bcrypt', '@mongodb-js/saslprep', 'node-gyp-build']
     },
     ssr: {
@@ -49,8 +48,7 @@ export default defineConfig({
         'win32-x64-msvc',
         'darwin-x64',
         'linux-x64-gnu'
-      ],
-      noExternal: ['zustand', 'zustand/middleware']
+      ]
     },
     resolve: {
       alias: {

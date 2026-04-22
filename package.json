@@ -2,7 +2,7 @@
   "name": "mahalle-community-app",
   "type": "module",
   "version": "1.0.0",
-  "description": "Mahalle - A Fullstack Community Web App built with Astro, TypeScript, and Zustand",
+  "description": "Mahalle - A Fullstack Community Web App built with Astro, TypeScript, React, Svelte, TanStack Query, and MongoDB",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
