@@ -1,32 +1,38 @@
-import { MongoClient, Db } from "mongodb";
+import { MongoClient, Db, type MongoClientOptions } from "mongodb";
 
 if (!import.meta.env.MONGODB_URI) {
   throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
 }
 
 const uri = import.meta.env.MONGODB_URI;
-const options = {};
 
-let client: MongoClient;
-let clientPromise: Promise<MongoClient>;
+// Connection pool tuning for serverless. Small pool because each invocation
+// is short-lived and shares the container; server selection timeout trimmed
+// from the 30s default so a stalled primary fails fast instead of blocking
+// the whole function.
+const options: MongoClientOptions = {
+  maxPoolSize: 10,
+  minPoolSize: 0,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+};
 
-if (process.env.NODE_ENV === "development") {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  let globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>;
-  };
+// Cache the client promise on globalThis in ALL environments. On Vercel
+// serverless, module-level globals are reused across warm invocations of the
+// same container; without this, every invocation pays a fresh TCP+TLS+auth
+// handshake to Atlas (~200–500ms). In dev it prevents HMR from opening a new
+// connection on every reload. Same pattern MongoDB + Vercel officially
+// recommend for Next.js / Astro serverless functions.
+const globalWithMongo = globalThis as typeof globalThis & {
+  _mongoClientPromise?: Promise<MongoClient>;
+};
 
-  if (!globalWithMongo._mongoClientPromise) {
-    client = new MongoClient(uri, options);
-    globalWithMongo._mongoClientPromise = client.connect();
-  }
-  clientPromise = globalWithMongo._mongoClientPromise;
-} else {
-  // In production mode, it's best to not use a global variable.
-  client = new MongoClient(uri, options);
-  clientPromise = client.connect();
+if (!globalWithMongo._mongoClientPromise) {
+  const client = new MongoClient(uri, options);
+  globalWithMongo._mongoClientPromise = client.connect();
 }
+
+const clientPromise: Promise<MongoClient> = globalWithMongo._mongoClientPromise;
 
 // Export a module-scoped MongoClient promise. By doing this in a
 // separate module, the client can be shared across functions.
