@@ -278,8 +278,11 @@ body {
   display: none;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  /* Transparent overlay — just blur the page behind. Video element has its
+     own dark bg + visibility:hidden until first frame, so no blob flash. */
+  background-color: transparent;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 #splash-video {
@@ -288,6 +291,16 @@ body {
   border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
   transform: perspective(500px) rotateY(-10deg) rotateX(4deg);
   box-shadow: 18px 24px 40px rgba(0, 0, 0, 0.45), 0 0 80px rgba(75, 154, 170, 0.25);
+  /* Dark bg for the empty video element so the blob shape doesn't
+     flash lilac/purple before the first frame paints. */
+  background-color: #0e1033;
+  /* Hide the video element itself until first frame is decoded — JS flips
+     this to visible on `loadeddata` so users never see an empty shape. */
+  visibility: hidden;
+}
+
+#splash-video.ready {
+  visibility: visible;
 }
 
 @media (max-width: 640px) {

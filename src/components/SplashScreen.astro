@@ -6,6 +6,7 @@
     muted
     playsinline
     preload="auto"
+    fetchpriority="high"
   ></video>
 </div>
 
@@ -23,22 +24,23 @@
       return;
     }
 
-    // // Already shown this session or reduced motion — remove, stay hidden
-    // if (
-    //   sessionStorage.getItem('mahalle-splash-shown') ||
-    //   window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    // ) {
-    //   overlay.remove();
-    //   return;
-    // }
+    // Already shown this session or reduced motion — remove, stay hidden
+    try {
+      if (
+        sessionStorage.getItem('mahalle-splash-shown') ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ) {
+        overlay.remove();
+        return;
+      }
+    } catch (e) {
+      // sessionStorage can throw in privacy modes — fall through and show splash
+    }
 
-    // First visit: show overlay with fade-in
+    // First visit: show overlay fully opaque from the start — no fade-in
+    // (fade-in briefly exposes the page bg behind the solid overlay color).
     overlay.style.display = 'flex';
-    overlay.style.opacity = '0';
-    overlay.animate(
-      [{ opacity: 0 }, { opacity: 1 }],
-      { duration: 500, easing: 'ease-in', fill: 'forwards' }
-    );
+    overlay.style.opacity = '1';
 
     var dismissed = false;
     var videoReady = false;
@@ -50,7 +52,7 @@
       // Only dismiss when BOTH conditions are met
       if (!videoReady || !pageReady) return;
       dismissed = true;
-      // sessionStorage.setItem('mahalle-splash-shown', '1');
+      try { sessionStorage.setItem('mahalle-splash-shown', '1'); } catch (e) {}
 
       var anim = overlay.animate(
         [{ opacity: 1 }, { opacity: 0 }],
@@ -73,7 +75,20 @@
 
     // --- Video done detection ---
     if (video) {
-      video.play().catch(function () {});
+      // Reveal the video element only once its first frame is decoded,
+      // so users don't see an empty blob-shaped placeholder while loading.
+      video.addEventListener('loadeddata', function () {
+        video.classList.add('ready');
+      });
+      // If autoplay is blocked (common on mobile Firefox even with muted),
+      // dismiss quickly rather than leaving a blank overlay sitting there.
+      video.play().catch(function () {
+        setTimeout(function () {
+          videoReady = true;
+          pageReady = true;
+          dismissSplash();
+        }, 600);
+      });
       video.addEventListener('ended', onVideoDone);
 
       // Backup: check via timeupdate if video reached the end
@@ -93,14 +108,14 @@
       window.addEventListener('load', onPageLoaded);
     }
 
-    // Safety timeout — dismiss after 5s no matter what
+    // Safety timeout — dismiss after 4s no matter what
     setTimeout(function () {
       if (document.getElementById('splash-overlay')) {
         videoReady = true;
         pageReady = true;
         dismissSplash();
       }
-    }, 1500);
+    }, 4000);
   })();
 </script>
 
