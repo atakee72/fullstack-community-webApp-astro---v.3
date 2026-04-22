@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { signOut } from 'auth-astro/client';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, PenLine, Newspaper, Calendar, ShoppingBag, BarChart3, User, LogOut } from 'lucide-react';
+import { optimizeCloudinary } from '../utils/cloudinary';
 
 interface NavbarProps {
   user?: any;
@@ -15,6 +16,17 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
   useEffect(() => {
     setIsClient(true);
     setUser(initialUser);
+    // On prerendered pages, the server can't read cookies at build time, so
+    // `initialUser` is undefined. Fetch the current session client-side so
+    // the navbar reflects the real login state on static pages too.
+    if (!initialUser) {
+      fetch('/api/auth/session', { credentials: 'include' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((session) => {
+          if (session?.user) setUser(session.user);
+        })
+        .catch(() => {});
+    }
   }, [initialUser]);
 
   // Close menu on escape key
@@ -139,7 +151,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
                   <div className="flex items-center gap-3">
                     <img
                       className="w-10 h-10 rounded-full object-cover ring-2 ring-white/20"
-                      src={user.image || `https://ui-avatars.com/api/?name=${user.name}&background=4b9aaa&color=fff&size=96`}
+                      src={optimizeCloudinary(user.image) || `https://ui-avatars.com/api/?name=${user.name}&background=4b9aaa&color=fff&size=96`}
                       alt={user.name}
                     />
                     <div>
@@ -214,7 +226,7 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
             <div className="relative">
               <img
                 className="w-12 h-12 lg:w-14 lg:h-14 rounded-full object-cover bg-white shadow-xl cursor-pointer group-hover:scale-110 transition-transform duration-300 border-3 border-[#4b9aaa]"
-                src={user.image || `https://ui-avatars.com/api/?name=${user.name}&background=4b9aaa&color=fff&size=140`}
+                src={optimizeCloudinary(user.image) || `https://ui-avatars.com/api/?name=${user.name}&background=4b9aaa&color=fff&size=140`}
                 alt={user.name}
               />
               <div className="absolute -bottom-1 -right-1 w-3 h-3 lg:w-4 lg:h-4 bg-green-500 rounded-full border-2 border-white"></div>
