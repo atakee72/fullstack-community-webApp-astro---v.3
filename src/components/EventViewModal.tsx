@@ -5,6 +5,7 @@ import { RemoveScroll } from 'react-remove-scroll';
 import type { Event } from '../types';
 import { generateGoogleCalendarUrl, downloadIcsFile } from '../utils/calendarExport';
 import { useModalHistory } from '../hooks/useModalHistory';
+import { useCommentsQuery } from '../hooks/api/useCommentsQuery';
 
 const REVEALED_WARNINGS_KEY = 'mahalle_revealed_event_comment_warnings';
 const REVEALED_EVENT_WARNINGS_KEY = 'mahalle_revealed_event_warnings';
@@ -87,6 +88,21 @@ export default function EventViewModal({
       // Ignore localStorage errors
     }
   }, [revealedEventWarnings]);
+
+  // Lazy-fetch full comment objects when the modal is open.
+  // Comments are no longer shipped with the events list payload (saved
+  // ~300 KB on the calendar page); we pull them on demand here. Request
+  // only fires when `enabled` is true (modal open + event loaded).
+  const eventId = event?._id?.toString() || '';
+  const { data: comments = [], isLoading: commentsLoading } = useCommentsQuery(
+    show && eventId ? eventId : ''
+  );
+
+  // Fall back to raw comment-id count on the event while full comments
+  // are loading so the count doesn't flicker from N → 0 → N.
+  const commentCount = commentsLoading
+    ? (event?.comments?.length || 0)
+    : comments.length;
 
   // Helper to check if current user is the comment author
   const isCommentAuthor = (comment: any) => {
@@ -337,14 +353,14 @@ export default function EventViewModal({
             <div className="flex items-center pt-2 border-t border-white/10">
               <div className="flex items-center gap-1.5 text-xs text-white/70">
                 <MessageCircle className="w-3.5 h-3.5" strokeWidth={1.75} />
-                <span>{event.comments?.length || 0} comments</span>
+                <span>{commentCount} comments</span>
               </div>
             </div>
 
             {/* Comments Section */}
             <div className="border-t border-white/10 pt-3 mt-3">
               <h3 className="text-base font-semibold text-[#e8e6e1] mb-2">
-                Comments ({event.comments?.length || 0})
+                Comments ({commentCount})
               </h3>
 
               {/* Add Comment Form */}
@@ -379,9 +395,9 @@ export default function EventViewModal({
               )}
 
               {/* Existing Comments */}
-              {event.comments && event.comments.length > 0 ? (
+              {comments.length > 0 ? (
                 <div className="space-y-1.5 max-h-60 overflow-y-auto mb-4">
-                  {[...event.comments].reverse().map((comment: any, idx: number) => {
+                  {[...comments].reverse().map((comment: any, idx: number) => {
                     const isAuthor = isCommentAuthor(comment);
                     const commentId = comment._id?.toString() || idx.toString();
 
