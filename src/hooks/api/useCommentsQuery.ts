@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Comment } from '../../types';
+import { qk, forumQk } from '../../lib/queryKeys';
 
 const API_URL = '/api';
 
@@ -18,7 +19,7 @@ async function fetchComments(postId: string): Promise<Comment[]> {
 // Hook for fetching comments
 export function useCommentsQuery(postId: string) {
   return useQuery({
-    queryKey: ['comments', postId],
+    queryKey: qk.comments(postId),
     queryFn: () => fetchComments(postId),
     enabled: !!postId,
     // Comments stay fresh for 30 seconds
@@ -71,18 +72,20 @@ export function useCreateComment() {
     onSuccess: (response, variables) => {
       // Prepend the new comment to the cache (newest first, matching API sort order)
       queryClient.setQueryData(
-        ['comments', variables.topicId],
+        qk.comments(variables.topicId),
         (old: Comment[] | undefined) => {
           if (!old) return [response.comment];
           return [response.comment, ...old];
         }
       );
 
-      // Also update the comment count in the parent post
-      queryClient.invalidateQueries({
-        queryKey: [variables.collectionType],
-        exact: false
-      });
+      // Also update the comment count in the parent post. `events` isn't a
+      // forum namespace, so branch on collectionType.
+      const parentKey =
+        variables.collectionType === 'events'
+          ? qk.events.all
+          : forumQk(variables.collectionType).all;
+      queryClient.invalidateQueries({ queryKey: parentKey, exact: false });
     },
   });
 }
@@ -110,7 +113,7 @@ export function useDeleteComment(postId: string) {
     onSuccess: (data, commentId) => {
       // Remove the comment from cache
       queryClient.setQueryData(
-        ['comments', postId],
+        qk.comments(postId),
         (old: Comment[] | undefined) => {
           if (!old) return old;
           return old.filter(comment => comment._id !== commentId);
@@ -119,7 +122,7 @@ export function useDeleteComment(postId: string) {
 
       // Invalidate parent posts to update comment count
       queryClient.invalidateQueries({
-        queryKey: ['topics'],
+        queryKey: qk.topics.all,
         exact: false
       });
     },

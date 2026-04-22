@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { NewsItem } from '../../types';
+import { qk } from '../../lib/queryKeys';
 
 const API_URL = '/api';
 
@@ -56,7 +57,7 @@ async function fetchNews(options: NewsQueryOptions = {}): Promise<NewsResponse> 
 // Hook for fetching news
 export function useNewsQuery(options: NewsQueryOptions = {}) {
   return useQuery({
-    queryKey: ['news', options],
+    queryKey: qk.news.list(options),
     queryFn: () => fetchNews(options),
     staleTime: 60 * 1000, // News doesn't change rapidly — 1 minute stale time
     gcTime: 5 * 60 * 1000,
@@ -96,7 +97,7 @@ export function useSubmitNews() {
     mutationFn: submitNews,
     // Canonical v5: single invalidation in onSettled (runs on success + error).
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['news'] });
+      queryClient.invalidateQueries({ queryKey: qk.news.all });
     },
     retry: false,
   });
@@ -127,8 +128,8 @@ export function useSaveNewsMutation() {
     mutationFn: ({ newsId, action }: { newsId: string; action: 'save' | 'unsave' }) =>
       toggleSaveNews(newsId, action),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['news'] });
-      queryClient.invalidateQueries({ queryKey: ['savedNews'] });
+      queryClient.invalidateQueries({ queryKey: qk.news.all });
+      queryClient.invalidateQueries({ queryKey: qk.news.saved });
     },
   });
 }
@@ -148,9 +149,11 @@ async function fetchSavedNewsIds(): Promise<string[]> {
 // Hook for loading saved news IDs
 export function useSavedNewsQuery(enabled: boolean) {
   return useQuery({
-    queryKey: ['savedNews'],
+    queryKey: qk.news.saved,
     queryFn: fetchSavedNewsIds,
     enabled,
     staleTime: 5 * 60 * 1000,
+    // User-scoped set only this tab mutates. Skip refocus refetch.
+    refetchOnWindowFocus: false,
   });
 }

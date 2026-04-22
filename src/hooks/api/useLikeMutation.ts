@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { forumQk } from '../../lib/queryKeys';
 
 interface LikeToggleParams {
   postId: string;
@@ -43,10 +44,10 @@ export function useLikeMutation(
     // Optimistic update for immediate UI feedback
     onMutate: async ({ postId, action }) => {
       // Cancel any outgoing refetches so they don't overwrite our optimistic update
-      await queryClient.cancelQueries({ queryKey: [collectionType] });
+      await queryClient.cancelQueries({ queryKey: forumQk(collectionType).all });
 
       // Snapshot all query variations for rollback
-      const queries = queryClient.getQueriesData({ queryKey: [collectionType] });
+      const queries = queryClient.getQueriesData({ queryKey: forumQk(collectionType).all });
       const previousQueries = queries.map(([queryKey, data]) => ({ queryKey, data }));
 
       // Update all matching queries optimistically
@@ -94,7 +95,7 @@ export function useLikeMutation(
 
     // Single eventual-consistency invalidation (canonical TanStack v5 pattern)
     onSettled: () => {
-      return queryClient.invalidateQueries({ queryKey: [collectionType] });
+      return queryClient.invalidateQueries({ queryKey: forumQk(collectionType).all });
     },
   });
 }

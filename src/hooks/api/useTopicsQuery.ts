@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Topic, Announcement, Recommendation } from '../../types';
+import { qk, forumQk } from '../../lib/queryKeys';
 
 const API_URL = '/api';
 
@@ -67,7 +68,7 @@ export function useTopicsQuery(
   extras: { initialData?: any[] } = {}
 ) {
   return useQuery({
-    queryKey: [type, options],
+    queryKey: forumQk(type).list(options),
     queryFn: () => fetchTopics(type, options),
     // Keep data cached for 1 minute - balances freshness with API efficiency
     staleTime: 60 * 1000,
@@ -119,7 +120,7 @@ export function useCreatePost(type: 'topics' | 'announcements' | 'recommendation
     // Canonical v5: single invalidation in onSettled (runs on success + error).
     // Previously did both onSuccess + onSettled, which caused a double-refetch flicker.
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [type] });
+      queryClient.invalidateQueries({ queryKey: forumQk(type).all });
     },
     retry: false,
   });
@@ -140,7 +141,7 @@ async function fetchTopicById(id: string): Promise<Topic> {
 // Hook for fetching a single topic
 export function useTopicQuery(id: string) {
   return useQuery({
-    queryKey: ['topic', id],
+    queryKey: qk.topics.detail(id),
     queryFn: () => fetchTopicById(id),
     enabled: !!id,
   });
@@ -176,7 +177,7 @@ export function useLikeMutation(type: 'topics' | 'announcements' | 'recommendati
     mutationFn: ({ postId, action }: { postId: string; action: 'like' | 'unlike' }) =>
       updateLikes(postId, action, type),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [type] });
+      queryClient.invalidateQueries({ queryKey: forumQk(type).all });
     },
   });
 }
@@ -214,7 +215,7 @@ export function useEditPost(type: 'topics' | 'announcements' | 'recommendations'
     mutationFn: ({ postId, data }: { postId: string; data: { title: string; body: string; tags: string[]; images?: { url: string; publicId: string }[] } }) =>
       editPost(postId, type, data),
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [type] });
+      queryClient.invalidateQueries({ queryKey: forumQk(type).all });
     },
   });
 }
@@ -245,13 +246,13 @@ export function useDeletePost(type: 'topics' | 'announcements' | 'recommendation
     mutationFn: (postId: string) => deletePost(postId, type),
     onSuccess: (data, postId) => {
       // Remove the deleted item from the cache
-      queryClient.setQueryData([type], (old: any[] | undefined) => {
+      queryClient.setQueryData(forumQk(type).all, (old: any[] | undefined) => {
         if (!old) return old;
         return old.filter(item => item._id !== postId);
       });
 
       // Also invalidate to ensure consistency
-      queryClient.invalidateQueries({ queryKey: [type] });
+      queryClient.invalidateQueries({ queryKey: forumQk(type).all });
     },
   });
 }
@@ -274,26 +275,26 @@ export function useSavePostMutation() {
     mutationFn: ({ postId, action }: { postId: string; action: 'save' | 'unsave' }) =>
       toggleSavePost(postId, action),
     onMutate: async ({ postId, action }) => {
-      await queryClient.cancelQueries({ queryKey: ['savedPosts'] });
-      const prev = queryClient.getQueryData<{ savedIds: string[] }>(['savedPosts']);
-      queryClient.setQueryData(['savedPosts'], (old: { savedIds: string[] } | undefined) => {
+      await queryClient.cancelQueries({ queryKey: qk.savedPosts });
+      const prev = queryClient.getQueryData<{ savedIds: string[] }>(qk.savedPosts);
+      queryClient.setQueryData(qk.savedPosts, (old: { savedIds: string[] } | undefined) => {
         const ids = old?.savedIds || [];
         return { savedIds: action === 'save' ? [...ids, postId] : ids.filter(id => id !== postId) };
       });
       return { prev };
     },
     onError: (_err: unknown, _vars: unknown, context: { prev?: { savedIds: string[] } } | undefined) => {
-      if (context?.prev) queryClient.setQueryData(['savedPosts'], context.prev);
+      if (context?.prev) queryClient.setQueryData(qk.savedPosts, context.prev);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['savedPosts'] });
+      queryClient.invalidateQueries({ queryKey: qk.savedPosts });
     },
   });
 }
 
 export function useSavedPostsQuery(enabled: boolean) {
   return useQuery({
-    queryKey: ['savedPosts'],
+    queryKey: qk.savedPosts,
     queryFn: async () => {
       const res = await fetch(`${API_URL}/posts/save`, { credentials: 'include' });
       if (!res.ok) return { savedIds: [] as string[] };
@@ -301,5 +302,7 @@ export function useSavedPostsQuery(enabled: boolean) {
     },
     enabled,
     staleTime: 5 * 60 * 1000,
+    // User-scoped set only this tab mutates. Skip refocus refetch.
+    refetchOnWindowFocus: false,
   });
 }

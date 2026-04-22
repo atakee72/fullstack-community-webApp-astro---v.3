@@ -1,8 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { qk } from '../../lib/queryKeys';
 
 const API_URL = '/api';
 
-export const MY_REPORTED_IDS_KEY = ['my-reported-ids'] as const;
+// Re-export under the old name so external imports keep working.
+export const MY_REPORTED_IDS_KEY = qk.myReportedIds;
 
 /**
  * Eager-loads the IDs of all content the current user has reported,
@@ -11,7 +13,7 @@ export const MY_REPORTED_IDS_KEY = ['my-reported-ids'] as const;
  */
 export function useMyReportedIdsQuery(enabled: boolean) {
   return useQuery({
-    queryKey: MY_REPORTED_IDS_KEY,
+    queryKey: qk.myReportedIds,
     queryFn: async () => {
       const res = await fetch(`${API_URL}/reports/my-reported-ids`, { credentials: 'include' });
       if (!res.ok) return { reportedIds: [] as string[] };
@@ -30,7 +32,7 @@ export function useMarkAsReported() {
   const queryClient = useQueryClient();
   return (contentId: string) => {
     queryClient.setQueryData<{ reportedIds: string[] }>(
-      MY_REPORTED_IDS_KEY,
+      qk.myReportedIds,
       (prev) => {
         const current = prev?.reportedIds ?? [];
         if (current.includes(contentId)) return prev ?? { reportedIds: current };

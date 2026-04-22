@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, isBefore, isSameDay, startOfDay, isSameMonth } from 'date-fns';
 import { getDefaultCalendarQueryOptions } from '../lib/calendarQueryOptions';
+import { qk } from '../lib/queryKeys';
 import { de } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEventsQuery, useCreateEvent, useEditEvent, useDeleteEvent, useEventLikeMutation } from '../hooks/api/useEventsQuery';
@@ -129,7 +130,7 @@ export default function CalendarContainer({ initialSession, initialEvents }: Cal
 
       // Prefetch next and previous months in the background
       queryClient.prefetchQuery({
-        queryKey: ['events', buildAdjacentQuery(nextMonth)],
+        queryKey: qk.events.list(buildAdjacentQuery(nextMonth)),
         queryFn: async () => {
           const response = await fetch(`/api/events?${new URLSearchParams({
             dateFrom: new Date(buildAdjacentQuery(nextMonth).dateFrom!).toISOString(),
@@ -144,7 +145,7 @@ export default function CalendarContainer({ initialSession, initialEvents }: Cal
       });
 
       queryClient.prefetchQuery({
-        queryKey: ['events', buildAdjacentQuery(prevMonth)],
+        queryKey: qk.events.list(buildAdjacentQuery(prevMonth)),
         queryFn: async () => {
           const response = await fetch(`/api/events?${new URLSearchParams({
             dateFrom: new Date(buildAdjacentQuery(prevMonth).dateFrom!).toISOString(),

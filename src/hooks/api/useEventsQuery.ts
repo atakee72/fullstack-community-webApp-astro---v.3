@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Event } from '../../types';
+import { qk } from '../../lib/queryKeys';
 
 const API_URL = '/api';
 
@@ -74,7 +75,7 @@ async function fetchEvents(options: QueryOptions = {}): Promise<Event[]> {
 // Hook for fetching events
 export function useEventsQuery(options: QueryOptions = {}, additionalQueryOptions: any = {}) {
   return useQuery({
-    queryKey: ['events', options],
+    queryKey: qk.events.list(options),
     queryFn: () => fetchEvents(options),
     // Keep calendar data fresh for 30 seconds (events don't change rapidly)
     staleTime: 30 * 1000,
@@ -124,7 +125,7 @@ export function useCreateEvent() {
     mutationFn: createEvent,
     // Canonical v5: single invalidation in onSettled (runs on success + error).
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: qk.events.all });
     },
     retry: false,
   });
@@ -147,7 +148,7 @@ async function fetchEventById(id: string): Promise<Event> {
 // Hook for fetching a single event
 export function useEventQuery(id: string) {
   return useQuery({
-    queryKey: ['event', id],
+    queryKey: qk.events.detail(id),
     queryFn: () => fetchEventById(id),
     enabled: !!id,
   });
@@ -179,7 +180,7 @@ export function useEventLikeMutation() {
     mutationFn: ({ eventId, action }: { eventId: string; action: 'like' | 'unlike' }) =>
       updateEventLikes(eventId, action),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: qk.events.all });
     },
   });
 }
@@ -222,7 +223,7 @@ export function useEditEvent() {
     mutationFn: ({ eventId, data }: { eventId: string; data: Parameters<typeof editEvent>[1] }) =>
       editEvent(eventId, data),
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: qk.events.all });
     },
   });
 }
@@ -250,13 +251,13 @@ export function useDeleteEvent() {
     mutationFn: deleteEvent,
     onSuccess: (data, eventId) => {
       // Remove the deleted item from the cache
-      queryClient.setQueryData(['events'], (old: Event[] | undefined) => {
+      queryClient.setQueryData(qk.events.all, (old: Event[] | undefined) => {
         if (!old) return old;
         return old.filter(item => item._id !== eventId);
       });
 
       // Also invalidate to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: qk.events.all });
     },
   });
 }

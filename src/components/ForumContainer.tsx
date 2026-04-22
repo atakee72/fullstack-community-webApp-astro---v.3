@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTopicsQuery, useCreatePost, useDeletePost, useEditPost, useSavePostMutation, useSavedPostsQuery } from '../hooks/api/useTopicsQuery';
 import { FORUM_QUERY_OPTIONS } from '../lib/forumQueryOptions';
+import { forumQk } from '../lib/queryKeys';
 import { useMyReportedIdsQuery, useMarkAsReported } from '../hooks/api/useReportsQuery';
 import { BookmarkIcon, Flag } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -102,20 +103,16 @@ export default function ForumContainer({ initialSession, initialTopics }: ForumC
     });
   };
 
-  // Prefetch other collections on mount for instant tab switching
+  // Prefetch other collections on mount for instant tab switching.
+  // Reuses FORUM_QUERY_OPTIONS so the prefetched queryKey matches the hook's
+  // queryKey byte-for-byte (prevents drift with the SSR initialData path).
   useEffect(() => {
-    const queryOptions = {
-      fields: ['_id', 'title', 'body', 'description', 'author', 'tags', 'images', 'comments', 'date', 'likes', 'likedBy', 'views', 'moderationStatus', 'isUserReported', 'rejectionReason', 'hasWarningLabel', 'warningText'],
-      sortBy: 'date' as const,
-      sortOrder: 'desc' as const,
-    };
-
-    // Prefetch the collections not currently selected
-    const collectionsToFetch = ['topics', 'announcements', 'recommendations'].filter(c => c !== collectionType);
+    const collectionsToFetch = (['topics', 'announcements', 'recommendations'] as const)
+      .filter(c => c !== collectionType);
     collectionsToFetch.forEach(collection => {
       queryClient.prefetchQuery({
-        queryKey: [collection, queryOptions],
-        queryFn: () => fetch(`/api/${collection}?fields=${queryOptions.fields.join(',')}&sortBy=${queryOptions.sortBy}&sortOrder=${queryOptions.sortOrder}`)
+        queryKey: forumQk(collection).list(FORUM_QUERY_OPTIONS),
+        queryFn: () => fetch(`/api/${collection}?fields=${FORUM_QUERY_OPTIONS.fields.join(',')}&sortBy=${FORUM_QUERY_OPTIONS.sortBy}&sortOrder=${FORUM_QUERY_OPTIONS.sortOrder}`)
           .then(res => res.json())
           .then(data => data[collection] || []),
         staleTime: 5 * 60 * 1000,
