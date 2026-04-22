@@ -1,15 +1,13 @@
 import React from 'react';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 
-// Create a client with optimized defaults.
 // `gcTime` must be >= persist `maxAge` or queries are evicted before restore.
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Data is considered fresh for 5 seconds
       staleTime: 5 * 1000,
       // Keep cache for 24 hours so persisted entries survive a page reload
       // and get rehydrated instantly. Stale entries still refetch in the
@@ -33,19 +31,25 @@ const persister =
     ? createSyncStoragePersister({
         storage: window.localStorage,
         key: 'mahalle-rq-cache',
-        // Only persist successful query data; skip errors/loading shells.
         throttleTime: 1000,
       })
-    : undefined;
+    : null;
 
 interface QueryProviderProps {
   children: React.ReactNode;
 }
 
 export function QueryProvider({ children }: QueryProviderProps) {
-  // Fall back to in-memory only during SSR (persister undefined).
+  // On the server (and any edge case where window is missing), use a plain
+  // QueryClientProvider so useQuery calls still find a client. On the
+  // client, upgrade to PersistQueryClientProvider which hydrates the cache
+  // from localStorage before rendering children.
   if (!persister) {
-    return <>{children}</>;
+    return (
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    );
   }
 
   return (
@@ -57,7 +61,6 @@ export function QueryProvider({ children }: QueryProviderProps) {
         // Bump the buster to invalidate all persisted caches on schema changes.
         buster: 'v1',
         dehydrateOptions: {
-          // Don't persist mutations or queries that are still loading.
           shouldDehydrateQuery: (q) => q.state.status === 'success',
         },
       }}
@@ -68,5 +71,4 @@ export function QueryProvider({ children }: QueryProviderProps) {
   );
 }
 
-// Export the client for imperative use
 export { queryClient };
