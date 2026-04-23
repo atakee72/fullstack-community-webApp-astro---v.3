@@ -40,6 +40,21 @@ const { title, description = 'Mahalle - A community web app for local neighborho
 
     <title>{title} | Mahalle</title>
 
+    <!-- Low-perf detector — runs before first paint, tags underpowered
+         devices so heavy SVG filters (glass wobble) can degrade gracefully.
+         Checks CPU cores + device memory. Unknown values assume capable. -->
+    <script is:inline>
+      (function () {
+        try {
+          var cores = navigator.hardwareConcurrency;
+          var mem = navigator.deviceMemory;
+          if ((cores && cores < 4) || (mem && mem < 4)) {
+            document.documentElement.classList.add('low-perf');
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <!-- View Transitions for smooth page navigation -->
     <ViewTransitions />
   </head>
