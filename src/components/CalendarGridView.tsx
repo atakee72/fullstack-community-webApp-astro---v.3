@@ -351,9 +351,11 @@ export default function CalendarGridView({
                   className={`
                     relative min-h-[40px] md:min-h-[55px] lg:min-h-[65px] p-0.5 md:p-1 lg:p-2 rounded-md md:rounded-lg border transition-all
                     ${hasRange && isInRange
-                      ? (isRangeStart || isRangeEnd
-                          ? 'bg-[#d4af37]/30 border-2 border-[#6F2F59]'
-                          : 'bg-[#d4af37]/15 border-[#6F2F59]/40')
+                      ? (isRangeEnd
+                          ? 'bg-[#d4af37] text-[#0e1033] border-2 border-[#6F2F59]'
+                          : isRangeStart
+                            ? 'bg-[#d4af37]/30 border-2 border-[#6F2F59]'
+                            : 'bg-[#d4af37]/15 border-[#6F2F59]/40')
                       : (!rangeEnd && isRangeStart)
                         ? 'bg-[#d4af37]/30 border-[#d4af37]'
                         : isSelected
@@ -379,7 +381,7 @@ export default function CalendarGridView({
                   <div
                     className={`
                       text-xs md:text-sm lg:text-base font-medium mb-0.5 md:mb-1
-                      ${day.isCurrentMonth ? (isSelected ? 'text-[#0e1033]' : 'text-[#e8e6e1]') : 'text-white/40'}
+                      ${day.isCurrentMonth ? ((isSelected || (hasRange && isRangeEnd)) ? 'text-[#0e1033]' : 'text-[#e8e6e1]') : 'text-white/40'}
                       ${day.isToday && !isSelected ? 'text-[#d4af37] font-bold' : ''}
                     `}
                   >
