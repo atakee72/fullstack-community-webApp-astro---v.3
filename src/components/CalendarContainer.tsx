@@ -273,9 +273,18 @@ export default function CalendarContainer({ initialSession, initialEvents }: Cal
     }
   };
 
-  // Handle date click in grid view
-  const handleDateClick = (date: Date) => {
+  // Handle date click in grid view.
+  //
+  // Plain click → browse a day (sidebar view). Sets selectedDate + rangeStart
+  // on future dates so the "+ Event" tooltip still appears, but NEVER creates
+  // a range from two consecutive plain clicks. User asked for this explicitly:
+  // clicking around to peek at days shouldn't accidentally start a range.
+  //
+  // Range click (Shift/Cmd+click on desktop, long-press on mobile) → extend
+  // the existing rangeStart into a rangeEnd. This is the opt-in mode.
+  const handleDateClick = (date: Date, opts?: { range?: boolean }) => {
     const isPast = isBefore(startOfDay(date), startOfDay(new Date()));
+    const isRangeClick = !!opts?.range;
 
     // Always update sidebar
     setSelectedDate(date);
@@ -287,44 +296,28 @@ export default function CalendarContainer({ initialSession, initialEvents }: Cal
       return;
     }
 
-    // Range selection logic for future dates
-    if (!rangeStart) {
-      // Nothing selected → select start
-      setRangeStart(date);
-      setRangeEnd(undefined);
-    } else if (!rangeEnd) {
-      if (isSameDay(date, rangeStart)) {
-        // Click same date → deselect everything
-        setRangeStart(undefined);
-      } else if (isBefore(date, rangeStart)) {
-        // Clicked before start → swap
+    // RANGE-CLICK path (shift/meta/long-press): extend existing start to end.
+    if (isRangeClick && rangeStart && !isSameDay(date, rangeStart)) {
+      if (isBefore(date, rangeStart)) {
+        // Clicked before start → swap so start < end
         setRangeEnd(rangeStart);
         setRangeStart(date);
       } else {
-        // Clicked after start → set end
         setRangeEnd(date);
       }
-    } else {
-      // Both set
-      if (isSameDay(date, rangeEnd)) {
-        // Click end date → make it the new start
-        setRangeStart(date);
-        setRangeEnd(undefined);
-      } else if (isBefore(startOfDay(rangeEnd), startOfDay(date))) {
-        // Click after end → extend range forward
-        setRangeEnd(date);
-      } else if (isBefore(startOfDay(date), startOfDay(rangeStart))) {
-        // Click before start → new selection
-        setRangeStart(date);
-        setRangeEnd(undefined);
-      } else if (!isSameDay(date, rangeStart)) {
-        // Click within range → shorten range to that day
-        setRangeEnd(date);
-      } else {
-        // Click start date → collapse to single
-        setRangeEnd(undefined);
-      }
+      return;
     }
+
+    // PLAIN-CLICK path: single-day selection only. Move start to this date,
+    // drop any previous end. Clicking the same already-selected day clears it.
+    if (rangeStart && isSameDay(date, rangeStart) && !rangeEnd) {
+      // Click same single-selected day → deselect
+      setRangeStart(undefined);
+      setRangeEnd(undefined);
+      return;
+    }
+    setRangeStart(date);
+    setRangeEnd(undefined);
   };
 
   // Handle create event from range selection

@@ -26,7 +26,7 @@ interface CalendarGridViewProps {
   currentMonth: Date;
   onMonthChange: (newMonth: Date) => void;
   onClearSelection?: () => void;
-  onDateClick: (date: Date) => void;
+  onDateClick: (date: Date, opts?: { range?: boolean }) => void;
   selectedDate?: Date;
   rangeStart?: Date;
   rangeEnd?: Date;
@@ -68,6 +68,19 @@ export default function CalendarGridView({
 }: CalendarGridViewProps) {
   const [focusedDateIndex, setFocusedDateIndex] = useState<number>(0);
   const direction = useRef(1); // 1 = forward (slide left), -1 = backward (slide right)
+
+  // Long-press state for mobile range selection. If the pointer stays down on
+  // a cell for >= 450ms we mark the next click as a "range click" and suppress
+  // the tap visual. Touch users can't hold shift, so this is the mobile-
+  // equivalent opt-in into range mode.
+  const longPressFired = useRef(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
 
   // Generate calendar days (42 days for consistent 6-week grid)
   const calendarDays = useMemo(() => {
@@ -305,7 +318,29 @@ export default function CalendarGridView({
                   }${isPastDate ? ' (past date)' : ''}`}
                   aria-selected={isSelected}
                   tabIndex={day.isToday ? 0 : -1}
-                  onClick={() => onDateClick(day.date)}
+                  title={isLoggedIn && !isPastDate && rangeStart && !isSameDay(day.date, rangeStart)
+                    ? 'Shift+Click (or long-press on mobile) to select a date range'
+                    : undefined}
+                  onClick={(e) => {
+                    const range = e.shiftKey || e.metaKey || e.ctrlKey || longPressFired.current;
+                    longPressFired.current = false;
+                    onDateClick(day.date, { range });
+                  }}
+                  onPointerDown={(e) => {
+                    if (e.pointerType !== 'touch') return;
+                    if (isPastDate) return;
+                    clearLongPress();
+                    longPressTimer.current = setTimeout(() => {
+                      longPressFired.current = true;
+                      // Haptic feedback if available
+                      if ('vibrate' in navigator) {
+                        try { navigator.vibrate(15); } catch {}
+                      }
+                    }, 450);
+                  }}
+                  onPointerUp={clearLongPress}
+                  onPointerCancel={clearLongPress}
+                  onPointerLeave={clearLongPress}
                   onFocus={() => setFocusedDateIndex(dateIndex)}
                   className={`
                     relative min-h-[40px] md:min-h-[55px] lg:min-h-[65px] p-0.5 md:p-1 lg:p-2 rounded-md md:rounded-lg border transition-all
@@ -436,6 +471,15 @@ export default function CalendarGridView({
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* Range-selection hint — only shown when user is logged in, so we don't
+          nag logged-out viewers with an action they can't take. Short, calm. */}
+      {isLoggedIn && (
+        <p className="mt-3 text-center text-[10px] md:text-xs text-white/50 italic">
+          <span className="hidden md:inline">Tip: Shift+click another day to select a date range.</span>
+          <span className="md:hidden">Tip: long-press another day to select a date range.</span>
+        </p>
+      )}
 
     </div>
   );
