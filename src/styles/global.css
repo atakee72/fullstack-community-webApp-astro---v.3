@@ -227,6 +227,19 @@ body {
   display: inline-block;
 }
 
+/* Long-press pulse — visual confirmation that a long-press crossed the 450ms
+   threshold on the calendar grid. Needed because iOS Safari lacks Vibration
+   API, so haptic alone can't confirm on all devices. */
+@keyframes longpress-pulse {
+  0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.6); }
+  50%  { transform: scale(1.08); box-shadow: 0 0 0 8px rgba(212, 175, 55, 0);  }
+  100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0);    }
+}
+.longpress-pulse {
+  animation: longpress-pulse 400ms ease-out;
+  z-index: 5;
+}
+
 /* Accordion Styles for Comments */
 .accordion-wrap {
   width: 100%;

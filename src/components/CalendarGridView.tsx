@@ -75,6 +75,7 @@ export default function CalendarGridView({
   // equivalent opt-in into range mode.
   const longPressFired = useRef(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pulseDateIndex, setPulseDateIndex] = useState<number | null>(null);
   const clearLongPress = () => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
@@ -332,10 +333,15 @@ export default function CalendarGridView({
                     clearLongPress();
                     longPressTimer.current = setTimeout(() => {
                       longPressFired.current = true;
-                      // Haptic feedback if available
+                      // Haptic feedback where supported (Android Chrome/Firefox).
+                      // iOS Safari has no Vibration API — visual pulse below
+                      // acts as the cross-platform confirmation.
                       if ('vibrate' in navigator) {
-                        try { navigator.vibrate(15); } catch {}
+                        try { navigator.vibrate([30, 30, 30]); } catch {}
                       }
+                      // Visual ping: scale + gold ring pulse on the cell.
+                      setPulseDateIndex(dateIndex);
+                      setTimeout(() => setPulseDateIndex(null), 400);
                     }, 450);
                   }}
                   onPointerUp={clearLongPress}
@@ -356,6 +362,7 @@ export default function CalendarGridView({
                     }
                     ${day.isToday && !(hasRange && isInRange) && !(!rangeEnd && isRangeStart) ? 'border-[#d4af37] ring-2 ring-[#d4af37]/60' : (day.isToday ? 'ring-2 ring-[#d4af37]/60' : '')}
                     ${isFocused ? 'ring-2 ring-offset-1 ring-[#d4af37]' : ''}
+                    ${pulseDateIndex === dateIndex ? 'longpress-pulse' : ''}
                     ${isPastDate ? ''
                       : (hasRange && isInRange) || (!rangeEnd && isRangeStart)
                         ? 'hover:bg-[#d4af37]/40 hover:border-[#d4af37] cursor-pointer'
