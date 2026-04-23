@@ -33,6 +33,11 @@ export default function CalendarContainer({ initialSession, initialEvents }: Cal
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date()); // Default to today
   const [rangeStart, setRangeStart] = useState<Date | undefined>(undefined);
   const [rangeEnd, setRangeEnd] = useState<Date | undefined>(undefined);
+  // "Armed" = user opted into range-selection mode on mobile via long-press,
+  // or on desktop via shift+click. The NEXT plain click on a different future
+  // day commits the second endpoint. Without this flag we can't tell "tap to
+  // peek at a day" from "tap to complete a range I just started".
+  const [isRangeArmed, setIsRangeArmed] = useState(false);
 
   // Modal state
   const [showEventModal, setShowEventModal] = useState(false);
@@ -275,49 +280,61 @@ export default function CalendarContainer({ initialSession, initialEvents }: Cal
 
   // Handle date click in grid view.
   //
-  // Plain click → browse a day (sidebar view). Sets selectedDate + rangeStart
-  // on future dates so the "+ Event" tooltip still appears, but NEVER creates
-  // a range from two consecutive plain clicks. User asked for this explicitly:
-  // clicking around to peek at days shouldn't accidentally start a range.
-  //
-  // Range click (Shift/Cmd+click on desktop, long-press on mobile) → extend
-  // the existing rangeStart into a rangeEnd. This is the opt-in mode.
+  // Three modes:
+  //   1. Plain click, not armed → just move yellow to this day (view-only).
+  //   2. Range-click (shift/meta on desktop, long-press on mobile) → ALWAYS
+  //      restart selection here + arm range mode. Yellow jumps to the pressed
+  //      cell; any prior range is wiped. This is why user complained: they
+  //      didn't want long-press on B while yellow was on A to form A→B.
+  //   3. Plain click while armed → commit second endpoint. rangeStart stays
+  //      where it was, rangeEnd = clicked date (with swap so start < end).
   const handleDateClick = (date: Date, opts?: { range?: boolean }) => {
     const isPast = isBefore(startOfDay(date), startOfDay(new Date()));
     const isRangeClick = !!opts?.range;
 
-    // Always update sidebar
+    // Always update sidebar so logged-out users see day events too
     setSelectedDate(date);
 
-    // Past dates: clear range, don't start selection
+    // Past dates: clear everything, can't create events in the past
     if (isPast) {
       setRangeStart(undefined);
       setRangeEnd(undefined);
+      setIsRangeArmed(false);
       return;
     }
 
-    // RANGE-CLICK path (shift/meta/long-press): extend existing start to end.
-    if (isRangeClick && rangeStart && !isSameDay(date, rangeStart)) {
+    // MODE 2: Range-click → restart selection at pressed cell + arm.
+    if (isRangeClick) {
+      setRangeStart(date);
+      setRangeEnd(undefined);
+      setIsRangeArmed(true);
+      return;
+    }
+
+    // MODE 3: Plain click while armed + rangeStart exists + different day
+    //         → commit range end.
+    if (isRangeArmed && rangeStart && !isSameDay(date, rangeStart)) {
       if (isBefore(date, rangeStart)) {
-        // Clicked before start → swap so start < end
         setRangeEnd(rangeStart);
         setRangeStart(date);
       } else {
         setRangeEnd(date);
       }
+      setIsRangeArmed(false);
       return;
     }
 
-    // PLAIN-CLICK path: single-day selection only. Move start to this date,
-    // drop any previous end. Clicking the same already-selected day clears it.
+    // MODE 1: Plain click, view-only. Clicking the same already-armed day
+    // disarms without creating a range. Otherwise move yellow to this day.
     if (rangeStart && isSameDay(date, rangeStart) && !rangeEnd) {
-      // Click same single-selected day → deselect
       setRangeStart(undefined);
       setRangeEnd(undefined);
+      setIsRangeArmed(false);
       return;
     }
     setRangeStart(date);
     setRangeEnd(undefined);
+    setIsRangeArmed(false);
   };
 
   // Handle create event from range selection
@@ -511,6 +528,7 @@ export default function CalendarContainer({ initialSession, initialEvents }: Cal
               setSelectedDate(new Date());
               setRangeStart(undefined);
               setRangeEnd(undefined);
+              setIsRangeArmed(false);
             }}
             isLoggedIn={!!user}
             locale={de}

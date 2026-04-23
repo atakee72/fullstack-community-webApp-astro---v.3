@@ -485,12 +485,11 @@ export default function CalendarGridView({
         </AnimatePresence>
       </div>
 
-      {/* Range-selection hint — only shown when user is logged in, so we don't
-          nag logged-out viewers with an action they can't take. Short, calm. */}
+      {/* Range-selection hint — two-step model: arm, then tap second day. */}
       {isLoggedIn && (
         <p className="mt-3 text-center text-[10px] md:text-xs text-white/50 italic">
-          <span className="hidden md:inline">Tip: Shift+click another day to select a date range.</span>
-          <span className="md:hidden">Tip: long-press another day to select a date range.</span>
+          <span className="hidden md:inline">Tip: Shift+click a day to start a range, then click another to set the end.</span>
+          <span className="md:hidden">Tip: long-press a day to start a range, then tap another to set the end.</span>
         </p>
       )}
 
