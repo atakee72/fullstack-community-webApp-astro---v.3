@@ -304,6 +304,36 @@ Complex React components use a wrapper pattern:
 - **Animation**: `is:inline data-astro-rerun` script — re-triggers on every ViewTransitions navigation. Title fades in + slides up, then 3 decorative bars sweep in with staggered delays. Respects `prefers-reduced-motion`.
 - **Used on**: All main pages (`/`, `/calendar`, `/newsboard`, `/marketplace`, `/blog`, `/profile`, `/schillerkiez`). Blog uses `color="#ffffff" subtitleClass="text-white/80"` for dark background. Marketplace uses `color="#4b9aaa"` (teal). Schillerkiez uses `color="#6aab8e"` (green).
 
+### Glass Utility System
+Five opt-in CSS utilities in `global.css` layer the dark-glass look. Pair them as needed with standard Tailwind dark-glass classes (`bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] ...`).
+
+- **`.glass-inner-glow`** — Apple-style `box-shadow: inset 0 0 22px -4px rgba(255,255,255,0.4)`. Zero cost. Drop-in on any glass surface for a subtle inner highlight.
+- **`.glass-luxe`** — full-area liquid glass: `::after` with `backdrop-filter: blur(8px)` + `#glass-distortion` SVG filter (wobble). Used on the profile hero card. Host must have **no** `bg-*` or `backdrop-blur-*` — the pseudo handles it.
+- **`.glass-luxe-edge`** — same wobble as luxe but masked to an edge frame via radial `mask-composite: exclude`. Host keeps its own bg color visible in the center. Used on forum cards so the tan `bg-[#c9c4b9]/75` remains the trademark center while edges show the glass refraction. Base uses `#glass-distortion-subtle` (gentler scale/blur settings).
+- **`.glass-smooth`** — same shape as `glass-luxe` but **no SVG filter**: flat blur + tint, no wobble. Use when the wobble looks too fragmented or the surface doesn't need refraction.
+- **`.glass-smooth-edge`** — flat blur + tint masked to an edge frame. Use when you want a glass frame without the SVG cost.
+
+**Required helper component:** `GlassFilters.astro` (injected once in `BaseLayout` and `BlogBaseLayout`) defines three SVG filters — `#glass-distortion` (default, scale 60), `#glass-distortion-strong` (scale 110, for hover), `#glass-distortion-subtle` (low-frequency, heavy blur, scale 85 for organic curl without chunkiness). Without this component mounted, `.glass-luxe*` classes render as flat glass (SVG url() refs silently no-op).
+
+**Why `::after` instead of filtering the host:** `backdrop-filter` and `filter` create a containing block for `position: fixed` descendants (see Common Errors). Putting the filter on `::after` keeps the host a normal element, so modals inside still escape to the viewport. Also isolates `z-index` via `isolation: isolate`.
+
+**Reduced motion:** all `.glass-luxe*` variants drop the SVG filter under `prefers-reduced-motion: reduce` (flat glass fallback). Effect gracefully degrades — nothing disappears.
+
+### Low-perf Device Detector
+Inline script in `<head>` of both `BaseLayout.astro` and `BlogBaseLayout.astro`. Runs before first paint, tags underpowered devices so heavy SVG filters degrade to flat glass.
+
+```js
+if ((navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) ||
+    (navigator.deviceMemory && navigator.deviceMemory < 4)) {
+  document.documentElement.classList.add('low-perf');
+}
+```
+
+`.low-perf .glass-luxe-edge::after, .low-perf .glass-luxe::after { filter: none }` in `global.css` drops the filter on flagged devices. Old Android (2 cores, 2 GB) → flat; modern iPhone/flagship → full wobble. Safari/Firefox `deviceMemory` is undefined — falls back to core count only, fail-safe (unknown = assume capable). Brave/Tor spoof `hardwareConcurrency` to 2 → falls to flat; zero harm, they opt into minimalism. Pattern reusable for any "heavy effect on mid-tier mobile" concern.
+
+### `content-visibility: auto` for heavy card lists
+Forum cards wear `[content-visibility:auto] [contain-intrinsic-size:400px]`. Offscreen cards skip layout, paint, AND filter passes — browser treats them as the intrinsic size until they enter the viewport. On a 12-card page with only 4 visible, 8 cards' `backdrop-filter` + SVG wobble never run. Layout jumps avoided via `contain-intrinsic-size` matching the real `h-[400px]`. Apply to any list where items have expensive filters/shadows AND fixed/predictable height. Don't use on items with unpredictable height — `contain-intrinsic-size` will mis-estimate and cause scrollbar jitter.
+
 ### Animation (Motion Library)
 - **Navbar**: `motion/react` — spring-based menu slide (`AnimatePresence`), staggered nav item entrance
 - **Calendar**: `motion/react` — spring-physics slide on month change (grid slides horizontally, month name slides vertically). `AnimatePresence mode="popLayout"` for smooth height transitions between 4/5/6-week months. Direction tracked via `useRef`.
