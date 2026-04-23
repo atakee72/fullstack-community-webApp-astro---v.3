@@ -351,7 +351,9 @@ export default function CalendarGridView({
                   className={`
                     relative min-h-[40px] md:min-h-[55px] lg:min-h-[65px] p-0.5 md:p-1 lg:p-2 rounded-md md:rounded-lg border transition-all
                     ${hasRange && isInRange
-                      ? (isRangeStart || isRangeEnd ? 'bg-[#d4af37]/30 border-[#d4af37]' : 'bg-[#d4af37]/15 border-[#d4af37]/30')
+                      ? (isRangeStart || isRangeEnd
+                          ? 'bg-[#d4af37]/30 border-2 border-[#6F2F59]'
+                          : 'bg-[#d4af37]/15 border-[#6F2F59]/40')
                       : (!rangeEnd && isRangeStart)
                         ? 'bg-[#d4af37]/30 border-[#d4af37]'
                         : isSelected
@@ -364,9 +366,11 @@ export default function CalendarGridView({
                     ${isFocused ? 'ring-2 ring-offset-1 ring-[#d4af37]' : ''}
                     ${pulseDateIndex === dateIndex ? 'longpress-pulse' : ''}
                     ${isPastDate ? ''
-                      : (hasRange && isInRange) || (!rangeEnd && isRangeStart)
-                        ? 'hover:bg-[#d4af37]/40 hover:border-[#d4af37] cursor-pointer'
-                        : 'hover:border-[#d4af37]/50 cursor-pointer'
+                      : hasRange && isInRange
+                        ? 'hover:bg-[#d4af37]/40 hover:border-[#6F2F59] cursor-pointer'
+                        : !rangeEnd && isRangeStart
+                          ? 'hover:bg-[#d4af37]/40 hover:border-[#d4af37] cursor-pointer'
+                          : 'hover:border-[#d4af37]/50 cursor-pointer'
                     }
                     focus:outline-none focus:ring-2 focus:ring-[#d4af37]
                   `}
