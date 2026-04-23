@@ -322,9 +322,23 @@ export default function CalendarGridView({
                   title={isLoggedIn && !isPastDate && rangeStart && !isSameDay(day.date, rangeStart)
                     ? 'Shift+Click (or long-press on mobile) to select a date range'
                     : undefined}
+                  style={{
+                    // Block iOS long-press callout, text selection, and
+                    // double-tap zoom delay — all three can kill our gesture.
+                    WebkitTouchCallout: 'none',
+                    WebkitUserSelect: 'none',
+                    userSelect: 'none',
+                    touchAction: 'manipulation',
+                  }}
                   onClick={(e) => {
-                    const range = e.shiftKey || e.metaKey || e.ctrlKey || longPressFired.current;
-                    longPressFired.current = false;
+                    // Long-press already committed inside the timer. Swallow
+                    // the synthetic click so we don't double-fire.
+                    if (longPressFired.current) {
+                      longPressFired.current = false;
+                      e.preventDefault();
+                      return;
+                    }
+                    const range = e.shiftKey || e.metaKey || e.ctrlKey;
                     onDateClick(day.date, { range });
                   }}
                   onPointerDown={(e) => {
@@ -333,15 +347,19 @@ export default function CalendarGridView({
                     clearLongPress();
                     longPressTimer.current = setTimeout(() => {
                       longPressFired.current = true;
-                      // Haptic feedback where supported (Android Chrome/Firefox).
-                      // iOS Safari has no Vibration API — visual pulse below
-                      // acts as the cross-platform confirmation.
+                      // Haptic where supported (Android). iOS has no
+                      // Vibration API — visual pulse is the fallback.
                       if ('vibrate' in navigator) {
                         try { navigator.vibrate([30, 30, 30]); } catch {}
                       }
-                      // Visual ping: scale + gold ring pulse on the cell.
                       setPulseDateIndex(dateIndex);
                       setTimeout(() => setPulseDateIndex(null), 400);
+                      // COMMIT IMMEDIATELY. iOS Safari suppresses the
+                      // subsequent click after a long-touch, so relying on
+                      // onClick to fire the range action never worked on
+                      // iPhone. Firing here guarantees action regardless of
+                      // whether click fires afterwards.
+                      onDateClick(day.date, { range: true });
                     }, 450);
                   }}
                   onPointerUp={clearLongPress}
