@@ -136,9 +136,10 @@ export default function UserProfile({ user: initialUser }: UserProfileProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4">
-      {/* Profile Header Card */}
-      <div className="bg-white rounded-2xl shadow-2xl overflow-hidden mb-6 md:mb-8">
-        <div className="bg-gradient-to-r from-[#4b9aaa] to-[#3a7888] p-4 md:p-6 lg:p-8 text-white">
+      {/* Profile Header Card — dark-glass + inner glow + liquid wobble.
+           No bg-white/backdrop-blur here: .glass-luxe handles tint + blur on ::after. */}
+      <div className="glass-luxe glass-inner-glow border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-2xl shadow-2xl mb-6 md:mb-8">
+        <div className="p-4 md:p-6 lg:p-8 text-white">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 md:gap-6">
               {isEditing ? (

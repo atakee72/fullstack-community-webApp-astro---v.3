@@ -3,6 +3,7 @@ import { getSession } from 'auth-astro/server';
 import Navbar from '../components/Navbar';
 import ToastProvider from '../components/ToastProvider';
 import SplashScreen from '../components/SplashScreen.astro';
+import GlassFilters from '../components/GlassFilters.astro';
 
 const session = await getSession(Astro.request);
 import { ViewTransitions } from 'astro:transitions';
@@ -44,6 +45,7 @@ const { title, description = 'Mahalle - A community web app for local neighborho
   </head>
   <body class="min-h-screen bg-[#0e1033]">
     <SplashScreen />
+    <GlassFilters />
     <Navbar client:load user={session?.user} />
     <ToastProvider client:load />
     <main>

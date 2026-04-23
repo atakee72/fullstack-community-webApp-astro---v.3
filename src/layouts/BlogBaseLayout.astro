@@ -2,6 +2,7 @@
 import Navbar from '../components/Navbar';
 import ToastProvider from '../components/ToastProvider';
 import SplashScreen from '../components/SplashScreen.astro';
+import GlassFilters from '../components/GlassFilters.astro';
 import { ViewTransitions } from 'astro:transitions';
 
 // Session is populated by middleware (Astro.locals)
@@ -52,6 +53,7 @@ const { title, description = 'Mahalle Blog - Community stories and updates', ima
     <div class="animated-gradient-bg" aria-hidden="true"></div>
 
     <SplashScreen />
+    <GlassFilters />
     <Navbar client:load user={session?.user} />
     <ToastProvider client:load />
     <div class="relative z-10">

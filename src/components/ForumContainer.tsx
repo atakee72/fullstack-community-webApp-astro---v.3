@@ -425,7 +425,7 @@ export default function ForumContainer({ initialSession, initialTopics }: ForumC
                     onMouseEnter={() => prefetchComments(item._id)}
                     onFocus={() => prefetchComments(item._id)}
                     className={cn(
-                      "bg-[#c9c4b9]/75 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden flex flex-col h-[340px] md:h-[400px] transition-all duration-300 ease-out border border-[#4b9aaa]/40 hover:ring-2 hover:ring-white/30 hover:shadow-[0_0_24px_rgba(255,255,255,0.12)]",
+                      "glass-luxe-edge glass-inner-glow bg-[#c9c4b9]/75 rounded-2xl shadow-xl overflow-hidden flex flex-col h-[340px] md:h-[400px] transition-all duration-300 ease-out hover:shadow-[0_0_12px_rgba(255,255,255,0.06)]",
                       !item.images?.length && "p-4 md:p-6",
                       item.moderationStatus === 'pending' && !item.isUserReported && isOwner(item.author, user) && "ring-2 ring-amber-300",
                       item.moderationStatus === 'pending' && item.isUserReported && isOwner(item.author, user) && "ring-2 ring-orange-300",
