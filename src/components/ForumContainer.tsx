@@ -433,7 +433,7 @@ export default function ForumContainer({ initialSession, initialTopics }: ForumC
                     )}>
                     {/* ===== MOBILE OVERLAY LAYOUT (image cards only, < md) ===== */}
                     {item.images?.length > 0 && (
-                      <div className="md:hidden flex flex-col flex-1">
+                      <div className="min-[600px]:hidden flex flex-col flex-1">
                         {/* Image hero area */}
                         <div className="relative h-48 overflow-hidden flex-shrink-0 cursor-pointer" onClick={() => handleReadMore(item)}>
                           <img src={optimizeCloudinary(item.images[0].url)} alt="" className="w-full h-full object-cover" loading="lazy" />
@@ -560,7 +560,7 @@ export default function ForumContainer({ initialSession, initialTopics }: ForumC
                     {/* ===== DESKTOP LAYOUT (image cards: 50/50 split, >= md) / TEXT CARDS: all sizes ===== */}
                     <div className={cn(
                       "flex flex-col flex-1 min-w-0",
-                      item.images?.length ? "hidden md:flex md:flex-row" : ""
+                      item.images?.length ? "max-[599px]:hidden min-[600px]:flex min-[600px]:flex-row" : ""
                     )}>
                     {/* Content side — takes w-1/2 when images on desktop */}
                     <div className={cn(
