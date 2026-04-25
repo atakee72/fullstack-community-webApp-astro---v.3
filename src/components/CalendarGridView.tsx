@@ -356,6 +356,11 @@ export default function CalendarGridView({
                   }}
                   onPointerDown={(e) => {
                     if (e.pointerType !== 'touch') return;
+                    // Clear any stale longPressFired flag from a prior gesture
+                    // whose synthetic click never came (Android Chrome often
+                    // doesn't dispatch one). Without this the next real tap on
+                    // a different day gets swallowed.
+                    longPressFired.current = false;
                     if (isPastDate) return;
                     clearLongPress();
                     longPressTimer.current = setTimeout(() => {
