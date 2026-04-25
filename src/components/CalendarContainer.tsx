@@ -280,22 +280,37 @@ export default function CalendarContainer({ initialSession, initialEvents }: Cal
 
   // Handle date click in grid view.
   //
-  // Three modes:
-  //   1. Plain click, not armed → just move yellow to this day (view-only).
-  //   2. Range-click (shift/meta on desktop, long-press on mobile) → ALWAYS
-  //      restart selection here + arm range mode. Yellow jumps to the pressed
-  //      cell; any prior range is wiped. This is why user complained: they
-  //      didn't want long-press on B while yellow was on A to form A→B.
-  //   3. Plain click while armed → commit second endpoint. rangeStart stays
-  //      where it was, rangeEnd = clicked date (with swap so start < end).
-  const handleDateClick = (date: Date, opts?: { range?: boolean }) => {
+  // State machine:
+  //   IDLE                 — nothing selected (no anchor, no range).
+  //   ANCHORED             — rangeStart set, no range, not armed (gold outline).
+  //   ANCHORED-armed       — rangeStart set, no range, armed (plum outline).
+  //                          Mobile long-press, or implicit armed on desktop.
+  //   RANGED               — rangeStart + rangeEnd both set.
+  //
+  // Transitions (D = clicked date):
+  //   Past D                       → clear all (sidebar only).
+  //   IDLE + plain                 → ANCHORED at D.
+  //   IDLE + range (shift/lp)      → ANCHORED-armed at D.
+  //   ANCHORED + plain same day    → no-op (don't lose anchor).
+  //   ANCHORED + plain other day   → move anchor to D.
+  //   ANCHORED + range other day   → form range (anchor → D, swap if needed).
+  //   ANCHORED + longpress         → re-anchor + arm at D.
+  //   ARMED + plain same day       → no-op.
+  //   ARMED + plain other day      → form range (commit second endpoint).
+  //   ARMED + range other day      → form range.
+  //   ARMED + longpress            → re-anchor + arm at D.
+  //   RANGED + plain               → clear range, ANCHORED at D.
+  //   RANGED + shift other day     → re-form range from existing rangeStart.
+  //   RANGED + longpress           → clear, ANCHORED-armed at D.
+  const handleDateClick = (date: Date, opts?: { range?: boolean; via?: 'shift' | 'longpress' }) => {
     const isPast = isBefore(startOfDay(date), startOfDay(new Date()));
     const isRangeClick = !!opts?.range;
+    const isLongPress = opts?.via === 'longpress';
 
-    // Always update sidebar so logged-out users see day events too
+    // Always update sidebar
     setSelectedDate(date);
 
-    // Past dates: clear everything, can't create events in the past
+    // Past dates: clear all selection state
     if (isPast) {
       setRangeStart(undefined);
       setRangeEnd(undefined);
@@ -303,17 +318,43 @@ export default function CalendarContainer({ initialSession, initialEvents }: Cal
       return;
     }
 
-    // MODE 2: Range-click → restart selection at pressed cell + arm.
-    if (isRangeClick) {
+    const hasRange = !!(rangeStart && rangeEnd);
+    const sameAsAnchor = rangeStart && isSameDay(date, rangeStart);
+
+    // Long-press always re-anchors + arms (per spec).
+    if (isLongPress) {
       setRangeStart(date);
       setRangeEnd(undefined);
       setIsRangeArmed(true);
       return;
     }
 
-    // MODE 3: Plain click while armed + rangeStart exists + different day
-    //         → commit range end.
-    if (isRangeArmed && rangeStart && !isSameDay(date, rangeStart)) {
+    // RANGED state.
+    if (hasRange) {
+      if (isRangeClick && rangeStart && !isSameDay(date, rangeStart)) {
+        // Re-form range from existing anchor.
+        if (isBefore(date, rangeStart)) {
+          setRangeEnd(rangeStart);
+          setRangeStart(date);
+        } else {
+          setRangeEnd(date);
+        }
+        setIsRangeArmed(false);
+        return;
+      }
+      // Plain click → clear range, anchor at D.
+      setRangeStart(date);
+      setRangeEnd(undefined);
+      setIsRangeArmed(false);
+      return;
+    }
+
+    // ANCHORED or ANCHORED-armed: same day no-op.
+    if (sameAsAnchor) return;
+
+    // ANCHORED(-armed) + range click on different day → form range.
+    // ANCHORED-armed + plain click on different day → also form range.
+    if (rangeStart && (isRangeClick || isRangeArmed)) {
       if (isBefore(date, rangeStart)) {
         setRangeEnd(rangeStart);
         setRangeStart(date);
@@ -324,14 +365,15 @@ export default function CalendarContainer({ initialSession, initialEvents }: Cal
       return;
     }
 
-    // MODE 1: Plain click, view-only. Clicking the same already-armed day
-    // disarms without creating a range. Otherwise move yellow to this day.
-    if (rangeStart && isSameDay(date, rangeStart) && !rangeEnd) {
-      setRangeStart(undefined);
+    // IDLE + range → ANCHORED-armed.
+    if (isRangeClick) {
+      setRangeStart(date);
       setRangeEnd(undefined);
-      setIsRangeArmed(false);
+      setIsRangeArmed(true);
       return;
     }
+
+    // IDLE + plain or ANCHORED + plain other day → move/set anchor.
     setRangeStart(date);
     setRangeEnd(undefined);
     setIsRangeArmed(false);
@@ -523,6 +565,7 @@ export default function CalendarContainer({ initialSession, initialEvents }: Cal
             selectedDate={selectedDate}
             rangeStart={rangeStart}
             rangeEnd={rangeEnd}
+            isRangeArmed={isRangeArmed}
             onCreateFromRange={handleCreateFromRange}
             onClearSelection={() => {
               setSelectedDate(new Date());

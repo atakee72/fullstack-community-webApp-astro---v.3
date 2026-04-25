@@ -26,10 +26,11 @@ interface CalendarGridViewProps {
   currentMonth: Date;
   onMonthChange: (newMonth: Date) => void;
   onClearSelection?: () => void;
-  onDateClick: (date: Date, opts?: { range?: boolean }) => void;
+  onDateClick: (date: Date, opts?: { range?: boolean; via?: 'shift' | 'longpress' }) => void;
   selectedDate?: Date;
   rangeStart?: Date;
   rangeEnd?: Date;
+  isRangeArmed?: boolean;
   onCreateFromRange?: () => void;
   isLoggedIn?: boolean;
   onEventClick?: (event: Event) => void;
@@ -61,6 +62,7 @@ export default function CalendarGridView({
   selectedDate,
   rangeStart,
   rangeEnd,
+  isRangeArmed,
   onCreateFromRange,
   isLoggedIn,
   onEventClick,
@@ -76,6 +78,19 @@ export default function CalendarGridView({
   const longPressFired = useRef(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pulseDateIndex, setPulseDateIndex] = useState<number | null>(null);
+
+  // True platform sense (touch vs mouse) — not viewport width. A touchscreen
+  // tablet wider than `md` still gets the touch hint; a narrow desktop window
+  // still gets the mouse hint.
+  const [isTouch, setIsTouch] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(pointer: coarse)');
+    setIsTouch(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsTouch(e.matches);
+    mq.addEventListener?.('change', onChange);
+    return () => mq.removeEventListener?.('change', onChange);
+  }, []);
   const clearLongPress = () => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
@@ -151,7 +166,7 @@ export default function CalendarGridView({
       case 'Enter':
       case ' ':
         e.preventDefault();
-        onDateClick(calendarDays[focusedDateIndex].date);
+        onDateClick(calendarDays[focusedDateIndex].date, e.shiftKey ? { range: true, via: 'shift' } : undefined);
         return;
       case 'Escape':
         e.preventDefault();
@@ -296,8 +311,6 @@ export default function CalendarGridView({
             <div key={weekIndex} role="row" className="grid grid-cols-7 gap-1 md:gap-1.5 lg:gap-2">
             {week.map((day, dayIndex) => {
               const dateIndex = weekIndex * 7 + dayIndex;
-              const isSelected = selectedDate && isSameDay(day.date, selectedDate);
-              const isFocused = focusedDateIndex === dateIndex;
               const isPastDate = isBefore(startOfDay(day.date), startOfDay(new Date()));
 
               // Range selection state
@@ -317,7 +330,7 @@ export default function CalendarGridView({
                   aria-label={`${format(day.date, 'EEEE, MMMM d, yyyy', { locale })}${
                     day.events.length > 0 ? `, ${day.events.length} event${day.events.length > 1 ? 's' : ''}` : ''
                   }${isPastDate ? ' (past date)' : ''}`}
-                  aria-selected={isSelected}
+                  aria-selected={!!(rangeStart && isSameDay(day.date, rangeStart))}
                   tabIndex={day.isToday ? 0 : -1}
                   title={isLoggedIn && !isPastDate && rangeStart && !isSameDay(day.date, rangeStart)
                     ? 'Shift+Click (or long-press on mobile) to select a date range'
@@ -339,7 +352,7 @@ export default function CalendarGridView({
                       return;
                     }
                     const range = e.shiftKey || e.metaKey || e.ctrlKey;
-                    onDateClick(day.date, { range });
+                    onDateClick(day.date, range ? { range: true, via: 'shift' } : undefined);
                   }}
                   onPointerDown={(e) => {
                     if (e.pointerType !== 'touch') return;
@@ -359,7 +372,7 @@ export default function CalendarGridView({
                       // onClick to fire the range action never worked on
                       // iPhone. Firing here guarantees action regardless of
                       // whether click fires afterwards.
-                      onDateClick(day.date, { range: true });
+                      onDateClick(day.date, { range: true, via: 'longpress' });
                     }, 450);
                   }}
                   onPointerUp={clearLongPress}
@@ -375,32 +388,31 @@ export default function CalendarGridView({
                             ? 'bg-[#d4af37]/30 border-2 border-[#6F2F59]'
                             : 'bg-[#d4af37]/15 border-[#6F2F59]/40')
                       : (!rangeEnd && isRangeStart)
-                        ? 'bg-[#d4af37]/30 border-[#d4af37]'
-                        : isSelected
-                          ? 'bg-[#d4af37] text-[#0e1033] border-[#d4af37]'
-                          : day.isCurrentMonth
-                            ? (isPastDate ? 'bg-transparent text-white/30 pointer-events-none border-transparent' : 'bg-white/[0.04] border-white/10 text-white/90 hover:bg-white/[0.08]')
-                            : (isPastDate ? 'bg-transparent text-white/30 pointer-events-none border-transparent' : 'bg-transparent text-white/30 border-transparent')
+                        ? (isRangeArmed
+                            ? 'bg-[#d4af37]/20 border-2 border-[#6F2F59]'
+                            : 'bg-[#d4af37]/20 border-2 border-[#d4af37]')
+                        : day.isCurrentMonth
+                          ? (isPastDate ? 'bg-transparent text-white/30 pointer-events-none border-transparent' : 'bg-white/[0.04] border-white/10 text-white/90 hover:bg-white/[0.08]')
+                          : (isPastDate ? 'bg-transparent text-white/30 pointer-events-none border-transparent' : 'bg-transparent text-white/30 border-transparent')
                     }
                     ${day.isToday && !(hasRange && isInRange) && !(!rangeEnd && isRangeStart) ? 'border-[#d4af37] ring-2 ring-[#d4af37]/60' : (day.isToday ? 'ring-2 ring-[#d4af37]/60' : '')}
-                    ${isFocused ? 'ring-2 ring-offset-1 ring-[#d4af37]' : ''}
                     ${pulseDateIndex === dateIndex ? 'longpress-pulse' : ''}
                     ${isPastDate ? ''
                       : hasRange && isInRange
                         ? 'hover:bg-[#d4af37]/40 hover:border-[#6F2F59] cursor-pointer'
                         : !rangeEnd && isRangeStart
-                          ? 'hover:bg-[#d4af37]/40 hover:border-[#d4af37] cursor-pointer'
+                          ? 'hover:bg-[#d4af37]/40 cursor-pointer'
                           : 'hover:border-[#d4af37]/50 cursor-pointer'
                     }
-                    focus:outline-none focus:ring-2 focus:ring-[#d4af37]
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d4af37]
                   `}
                 >
                   {/* Day number */}
                   <div
                     className={`
                       text-xs md:text-sm lg:text-base font-medium mb-0.5 md:mb-1
-                      ${day.isCurrentMonth ? ((isSelected || (hasRange && isRangeEnd)) ? 'text-[#0e1033]' : 'text-[#e8e6e1]') : 'text-white/40'}
-                      ${day.isToday && !isSelected ? 'text-[#d4af37] font-bold' : ''}
+                      ${day.isCurrentMonth ? ((hasRange && isRangeEnd) ? 'text-[#0e1033]' : 'text-[#e8e6e1]') : 'text-white/40'}
+                      ${day.isToday && !(hasRange && isRangeEnd) ? 'text-[#d4af37] font-bold' : ''}
                     `}
                   >
                     {day.dayNumber}
@@ -481,10 +493,16 @@ export default function CalendarGridView({
                                    hover:bg-[#b89030] transition-colors
                                    shadow-lg whitespace-nowrap
                                    flex items-center gap-0.5"
-                        aria-label="Create event on selected date"
+                        aria-label={isRangeArmed && !rangeEnd ? 'Tap another day to set range end' : 'Create event on selected date'}
                       >
-                        <span className="text-sm md:text-base leading-none">+</span>
-                        <span className="hidden sm:inline">Event</span>
+                        {isRangeArmed && !rangeEnd ? (
+                          <span className="whitespace-nowrap">Tap end day</span>
+                        ) : (
+                          <>
+                            <span className="text-sm md:text-base leading-none">+</span>
+                            <span className="hidden sm:inline">Event</span>
+                          </>
+                        )}
                       </button>
                       {/* Arrow pointing down */}
                       <div className="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-0 h-0
@@ -503,13 +521,31 @@ export default function CalendarGridView({
         </AnimatePresence>
       </div>
 
-      {/* Range-selection hint — two-step model: arm, then tap second day. */}
-      {isLoggedIn && (
-        <p className="mt-3 text-center text-[10px] md:text-xs text-white/50 italic">
-          <span className="hidden md:inline">Tip: Shift+click a day to start a range, then click another to set the end.</span>
-          <span className="md:hidden">Tip: long-press a day to start a range, then tap another to set the end.</span>
-        </p>
-      )}
+      {/* State-aware bottom hint — picks text by pointer type, not viewport width. */}
+      {isLoggedIn && (() => {
+        const hasRange = !!(rangeStart && rangeEnd);
+        const armedState = !!rangeStart && !rangeEnd && isRangeArmed;
+        const anchoredState = !!rangeStart && !rangeEnd && !isRangeArmed;
+
+        let hint: string;
+        if (isTouch) {
+          if (anchoredState) hint = 'Long-press a day to start a range.';
+          else if (armedState) hint = 'Now tap another day to set the end of the range.';
+          else if (hasRange) hint = 'Tap any day to clear the range.';
+          else hint = 'To set a range, long-press a day and then tap another to set the end of the range.';
+        } else {
+          if (anchoredState) hint = 'Shift+click another day to set the end of the range.';
+          else if (armedState) hint = 'Now click another day to set the end of the range.';
+          else if (hasRange) hint = 'Click any day to clear the range.';
+          else hint = 'To set a range, click a day and then shift+click another to set the end of the range.';
+        }
+
+        return (
+          <p className="mt-3 text-center text-[10px] md:text-xs text-white/50 italic">
+            {hint}
+          </p>
+        );
+      })()}
 
     </div>
   );
