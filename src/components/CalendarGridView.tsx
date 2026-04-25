@@ -401,6 +401,7 @@ export default function CalendarGridView({
                           : (isPastDate ? 'bg-transparent text-white/30 pointer-events-none border-transparent' : 'bg-transparent text-white/30 border-transparent')
                     }
                     ${day.isToday && !(hasRange && isInRange) && !(!rangeEnd && isRangeStart) ? 'border-[#d4af37] ring-2 ring-[#d4af37]/60' : (day.isToday ? 'ring-2 ring-[#d4af37]/60' : '')}
+                    ${isPastDate ? 'calendar-past-stripe' : ''}
                     ${pulseDateIndex === dateIndex ? 'longpress-pulse' : ''}
                     ${isPastDate ? ''
                       : hasRange && isInRange
@@ -416,7 +417,7 @@ export default function CalendarGridView({
                   <div
                     className={`
                       text-xs md:text-sm lg:text-base font-medium mb-0.5 md:mb-1
-                      ${day.isCurrentMonth ? ((hasRange && isRangeEnd) ? 'text-[#0e1033]' : 'text-[#e8e6e1]') : 'text-white/40'}
+                      ${(hasRange && isRangeEnd) ? 'text-[#0e1033]' : isPastDate ? 'text-white/30' : day.isCurrentMonth ? 'text-[#e8e6e1]' : 'text-white/40'}
                       ${day.isToday && !(hasRange && isRangeEnd) ? 'text-[#d4af37] font-bold' : ''}
                     `}
                   >

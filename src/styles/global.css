@@ -240,6 +240,22 @@ body {
   z-index: 5;
 }
 
+/* Single plum diagonal stripe through past calendar dates — bottom-left to
+   top-right, centered and shortened so it doesn't reach the corners. Reads as
+   "crossed out / unavailable" without strikethrough semantic confusion. */
+.calendar-past-stripe {
+  background-image: linear-gradient(
+    to top left,
+    transparent calc(50% - 1px),
+    rgba(111, 47, 89, 0.7) calc(50% - 1px),
+    rgba(111, 47, 89, 0.7) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
+  background-size: 32% 32%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 /* Accordion Styles for Comments */
 .accordion-wrap {
   width: 100%;
