@@ -396,5 +396,10 @@ When I say yellow, red, green, I always mean the default variants of the project
 - **Prevention**: after any SSR-touching change (new `Astro.locals` data threaded through, new shared util between page and component), **actually load the page in a browser** before declaring done. `pnpm build` is necessary but not sufficient.
 - **First hit**: April 2026 — `FORUM_QUERY_OPTIONS` lived in `topicsQuery.ts`, which imports `connectDB`. ForumContainer's browser chunk included MongoDB, forum never hydrated.
 
-## TODO / Reminders
-- [ ] Create a pre-commit hook for automatic credentials/secrets check before git add (husky + custom grep script)
+## Secret Scanning
+- **Pre-commit**: `.husky/pre-commit` runs `gitleaks protect --staged` on every commit. Falls back to a warning (exit 0) if gitleaks isn't installed locally, so collaborators without it aren't blocked.
+- **CI safety net**: `.github/workflows/gitleaks.yml` runs `gitleaks/gitleaks-action@v2` on push to `main` and on PRs — catches anything that bypassed the local hook.
+- **Whitelist**: `.gitleaksignore` lists historical findings accepted as residual risk (fingerprint format `<sha>:<file>:<rule>:<line>`). Add new entries only after a deliberate decision; each line silences a real finding.
+
+## License
+PolyForm Noncommercial 1.0.0 — see `LICENSE`. Free for noncommercial use; commercial use requires a separate license from the author.

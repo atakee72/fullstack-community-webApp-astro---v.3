@@ -363,4 +363,6 @@ For more information:
 
 ## 📄 License
 
-MIT License - feel free to use this project for your own purposes.
+Licensed under **PolyForm Noncommercial 1.0.0** — see [`LICENSE`](./LICENSE).
+
+Free for noncommercial use (personal, research, education, nonprofit). Commercial use requires a separate license from the author — please get in touch.
