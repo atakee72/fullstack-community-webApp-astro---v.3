@@ -1,0 +1,11 @@
+# Known historical leaks — accepted risk, not rotated.
+# Do not add new entries casually; each line silences a real finding.
+# Format: <commitSHA>:<file>:<ruleID>:<line>
+
+# Netlify auth token in pre-Better-Auth-cleanup commit (Dec 2025).
+# Service no longer used — token effectively orphaned.
+18040ebf759043f0bf6d134fc1ea1dba682203e1:.claude/settings.local.json:netlify-access-token:47
+
+# Cloudinary api_secret committed in early prototype (Feb 2023).
+# File deleted in subsequent refactors; secret remains in history.
+92582791da42ec46faedb3155f88e9c1e67a4537:server/config/cloudinaryConfig.js:generic-api-key:7

@@ -1,0 +1,27 @@
+name: gitleaks
+
+# Scan all pushed commits for secrets. Safety net behind the local pre-commit
+# hook — catches collaborators who skip hooks or install env without husky.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  scan:
+    name: Detect secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history for diff scan)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Free for public repos. For private, requires GITLEAKS_LICENSE
+          # secret (free key from https://gitleaks.io). Skip silently if missing.
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}

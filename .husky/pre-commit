@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+# Pre-commit hook: scan staged changes for secrets via gitleaks.
+# Resolves gitleaks from $PATH or common install locations so it works
+# across collaborators (apt-installed, ~/.local/bin, /usr/local/bin, brew, etc.)
+
+if command -v gitleaks >/dev/null 2>&1; then
+  GITLEAKS=gitleaks
+elif [ -x "$HOME/.local/bin/gitleaks" ]; then
+  GITLEAKS="$HOME/.local/bin/gitleaks"
+elif [ -x "/usr/local/bin/gitleaks" ]; then
+  GITLEAKS="/usr/local/bin/gitleaks"
+elif [ -x "/opt/homebrew/bin/gitleaks" ]; then
+  GITLEAKS="/opt/homebrew/bin/gitleaks"
+else
+  echo "WARN: gitleaks not installed — skipping secret scan."
+  echo "      Install: https://github.com/gitleaks/gitleaks#installing"
+  exit 0
+fi
+
+# Scan staged changes only. Fast on every commit.
+"$GITLEAKS" protect --staged --redact --no-banner --verbose
