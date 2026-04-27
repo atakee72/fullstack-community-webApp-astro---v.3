@@ -2,6 +2,8 @@
 
 A modern, performant community web application built with Astro, TypeScript, and React.
 
+> 📜 **Read the [Mahalle Manifesto](./MANIFESTO.md)** — the project's moral charter. It describes who Mahalle is for, what it must remain, and what it refuses to become. Anyone deploying, forking, or contributing to this project is expected to honor it.
+
 ## 🚀 Tech Stack
 
 - **Framework**: Astro 5.x with Hybrid SSR/SSG
