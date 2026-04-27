@@ -73,3 +73,34 @@ The **licensor** is the individual or entity offering these terms, and the **sof
 **Your licenses** are all the licenses granted to you for the software under these terms.
 
 **Use** means anything you do with the software requiring one of your licenses.
+
+---
+
+## Required Notice (Mahalle Field-of-Use Rider)
+
+The licensor distributes this software with the following Required Notice, which any redistributor must preserve and any deployer is expected to honor as a condition of the licenses granted above. This rider supplements — and does not replace — the PolyForm Noncommercial 1.0.0 terms.
+
+**Permitted deployers.** Use of the software is granted to:
+
+1. Registered nonprofit associations under local law (e.V., Verein, dernek, association loi 1901, or equivalent).
+2. Housing cooperatives, community land trusts, and tenant unions.
+3. Public institutions and municipal bodies acting on behalf of residents.
+4. Informal community groups with open membership, transparent decision-making, and no single owner.
+5. Individual contributors and researchers working on the software itself for educational, academic, or civic-tech purposes.
+
+**Prohibited deployers and uses.** The licenses granted above do not extend to, and use of the software is expressly prohibited for:
+
+a. **Political parties, partisan campaigns, or organizations whose primary purpose is electoral mobilization** for any candidate or party.
+b. **Religious organizations using the software for proselytizing purposes** (use for internal coordination by faith communities is permitted under the categories above where applicable).
+c. **For-profit entities** of any kind, in any context, regardless of whether the specific deployment is monetized (already restricted by PolyForm Noncommercial; reaffirmed here).
+d. **Single-individual personal deployments** where the deployer is also the sole intended user or the sole authority over moderation, governance, and data — the software is intended for communities, not for personal collections.
+e. **Surveillance of residents** by landlords, employers, intelligence agencies, or any third party seeking behavioral data on the platform's users without their informed and revocable consent.
+f. **Resale, white-labeling, or rebranding** of the software for distribution to entities that themselves fall under (a) through (e).
+
+**Charter alignment.** Deployers are expected to operate the software in alignment with the principles described in the project's [`MANIFESTO.md`](./MANIFESTO.md), including the maintenance of a community-accountable governance body, a public moderation log, transparent funding, and a community exit clause. Failure to maintain these practices does not automatically terminate the license, but it is grounds for the licensor to revoke the license under the termination provisions of the PolyForm Noncommercial terms above.
+
+**Trademark notice.** This license does not grant any rights to the names "Mahalle" or "Kiezgesichterbuch," to any associated logos, or to any trade dress of the project. Forks are welcome under the code license; forks branded as "Mahalle" require separate written permission from the trademark holder.
+
+**Severability.** If any provision of this Required Notice is held unenforceable in any jurisdiction, the remaining provisions remain in effect, and the unenforceable provision shall be construed in the manner most consistent with the project's stated intent in `MANIFESTO.md`.
+
+Required Notice: Copyright (c) 2026 Kamil Ercan Atak (Mahalle). Licensed under PolyForm Noncommercial 1.0.0 with the Mahalle Field-of-Use Rider above. See `MANIFESTO.md` for the project's binding statement of intent.

@@ -361,8 +361,10 @@ For more information:
 - [MongoDB Node Driver](https://www.mongodb.com/docs/drivers/node/)
 - [Vercel Deployment](https://vercel.com/docs)
 
-## 📄 License
+## 📄 License & Manifesto
 
-© Ercan Atak — Mahalle. Licensed under **PolyForm Noncommercial 1.0.0** — see [`LICENSE`](./LICENSE).
+© Ercan Atak — Mahalle. Licensed under **PolyForm Noncommercial 1.0.0** with the **Mahalle Field-of-Use Rider** — see [`LICENSE`](./LICENSE).
 
-Free for noncommercial use (personal, research, education, nonprofit). Commercial use requires a separate license from the author — please get in touch.
+Free for noncommercial use by neighborhood associations, housing cooperatives, public institutions, and community groups. **Not permitted** for political parties, for-profit entities, religious proselytizing, single-individual personal deployments, or surveillance of residents. Commercial licensing inquiries: contact the author.
+
+Before deploying or forking, please read [`MANIFESTO.md`](./MANIFESTO.md) — the project's binding statement of intent on what Mahalle is, who it is for, and what it refuses to become.
