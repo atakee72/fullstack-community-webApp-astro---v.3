@@ -363,6 +363,6 @@ For more information:
 
 ## 📄 License
 
-Licensed under **PolyForm Noncommercial 1.0.0** — see [`LICENSE`](./LICENSE).
+© Ercan Atak — Mahalle. Licensed under **PolyForm Noncommercial 1.0.0** — see [`LICENSE`](./LICENSE).
 
 Free for noncommercial use (personal, research, education, nonprofit). Commercial use requires a separate license from the author — please get in touch.

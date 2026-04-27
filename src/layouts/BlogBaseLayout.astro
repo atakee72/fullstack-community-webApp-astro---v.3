@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar';
 import ToastProvider from '../components/ToastProvider';
 import SplashScreen from '../components/SplashScreen.astro';
 import GlassFilters from '../components/GlassFilters.astro';
+import Footer from '../components/Footer.astro';
 import { ViewTransitions } from 'astro:transitions';
 
 // Session is populated by middleware (Astro.locals)
@@ -71,6 +72,7 @@ const { title, description = 'Mahalle Blog - Community stories and updates', ima
     <ToastProvider client:load />
     <div class="relative z-10">
       <slot />
+      <Footer />
     </div>
   </body>
 </html>
