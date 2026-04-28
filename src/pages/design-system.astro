@@ -17,7 +17,7 @@ import KioskAvatar from '../components/forum/kiosk/KioskAvatar.svelte';
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kiosk · Design System Sandbox</title>
   </head>
-  <body class="min-h-screen bg-paper text-ink font-bricolage antialiased">
+  <body class="min-h-screen k-paper-bg text-ink font-bricolage antialiased">
     <main class="max-w-5xl mx-auto px-6 md:px-10 py-12">
       <header class="mb-10 pb-6 border-b-2 border-ink">
         <p class="font-jetbrains text-[11px] uppercase tracking-[0.18em] text-ink-mute">
@@ -49,7 +49,12 @@ import KioskAvatar from '../components/forum/kiosk/KioskAvatar.svelte';
             <KioskBtn variant="secondary" size="lg" client:load>Abbrechen</KioskBtn>
           </div>
           <div class="flex flex-wrap items-center gap-4">
-            <KioskBtn variant="ghost" size="md" client:load>als Entwurf</KioskBtn>
+            <KioskBtn variant="danger" size="sm" client:load>verwerfen</KioskBtn>
+            <KioskBtn variant="danger" size="md" client:load>verwerfen</KioskBtn>
+            <KioskBtn variant="danger" size="lg" client:load>verwerfen</KioskBtn>
+          </div>
+          <div class="flex flex-wrap items-center gap-4">
+            <KioskBtn variant="ghost" size="md" client:load>mehr laden</KioskBtn>
             <KioskBtn variant="primary" size="md" disabled client:load>disabled</KioskBtn>
             <KioskBtn variant="secondary" href="#" size="md" client:load>als Link</KioskBtn>
           </div>
@@ -110,11 +115,22 @@ import KioskAvatar from '../components/forum/kiosk/KioskAvatar.svelte';
         </div>
 
         <p class="font-jetbrains text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-3">
+          explicit slot override · 5 slots
+        </p>
+        <div class="flex flex-wrap items-end gap-4 mb-6">
+          <KioskAvatar name="Wine" slot="wine" size="md" client:load />
+          <KioskAvatar name="Teal" slot="teal" size="md" client:load />
+          <KioskAvatar name="Ochre" slot="ochre" size="md" client:load />
+          <KioskAvatar name="Moss" slot="moss" size="md" client:load />
+          <KioskAvatar name="Plum" slot="plum" size="md" client:load />
+        </div>
+
+        <p class="font-jetbrains text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-3">
           OP badge
         </p>
         <div class="flex flex-wrap items-end gap-4">
-          <KioskAvatar name="Lena K." size="md" isOP client:load />
-          <KioskAvatar name="Tarık Y." size="lg" isOP client:load />
+          <KioskAvatar name="Lena K." slot="wine" size="md" isOP client:load />
+          <KioskAvatar name="Tarık Y." slot="teal" size="lg" isOP client:load />
         </div>
       </section>
 
@@ -124,7 +140,7 @@ import KioskAvatar from '../components/forum/kiosk/KioskAvatar.svelte';
           05 · combined — author row preview
         </h2>
         <div class="flex items-center gap-3 p-4 bg-paper-warm border-2 border-ink rounded-lg shadow-[4px_4px_0_var(--k-wine)]">
-          <KioskAvatar name="Lena K." size="md" isOP client:load />
+          <KioskAvatar name="Lena K." slot="wine" size="md" isOP client:load />
           <div class="flex-1">
             <div class="flex items-center gap-2">
               <span class="font-bricolage font-bold text-base">Lena K.</span>

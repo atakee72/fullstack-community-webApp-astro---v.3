@@ -13,12 +13,16 @@
     image = null,
     size = 'md',
     isOP = false,
+    slot: slotOverride,
     class: extraClass = ''
   } = $props<{
     name: string;
     image?: string | null;
     size?: 'sm' | 'md' | 'lg';
     isOP?: boolean;
+    /** Force a specific palette slot. Useful for canvas-fidelity examples
+     *  ("Lena K." in the canvas is wine) or branded users (Mahalle-Team). */
+    slot?: 'wine' | 'teal' | 'ochre' | 'moss' | 'plum';
     class?: string;
   }>();
 
@@ -51,7 +55,8 @@
       .join('')
       .toUpperCase() || '?'
   );
-  const slot = $derived(palette[colorIndex(trimmed || 'anon')]);
+  // Explicit override wins; otherwise hash-derive from name.
+  const slot = $derived(slotOverride ?? palette[colorIndex(trimmed || 'anon')]);
   const tone = $derived(slotClass[slot]);
 
   const sizeClass = $derived({

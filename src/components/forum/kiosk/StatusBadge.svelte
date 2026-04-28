@@ -19,38 +19,55 @@
     class?: string;
   }>();
 
-  // German labels (i18n in Phase 3 will swap these via dictionary).
+  // German labels — lowercase to match the canvas treatment (i18n swap in Phase 3).
   const defaultLabel = $derived({
-    pending:  'in Prüfung',
+    pending:  'in prüfung',
     approved: 'veröffentlicht',
     rejected: 'abgelehnt',
-    flagged:  'AI-markiert',
+    flagged:  'ai-markiert',
     reported: 'gemeldet',
-    warning:  'mit Hinweis'
+    warning:  'mit hinweis'
   }[state]);
 
-  // Soft tinted bg + colored border + matching dot. Border-led to read on cream paper.
+  // Each state owns a unique glyph — readers can scan by shape, not just color.
+  //   ● solid circle  → approved (settled, public)
+  //   ◐ half-moon     → pending  (in transit through moderation)
+  //   ×  cross         → rejected (closed, denied)
+  //   ⚠ warning tri.  → flagged / warning (caution, content is up but flagged)
+  //   ⚑ flag           → reported (community-flagged via 🚩)
+  const icon = $derived({
+    approved: '●',
+    pending:  '◐',
+    rejected: '×',
+    flagged:  '⚠',
+    reported: '⚑',
+    warning:  '⚠'
+  }[state]);
+
+  // Border + text both share the state color — bg stays transparent so the
+  // paper bg shows through (matches the canvas treatment).
   const tone = $derived({
-    pending:  { bg: 'bg-ochre/15',   border: 'border-ochre',   dot: 'bg-ochre',   text: 'text-ink' },
-    approved: { bg: 'bg-success/15', border: 'border-success', dot: 'bg-success', text: 'text-ink' },
-    rejected: { bg: 'bg-danger/15',  border: 'border-danger',  dot: 'bg-danger',  text: 'text-danger' },
-    flagged:  { bg: 'bg-ochre/15',   border: 'border-ochre',   dot: 'bg-ochre',   text: 'text-ink' },
-    reported: { bg: 'bg-warn/15',    border: 'border-warn',    dot: 'bg-warn',    text: 'text-ink' },
-    warning:  { bg: 'bg-warn/15',    border: 'border-warn',    dot: 'bg-warn',    text: 'text-ink' }
+    approved: 'border-success text-success',
+    pending:  'border-ochre   text-ochre',
+    rejected: 'border-danger  text-danger',
+    flagged:  'border-ochre   text-ochre',
+    reported: 'border-plum    text-plum',
+    warning:  'border-ochre   text-ochre'
   }[state]);
 
+  // Lowercase + mono — no uppercase tracking. Slightly more horizontal padding
+  // to match the canvas pill proportions.
   const sizeClass = $derived({
-    sm: 'px-2 py-0.5 text-[9px] gap-1',
-    md: 'px-2.5 py-0.5 text-[10px] gap-1.5'
+    sm: 'px-2.5 py-0.5 text-[10px] gap-1',
+    md: 'px-3 py-0.5 text-[11px] gap-1.5'
   }[size]);
 
-  const dotSize = $derived(size === 'sm' ? 'w-1 h-1' : 'w-1.5 h-1.5');
-  const isPulsing = $derived(state === 'pending' || state === 'flagged');
+  const isPulsing = $derived(state === 'pending');
 </script>
 
 <span
-  class={`inline-flex items-center rounded-full border font-jetbrains uppercase tracking-[0.12em] font-semibold ${sizeClass} ${tone.bg} ${tone.border} ${tone.text} ${extraClass}`}
+  class={`inline-flex items-center rounded-md border font-jetbrains font-medium ${sizeClass} ${tone} ${extraClass}`}
 >
-  <span class={`${dotSize} rounded-full ${tone.dot} ${isPulsing ? 'k-pulse-dot' : ''}`}></span>
+  <span aria-hidden="true" class={`leading-none ${isPulsing ? 'k-pulse-dot' : ''}`}>{icon}</span>
   {label ?? defaultLabel}
 </span>

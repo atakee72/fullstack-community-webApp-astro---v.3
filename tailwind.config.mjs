@@ -25,24 +25,25 @@ export default {
         // Kiosk palette — mirrors src/styles/tokens.css. Tailwind classes
         // exist alongside the CSS custom properties so authors can pick whichever fits.
         paper: {
-          DEFAULT: '#f4ede1',
+          DEFAULT: '#F3EAD8',
           warm:    '#ece2d2',
           soft:    '#f9f4ea'
         },
         ink: {
-          DEFAULT: '#1b1a17',
+          DEFAULT: '#1B1A17',
           soft:    '#3a352d',
           mute:    '#6b6358'
         },
         rule:    '#c8bfae',
-        wine:    '#7a4256',
-        plum:    '#6F2F59',
-        teal:    '#4b9aaa',
-        moss:    '#6aab8e',
-        ochre:   '#d9b238',
-        success: '#7a9e7f',
-        warn:    '#d9b238',
-        danger:  '#b04545'
+        wine:    '#B23A5B',   // topic · Forum brand
+        plum:    '#6F2F59',   // long-form
+        teal:    '#3F8F9F',   // announcement
+        moss:    '#6B8A4A',   // recommendation
+        ochre:   '#E8A53A',   // highlight · neu
+        sky:     '#B6D4DB',   // info bg
+        success: '#6B8A4A',   // approved (moss)
+        warn:    '#E8A53A',   // warning (ochre)
+        danger:  '#A83245'    // destructive — deeper than wine
       },
       fontFamily: {
         sans: [

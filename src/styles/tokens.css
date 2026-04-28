@@ -7,23 +7,24 @@
 
 :root {
   /* ── Color · paper / ink ─────────────────────────────────────── */
-  --k-paper:        #f4ede1;   /* primary surface — warm cream */
+  --k-paper:        #F3EAD8;   /* primary surface — warm cream (canvas-true) */
   --k-paper-warm:   #ece2d2;   /* sectioned surface, hover */
   --k-paper-soft:   #f9f4ea;   /* low-contrast background */
-  --k-ink:          #1b1a17;   /* primary text + borders */
+  --k-ink:          #1B1A17;   /* primary text + primary-CTA fill */
   --k-ink-soft:     #3a352d;   /* body copy */
   --k-ink-mute:     #6b6358;   /* meta, timestamps */
   --k-rule:         #c8bfae;   /* dashed dividers */
 
-  /* ── Color · accents (per-page carved title) ─────────────────── */
-  --k-wine:    #7a4256;   /* Forum                       */
-  --k-plum:    #6F2F59;   /* Forum (legacy carved-accent) */
-  --k-teal:    #4b9aaa;   /* Calendar / Marketplace      */
-  --k-moss:    #6aab8e;   /* Schillerkiez data           */
-  --k-ochre:   #d9b238;   /* Newsboard, status warn      */
-  --k-success: #7a9e7f;
-  --k-warn:    #d9b238;
-  --k-danger:  #b04545;
+  /* ── Color · semantic accents (canvas-true hex) ──────────────── */
+  --k-wine:    #B23A5B;   /* topic · Forum brand (carved-accent)  */
+  --k-plum:    #6F2F59;   /* long-form, deep accent               */
+  --k-teal:    #3F8F9F;   /* announcement                         */
+  --k-moss:    #6B8A4A;   /* recommendation                       */
+  --k-ochre:   #E8A53A;   /* highlight, "neu" badge               */
+  --k-sky:     #B6D4DB;   /* info background                      */
+  --k-success: #6B8A4A;   /* approved (re-uses moss for harmony)  */
+  --k-warn:    #E8A53A;   /* warning (re-uses ochre)              */
+  --k-danger:  #A83245;   /* destructive — deeper than wine, signals "warning"  */
 
   /* ── Type · families ─────────────────────────────────────────── */
   --k-font-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
