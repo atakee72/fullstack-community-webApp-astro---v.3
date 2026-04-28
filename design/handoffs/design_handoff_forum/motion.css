@@ -1,0 +1,112 @@
+/* ════════════════════════════════════════════════════════════════
+   MAHALLE · KIOSK · MOTION KEYFRAMES · v1.0
+   Twelve animations that make the Forum feel alive.
+   See motion.html (or canvas: ◆ Forum · motion spec) for live demos.
+   ════════════════════════════════════════════════════════════════ */
+
+/* 01 · Skeleton shimmer · Loading any list · 1400ms loop · ease-in-out */
+@keyframes k-skeleton {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.k-skeleton {
+  background: rgba(27, 26, 23, 0.08);
+  background-image: linear-gradient(90deg,
+    transparent 0%,
+    rgba(27, 26, 23, 0.04) 50%,
+    transparent 100%);
+  background-size: 200% 100%;
+  animation: k-skeleton 1400ms ease-in-out infinite;
+}
+
+/* 02 · Optimistic slide-in · User submits a post · 380ms once · ease-in-out */
+@keyframes k-slide-in {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.k-slide-in { animation: k-slide-in var(--k-dur-slow, 380ms) var(--k-ease-in-out, cubic-bezier(.2,.7,.3,1)) both; }
+
+/* 03 · Pending → Approved · Moderation completes · 600ms · ease-in-out */
+@keyframes k-pending-approved {
+  from { background-color: rgba(217, 178, 56, 0.15); border-color: var(--k-ochre, #d9b238); }
+  to   { background-color: rgba(122, 158, 127, 0.15); border-color: var(--k-success, #7a9e7f); }
+}
+.k-pending-approved { animation: k-pending-approved 600ms ease-in-out both; }
+
+/* 04 · Moderation pulse · Screening modal · 1400ms loop · ease-in-out */
+@keyframes k-pulse-dot {
+  0%, 100% { transform: scale(1);    opacity: 0.95; }
+  50%      { transform: scale(1.18); opacity: 0.6;  }
+}
+.k-pulse-dot { animation: k-pulse-dot 1400ms ease-in-out infinite; }
+
+/* 05 · Stage spinner · Active moderation step · 1200ms loop · linear */
+@keyframes k-spin { to { transform: rotate(360deg); } }
+.k-spin { animation: k-spin 1200ms linear infinite; }
+
+/* 06 · Danke (heart) tap · ♥ tap · 450ms once · spring */
+@keyframes k-heart-pop {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.4); }
+  60%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+@keyframes k-heart-burst {
+  from { transform: scale(0);   opacity: 1; }
+  to   { transform: scale(2.4); opacity: 0; }
+}
+.k-heart-pop   { animation: k-heart-pop   450ms var(--k-ease-spring, cubic-bezier(.34,1.56,.64,1)); }
+.k-heart-burst { animation: k-heart-burst 450ms ease-out; }
+
+/* 07 · Bookmark fill · 🔖 tap · 500ms once · spring */
+@keyframes k-bookmark-fill {
+  0%   { color: rgba(27,26,23,0.4); transform: scale(1); }
+  50%  { color: var(--k-ochre, #d9b238); transform: scale(1.3) rotate(-8deg); }
+  100% { color: var(--k-ochre, #d9b238); transform: scale(1); }
+}
+.k-bookmark-fill { animation: k-bookmark-fill 500ms var(--k-ease-spring, cubic-bezier(.34,1.56,.64,1)) both; }
+
+/* 08 · Rejected shake · Post fails · 500ms once · cubic */
+@keyframes k-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX( 6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX( 4px); }
+}
+.k-shake { animation: k-shake 500ms cubic-bezier(.36,.07,.19,.97); }
+
+/* 09 · Cursor blink · Editable text · 1000ms loop · step-end */
+@keyframes k-blink-cursor {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.k-cursor {
+  display: inline-block; vertical-align: middle;
+  width: 2px; height: 1em; margin-left: 1px;
+  background: var(--k-ink, #1b1a17);
+  animation: k-blink-cursor 1000ms step-end infinite;
+}
+
+/* 10 · Tab → tab transition · Section switch · 320ms · ease-out */
+@keyframes k-tab-out { to { opacity: 0; transform: translateX(-30px); } }
+@keyframes k-tab-in  { from { opacity: 0; transform: translateX( 30px); } to { opacity: 1; transform: translateX(0); } }
+.k-tab-out { animation: k-tab-out var(--k-dur-page, 320ms) var(--k-ease-out, cubic-bezier(.4,0,.2,1)); }
+.k-tab-in  { animation: k-tab-in  var(--k-dur-page, 320ms) var(--k-ease-out, cubic-bezier(.4,0,.2,1)); }
+
+/* 11 · Skeleton → content fade · Data loaded · 240ms · ease-out */
+@keyframes k-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.k-fade-in { animation: k-fade-in var(--k-dur-base, 240ms) var(--k-ease-out, cubic-bezier(.4,0,.2,1)) both; }
+
+/* 12 · Carved title hover · 200ms · ease-out — declarative, no keyframes */
+.k-carved-title {
+  text-shadow: 2px 2px 0 var(--k-accent, var(--k-wine, #7a4256));
+  transition: text-shadow var(--k-dur-fast, 180ms) var(--k-ease-out, cubic-bezier(.4,0,.2,1)),
+              transform   var(--k-dur-fast, 180ms) var(--k-ease-out, cubic-bezier(.4,0,.2,1));
+}
+.k-carved-title:hover {
+  text-shadow: 4px 4px 0 var(--k-accent, var(--k-wine, #7a4256));
+  transform: translate(-1px, -1px);
+}
+
+/* Reduced motion already handled in tokens.css */

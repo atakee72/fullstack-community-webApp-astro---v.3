@@ -21,7 +21,28 @@ export default {
           DEFAULT: '#aca89f',   // Secondary backgrounds
           light: '#c9c4b9',
           lighter: '#e8e0e0'
-        }
+        },
+        // Kiosk palette — mirrors src/styles/tokens.css. Tailwind classes
+        // exist alongside the CSS custom properties so authors can pick whichever fits.
+        paper: {
+          DEFAULT: '#f4ede1',
+          warm:    '#ece2d2',
+          soft:    '#f9f4ea'
+        },
+        ink: {
+          DEFAULT: '#1b1a17',
+          soft:    '#3a352d',
+          mute:    '#6b6358'
+        },
+        rule:    '#c8bfae',
+        wine:    '#7a4256',
+        plum:    '#6F2F59',
+        teal:    '#4b9aaa',
+        moss:    '#6aab8e',
+        ochre:   '#d9b238',
+        success: '#7a9e7f',
+        warn:    '#d9b238',
+        danger:  '#b04545'
       },
       fontFamily: {
         sans: [
@@ -36,7 +57,11 @@ export default {
           'Droid Sans',
           'Helvetica Neue',
           'sans-serif'
-        ]
+        ],
+        // Kiosk fonts — mirror tokens.css `--k-font-*`
+        bricolage:  ['"Bricolage Grotesque"', 'Inter', 'system-ui', 'sans-serif'],
+        instrument: ['"Instrument Serif"', 'Fraunces', 'Georgia', 'serif'],
+        jetbrains:  ['"JetBrains Mono"', '"IBM Plex Mono"', 'ui-monospace', 'monospace']
       },
       borderRadius: {
         'standard': '4px',

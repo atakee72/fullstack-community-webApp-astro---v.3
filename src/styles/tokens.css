@@ -1,0 +1,119 @@
+/* ════════════════════════════════════════════════════════════════
+   MAHALLE · KIOSK · DESIGN TOKENS · v1.0
+   Forum pass — production-ready CSS custom properties.
+   Drop this into src/styles/tokens.css and import once at app root.
+   Every design decision in the canvas resolves to one of these.
+   ════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Color · paper / ink ─────────────────────────────────────── */
+  --k-paper:        #f4ede1;   /* primary surface — warm cream */
+  --k-paper-warm:   #ece2d2;   /* sectioned surface, hover */
+  --k-paper-soft:   #f9f4ea;   /* low-contrast background */
+  --k-ink:          #1b1a17;   /* primary text + borders */
+  --k-ink-soft:     #3a352d;   /* body copy */
+  --k-ink-mute:     #6b6358;   /* meta, timestamps */
+  --k-rule:         #c8bfae;   /* dashed dividers */
+
+  /* ── Color · accents (per-page carved title) ─────────────────── */
+  --k-wine:    #7a4256;   /* Forum                       */
+  --k-plum:    #6F2F59;   /* Forum (legacy carved-accent) */
+  --k-teal:    #4b9aaa;   /* Calendar / Marketplace      */
+  --k-moss:    #6aab8e;   /* Schillerkiez data           */
+  --k-ochre:   #d9b238;   /* Newsboard, status warn      */
+  --k-success: #7a9e7f;
+  --k-warn:    #d9b238;
+  --k-danger:  #b04545;
+
+  /* ── Type · families ─────────────────────────────────────────── */
+  --k-font-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --k-font-serif:   "Instrument Serif", "Fraunces", Georgia, serif;
+  --k-font-mono:    "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+
+  /* ── Type · scale ────────────────────────────────────────────── */
+  --k-text-xs:   10px;
+  --k-text-sm:   12px;
+  --k-text-base: 14px;
+  --k-text-md:   16px;
+  --k-text-lg:   20px;
+  --k-text-xl:   28px;
+  --k-text-2xl:  40px;
+  --k-text-3xl:  56px;
+  --k-text-4xl:  72px;
+
+  --k-leading-tight:  1.1;
+  --k-leading-snug:   1.25;
+  --k-leading-normal: 1.5;
+  --k-leading-relax:  1.7;
+
+  --k-tracking-tight:  -0.025em;
+  --k-tracking-snug:   -0.015em;
+  --k-tracking-normal: 0;
+  --k-tracking-mono:    0.06em;
+  --k-tracking-eyebrow: 0.12em;
+
+  /* ── Spacing (4-px base) ─────────────────────────────────────── */
+  --k-space-1:  4px;
+  --k-space-2:  8px;
+  --k-space-3:  12px;
+  --k-space-4:  16px;
+  --k-space-5:  20px;
+  --k-space-6:  24px;
+  --k-space-8:  32px;
+  --k-space-10: 40px;
+  --k-space-12: 48px;
+  --k-space-16: 64px;
+
+  /* ── Radii ───────────────────────────────────────────────────── */
+  --k-radius-sm:   4px;
+  --k-radius-md:   8px;
+  --k-radius-lg:   14px;
+  --k-radius-pill: 999px;
+
+  /* ── Borders ─────────────────────────────────────────────────── */
+  --k-border-ink:    2px solid var(--k-ink);
+  --k-border-rule:   1px dashed var(--k-rule);
+  --k-border-hair:   1px solid var(--k-rule);
+
+  /* ── Print-style stacked shadows (signature of Kiosk) ────────── */
+  --k-shadow-sm: 2px 2px 0 var(--k-wine);
+  --k-shadow-md: 4px 4px 0 var(--k-wine);
+  --k-shadow-lg: 6px 6px 0 var(--k-wine), 8px 8px 0 var(--k-ink);
+
+  /* ── Motion · timings ────────────────────────────────────────── */
+  --k-dur-fast:   180ms;
+  --k-dur-base:   240ms;
+  --k-dur-slow:   380ms;
+  --k-dur-page:   320ms;
+
+  --k-ease-out:    cubic-bezier(.4, 0, .2, 1);
+  --k-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --k-ease-in-out: cubic-bezier(.2, .7, .3, 1);
+
+  /* ── Z-index ─────────────────────────────────────────────────── */
+  --k-z-nav:    50;
+  --k-z-modal:  100;
+  --k-z-toast:  200;
+}
+
+/* ── Per-page accent override (matches existing --carved-accent) ── */
+[data-page="forum"]        { --k-accent: var(--k-wine); }
+[data-page="newsboard"]    { --k-accent: var(--k-ochre); }
+[data-page="calendar"]     { --k-accent: var(--k-teal); }
+[data-page="marketplace"]  { --k-accent: var(--k-teal); }
+[data-page="schillerkiez"] { --k-accent: var(--k-moss); }
+
+/* ── Reduced motion ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --k-dur-fast: 0ms;
+    --k-dur-base: 0ms;
+    --k-dur-slow: 0ms;
+    --k-dur-page: 0ms;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
