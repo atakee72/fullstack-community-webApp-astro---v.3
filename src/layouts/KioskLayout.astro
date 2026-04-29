@@ -1,0 +1,74 @@
+---
+// Editorial Kiosk layout — replaces dark-glass for Forum (and eventually
+// the rest of the app, batch by batch). Use this for any page that should
+// render in the new visual identity.
+//
+// What's NOT here (vs BaseLayout):
+//   - SplashScreen          (Kiosk variant TBD; opt-in later)
+//   - GlassFilters          (dark-glass-only SVG displacement filters)
+//   - low-perf detector     (no heavy filters in Kiosk)
+//
+// Body background uses `.k-paper-bg` — cream paper + subtle risograph grain.
+import { getSession } from 'auth-astro/server';
+import KioskNav from '../components/forum/kiosk/KioskNav.svelte';
+import KioskFooter from '../components/forum/kiosk/KioskFooter.svelte';
+import ToastProvider from '../components/ToastProvider';
+import { ViewTransitions } from 'astro:transitions';
+
+const session = await getSession(Astro.request);
+const currentPath = Astro.url.pathname;
+
+export interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+}
+
+const {
+  title,
+  description = 'Mahalle — a community web app for local neighborhoods.',
+  image = '/og-image.png'
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={image} />
+
+    <title>{title} | Mahalle</title>
+
+    <ViewTransitions />
+  </head>
+
+  <body class="min-h-screen k-paper-bg text-ink font-bricolage antialiased flex flex-col">
+    <KioskNav client:load currentPath={currentPath} user={session?.user ?? null} />
+    <ToastProvider client:load />
+
+    <main class="flex-1">
+      <slot />
+    </main>
+
+    <KioskFooter client:load />
+  </body>
+</html>
+
+<style is:global>
+  @import '../styles/global.css';
+</style>

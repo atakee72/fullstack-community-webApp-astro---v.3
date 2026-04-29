@@ -1,167 +1,152 @@
 ---
-// Phase-2 sandbox for the Editorial Kiosk atomic UI kit.
-// Bare-minimum page (no layout) so the cream paper surface is uncontaminated
-// by the dark-glass body styling in BaseLayout. Once Phase 3 lands a real
-// KioskLayout, this page can switch to it.
+// Design system sandbox — wired to KioskLayout so the atoms render in their
+// real shell (KioskNav at top, KioskFooter at bottom, paper-grain bg, locale
+// toggle, sticky brand). Use this page to verify visual fidelity across atoms
+// before wiring them into actual product surfaces.
 
+import KioskLayout from '../layouts/KioskLayout.astro';
 import KioskBtn from '../components/forum/kiosk/KioskBtn.svelte';
 import PostTypeChip from '../components/forum/kiosk/PostTypeChip.svelte';
 import StatusBadge from '../components/forum/kiosk/StatusBadge.svelte';
 import KioskAvatar from '../components/forum/kiosk/KioskAvatar.svelte';
 ---
 
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kiosk · Design System Sandbox</title>
-  </head>
-  <body class="min-h-screen k-paper-bg text-ink font-bricolage antialiased">
-    <main class="max-w-5xl mx-auto px-6 md:px-10 py-12">
-      <header class="mb-10 pb-6 border-b-2 border-ink">
-        <p class="font-jetbrains text-[11px] uppercase tracking-[0.18em] text-ink-mute">
-          ◆ Phase 2 · Atomic UI Kit
-        </p>
-        <h1 class="font-bricolage font-extrabold text-4xl md:text-5xl tracking-tight mt-2 leading-none">
-          Editorial <em class="font-instrument italic font-normal">Kiosk</em>
-        </h1>
-        <p class="text-ink-soft mt-3 max-w-2xl text-sm md:text-base">
-          Sandbox for the four atomic components. Verify visual fidelity here before
-          wiring them into the Forum proper.
-        </p>
-      </header>
+<KioskLayout title="Kiosk · Design System Sandbox" description="Sandbox for the Editorial Kiosk atomic UI kit.">
+  <main class="max-w-5xl mx-auto px-6 md:px-10 py-12">
+    <header class="mb-10 pb-6 border-b-2 border-ink">
+      <p class="font-jetbrains text-[11px] uppercase tracking-[0.18em] text-ink-mute">
+        ◆ Phase 2 · Atomic UI Kit
+      </p>
+      <h1 class="font-bricolage font-extrabold text-4xl md:text-5xl tracking-tight mt-2 leading-none">
+        Editorial <em class="font-instrument italic font-normal">Kiosk</em>
+      </h1>
+      <p class="text-ink-soft mt-3 max-w-2xl text-sm md:text-base">
+        Sandbox for the four atomic components. Verify visual fidelity here before
+        wiring them into the Forum proper.
+      </p>
+    </header>
 
-      {/* ── KioskBtn ─────────────────────────────────────────────────── */}
-      <section class="mb-12">
-        <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
-          01 · KioskBtn
-        </h2>
-        <div class="space-y-6">
-          <div class="flex flex-wrap items-center gap-4">
-            <KioskBtn variant="primary" size="sm" client:load>+ Neues Thema</KioskBtn>
-            <KioskBtn variant="primary" size="md" client:load>+ Neues Thema</KioskBtn>
-            <KioskBtn variant="primary" size="lg" client:load>+ Neues Thema</KioskBtn>
-          </div>
-          <div class="flex flex-wrap items-center gap-4">
-            <KioskBtn variant="secondary" size="sm" client:load>Abbrechen</KioskBtn>
-            <KioskBtn variant="secondary" size="md" client:load>Abbrechen</KioskBtn>
-            <KioskBtn variant="secondary" size="lg" client:load>Abbrechen</KioskBtn>
-          </div>
-          <div class="flex flex-wrap items-center gap-4">
-            <KioskBtn variant="danger" size="sm" client:load>verwerfen</KioskBtn>
-            <KioskBtn variant="danger" size="md" client:load>verwerfen</KioskBtn>
-            <KioskBtn variant="danger" size="lg" client:load>verwerfen</KioskBtn>
-          </div>
-          <div class="flex flex-wrap items-center gap-4">
-            <KioskBtn variant="ghost" size="md" client:load>mehr laden</KioskBtn>
-            <KioskBtn variant="primary" size="md" disabled client:load>disabled</KioskBtn>
-            <KioskBtn variant="secondary" href="#" size="md" client:load>als Link</KioskBtn>
-          </div>
+    {/* ── KioskBtn ─────────────────────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
+        01 · KioskBtn
+      </h2>
+      <div class="space-y-6">
+        <div class="flex flex-wrap items-center gap-4">
+          <KioskBtn variant="primary" size="sm" client:load>+ Neues Thema</KioskBtn>
+          <KioskBtn variant="primary" size="md" client:load>+ Neues Thema</KioskBtn>
+          <KioskBtn variant="primary" size="lg" client:load>+ Neues Thema</KioskBtn>
         </div>
-      </section>
-
-      {/* ── PostTypeChip ─────────────────────────────────────────────── */}
-      <section class="mb-12">
-        <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
-          02 · PostTypeChip
-        </h2>
-        <div class="space-y-4">
-          <div class="flex flex-wrap items-center gap-3">
-            <PostTypeChip kind="discussion" client:load />
-            <PostTypeChip kind="recommendation" client:load />
-            <PostTypeChip kind="announcement" client:load />
-          </div>
-          <div class="flex flex-wrap items-center gap-3">
-            <PostTypeChip kind="discussion" selected client:load />
-            <PostTypeChip kind="recommendation" selected client:load />
-            <PostTypeChip kind="announcement" selected client:load />
-          </div>
+        <div class="flex flex-wrap items-center gap-4">
+          <KioskBtn variant="secondary" size="sm" client:load>Abbrechen</KioskBtn>
+          <KioskBtn variant="secondary" size="md" client:load>Abbrechen</KioskBtn>
+          <KioskBtn variant="secondary" size="lg" client:load>Abbrechen</KioskBtn>
         </div>
-      </section>
+        <div class="flex flex-wrap items-center gap-4">
+          <KioskBtn variant="danger" size="sm" client:load>verwerfen</KioskBtn>
+          <KioskBtn variant="danger" size="md" client:load>verwerfen</KioskBtn>
+          <KioskBtn variant="danger" size="lg" client:load>verwerfen</KioskBtn>
+        </div>
+        <div class="flex flex-wrap items-center gap-4">
+          <KioskBtn variant="ghost" size="md" client:load>mehr laden</KioskBtn>
+          <KioskBtn variant="primary" size="md" disabled client:load>disabled</KioskBtn>
+          <KioskBtn variant="secondary" href="#" size="md" client:load>als Link</KioskBtn>
+        </div>
+      </div>
+    </section>
 
-      {/* ── StatusBadge ──────────────────────────────────────────────── */}
-      <section class="mb-12">
-        <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
-          03 · StatusBadge
-        </h2>
+    {/* ── PostTypeChip ─────────────────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
+        02 · PostTypeChip
+      </h2>
+      <div class="space-y-4">
         <div class="flex flex-wrap items-center gap-3">
-          <StatusBadge state="pending" client:load />
-          <StatusBadge state="approved" client:load />
-          <StatusBadge state="rejected" client:load />
-          <StatusBadge state="flagged" client:load />
-          <StatusBadge state="reported" client:load />
-          <StatusBadge state="warning" client:load />
+          <PostTypeChip kind="discussion" client:load />
+          <PostTypeChip kind="recommendation" client:load />
+          <PostTypeChip kind="announcement" client:load />
         </div>
-      </section>
-
-      {/* ── KioskAvatar ──────────────────────────────────────────────── */}
-      <section class="mb-12">
-        <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
-          04 · KioskAvatar
-        </h2>
-
-        <p class="font-jetbrains text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-3">
-          deterministic initials · 5-slot palette
-        </p>
-        <div class="flex flex-wrap items-end gap-4 mb-6">
-          <KioskAvatar name="Lena K." size="sm" client:load />
-          <KioskAvatar name="Tarık Y." size="md" client:load />
-          <KioskAvatar name="Ayşegül Ç." size="lg" client:load />
-          <KioskAvatar name="Mahalle Team" size="md" client:load />
-          <KioskAvatar name="Ercan A." size="md" client:load />
-          <KioskAvatar name="Marco R." size="md" client:load />
-          <KioskAvatar name="Sophie L." size="md" client:load />
+        <div class="flex flex-wrap items-center gap-3">
+          <PostTypeChip kind="discussion" selected client:load />
+          <PostTypeChip kind="recommendation" selected client:load />
+          <PostTypeChip kind="announcement" selected client:load />
         </div>
+      </div>
+    </section>
 
-        <p class="font-jetbrains text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-3">
-          explicit slot override · 5 slots
-        </p>
-        <div class="flex flex-wrap items-end gap-4 mb-6">
-          <KioskAvatar name="Wine" slot="wine" size="md" client:load />
-          <KioskAvatar name="Teal" slot="teal" size="md" client:load />
-          <KioskAvatar name="Ochre" slot="ochre" size="md" client:load />
-          <KioskAvatar name="Moss" slot="moss" size="md" client:load />
-          <KioskAvatar name="Plum" slot="plum" size="md" client:load />
-        </div>
+    {/* ── StatusBadge ──────────────────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
+        03 · StatusBadge
+      </h2>
+      <div class="flex flex-wrap items-center gap-3">
+        <StatusBadge state="pending" client:load />
+        <StatusBadge state="approved" client:load />
+        <StatusBadge state="rejected" client:load />
+        <StatusBadge state="flagged" client:load />
+        <StatusBadge state="reported" client:load />
+        <StatusBadge state="warning" client:load />
+      </div>
+    </section>
 
-        <p class="font-jetbrains text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-3">
-          OP badge
-        </p>
-        <div class="flex flex-wrap items-end gap-4">
-          <KioskAvatar name="Lena K." slot="wine" size="md" isOP client:load />
-          <KioskAvatar name="Tarık Y." slot="teal" size="lg" isOP client:load />
-        </div>
-      </section>
+    {/* ── KioskAvatar ──────────────────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
+        04 · KioskAvatar
+      </h2>
 
-      {/* ── Combined preview ─────────────────────────────────────────── */}
-      <section class="mb-12">
-        <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
-          05 · combined — author row preview
-        </h2>
-        <div class="flex items-center gap-3 p-4 bg-paper-warm border-2 border-ink rounded-lg shadow-[4px_4px_0_var(--k-wine)]">
-          <KioskAvatar name="Lena K." slot="wine" size="md" isOP client:load />
-          <div class="flex-1">
-            <div class="flex items-center gap-2">
-              <span class="font-bricolage font-bold text-base">Lena K.</span>
-              <PostTypeChip kind="discussion" client:load />
-              <StatusBadge state="approved" size="sm" client:load />
-            </div>
-            <p class="font-jetbrains text-[11px] uppercase tracking-[0.08em] text-ink-mute mt-0.5">
-              seit 2019 · vor 1 Std
-            </p>
+      <p class="font-jetbrains text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-3">
+        deterministic initials · 5-slot palette
+      </p>
+      <div class="flex flex-wrap items-end gap-4 mb-6">
+        <KioskAvatar name="Lena K." size="sm" client:load />
+        <KioskAvatar name="Tarık Y." size="md" client:load />
+        <KioskAvatar name="Ayşegül Ç." size="lg" client:load />
+        <KioskAvatar name="Mahalle Team" size="md" client:load />
+        <KioskAvatar name="Ercan A." size="md" client:load />
+        <KioskAvatar name="Marco R." size="md" client:load />
+        <KioskAvatar name="Sophie L." size="md" client:load />
+      </div>
+
+      <p class="font-jetbrains text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-3">
+        explicit slot override · 5 slots
+      </p>
+      <div class="flex flex-wrap items-end gap-4 mb-6">
+        <KioskAvatar name="Wine" slot="wine" size="md" client:load />
+        <KioskAvatar name="Teal" slot="teal" size="md" client:load />
+        <KioskAvatar name="Ochre" slot="ochre" size="md" client:load />
+        <KioskAvatar name="Moss" slot="moss" size="md" client:load />
+        <KioskAvatar name="Plum" slot="plum" size="md" client:load />
+      </div>
+
+      <p class="font-jetbrains text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-3">
+        OP badge
+      </p>
+      <div class="flex flex-wrap items-end gap-4">
+        <KioskAvatar name="Lena K." slot="wine" size="md" isOP client:load />
+        <KioskAvatar name="Tarık Y." slot="teal" size="lg" isOP client:load />
+      </div>
+    </section>
+
+    {/* ── Combined preview ─────────────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
+        05 · combined — author row preview
+      </h2>
+      <div class="flex items-center gap-3 p-4 bg-paper-warm border-2 border-ink rounded-lg shadow-[4px_4px_0_var(--k-wine)]">
+        <KioskAvatar name="Lena K." slot="wine" size="md" isOP client:load />
+        <div class="flex-1">
+          <div class="flex items-center gap-2">
+            <span class="font-bricolage font-bold text-base">Lena K.</span>
+            <PostTypeChip kind="discussion" client:load />
+            <StatusBadge state="approved" size="sm" client:load />
           </div>
-          <KioskBtn variant="secondary" size="sm" client:load>Antworten</KioskBtn>
+          <p class="font-jetbrains text-[11px] uppercase tracking-[0.08em] text-ink-mute mt-0.5">
+            seit 2019 · vor 1 Std
+          </p>
         </div>
-      </section>
-
-      <footer class="mt-16 pt-6 border-t border-rule font-jetbrains text-[11px] uppercase tracking-[0.12em] text-ink-mute">
-        Phase 2 sandbox · feature/forum-kiosk-redesign
-      </footer>
-    </main>
-
-    <style is:global>
-      @import '../styles/global.css';
-    </style>
-  </body>
-</html>
+        <KioskBtn variant="secondary" size="sm" client:load>Antworten</KioskBtn>
+      </div>
+    </section>
+  </main>
+</KioskLayout>
