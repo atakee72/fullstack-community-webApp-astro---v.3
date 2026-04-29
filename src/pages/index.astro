@@ -1,15 +1,18 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import PageHeader from '../components/ui/PageHeader.astro';
+// Forum index — Editorial Kiosk shell (replaces dark-glass on this branch).
+// SSR pre-fetches the topic list so first paint shows real cards.
+//
+// URL move (`/` → `/forum`) is deferred until the dashboard page exists.
+// For now the forum stays at `/`, which is what KioskNav points its Forum
+// pill at.
+
+import KioskLayout from '../layouts/KioskLayout.astro';
+import ForumIndex from '../components/forum/kiosk/ForumIndex.svelte';
 import { getSession } from 'auth-astro/server';
-import ForumWrapper from '../components/ForumWrapper';
 import { fetchForumItemsForSSR } from '../lib/topicsQuery';
 
 const session = await getSession(Astro.request);
 
-// Prefetch the active tab (topics) server-side so the forum hydrates with
-// data in cache — no /api/topics round-trip on first paint. Best-effort:
-// on failure, the client falls back to the normal fetch.
 let initialTopics: any[] = [];
 try {
   initialTopics = await fetchForumItemsForSSR('topics', session?.user?.id);
@@ -18,19 +21,6 @@ try {
 }
 ---
 
-<BaseLayout title="Your Local Forum">
-  <div class="dark-glass-bg" aria-hidden="true"></div>
-  <div class="dark-glass-gradient" aria-hidden="true"></div>
-
-  <main class="relative z-10 min-h-[calc(100vh-60px)] py-2 md:py-4 font-inter carved-title" style="--carved-accent: #6F2F59">
-    <div class="max-w-7xl mx-auto px-4 md:px-8 lg:px-16">
-      <PageHeader title="Your Local Forum" color="#6F2F59" subtitleClass="text-white/70" />
-      <div class="bg-white/[0.06] border border-white/[0.15] border-t-white/30 border-l-white/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] flex justify-center px-2 sm:px-4 md:px-8 lg:px-12 py-6 md:py-8 rounded-lg mt-1 md:mt-2 min-h-[400px]">
-        <ForumWrapper client:only="react" session={session} initialTopics={initialTopics} />
-      </div>
-    </div>
-  </main>
-  <footer class="relative z-10 text-white/60 text-center py-4 md:py-6 mt-auto">
-    <p class="text-sm md:text-base">&copy; 2023 Mahalle Community App. All rights reserved.</p>
-  </footer>
-</BaseLayout>
+<KioskLayout title="Mahalle · Forum" description="Diskussionen aus deinem Kiez.">
+  <ForumIndex client:only="svelte" initialTopics={initialTopics} />
+</KioskLayout>

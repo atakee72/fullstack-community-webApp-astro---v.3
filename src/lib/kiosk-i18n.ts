@@ -61,6 +61,7 @@ const de = {
   // brand
   'brand.name': 'mahalle',
   'brand.tagline': 'mahalle · forum',
+  'brand.location': 'SCHILLERKIEZ · NEUKÖLLN',
 
   // top nav
   'nav.forum': 'Forum',
@@ -78,10 +79,34 @@ const de = {
   'nav.short.kiez': 'kiez',
 
   // forum page
+  // The title carries an italic Instrument-Serif accent word, so it ships
+  // as three pieces. Use `forum.title` for plain-text contexts (meta tags).
   'forum.title': 'Was reden wir heute?',
+  'forum.title.prefix': 'Was',
+  'forum.title.accent': 'reden',
+  'forum.title.suffix': 'wir heute?',
   'forum.subtitle': 'Diskussionen aus deinem Kiez.',
   'forum.cta.newTopic': '+ neues thema',
   'forum.cta.readMore': 'mehr laden',
+
+  // forum stats — counters above the filter bar
+  'forum.stats.topics': 'Themen',
+  'forum.stats.new': 'neu seit gestern',
+  'forum.stats.active': 'aktiv jetzt',
+
+  // forum filters
+  'filter.all': 'Alle',
+  'filter.discussion': 'Diskussion',
+  'filter.announcement': 'Ankündigung',
+  'filter.recommendation': 'Empfehlung',
+  'filter.saved': 'Gespeichert',
+  'filter.mine': 'Meine',
+  'filter.tagsLabel': 'TAGS',
+
+  // pinned block
+  'pinned.banner.label': 'OFFIZIELLE ANKÜNDIGUNG · KIEZRAT',
+  'pinned.banner.tag': 'ANGEHEFTET',
+  'role.team': 'MAHALLE-TEAM',
 
   // post type chips
   'chip.discussion': 'Diskussion',
@@ -111,6 +136,7 @@ type Dict = typeof de;
 const en: Dict = {
   'brand.name': 'mahalle',
   'brand.tagline': 'mahalle · forum',
+  'brand.location': 'SCHILLERKIEZ · NEUKÖLLN',
 
   'nav.forum': 'Forum',
   'nav.calendar': 'Calendar',
@@ -126,9 +152,28 @@ const en: Dict = {
   'nav.short.kiez': 'kiez',
 
   'forum.title': 'What are we talking about today?',
+  'forum.title.prefix': 'What are we',
+  'forum.title.accent': 'talking',
+  'forum.title.suffix': 'about today?',
   'forum.subtitle': 'Conversations from your neighborhood.',
   'forum.cta.newTopic': '+ new topic',
   'forum.cta.readMore': 'load more',
+
+  'forum.stats.topics': 'topics',
+  'forum.stats.new': 'new since yesterday',
+  'forum.stats.active': 'active now',
+
+  'filter.all': 'All',
+  'filter.discussion': 'Discussion',
+  'filter.announcement': 'Announcement',
+  'filter.recommendation': 'Recommendation',
+  'filter.saved': 'Saved',
+  'filter.mine': 'Mine',
+  'filter.tagsLabel': 'TAGS',
+
+  'pinned.banner.label': 'OFFICIAL ANNOUNCEMENT · KIEZRAT',
+  'pinned.banner.tag': 'PINNED',
+  'role.team': 'MAHALLE-TEAM',
 
   'chip.discussion': 'Discussion',
   'chip.recommendation': 'Recommendation',

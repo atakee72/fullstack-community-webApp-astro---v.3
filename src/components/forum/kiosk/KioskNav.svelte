@@ -1,32 +1,28 @@
 <script lang="ts">
-  // Top navigation chrome for the Kiosk shell:
-  //   left   — brand mark "m" + wordmark
-  //   center — pill nav (Forum/Kalender/Markt/News/Kiez/Blog) — desktop only
-  //   right  — DE/EN locale toggle + user avatar (when logged in)
+  // Top navigation chrome — Editorial Kiosk canvas:
+  //   left   — wine "m" disc + "mahalle" wordmark + "SCHILLERKIEZ · NEUKÖLLN"
+  //   center — outlined pill nav (Forum/Kalender/News/Markt/Kiez/Blog), desktop only
+  //   right  — segmented DE/EN pill toggle + ochre user disc (initials)
   //
-  // Mobile shows a compact top bar (brand + locale toggle) plus a fixed
-  // bottom-anchored nav bar (Forum/Kal./News/Markt/Kiez), 5 items per the
-  // canvas — Profile is reachable via the avatar.
+  // Mobile shows the top bar (brand + locale toggle) plus a fixed bottom nav
+  // bar (5 short labels). Profile reachable via the avatar.
 
   import { locale, t, toggleLocale } from '../../../lib/kiosk-i18n';
-  import KioskAvatar from './KioskAvatar.svelte';
 
   let { currentPath = '/', user = null } = $props<{
     currentPath?: string;
     user?: { name?: string; image?: string | null } | null;
   }>();
 
-  // Top nav (desktop) — full set. Reactive to locale.
   const topNav = $derived([
     { href: '/',             label: $t['nav.forum'],       match: ['/', '/forum'] },
     { href: '/calendar',     label: $t['nav.calendar'],    match: ['/calendar'] },
-    { href: '/marketplace',  label: $t['nav.marketplace'], match: ['/marketplace'] },
     { href: '/newsboard',    label: $t['nav.news'],        match: ['/newsboard'] },
+    { href: '/marketplace',  label: $t['nav.marketplace'], match: ['/marketplace'] },
     { href: '/schillerkiez', label: $t['nav.kiez'],        match: ['/schillerkiez'] },
     { href: '/blog',         label: $t['nav.blog'],        match: ['/blog'] }
   ]);
 
-  // Bottom nav (mobile) — 5 items, compact labels. Profile is reached via avatar.
   const bottomNav = $derived([
     { href: '/',             label: $t['nav.short.forum'],       match: ['/', '/forum'] },
     { href: '/calendar',     label: $t['nav.short.calendar'],    match: ['/calendar'] },
@@ -38,32 +34,42 @@
   function isActive(matches: string[]): boolean {
     return matches.some((m) => currentPath === m || (m !== '/' && currentPath.startsWith(m + '/')));
   }
+
+  // Avatar initials: take first letter of first two name parts.
+  function initialsOf(name?: string): string {
+    if (!name) return '·';
+    const parts = name.trim().split(/\s+/).slice(0, 2);
+    return parts.map((p) => p[0]?.toUpperCase() ?? '').join('') || '·';
+  }
 </script>
 
 <!-- ─── Top bar (sticky, all viewports) ───────────────────────────────── -->
-<header
-  class="sticky top-0 z-40 border-b-2 border-ink k-paper-bg"
->
+<header class="sticky top-0 z-40 border-b-2 border-ink k-paper-bg">
   <div class="max-w-7xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between gap-4">
-    <!-- Brand -->
-    <a href="/" class="flex items-center gap-2 group">
+    <!-- Brand: wine disc + wordmark + place tagline below -->
+    <a href="/" class="flex items-center gap-3 group shrink-0">
       <span
-        class="w-9 h-9 rounded-full bg-ink text-paper flex items-center justify-center font-bricolage font-bold text-lg leading-none border-2 border-ink shadow-[2px_2px_0_var(--k-wine)] group-hover:shadow-[3px_3px_0_var(--k-wine)] group-hover:-translate-x-px group-hover:-translate-y-px transition-all duration-[180ms] ease-out"
+        class="w-10 h-10 rounded-full bg-wine text-paper flex items-center justify-center font-bricolage font-bold text-xl leading-none group-hover:scale-105 transition-transform duration-[180ms] ease-out"
       >m</span>
-      <span class="hidden sm:inline font-bricolage font-bold tracking-tight text-ink text-lg">
-        {$t['brand.tagline']}
+      <span class="hidden sm:flex flex-col leading-tight">
+        <span class="font-bricolage font-bold text-ink text-xl tracking-tight">
+          {$t['brand.name']}
+        </span>
+        <span class="font-jetbrains text-[10px] uppercase tracking-[0.18em] text-ink-mute">
+          {$t['brand.location']}
+        </span>
       </span>
     </a>
 
     <!-- Pill nav (desktop only) -->
-    <nav class="hidden lg:flex items-center gap-1">
+    <nav class="hidden lg:flex items-center gap-2">
       {#each topNav as item (item.href)}
         <a
           href={item.href}
-          class="px-3 py-1.5 rounded-md font-bricolage font-medium text-sm transition-colors duration-150 {
+          class="px-4 py-1.5 rounded-full border-2 border-ink font-bricolage font-medium text-sm transition-colors duration-150 {
             isActive(item.match)
               ? 'bg-ink text-paper'
-              : 'text-ink hover:bg-paper-warm'
+              : 'bg-transparent text-ink hover:bg-paper-warm'
           }"
           aria-current={isActive(item.match) ? 'page' : undefined}
         >
@@ -72,23 +78,51 @@
       {/each}
     </nav>
 
-    <!-- Right: locale toggle + avatar -->
-    <div class="flex items-center gap-3">
-      <button
-        type="button"
-        onclick={toggleLocale}
-        aria-label="Toggle language"
-        class="font-jetbrains text-xs uppercase tracking-[0.12em] flex items-center gap-1 px-2 py-1 rounded-md hover:bg-paper-warm transition-colors"
+    <!-- Right: segmented locale toggle + avatar disc -->
+    <div class="flex items-center gap-3 shrink-0">
+      <!-- DE/EN segmented pill -->
+      <div
+        class="inline-flex items-center rounded-full border-2 border-ink overflow-hidden font-jetbrains text-[11px] uppercase tracking-[0.12em] bg-ink"
+        role="group"
+        aria-label="Language"
       >
-        <span class={$locale === 'de' ? 'text-ink font-bold' : 'text-ink-mute'}>de</span>
-        <span class="text-ink-mute">/</span>
-        <span class={$locale === 'en' ? 'text-ink font-bold' : 'text-ink-mute'}>en</span>
-      </button>
+        <button
+          type="button"
+          onclick={() => $locale === 'en' && toggleLocale()}
+          class="px-2.5 py-0.5 transition-colors {
+            $locale === 'de' ? 'bg-paper text-ink' : 'bg-ink text-paper hover:text-paper-warm'
+          }"
+          aria-pressed={$locale === 'de'}
+        >DE</button>
+        <button
+          type="button"
+          onclick={() => $locale === 'de' && toggleLocale()}
+          class="px-2.5 py-0.5 transition-colors {
+            $locale === 'en' ? 'bg-paper text-ink' : 'bg-ink text-paper hover:text-paper-warm'
+          }"
+          aria-pressed={$locale === 'en'}
+        >EN</button>
+      </div>
 
+      <!-- User disc (ochre + initials, or photo) -->
       {#if user?.name}
-        <a href="/profile" aria-label={user.name}>
-          <KioskAvatar name={user.name} image={user.image ?? null} size="sm" />
+        <a
+          href="/profile"
+          aria-label={user.name}
+          class="w-9 h-9 rounded-full border-2 border-ink overflow-hidden flex items-center justify-center font-jetbrains font-bold text-[11px] uppercase tracking-wider bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
+        >
+          {#if user.image}
+            <img src={user.image} alt="" class="w-full h-full object-cover" />
+          {:else}
+            {initialsOf(user.name)}
+          {/if}
         </a>
+      {:else}
+        <a
+          href="/login"
+          aria-label="Sign in"
+          class="w-9 h-9 rounded-full border-2 border-ink flex items-center justify-center font-jetbrains font-bold text-[11px] bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
+        >EA</a>
       {/if}
     </div>
   </div>
@@ -116,5 +150,4 @@
   </div>
 </nav>
 
-<!-- Spacer so content beneath the fixed bottom nav isn't covered on mobile -->
 <div class="lg:hidden h-12" aria-hidden="true"></div>
