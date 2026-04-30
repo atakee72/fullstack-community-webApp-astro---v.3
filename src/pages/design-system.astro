@@ -29,6 +29,11 @@ import OfflineBanner from '../components/forum/kiosk/states/OfflineBanner.svelte
 import OwnStatusBanner from '../components/forum/kiosk/states/OwnStatusBanner.svelte';
 import FeedStatusFooter from '../components/forum/kiosk/states/FeedStatusFooter.svelte';
 import RateLimitPanel from '../components/forum/kiosk/states/RateLimitPanel.svelte';
+import ComposeForm from '../components/forum/kiosk/compose/ComposeForm.svelte';
+import ComposePreview from '../components/forum/kiosk/compose/ComposePreview.svelte';
+import ModeratingModal from '../components/forum/kiosk/compose/ModeratingModal.svelte';
+import DeleteConfirmCard from '../components/forum/kiosk/compose/DeleteConfirmCard.svelte';
+import EditModeBanner from '../components/forum/kiosk/compose/EditModeBanner.svelte';
 
 // ── Mock data ────────────────────────────────────────────────────────
 // Synthetic Schillerkiez topics so the cards render with realistic
@@ -133,7 +138,7 @@ const replyShort = {
   <main class="max-w-5xl mx-auto px-6 md:px-10 py-12">
     <header class="mb-10 pb-6 border-b-2 border-ink">
       <p class="font-dmmono text-[11px] uppercase tracking-[0.18em] text-ink-mute">
-        ◆ Phase 2–4b · Atoms + Forum Molecules + State Matrix
+        ◆ Phase 2–5b · Atoms + Forum Molecules + State Matrix + Compose
       </p>
       <h1 class="font-bricolage font-extrabold text-4xl md:text-5xl tracking-tight mt-2 leading-none">
         Editorial <em class="font-instrument italic font-normal">Kiosk</em>
@@ -557,6 +562,114 @@ const replyShort = {
         ◇ offline
       </p>
       <FeedStatusFooter mode="offline" pageCount={18} currentPage={1} client:load />
+      <p class="font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute mt-4 mb-2">
+        ◇ live (post just landed — fires for 6 s after a successful submit)
+      </p>
+      <FeedStatusFooter mode="live" pageCount={18} currentPage={1} client:load />
+    </section>
+
+    {/* ── 18 · ComposeForm ─────────────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        18 · ComposeForm
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        The full compose form — title, type selector, body editor, image
+        upload, tag input. Used by both <code class="font-dmmono text-[12px]">/topics/create</code> and (in a different
+        layout) inline edit on the post detail page. Below: a live form
+        instance — interact with it to see the type selector toggle and
+        char counters update.
+      </p>
+      <div class="border-2 border-ink rounded-lg overflow-hidden bg-paper">
+        <ComposeForm
+          suggestedTags={['nachbarschaft', 'upcycling', 'sonntag']}
+          onChange={() => {}}
+          client:load
+        />
+      </div>
+    </section>
+
+    {/* ── 19 · ComposePreview ──────────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        19 · ComposePreview — live preview sidebar
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        The right-column preview that updates as the user types. Shown
+        with a hand-typed values object so the section is static-but-
+        realistic. CTA handlers are no-ops.
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-0 border-2 border-ink rounded-lg overflow-hidden">
+        <div class="bg-paper p-6 font-dmmono text-[10px] text-ink-mute">
+          ◇ form column would render here at md+
+        </div>
+        <ComposePreview
+          values={{
+            title: 'Sperrmüll-Tausch Sonntag — wer macht mit?',
+            body: 'Letztes Mal hab ich einen Stuhl und zwei Pflanzen mitgenommen. Wir machen das wieder am Sonntag — nehmen statt kaufen.',
+            kind: 'discussion',
+            tags: ['tausch', 'sonntag']
+          }}
+          currentUser={{ name: 'Ercan A.', image: null }}
+          submitting={false}
+          onPublish={() => {}}
+          onSaveDraft={() => {}}
+          onDiscard={() => {}}
+          client:load
+        />
+      </div>
+    </section>
+
+    {/* ── 20 · ModeratingModal ─────────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        20 · ModeratingModal — 5-stage cosmetic pipeline
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        Full-viewport overlay shown for ~14–20 s during topic submission.
+        Stages cascade in on a fixed schedule (~2.8 s each); the whole
+        cycle parks at "all done" until the create mutation resolves.
+        Sandbox preview embeds the modal inline so the design is
+        auditable without a real submit.
+      </p>
+      <div class="relative h-[600px] border-2 border-ink rounded-lg overflow-hidden bg-paper-warm">
+        <ModeratingModal open={true} onDismiss={() => {}} client:load />
+      </div>
+    </section>
+
+    {/* ── 21 · DeleteConfirmCard ───────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        21 · DeleteConfirmCard — type-to-confirm friction
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        Confirm button stays disabled until the user types the locale
+        target word ("LÖSCHEN" / "DELETE"). Lives in the post detail
+        right rail when delete-confirm is active. Matches the JSX
+        sidebar exactly.
+      </p>
+      <div class="max-w-md border-l border-dashed border-rule">
+        <DeleteConfirmCard
+          replyCount={47}
+          deleting={false}
+          onConfirm={() => {}}
+          onCancel={() => {}}
+          client:load
+        />
+      </div>
+    </section>
+
+    {/* ── 22 · EditModeBanner ──────────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        22 · EditModeBanner — top bar in inline edit mode
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        Ochre top bar that appears above the post title when the author
+        enters edit mode. ESC keyboard handler lives on the page, not
+        the banner — the right-side label is decorative copy only.
+      </p>
+      <EditModeBanner client:load />
     </section>
   </main>
 </KioskLayout>
