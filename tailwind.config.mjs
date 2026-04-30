@@ -25,25 +25,26 @@ export default {
         // Kiosk palette — mirrors src/styles/tokens.css. Tailwind classes
         // exist alongside the CSS custom properties so authors can pick whichever fits.
         paper: {
-          DEFAULT: '#F3EAD8',
-          warm:    '#ece2d2',
-          soft:    '#f9f4ea'
+          DEFAULT: '#f3ead8',
+          warm:    '#f7f0de',  // raised card on paper
+          soft:    '#ebe1c7'   // recessed surface (inputs, footer)
         },
         ink: {
-          DEFAULT: '#1B1A17',
-          soft:    '#3a352d',
-          mute:    '#6b6358'
+          DEFAULT: '#1b1a17',
+          soft:    '#3a362e',
+          mute:    '#7a7264'
         },
-        rule:    '#c8bfae',
-        wine:    '#B23A5B',   // topic · Forum brand
-        plum:    '#6F2F59',   // long-form
-        teal:    '#3F8F9F',   // announcement
-        moss:    '#6B8A4A',   // recommendation
-        ochre:   '#E8A53A',   // highlight · neu
-        sky:     '#B6D4DB',   // info bg
-        success: '#6B8A4A',   // approved (moss)
-        warn:    '#E8A53A',   // warning (ochre)
-        danger:  '#A83245'    // destructive — deeper than wine
+        rule:    '#c9bea3',
+        wine:    '#b23a5b',   // topic · Forum brand
+        plum:    '#6f2f59',   // long-form
+        teal:    '#3f8f9f',   // announcement
+        moss:    '#6b8a4a',   // recommendation
+        ochre:   '#e8a53a',   // highlight · neu
+        sky:     '#b6d4db',   // info bg
+        success: '#5a8a3a',   // approved
+        warn:    '#c8881e',   // warning
+        danger:  '#a83245',   // destructive
+        info:    '#3a7282'    // info accent
       },
       fontFamily: {
         sans: [
@@ -60,9 +61,9 @@ export default {
           'sans-serif'
         ],
         // Kiosk fonts — mirror tokens.css `--k-font-*`
-        bricolage:  ['"Bricolage Grotesque"', 'Inter', 'system-ui', 'sans-serif'],
+        bricolage:  ['"Bricolage Grotesque"', 'system-ui', 'sans-serif'],
         instrument: ['"Instrument Serif"', 'Fraunces', 'Georgia', 'serif'],
-        jetbrains:  ['"JetBrains Mono"', '"IBM Plex Mono"', 'ui-monospace', 'monospace']
+        dmmono:     ['"DM Mono"', 'ui-monospace', 'monospace']
       },
       borderRadius: {
         'standard': '4px',

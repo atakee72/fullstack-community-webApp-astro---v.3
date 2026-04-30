@@ -6,30 +6,31 @@
    ════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Color · paper / ink ─────────────────────────────────────── */
-  --k-paper:        #F3EAD8;   /* primary surface — warm cream (canvas-true) */
-  --k-paper-warm:   #ece2d2;   /* sectioned surface, hover */
-  --k-paper-soft:   #f9f4ea;   /* low-contrast background */
-  --k-ink:          #1B1A17;   /* primary text + primary-CTA fill */
-  --k-ink-soft:     #3a352d;   /* body copy */
-  --k-ink-mute:     #6b6358;   /* meta, timestamps */
-  --k-rule:         #c8bfae;   /* dashed dividers */
+  /* ── Color · paper / ink (canvas-true hex from kiosk-system.jsx) ── */
+  --k-paper:        #f3ead8;   /* primary surface — warm cream */
+  --k-paper-warm:   #f7f0de;   /* raised card on paper (subtle elevation) */
+  --k-paper-soft:   #ebe1c7;   /* recessed surface (inputs, footer) */
+  --k-ink:          #1b1a17;   /* primary text + primary-CTA fill */
+  --k-ink-soft:     #3a362e;   /* body copy */
+  --k-ink-mute:     #7a7264;   /* meta, timestamps */
+  --k-rule:         #c9bea3;   /* dashed dividers */
 
   /* ── Color · semantic accents (canvas-true hex) ──────────────── */
-  --k-wine:    #B23A5B;   /* topic · Forum brand (carved-accent)  */
-  --k-plum:    #6F2F59;   /* long-form, deep accent               */
-  --k-teal:    #3F8F9F;   /* announcement                         */
-  --k-moss:    #6B8A4A;   /* recommendation                       */
-  --k-ochre:   #E8A53A;   /* highlight, "neu" badge               */
-  --k-sky:     #B6D4DB;   /* info background                      */
-  --k-success: #6B8A4A;   /* approved (re-uses moss for harmony)  */
-  --k-warn:    #E8A53A;   /* warning (re-uses ochre)              */
-  --k-danger:  #A83245;   /* destructive — deeper than wine, signals "warning"  */
+  --k-wine:    #b23a5b;   /* topic · Forum brand (carved-accent)  */
+  --k-plum:    #6f2f59;   /* long-form, deep accent               */
+  --k-teal:    #3f8f9f;   /* announcement                         */
+  --k-moss:    #6b8a4a;   /* recommendation                       */
+  --k-ochre:   #e8a53a;   /* highlight, "neu" badge               */
+  --k-sky:     #b6d4db;   /* info background                      */
+  --k-success: #5a8a3a;   /* approved (slightly darker than moss for legibility on paper) */
+  --k-warn:    #c8881e;   /* warning (deeper than ochre)         */
+  --k-danger:  #a83245;   /* destructive — deeper than wine      */
+  --k-info:    #3a7282;   /* info accent                          */
 
   /* ── Type · families ─────────────────────────────────────────── */
-  --k-font-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --k-font-display: "Bricolage Grotesque", system-ui, sans-serif;
   --k-font-serif:   "Instrument Serif", "Fraunces", Georgia, serif;
-  --k-font-mono:    "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+  --k-font-mono:    "DM Mono", ui-monospace, monospace;
 
   /* ── Type · scale ────────────────────────────────────────────── */
   --k-text-xs:   10px;

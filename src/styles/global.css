@@ -1,5 +1,5 @@
-/* Google Fonts — Inter + Space Grotesk (dark-glass legacy) + Bricolage Grotesque + Instrument Serif + JetBrains Mono (Kiosk) */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Bricolage+Grotesque:wght@400;600;700;800&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Google Fonts — Inter + Space Grotesk (dark-glass legacy) + Bricolage Grotesque + Instrument Serif + DM Mono (Kiosk) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&display=swap');
 
 /* Kiosk design tokens — color, type, spacing, radii, shadows, motion durations.
    Loads CSS custom properties only; no element-level styling, safe to import globally. */
