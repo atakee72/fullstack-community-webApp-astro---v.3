@@ -20,10 +20,16 @@
 
   let {
     open = false,
-    onDismiss
+    onDismiss,
+    embedded = false
   } = $props<{
     open: boolean;
     onDismiss: () => void;
+    // Sandbox-only escape hatch: render with `absolute inset-0` instead
+    // of `fixed inset-0` so the modal stays inside its parent box on
+    // /design-system. Live consumers leave this false (default) so the
+    // modal covers the actual viewport.
+    embedded?: boolean;
   }>();
 
   // Stage names + hints come from i18n. The list is fixed; the index of
@@ -60,7 +66,7 @@
 
 {#if open}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center px-6 py-10"
+    class={`${embedded ? 'absolute' : 'fixed'} inset-0 z-50 flex items-center justify-center px-6 py-10`}
     role="dialog"
     aria-modal="true"
     aria-live="polite"
