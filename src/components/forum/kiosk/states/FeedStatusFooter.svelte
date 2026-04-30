@@ -22,18 +22,21 @@
     currentPage = 1,
     minutesSinceLast = 28
   } = $props<{
-    mode?: 'fresh' | 'loading' | 'offline';
+    mode?: 'fresh' | 'loading' | 'offline' | 'live';
     pageCount?: number;
     currentPage?: number;
     minutesSinceLast?: number;
   }>();
 
-  // Status indicator colour + copy per mode.
+  // Status indicator colour + copy per mode. 'live' fires for ~6 s after
+  // a successful topic create — green dot with celebratory copy.
   const indicator = $derived(
     mode === 'loading'
       ? { color: 'text-ink-mute', text: $t['feed.footer.loading'] }
       : mode === 'offline'
       ? { color: 'text-warn', text: $t['feed.footer.offline'] }
+      : mode === 'live'
+      ? { color: 'text-success', text: $t['feed.footer.live'] }
       : {
           color: 'text-wine',
           text: tStr($t['feed.footer.fresh'], { n: minutesSinceLast })

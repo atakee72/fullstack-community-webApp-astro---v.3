@@ -230,9 +230,40 @@
       : null
   );
 
+  // ─── Just-posted detection ──────────────────────────────────────────
+  // When a user just submitted a new topic from /topics/create and got
+  // navigated back to /, the SSR fetch returns their post at the top.
+  // We detect that by date (within last ~6 s) + author, and surface it
+  // with a slide-in animation + live footer mode for a brief window.
+  // No URL param needed — the 6 s wall-clock window naturally covers
+  // the full-page-reload navigation.
+  const LIVE_MS = 6000;
+  let pageMountedAt = $state(Date.now());
+  let liveTick = $state(0);
+  $effect(() => {
+    // Re-evaluate the live window every second so the badge clears.
+    const id = setInterval(() => (liveTick = Date.now()), 1000);
+    return () => clearInterval(id);
+  });
+  function isJustPosted(topic: any): boolean {
+    if (!currentUserId) return false;
+    if (authorIdOf(topic.author) !== currentUserId) return false;
+    if (!topic.date) return false;
+    const age = liveTick - new Date(topic.date).getTime();
+    return age >= 0 && age < LIVE_MS;
+  }
+  const hasJustPosted = $derived(filteredRest.some((tt: any) => isJustPosted(tt)));
+
   // Footer mode follows the same precedence as the grid branches.
+  // 'live' wins over 'fresh' when a just-posted card is in the feed.
   const footerMode = $derived(
-    !$online ? 'offline' : query.isFetching || query.isPending ? 'loading' : 'fresh'
+    !$online
+      ? 'offline'
+      : query.isFetching || query.isPending
+      ? 'loading'
+      : hasJustPosted
+      ? 'live'
+      : 'fresh'
   );
 </script>
 
@@ -342,7 +373,33 @@
              else     → normal grid card                                       -->
       {#each filteredRest as topic (topic._id)}
         {@const status = ownStatusFor(topic)}
-        {#if status === 'pending'}
+        {@const justPosted = isJustPosted(topic)}
+        {#if justPosted}
+          <!-- ✓ DEIN POST celebration — full-width slide-in + green pill.
+               Wins over the moderation status banner for the 6 s window
+               after submit; falls through to the normal status branch
+               once the celebration tick clears. -->
+          <div
+            class="md:col-span-2 lg:col-span-3 relative k-slide-in"
+          >
+            <span
+              class="absolute -top-2 left-3 z-[2] px-2.5 py-0.5 rounded-full bg-success text-paper font-dmmono text-[9.5px] tracking-[0.1em] uppercase border border-ink"
+            >
+              {$t['feed.footer.live']}
+            </span>
+            <a
+              href={`/topics/${topic._id}`}
+              class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+            >
+              <ForumPostCard
+                {topic}
+                kind="discussion"
+                optimistic
+                statusBadgeOverride={status === 'rejected' ? 'rejected' : 'pending'}
+              />
+            </a>
+          </div>
+        {:else if status === 'pending'}
           <div
             class="md:col-span-2 lg:col-span-3 p-1 rounded-lg border-2 border-dashed border-warn"
           >
