@@ -1,29 +1,28 @@
 <script lang="ts">
-  // Forum index inner — Phase 4a, loaded state only.
+  // Forum index inner — Phase 4a, loaded state.
   //
-  // Layout matches the Editorial Kiosk canvas:
-  //   1. Header (paper bg)        — datetime crumb + title + CTA
-  //   2. Stats line (paper bg)    — `247 Themen · 12 neu seit gestern · …`
-  //   3. PinnedBlock (ink bg)     — TagBar + announcement strip + pinned hero
-  //   4. Card grid (paper bg)     — regular topics
+  // Layout (per kiosk-forum.jsx KioskForumDesktop):
+  //   1. Header section (paper bg, dashed bottom rule)
+  //      datetime crumb · h1 with italic serif accent · CTA top-right
+  //      stats row underneath
+  //   2. Filter rail (paper bg) — TagBar
+  //   3. Card grid — featured pinned post first (col-span-3), then regular
+  //      cards in 1/2/3-column grid.
   //
-  // 4a hardcodes the first topic as "pinned" so the visual matches the
-  // canvas before any pinned/admin/role data fields are wired. Phase 5
-  // wires real pinned-flag + admin role detection.
+  // The synthetic Mahalle-Team welcome post is hardcoded as a featured
+  // announcement card with `pinned: true` so the design's `📌 ANGEHEFTET`
+  // marker shows in the strap. Phase 5 reads a real `pinned` boolean +
+  // admin role from the database.
 
   import { createQuery } from '@tanstack/svelte-query';
   import { t, locale } from '../../../lib/kiosk-i18n';
   import ForumPostCard from './ForumPostCard.svelte';
-  import PinnedBlock from './PinnedBlock.svelte';
   import TagBar, { type Filter } from './TagBar.svelte';
 
   let { initialTopics = [] } = $props<{
     initialTopics?: any[];
   }>();
 
-  // Svelte Query 6: options is a function (re-evaluated on reactive deps),
-  // and the return is a reactive proxy — access keys directly (`query.data`,
-  // not `$query.data`).
   const query = createQuery(() => ({
     queryKey: ['forum', 'topics'],
     queryFn: async () => {
@@ -40,9 +39,9 @@
 
   const items = $derived((query.data ?? []) as any[]);
 
-  // Pinned (hardcoded for 4a) — synthetic Mahalle-Team welcome post. Sits
-  // ABOVE the real data; the regular feed below is unaffected. Phase 5
-  // reads a real `pinned` boolean + admin role from the database.
+  // Synthetic Mahalle-Team welcome post — featured announcement card with
+  // pinned + team flags. Sits ABOVE the real data; the regular feed
+  // remains unaffected.
   const pinnedTopic = {
     _id: 'pinned-mahalle-team-001',
     title: 'Willkommen im Forum — schreibt, lest, redet mit.',
@@ -58,26 +57,20 @@
     tags: ['willkommen', 'kiezrat'],
     comments: [],
     likes: 47,
-    views: 1287,
     date: new Date().toISOString()
   };
-  const restItems = $derived(items);
 
-  // Filter state — Phase 4a applies tag filters locally; type/saved/mine
-  // filters toggle the active pill but don't reshape the data yet (we
-  // only have one collection wired). Phase 4b wires the multi-collection
-  // feed + saved/mine.
+  // Filter state — Phase 4a applies tag filters locally only; type/saved/mine
+  // filters toggle the active pill but don't reshape the data yet.
   let activeFilter = $state<Filter>('all');
   let activeTag = $state<string | null>(null);
 
   const filteredRest = $derived(
     activeTag
-      ? restItems.filter((t) => (t.tags ?? []).includes(activeTag))
-      : restItems
+      ? items.filter((it) => (it.tags ?? []).includes(activeTag))
+      : items
   );
 
-  // Top-N tags from the full set (excluding the pinned topic so the
-  // pinned hero's tags don't dominate the chip list).
   function topTags(input: any[], n = 6): string[] {
     const counts = new Map<string, number>();
     for (const it of input) {
@@ -91,23 +84,19 @@
       .slice(0, n)
       .map(([tag]) => tag);
   }
-  const tags = $derived(topTags(restItems));
+  const tags = $derived(topTags(items));
 
-  // Stats — Themen / neu seit gestern / aktiv jetzt.
-  // "aktiv jetzt" is stubbed (no presence data yet); treat as topics with
-  // a comment in the last 24 hours.
+  // Stats: total / new since yesterday / "active now" stub (any comment in
+  // the last 24h). Phase 4b wires real presence.
   const stats = $derived.by(() => {
     const now = Date.now();
-    const oneDay = 24 * 60 * 60 * 1000;
-    const yesterday = now - oneDay;
-
+    const yesterday = now - 24 * 60 * 60 * 1000;
     const total = items.length;
     let newSinceYesterday = 0;
     let activeNow = 0;
     for (const it of items) {
       const d = it.date ? new Date(it.date).getTime() : 0;
       if (d > yesterday) newSinceYesterday++;
-      // proxy: any comment in the last day = "aktiv"
       const lastComment = (it.comments ?? []).reduce((max: number, c: any) => {
         const cd = c?.date ? new Date(c.date).getTime() : 0;
         return cd > max ? cd : max;
@@ -117,7 +106,6 @@
     return { total, newSinceYesterday, activeNow };
   });
 
-  // Live datetime crumb — `FORUM · MITTWOCH 25. APRIL · 14:42`.
   let now = $state(new Date());
   $effect(() => {
     const id = setInterval(() => (now = new Date()), 60_000);
@@ -136,21 +124,23 @@
 
   function handleFilterChange(f: Filter) {
     activeFilter = f;
-    // Phase 4b: kick off the relevant query / merge result.
+    // Phase 4b: trigger the relevant query / merge result.
   }
   function handleTagChange(tag: string | null) {
     activeTag = tag;
   }
 </script>
 
-<main class="max-w-7xl mx-auto px-4 md:px-8 lg:px-10 py-8 md:py-12">
-  <!-- ── Header (paper bg) ────────────────────────────────────── -->
-  <header class="mb-6">
-    <p class="font-jetbrains text-[11px] uppercase tracking-[0.18em] text-ink-mute mb-3">
+<main class="max-w-7xl mx-auto px-4 md:px-8 lg:px-10 py-8 md:py-10">
+  <!-- ── Header section ─────────────────────────────────────────── -->
+  <section class="mb-5 pb-4 border-b border-dashed border-rule">
+    <p class="font-dmmono text-[11px] uppercase tracking-[0.18em] text-wine mb-2">
       FORUM · {dayOfWeek.toUpperCase()} {dayMonth.toUpperCase()} · {hhmm}
     </p>
-    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-1">
-      <h1 class="font-bricolage font-extrabold text-4xl md:text-6xl lg:text-7xl tracking-tight leading-[1.02] text-ink">
+    <div class="grid grid-cols-1 md:grid-cols-[1fr_auto] md:items-end gap-4">
+      <h1
+        class="font-bricolage font-extrabold text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[0.95] text-ink"
+      >
         {$t['forum.title.prefix']}
         <em class="font-instrument italic font-normal text-wine">{$t['forum.title.accent']}</em>
         {$t['forum.title.suffix']}
@@ -162,20 +152,22 @@
         {$t['forum.cta.newTopic']}
       </a>
     </div>
-    <p class="font-inter text-ink-soft text-sm md:text-base max-w-2xl">
-      {$t['forum.subtitle']}
-    </p>
-  </header>
+    <div
+      class="flex flex-wrap items-baseline gap-x-5 gap-y-1 mt-3 font-dmmono text-[11px] text-ink-mute"
+    >
+      <span><span class="font-bold text-ink">{stats.total}</span> {$t['forum.stats.topics']}</span>
+      <span
+        ><span class="font-bold text-ink">{stats.newSinceYesterday}</span>
+        {$t['forum.stats.new']}</span
+      >
+      <span
+        ><span class="font-bold text-ink">{stats.activeNow}</span> {$t['forum.stats.active']}</span
+      >
+    </div>
+  </section>
 
-  <!-- ── Stats line (paper bg) ────────────────────────────────── -->
-  <div class="flex flex-wrap items-baseline gap-x-5 gap-y-1 mb-5 font-jetbrains text-[12px] text-ink-mute">
-    <span><span class="font-bold text-ink">{stats.total}</span> {$t['forum.stats.topics']}</span>
-    <span><span class="font-bold text-ink">{stats.newSinceYesterday}</span> {$t['forum.stats.new']}</span>
-    <span><span class="font-bold text-ink">{stats.activeNow}</span> {$t['forum.stats.active']}</span>
-  </div>
-
-  <!-- ── Filter bar (paper bg) ────────────────────────────────── -->
-  <div class="mb-6">
+  <!-- ── Filter rail (paper bg) ─────────────────────────────────── -->
+  <div class="mb-5">
     <TagBar
       tone="paper"
       {activeFilter}
@@ -186,22 +178,31 @@
     />
   </div>
 
-  <!-- ── PinnedBlock (ink bg, announcement + hero only) ──────── -->
-  <div class="mb-6">
-    <PinnedBlock pinnedTopic={pinnedTopic} />
-  </div>
-
-  <!-- ── Card grid (paper bg) ─────────────────────────────────── -->
-  {#if filteredRest.length}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-      {#each filteredRest as topic (topic._id)}
-        <a
-          href={`/topics/${topic._id}`}
-          class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
-        >
-          <ForumPostCard {topic} />
-        </a>
-      {/each}
+  <!-- ── Card grid: pinned (col-span-3) + regular cards ─────────── -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+    <div class="md:col-span-2 lg:col-span-3">
+      <a
+        href="#"
+        class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+        aria-label="Mahalle-Team Willkommensbeitrag"
+      >
+        <ForumPostCard
+          topic={pinnedTopic}
+          kind="announcement"
+          featured
+          pinned
+          team
+        />
+      </a>
     </div>
-  {/if}
+
+    {#each filteredRest as topic (topic._id)}
+      <a
+        href={`/topics/${topic._id}`}
+        class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+      >
+        <ForumPostCard {topic} kind="discussion" />
+      </a>
+    {/each}
+  </div>
 </main>
