@@ -1,0 +1,82 @@
+---
+// Forum post detail — Editorial Kiosk shell.
+//
+// SSR-fetches the topic by id + populates the author + fetches the
+// comment thread. Threads everything to a single Svelte island for
+// client-side hydration. Compose / edit live on separate routes.
+
+import KioskLayout from '../../layouts/KioskLayout.astro';
+import ForumPostDetail from '../../components/forum/kiosk/ForumPostDetail.svelte';
+import { getSession } from 'auth-astro/server';
+import { connectDB } from '../../lib/mongodb';
+import { ObjectId } from 'mongodb';
+import { buildModerationFilter, populateAuthors } from '../../lib/topicsQuery';
+
+const { id } = Astro.params;
+
+if (!id || !ObjectId.isValid(id)) {
+  return Astro.redirect('/', 302);
+}
+
+const session = await getSession(Astro.request);
+const currentUserId = session?.user?.id;
+
+const db = await connectDB();
+const topicsCollection = db.collection('topics');
+const commentsCollection = db.collection('comments');
+
+// Topic fetch with the same moderation visibility rules as the index.
+const topicFilter: Record<string, any> = {
+  _id: new ObjectId(id),
+  ...buildModerationFilter(currentUserId)
+};
+
+const topicDoc = await topicsCollection.findOne(topicFilter);
+
+if (!topicDoc) {
+  // Either non-existent or filtered out by moderation. 404 via Astro.
+  return new Response('Not found', { status: 404 });
+}
+
+// Populate author (single-doc convenience — reuses the batch helper).
+const [topic] = await populateAuthors([topicDoc as any]);
+
+// Comments — moderation-aware: approved + author-own pending/rejected +
+// user-reported pending. Newest first.
+const commentFilter: Record<string, any> = {
+  relevantPostId: new ObjectId(id),
+  $or: [
+    { moderationStatus: 'approved' },
+    { moderationStatus: { $exists: false } },
+    { moderationStatus: 'pending', isUserReported: true },
+    ...(currentUserId
+      ? [
+          { author: currentUserId, moderationStatus: 'pending' },
+          { author: currentUserId, moderationStatus: 'rejected' }
+        ]
+      : [])
+  ]
+};
+
+const rawComments = await commentsCollection
+  .find(commentFilter)
+  .sort({ date: -1 })
+  .toArray();
+
+const comments = await populateAuthors(rawComments as any[]);
+
+// Date / ObjectId → string before sending across the SSR boundary.
+const initialTopic = JSON.parse(JSON.stringify(topic));
+const initialComments = JSON.parse(JSON.stringify(comments));
+
+const pageTitle = topicDoc.title ? `${topicDoc.title} · Mahalle Forum` : 'Mahalle Forum';
+---
+
+<KioskLayout title={pageTitle} description={topicDoc.body?.slice(0, 160) ?? ''}>
+  <ForumPostDetail
+    client:only="svelte"
+    initialTopic={initialTopic}
+    initialComments={initialComments}
+    currentUserId={currentUserId ?? null}
+  />
+</KioskLayout>
