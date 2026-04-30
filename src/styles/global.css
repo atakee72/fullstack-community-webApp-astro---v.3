@@ -22,6 +22,12 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;  /* Chrome, Safari and Opera */
   }
+
+  /* Kiosk · offline-cached overlay. Applied to the forum feed when
+     `navigator.onLine === false` so the cards read as "stored, not live". */
+  .k-grayscale-cached {
+    filter: grayscale(0.4) opacity(0.85);
+  }
 }
 
 /* Kiosk paper-grain texture — risograph-print feel.

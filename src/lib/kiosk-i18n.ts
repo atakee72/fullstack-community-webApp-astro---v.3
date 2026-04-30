@@ -157,6 +157,67 @@ const de = {
   'footer.licensedUnder': 'Lizenziert unter',
   'footer.license': 'PolyForm Noncommercial 1.0.0',
 
+  // ─── Phase 4b · forum state matrix ─────────────────────────────────
+  // Empty state — active filter (tag or kind) returned zero matches.
+  'state.empty.filter.flourish': 'still.',
+  'state.empty.filter.title': "Hier ist's gerade ruhig.",
+  'state.empty.filter.body': 'Keine Beiträge mit {filter} in den letzten 30 Tagen. Magst du den Anfang machen?',
+  'state.empty.filter.cta.start': '+ erstes Thema',
+  'state.empty.filter.cta.clear': 'Filter zurücksetzen',
+  'state.empty.filter.relatedTags': 'VERWANDTE TAGS',
+
+  // Empty state — no posts in the database at all (true zero).
+  'state.empty.zero.kicker': 'NEU IM KIEZ · TAG 01',
+  'state.empty.zero.title.line1': 'Noch keine Beiträge.',
+  'state.empty.zero.title.line2': 'Sei die erste Stimme.',
+  'state.empty.zero.body':
+    'Mahalle ist neu in Schillerkiez. Erzähl was — vom Späti um die Ecke, von einer Bauarbeit, einer Empfehlung. Andere Nachbarn werden mitlesen.',
+  'state.empty.zero.cta.first': '+ erstes Thema',
+  'state.empty.zero.cta.howto': "Wie funktioniert's?",
+
+  // 503 error.
+  'state.error.kicker': 'FEHLER · 503 · API NICHT ERREICHBAR',
+  'state.error.title': "Da hakt's gerade.",
+  'state.error.body':
+    "Wir kommen gerade nicht ans Forum. Das liegt nicht an dir. Wir versuchen's gleich nochmal — oder du klickst auf neu laden.",
+  'state.error.cta.reload': '↻ neu laden',
+
+  // Offline banner. `body.cached` shows when in-memory data exists.
+  'state.offline.label': 'OFFLINE',
+  'state.offline.body.cached':
+    'Du siehst gespeicherte Beiträge von vor {n} min. Neue Posts kommen, sobald du wieder online bist.',
+  'state.offline.body.empty': 'Du bist offline — zwischengespeicherte Inhalte nicht verfügbar.',
+
+  // Rate-limited compose (sandbox-only in 4b — wired in 5b).
+  // Note: API enforces 5 per rolling 24h, not per hour as JSX implies.
+  'state.rate.kicker': 'LIMIT ERREICHT · 5 BEITRÄGE / TAG',
+  'state.rate.title': 'Pause für Mahalle.',
+  'state.rate.body':
+    'Du hast 5 Beiträge in den letzten 24 Stunden geschrieben — das ist viel! Wir geben Mahalle und allen anderen Lesenden ein bisschen Zeit.',
+  'state.rate.unlocks': 'ZURÜCK ZUM POSTEN IN',
+  'state.rate.coda':
+    'In der Zwischenzeit: Lesen, Kommentieren, ein Beitrag merken. Auch Stille ist Teil der Nachbarschaft.',
+
+  // Author-status banners — shown above the affected card in the feed.
+  'state.own.pending.title': 'Dein Beitrag wird gerade gelesen.',
+  'state.own.pending.body':
+    'Während der Prüfung sehen andere Nachbar:innen den Beitrag noch nicht. Du musst nichts tun. Danach wird er freigegeben — manchmal mit Hinweis — oder nicht freigegeben.',
+  'state.own.pending.note': 'nur du siehst diesen Status',
+  'state.own.pending.usual': 'üblich: 30–90 sek',
+  'state.own.rejected.title': 'Dein Beitrag wurde nicht freigegeben.',
+  'state.own.rejected.body':
+    'Andere Nachbar:innen sehen ihn nicht. Du siehst ihn weiterhin in deiner Übersicht. Wir behalten ihn intern, falls du dich an die Moderation wenden möchtest.',
+  'state.own.reported.title': 'Ein Beitrag wurde von Nachbar:innen gemeldet.',
+  'state.own.reported.body':
+    'Während wir prüfen, ist er für andere ausgeblendet — du siehst nur, dass er existiert.',
+
+  // Feed footer rule.
+  'feed.footer.pages': '{current} / {total} SEITEN',
+  'feed.footer.fresh': '↻ live · letzter post vor {n} min',
+  'feed.footer.offline': '● OFFLINE · CACHED',
+  'feed.footer.loading': 'LADE…',
+  'feed.footer.loadMore': 'MEHR LADEN ↓',
+
   // sandbox
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox für die atomaren Komponenten. Visuelle Treue prüfen, bevor sie ins Forum übernommen werden.'
@@ -249,6 +310,59 @@ const en: Dict = {
   'footer.copyright': '© {year} Ercan Atak — Mahalle.',
   'footer.licensedUnder': 'Licensed under',
   'footer.license': 'PolyForm Noncommercial 1.0.0',
+
+  // ─── Phase 4b · forum state matrix ─────────────────────────────────
+  'state.empty.filter.flourish': 'still.',
+  'state.empty.filter.title': 'All quiet here.',
+  'state.empty.filter.body': 'No posts tagged {filter} in the last 30 days. Want to start the conversation?',
+  'state.empty.filter.cta.start': '+ start a topic',
+  'state.empty.filter.cta.clear': 'clear filter',
+  'state.empty.filter.relatedTags': 'RELATED TAGS',
+
+  'state.empty.zero.kicker': 'NEW IN THE KIEZ · DAY 01',
+  'state.empty.zero.title.line1': 'No posts yet.',
+  'state.empty.zero.title.line2': 'Be the first voice.',
+  'state.empty.zero.body':
+    'Mahalle is new in Schillerkiez. Share something — about the Späti next door, a construction notice, a recommendation. Your neighbours will read.',
+  'state.empty.zero.cta.first': '+ first post',
+  'state.empty.zero.cta.howto': 'How it works',
+
+  'state.error.kicker': 'ERROR · 503 · API UNREACHABLE',
+  'state.error.title': "Something's stuck.",
+  'state.error.body':
+    "We can't reach the forum right now. Not your fault. We'll retry — or hit reload.",
+  'state.error.cta.reload': '↻ reload',
+
+  'state.offline.label': 'OFFLINE',
+  'state.offline.body.cached':
+    "You're viewing cached posts from {n} min ago. New posts arrive when you're back online.",
+  'state.offline.body.empty': "You're offline — cached content unavailable.",
+
+  'state.rate.kicker': 'LIMIT REACHED · 5 POSTS / DAY',
+  'state.rate.title': 'Mahalle says: take a breath.',
+  'state.rate.body':
+    "You've made 5 posts in the last 24 hours — that's a lot! We're giving Mahalle and other readers some breathing room.",
+  'state.rate.unlocks': 'POSTING UNLOCKS IN',
+  'state.rate.coda':
+    'Meanwhile: read, comment, bookmark. Quiet time is part of the neighborhood too.',
+
+  'state.own.pending.title': "We're reading your post.",
+  'state.own.pending.body':
+    "While we review, other neighbours don't see the post yet. Nothing for you to do. Afterwards it goes live — sometimes with a notice — or it doesn't.",
+  'state.own.pending.note': 'only you see this status',
+  'state.own.pending.usual': 'usual: 30–90 sec',
+  'state.own.rejected.title': "Your post wasn't approved.",
+  'state.own.rejected.body':
+    "Other neighbours can't see it. You still see it in your own view. We keep it internally in case you want to reach out to moderation.",
+  'state.own.reported.title': 'A post was flagged by neighbors.',
+  'state.own.reported.body':
+    "While we review, it's hidden from others — you only see it exists.",
+
+  'feed.footer.pages': '{current} / {total} PAGES',
+  'feed.footer.fresh': '↻ live · last post {n} min ago',
+  'feed.footer.offline': '● OFFLINE · CACHED',
+  'feed.footer.loading': 'LOADING…',
+  'feed.footer.loadMore': 'LOAD MORE ↓',
 
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox for the atomic components. Verify visual fidelity here before wiring them into the Forum.'
