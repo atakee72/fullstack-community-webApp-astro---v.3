@@ -1,34 +1,141 @@
 ---
 // Design system sandbox — wired to KioskLayout so the atoms render in their
 // real shell (KioskNav at top, KioskFooter at bottom, paper-grain bg, locale
-// toggle, sticky brand). Use this page to verify visual fidelity across atoms
-// before wiring them into actual product surfaces.
+// toggle, sticky brand). Use this page to verify visual fidelity across
+// atoms AND molecules before wiring them into actual product surfaces.
+//
+// Sections grow alongside the kit:
+//   01–05  atoms          (KioskBtn, PostTypeChip, StatusBadge, KioskAvatar)
+//   06–09  forum molecules (post cards, featured pinned, state variants,
+//                           comment / reply card)
+// Future phases append here too — never delete sections, just extend.
 
 import KioskLayout from '../layouts/KioskLayout.astro';
 import KioskBtn from '../components/forum/kiosk/KioskBtn.svelte';
 import PostTypeChip from '../components/forum/kiosk/PostTypeChip.svelte';
 import StatusBadge from '../components/forum/kiosk/StatusBadge.svelte';
 import KioskAvatar from '../components/forum/kiosk/KioskAvatar.svelte';
+import ForumPostCard from '../components/forum/kiosk/ForumPostCard.svelte';
+import ForumComment from '../components/forum/kiosk/ForumComment.svelte';
+
+// ── Mock data ────────────────────────────────────────────────────────
+// Synthetic Schillerkiez topics so the cards render with realistic
+// content. Dates are set relative to NOW so the relTime() helper inside
+// ForumPostCard always produces a plausible "vor X min/std" label.
+
+const NOW = Date.now();
+const minsAgo = (n: number) => new Date(NOW - n * 60_000).toISOString();
+const hoursAgo = (n: number) => new Date(NOW - n * 60 * 60_000).toISOString();
+const daysAgo = (n: number) => new Date(NOW - n * 24 * 60 * 60_000).toISOString();
+
+const topicSample = {
+  _id: 'sample-discussion',
+  title: 'Wir brauchen bessere Beleuchtung am Herrfurthplatz',
+  body: 'Seit Wochen ist die Westseite ab 22 Uhr stockdunkel. Hat jemand schon dem Bezirksamt geschrieben oder lohnt sich eine gemeinsame Eingabe?',
+  author: { name: 'Lena K.', image: null, createdAt: '2019-03-12' },
+  tags: ['beleuchtung', 'sicherheit', 'herrfurthplatz'],
+  date: hoursAgo(2),
+  likes: 14,
+  comments: Array(11).fill({}),
+};
+
+const recommendationSample = {
+  _id: 'sample-recommendation',
+  title: 'Frischer Lahmacun bei Pinar — und niemand weiß davon',
+  body: 'Der kleine Laden gegenüber vom Spielplatz macht den besten Lahmacun im Kiez. Teig hauchdünn, Hackfleisch frisch, 3,50 €. Kein Schnickschnack.',
+  author: { name: 'Tarık Y.', image: null, createdAt: '2021-08-04' },
+  tags: ['essen', 'tipp', 'schillerpromenade'],
+  date: hoursAgo(6),
+  likes: 27,
+  comments: Array(8).fill({}),
+};
+
+const announcementSample = {
+  _id: 'sample-announcement',
+  title: 'Kiezrat-Sitzung am Donnerstag — Themen einreichen bis Mittwoch',
+  body: 'Diese Woche stehen Spielplatzsanierung und Verkehrsberuhigung auf der Tagesordnung. Eigene Punkte gerne per Mail an kiezrat@…',
+  author: { name: 'Mahalle Team', image: null, createdAt: '2024-01-01' },
+  tags: ['sitzung', 'kiezrat'],
+  date: hoursAgo(11),
+  likes: 4,
+  comments: Array(3).fill({}),
+};
+
+const pinnedWelcomeSample = {
+  _id: 'sample-pinned-welcome',
+  title: 'Willkommen im Forum — wie wir hier miteinander reden',
+  body: 'Mahalle ist kein Forum für anonyme Wut. Schreib direkt, schreib freundlich, schreib lokal. Fünf Tipps fürs erste Posting findest du in diesem Beitrag.',
+  author: { name: 'Mahalle Team', image: null, createdAt: '2024-01-01' },
+  tags: ['willkommen', 'forum-guide', 'kiez'],
+  date: daysAgo(3),
+  likes: 47,
+  comments: Array(23).fill({}),
+};
+
+const optimisticSample = {
+  ...topicSample,
+  _id: 'sample-optimistic',
+  title: 'gerade gepostet — wartet auf Bestätigung',
+  body: 'Optimistic-update Treatment: 78 % Opacity, kein Border-Color-Wechsel, dezenter Wartezustand bis der Server quittiert.',
+  date: minsAgo(0),
+  comments: [],
+  likes: 0,
+};
+
+const ghostedSample = {
+  ...topicSample,
+  _id: 'sample-ghosted',
+  title: 'in Prüfung — KI hat den Beitrag markiert',
+  body: 'Ghosted Treatment: 45 % Opacity, weiterhin lesbar aber sichtbar zurückgesetzt. Wird in Phase 4b mit dem AI-flagged-Banner kombiniert.',
+  date: minsAgo(15),
+  comments: Array(2).fill({}),
+  likes: 1,
+};
+
+const replyOP = {
+  _id: 'reply-op',
+  body: 'Danke für die Bestätigung — habe das auch dem Bezirksamt gemeldet, Ticket-Nr. liegt mir vor. Ich melde mich, sobald sich etwas tut.',
+  author: { name: 'Lena K.', image: null, _id: 'lena' },
+  date: minsAgo(8),
+  likes: 5,
+};
+
+const replyRegular = {
+  _id: 'reply-regular',
+  body: 'Stimme zu — die Westseite ist seit Wochen aus. Vor allem wenn man mit Kind aus der KiTa kommt, fühlt sich das nicht mehr okay an.',
+  author: { name: 'Marco R.', image: null, _id: 'marco' },
+  date: minsAgo(45),
+  likes: 3,
+};
+
+const replyShort = {
+  _id: 'reply-short',
+  body: 'Bin dabei.',
+  author: { name: 'Sophie L.', image: null, _id: 'sophie' },
+  date: minsAgo(120),
+  likes: 0,
+};
 ---
 
-<KioskLayout title="Kiosk · Design System Sandbox" description="Sandbox for the Editorial Kiosk atomic UI kit.">
+<KioskLayout title="Kiosk · Design System Sandbox" description="Sandbox for the Editorial Kiosk atomic UI kit and forum molecules.">
   <main class="max-w-5xl mx-auto px-6 md:px-10 py-12">
     <header class="mb-10 pb-6 border-b-2 border-ink">
-      <p class="font-jetbrains text-[11px] uppercase tracking-[0.18em] text-ink-mute">
-        ◆ Phase 2 · Atomic UI Kit
+      <p class="font-dmmono text-[11px] uppercase tracking-[0.18em] text-ink-mute">
+        ◆ Phase 2–4a · Atoms + Forum Molecules
       </p>
       <h1 class="font-bricolage font-extrabold text-4xl md:text-5xl tracking-tight mt-2 leading-none">
         Editorial <em class="font-instrument italic font-normal">Kiosk</em>
       </h1>
       <p class="text-ink-soft mt-3 max-w-2xl text-sm md:text-base">
-        Sandbox for the four atomic components. Verify visual fidelity here before
-        wiring them into the Forum proper.
+        Atoms (01–05), then forum molecules (06–09): card kinds, featured
+        pinned slot, state variants, and the reply card. Verify visual
+        fidelity here before wiring components into product surfaces.
       </p>
     </header>
 
-    {/* ── KioskBtn ─────────────────────────────────────────────────── */}
+    {/* ── 01 · KioskBtn ────────────────────────────────────────────── */}
     <section class="mb-12">
-      <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
         01 · KioskBtn
       </h2>
       <div class="space-y-6">
@@ -55,9 +162,9 @@ import KioskAvatar from '../components/forum/kiosk/KioskAvatar.svelte';
       </div>
     </section>
 
-    {/* ── PostTypeChip ─────────────────────────────────────────────── */}
+    {/* ── 02 · PostTypeChip ────────────────────────────────────────── */}
     <section class="mb-12">
-      <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
         02 · PostTypeChip
       </h2>
       <div class="space-y-4">
@@ -74,9 +181,9 @@ import KioskAvatar from '../components/forum/kiosk/KioskAvatar.svelte';
       </div>
     </section>
 
-    {/* ── StatusBadge ──────────────────────────────────────────────── */}
+    {/* ── 03 · StatusBadge ─────────────────────────────────────────── */}
     <section class="mb-12">
-      <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
         03 · StatusBadge
       </h2>
       <div class="flex flex-wrap items-center gap-3">
@@ -89,13 +196,13 @@ import KioskAvatar from '../components/forum/kiosk/KioskAvatar.svelte';
       </div>
     </section>
 
-    {/* ── KioskAvatar ──────────────────────────────────────────────── */}
+    {/* ── 04 · KioskAvatar ─────────────────────────────────────────── */}
     <section class="mb-12">
-      <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
         04 · KioskAvatar
       </h2>
 
-      <p class="font-jetbrains text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-3">
+      <p class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-3">
         deterministic initials · 5-slot palette
       </p>
       <div class="flex flex-wrap items-end gap-4 mb-6">
@@ -108,7 +215,7 @@ import KioskAvatar from '../components/forum/kiosk/KioskAvatar.svelte';
         <KioskAvatar name="Sophie L." size="md" client:load />
       </div>
 
-      <p class="font-jetbrains text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-3">
+      <p class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-3">
         explicit slot override · 5 slots
       </p>
       <div class="flex flex-wrap items-end gap-4 mb-6">
@@ -119,7 +226,7 @@ import KioskAvatar from '../components/forum/kiosk/KioskAvatar.svelte';
         <KioskAvatar name="Plum" slot="plum" size="md" client:load />
       </div>
 
-      <p class="font-jetbrains text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-3">
+      <p class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-3">
         OP badge
       </p>
       <div class="flex flex-wrap items-end gap-4">
@@ -128,9 +235,9 @@ import KioskAvatar from '../components/forum/kiosk/KioskAvatar.svelte';
       </div>
     </section>
 
-    {/* ── Combined preview ─────────────────────────────────────────── */}
+    {/* ── 05 · combined author row ─────────────────────────────────── */}
     <section class="mb-12">
-      <h2 class="font-jetbrains text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-4">
         05 · combined — author row preview
       </h2>
       <div class="flex items-center gap-3 p-4 bg-paper-warm border-2 border-ink rounded-lg shadow-[4px_4px_0_var(--k-wine)]">
@@ -141,11 +248,108 @@ import KioskAvatar from '../components/forum/kiosk/KioskAvatar.svelte';
             <PostTypeChip kind="discussion" client:load />
             <StatusBadge state="approved" size="sm" client:load />
           </div>
-          <p class="font-jetbrains text-[11px] uppercase tracking-[0.08em] text-ink-mute mt-0.5">
+          <p class="font-dmmono text-[11px] uppercase tracking-[0.08em] text-ink-mute mt-0.5">
             seit 2019 · vor 1 Std
           </p>
         </div>
         <KioskBtn variant="secondary" size="sm" client:load>Antworten</KioskBtn>
+      </div>
+    </section>
+
+    {/* ── 06 · ForumPostCard — three kinds ─────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        06 · ForumPostCard — three kinds
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        Each post-kind owns a distinct visual identity. Topic = quiet
+        paper-warm card with ink chip. Announcement = ink bg + teal strap.
+        Recommendation = paper-warm + moss strap, body in serif italic.
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <ForumPostCard topic={topicSample} kind="discussion" client:load />
+        <ForumPostCard topic={announcementSample} kind="announcement" team client:load />
+        <ForumPostCard topic={recommendationSample} kind="recommendation" client:load />
+      </div>
+    </section>
+
+    {/* ── 07 · ForumPostCard — featured pinned (full-width) ────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        07 · ForumPostCard — featured + pinned
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        The pinned slot at the top of the forum index is just a
+        <code class="font-dmmono text-[12px]">&lt;ForumPostCard featured pinned team /&gt;</code>
+        spanning all columns. No separate hero component, no special
+        wrapper — kind drives the visuals, the featured flag bumps padding
+        + title size + shadow.
+      </p>
+      <ForumPostCard
+        topic={pinnedWelcomeSample}
+        kind="announcement"
+        featured
+        pinned
+        team
+        client:load
+      />
+    </section>
+
+    {/* ── 08 · ForumPostCard — state variants ──────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        08 · ForumPostCard — state variants
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        Optimistic (78 % opacity, while a fresh post waits for the server),
+        ghosted (45 % opacity, AI-flagged or under review), and a default
+        card with an explicit StatusBadge override. The full state matrix
+        lands in Phase 4b — these three are the most-used variants.
+      </p>
+      <p class="font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute mb-4">
+        ◇ chip stacks under the badge in the right cluster — keeps both
+        readable inside a 1/3-width slot without crowding the author byline.
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <ForumPostCard
+          topic={optimisticSample}
+          kind="discussion"
+          optimistic
+          statusBadgeOverride="pending"
+          client:load
+        />
+        <ForumPostCard
+          topic={ghostedSample}
+          kind="discussion"
+          ghosted
+          statusBadgeOverride="flagged"
+          client:load
+        />
+        <ForumPostCard
+          topic={topicSample}
+          kind="discussion"
+          statusBadgeOverride="warning"
+          bookmarked
+          client:load
+        />
+      </div>
+    </section>
+
+    {/* ── 09 · ForumComment / ReplyCard ────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        09 · ForumComment — reply card
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        Used inside <code class="font-dmmono text-[12px]">ForumCommentList</code>
+        on the post detail page. Avatar column carries the heart count
+        below the picture; the OP variant gets a wine pill next to the name
+        plus a wine ring around the avatar.
+      </p>
+      <div class="bg-paper-warm border-[1.5px] border-ink rounded-lg p-5">
+        <ForumComment comment={replyOP} isOP client:load />
+        <ForumComment comment={replyRegular} client:load />
+        <ForumComment comment={replyShort} client:load />
       </div>
     </section>
   </main>
