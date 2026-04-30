@@ -9,17 +9,25 @@
   import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
   import ForumIndexInner from './ForumIndexInner.svelte';
 
-  let { initialTopics = [] } = $props<{
+  let { initialTopics = [], currentUserId = null } = $props<{
     initialTopics?: any[];
+    currentUserId?: string | null;
   }>();
 
+  // refetchOnReconnect lets TanStack pull fresh data when the browser
+  // recovers connectivity — the OfflineBanner clears automatically once
+  // the new payload lands.
   const client = new QueryClient({
     defaultOptions: {
-      queries: { staleTime: 60_000, refetchOnWindowFocus: false }
+      queries: {
+        staleTime: 60_000,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: true
+      }
     }
   });
 </script>
 
 <QueryClientProvider {client}>
-  <ForumIndexInner {initialTopics} />
+  <ForumIndexInner {initialTopics} {currentUserId} />
 </QueryClientProvider>

@@ -16,11 +16,20 @@
 
   import { createQuery } from '@tanstack/svelte-query';
   import { t, locale } from '../../../lib/kiosk-i18n';
+  import { online } from '../../../lib/onlineStore';
   import ForumPostCard from './ForumPostCard.svelte';
   import TagBar, { type Filter } from './TagBar.svelte';
+  import ForumIndexSkeleton from './states/ForumIndexSkeleton.svelte';
+  import EmptyFilterPanel from './states/EmptyFilterPanel.svelte';
+  import EmptyZeroPanel from './states/EmptyZeroPanel.svelte';
+  import ErrorPanel from './states/ErrorPanel.svelte';
+  import OfflineBanner from './states/OfflineBanner.svelte';
+  import OwnStatusBanner from './states/OwnStatusBanner.svelte';
+  import FeedStatusFooter from './states/FeedStatusFooter.svelte';
 
-  let { initialTopics = [] } = $props<{
+  let { initialTopics = [], currentUserId = null } = $props<{
     initialTopics?: any[];
+    currentUserId?: string | null;
   }>();
 
   const query = createQuery(() => ({
@@ -129,6 +138,102 @@
   function handleTagChange(tag: string | null) {
     activeTag = tag;
   }
+  function clearFilters() {
+    activeFilter = 'all';
+    activeTag = null;
+  }
+
+  // ─── Phase 4b · state-matrix helpers ────────────────────────────────
+  // Author-id extractor — schema returns either a string (raw _id) or a
+  // populated `{ _id }` object depending on the SSR path.
+  function authorIdOf(v: any): string | null {
+    if (!v) return null;
+    if (typeof v === 'string') return v;
+    if (typeof v === 'object' && v._id) return String(v._id);
+    return null;
+  }
+
+  type OwnStatus = 'pending' | 'rejected' | 'reported' | null;
+
+  // Mirror of ForumPostCard's inferredBadge logic (line 139), extended
+  // to mark community-reported posts that the viewer is NOT the author of.
+  function ownStatusFor(topic: any): OwnStatus {
+    const isAuthor =
+      currentUserId && authorIdOf(topic.author) === currentUserId;
+    if (isAuthor && topic.moderationStatus === 'pending' && !topic.isUserReported) {
+      return 'pending';
+    }
+    if (isAuthor && topic.moderationStatus === 'rejected') return 'rejected';
+    if (
+      !isAuthor &&
+      topic.moderationStatus === 'pending' &&
+      topic.isUserReported
+    ) {
+      return 'reported';
+    }
+    return null;
+  }
+
+  // Whether ANY card in the rendered feed is community-reported. Drives
+  // the single feed-level plum banner — JSX shows it once per page,
+  // not once per affected card.
+  const hasReportedInFeed = $derived(
+    filteredRest.some((t: any) => ownStatusFor(t) === 'reported')
+  );
+
+  // Localised label for the active filter (kind tab OR tag pill).
+  // Keys here mirror the `filter.*` namespace in kiosk-i18n.ts.
+  const KIND_LABELS_KEY = {
+    discussion: 'filter.discussion',
+    announcement: 'filter.announcement',
+    recommendation: 'filter.recommendation',
+    saved: 'filter.saved',
+    mine: 'filter.mine'
+  } as const;
+  const filterLabel = $derived(
+    activeTag
+      ? `#${activeTag}`
+      : activeFilter !== 'all'
+      ? ($t as any)[KIND_LABELS_KEY[activeFilter as Exclude<Filter, 'all'>]]
+      : ''
+  );
+  const FALLBACK_RELATED = ['familie', 'spielplatz', 'schule', 'betreuung'];
+  const relatedTags = $derived(
+    items.length > 0
+      ? topTags(items, 5)
+          .filter((tag) => tag !== activeTag)
+          .slice(0, 4)
+      : FALLBACK_RELATED
+  );
+
+  // Branching predicates (state precedence: error > loading > empty > grid).
+  const showError = $derived(query.isError);
+  const showSkeleton = $derived(!showError && query.isPending && !items.length);
+  const showEmptyFilter = $derived(
+    !showError &&
+      !showSkeleton &&
+      filteredRest.length === 0 &&
+      (activeTag !== null || activeFilter !== 'all')
+  );
+  const showEmptyZero = $derived(
+    !showError &&
+      !showSkeleton &&
+      !showEmptyFilter &&
+      items.length === 0
+  );
+  const showGrid = $derived(!showError && !showSkeleton && !showEmptyFilter && !showEmptyZero);
+
+  // Cached-minutes for OfflineBanner — null when no data has loaded yet.
+  const cachedMinutes = $derived(
+    query.dataUpdatedAt
+      ? Math.max(0, Math.floor((Date.now() - query.dataUpdatedAt) / 60_000))
+      : null
+  );
+
+  // Footer mode follows the same precedence as the grid branches.
+  const footerMode = $derived(
+    !$online ? 'offline' : query.isFetching || query.isPending ? 'loading' : 'fresh'
+  );
 </script>
 
 <main class="max-w-7xl mx-auto px-4 md:px-8 lg:px-10 py-8 md:py-10">
@@ -178,31 +283,122 @@
     />
   </div>
 
-  <!-- ── Card grid: pinned (col-span-3) + regular cards ─────────── -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-    <div class="md:col-span-2 lg:col-span-3">
-      <a
-        href="#"
-        class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
-        aria-label="Mahalle-Team Willkommensbeitrag"
-      >
-        <ForumPostCard
-          topic={pinnedTopic}
-          kind="announcement"
-          featured
-          pinned
-          team
-        />
-      </a>
-    </div>
+  <!-- ── State branch ladder ────────────────────────────────────────
+       Precedence: error > skeleton > empty-filter > empty-zero > grid.
+       Header + filter rail above stay visible on every branch so the
+       user can still clear a bad filter or reach for a retry.        -->
 
-    {#each filteredRest as topic (topic._id)}
-      <a
-        href={`/topics/${topic._id}`}
-        class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
-      >
-        <ForumPostCard {topic} kind="discussion" />
-      </a>
-    {/each}
-  </div>
+  {#if showError}
+    <ErrorPanel onReload={() => query.refetch()} />
+  {:else if showSkeleton}
+    <ForumIndexSkeleton />
+  {:else if showEmptyFilter}
+    <EmptyFilterPanel
+      filterLabel={filterLabel}
+      relatedTags={relatedTags}
+      onClear={clearFilters}
+    />
+  {:else if showEmptyZero}
+    <EmptyZeroPanel />
+  {:else}
+    <!-- ── Happy path · pinned + regular grid ──────────────────────── -->
+    {#if !$online}
+      <OfflineBanner cachedMinutes={cachedMinutes} />
+    {/if}
+
+    <div
+      class={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 ${
+        !$online ? 'k-grayscale-cached' : ''
+      }`}
+    >
+      <!-- Pinned welcome (synthetic) — always col-span-3 in the happy path. -->
+      <div class="md:col-span-2 lg:col-span-3">
+        <a
+          href="#"
+          class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+          aria-label="Mahalle-Team Willkommensbeitrag"
+        >
+          <ForumPostCard
+            topic={pinnedTopic}
+            kind="announcement"
+            featured
+            pinned
+            team
+          />
+        </a>
+      </div>
+
+      <!-- Single feed-level plum banner if any community-reported card exists. -->
+      {#if hasReportedInFeed}
+        <div class="md:col-span-2 lg:col-span-3">
+          <OwnStatusBanner state="reported" />
+        </div>
+      {/if}
+
+      <!-- Regular feed. Per-topic moderation status drives placement:
+             pending  → dashed-warn wrapper around banner + own card (col-span-3)
+             rejected → standalone banner block + ghosted card (both col-span-3)
+             reported → ghosted card in normal grid flow (banner already at top)
+             else     → normal grid card                                       -->
+      {#each filteredRest as topic (topic._id)}
+        {@const status = ownStatusFor(topic)}
+        {#if status === 'pending'}
+          <div
+            class="md:col-span-2 lg:col-span-3 p-1 rounded-lg border-2 border-dashed border-warn"
+          >
+            <div class="px-2 pt-1.5 pb-2">
+              <OwnStatusBanner state="pending" />
+            </div>
+            <a
+              href={`/topics/${topic._id}`}
+              class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+            >
+              <ForumPostCard
+                {topic}
+                kind="discussion"
+                optimistic
+                statusBadgeOverride="pending"
+              />
+            </a>
+          </div>
+        {:else if status === 'rejected'}
+          <div class="md:col-span-2 lg:col-span-3">
+            <OwnStatusBanner state="rejected" />
+          </div>
+          <a
+            href={`/topics/${topic._id}`}
+            class="md:col-span-2 lg:col-span-3 block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+          >
+            <ForumPostCard
+              {topic}
+              kind="discussion"
+              ghosted
+              statusBadgeOverride="rejected"
+            />
+          </a>
+        {:else if status === 'reported'}
+          <a
+            href={`/topics/${topic._id}`}
+            class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+          >
+            <ForumPostCard
+              {topic}
+              kind="discussion"
+              ghosted
+              statusBadgeOverride="flagged"
+            />
+          </a>
+        {:else}
+          <a
+            href={`/topics/${topic._id}`}
+            class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+          >
+            <ForumPostCard {topic} kind="discussion" />
+          </a>
+        {/if}
+      {/each}
+    </div>
+  {/if}
+
+  <FeedStatusFooter mode={footerMode} pageCount={1} currentPage={1} />
 </main>

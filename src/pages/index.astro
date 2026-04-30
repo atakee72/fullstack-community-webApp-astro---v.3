@@ -22,5 +22,9 @@ try {
 ---
 
 <KioskLayout title="Mahalle · Forum" description="Diskussionen aus deinem Kiez.">
-  <ForumIndex client:only="svelte" initialTopics={initialTopics} />
+  <ForumIndex
+    client:only="svelte"
+    initialTopics={initialTopics}
+    currentUserId={session?.user?.id ?? null}
+  />
 </KioskLayout>
