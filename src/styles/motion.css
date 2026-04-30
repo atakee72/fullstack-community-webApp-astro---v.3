@@ -98,6 +98,13 @@
 @keyframes k-fade-in { from { opacity: 0; } to { opacity: 1; } }
 .k-fade-in { animation: k-fade-in var(--k-dur-base, 240ms) var(--k-ease-out, cubic-bezier(.4,0,.2,1)) both; }
 
+/* 13 · Striped progress · Moderating modal bar · 1200ms loop · linear */
+@keyframes k-prog-stripe {
+  from { background-position: 0 0; }
+  to   { background-position: 24px 0; }
+}
+.k-prog-stripe { animation: k-prog-stripe 1200ms linear infinite; }
+
 /* 12 · Carved title hover · 200ms · ease-out — declarative, no keyframes */
 .k-carved-title {
   text-shadow: 2px 2px 0 var(--k-accent, var(--k-wine, #7a4256));

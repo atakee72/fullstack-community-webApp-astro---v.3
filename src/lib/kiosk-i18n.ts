@@ -219,6 +219,91 @@ const de = {
   'feed.footer.loadMore': 'MEHR LADEN ↓',
 
   // sandbox
+  // ─── Phase 5b · compose / edit / moderating / delete ───────────────
+  // Compose form (create + edit shared sections).
+  'compose.kicker': 'WORÜBER REDEN WIR HEUTE?',
+  'compose.title.label': 'TITEL',
+  'compose.title.placeholder': 'Was willst du teilen?',
+  'compose.type.label': 'ART · WAS POSTEST DU?',
+  'compose.type.discussion': 'Diskussion',
+  'compose.type.discussion.hint': 'frage, problem, austausch',
+  'compose.type.recommendation': 'Empfehlung',
+  'compose.type.recommendation.hint': 'tipp, ort, person',
+  'compose.type.announcement': 'Ankündigung',
+  'compose.type.announcement.hint': 'info, hinweis, einladung',
+  'compose.body.label': 'TEXT · MARKDOWN OK',
+  'compose.body.placeholder': 'Schreib was Hilfreiches…',
+  'compose.body.tip': 'tipp · @name erwähnt jemanden im kiez',
+  'compose.images.label': 'BILDER · MAX 5',
+  'compose.images.upload': 'hochladen',
+  'compose.images.formats': 'JPG, PNG, WebP · ≤5 MB · alle Bilder werden geprüft',
+  'compose.tags.label': 'TAGS · 1–3',
+  'compose.tags.add': '+ tag',
+  'compose.tags.suggested': 'vorgeschlagen:',
+  'compose.preview.kicker': 'VORSCHAU · LIVE',
+  'compose.preview.you': 'du',
+  'compose.preview.now': 'gleich',
+  'compose.moderation.kicker': 'MODERATION',
+  'compose.moderation.body':
+    'Dein Beitrag wird kurz auf Sprache und Inhalt geprüft, bevor er veröffentlicht wird. Die Prüfung ist anonym — keine persönlichen Daten werden verwendet, nur der Text und die Bilder.',
+  'compose.cta.publish': 'veröffentlichen →',
+  'compose.cta.draft': 'als Entwurf speichern',
+  'compose.cta.discard': 'verwerfen',
+  'compose.draft.saved': 'Entwurf wird gesichert',
+  'compose.terms':
+    'Indem du veröffentlichst, akzeptierst du die Kiez-Regeln. Wir sind eine Nachbarschaft, kein anonymes Board.',
+
+  // Moderating modal — cosmetic 5-stage pipeline.
+  'moderating.kicker': 'DEIN POST WIRD GEPRÜFT',
+  'moderating.title.prefix': 'Wir',
+  'moderating.title.accent': 'schauen',
+  'moderating.title.suffix': 'kurz drüber.',
+  'moderating.subtitle': 'Kurze, anonyme Prüfung. Du musst nichts tun.',
+  'moderating.stage.language': 'Sprache geprüft',
+  'moderating.stage.language.hint': 'TR · DE · EN',
+  'moderating.stage.content': 'Inhalt geprüft',
+  'moderating.stage.content.hint': 'keine Auffälligkeiten',
+  'moderating.stage.context': 'Kontext-Prüfung',
+  'moderating.stage.context.hint': 'läuft',
+  'moderating.stage.images': 'Bilder werden geprüft',
+  'moderating.stage.images.hint': 'Bild {n}/{total}',
+  'moderating.stage.publish': 'Veröffentlichen',
+  'moderating.stage.publish.hint': 'gleich live',
+  'moderating.note':
+    '✦ Im Hintergrund läuft schon der optimistische Eintrag — falls alles ok ist, ist dein Post bereits sichtbar, sobald du diesen Dialog wegklickst.',
+
+  // Inline edit mode on the post detail page.
+  'edit.banner.left': '✎ DU BEARBEITEST DEINEN POST · Änderungen werden mit „bearbeitet" markiert',
+  'edit.banner.right': 'ESC = abbrechen',
+  'edit.published.line': 'VERÖFFENTLICHT · vor {n} {unit} · {replies} Antworten',
+  'edit.versions.label': 'VERSIONEN',
+  'edit.versions.count': '{n}-mal bearbeitet',
+  'edit.cta.save': 'speichern',
+  'edit.cta.cancel': 'abbrechen',
+  'edit.cta.delete': 'post löschen…',
+  'edit.confirm.discard': 'Änderungen verwerfen?',
+
+  // Delete-confirm card with type-to-confirm friction.
+  'delete.kicker': 'POST LÖSCHEN?',
+  'delete.title.prefix': 'Wirklich',
+  'delete.title.accent': 'löschen',
+  'delete.title.suffix': '?',
+  'delete.body': '{replies} Antworten gehen verloren.',
+  'delete.body.zero': 'Dieser Post wird endgültig gelöscht.',
+  'delete.confirm.label': 'TIPPE „LÖSCHEN" ZUM BESTÄTIGEN',
+  'delete.confirm.placeholder': 'lösch…',
+  'delete.confirm.target': 'LÖSCHEN',
+  'delete.cta.confirm': 'endgültig löschen',
+  'delete.cta.cancel': 'abbrechen',
+  'delete.friction':
+    'Der Knopf links wird erst aktiv, wenn du „löschen" tippst. Bewusste Reibung — wir schützen den Thread.',
+
+  // Static rate-limit copy (live surface — sandbox keeps the clock).
+  'state.rate.body.short': '5 heute · komm morgen wieder.',
+
+  // Live mode for the feed footer.
+  'feed.footer.live': '● LIVE · post just landed',
+
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox für die atomaren Komponenten. Visuelle Treue prüfen, bevor sie ins Forum übernommen werden.'
 } as const;
@@ -363,6 +448,85 @@ const en: Dict = {
   'feed.footer.offline': '● OFFLINE · CACHED',
   'feed.footer.loading': 'LOADING…',
   'feed.footer.loadMore': 'LOAD MORE ↓',
+
+  // ─── Phase 5b · compose / edit / moderating / delete ───────────────
+  'compose.kicker': "WHAT'S ON YOUR MIND?",
+  'compose.title.label': 'TITLE',
+  'compose.title.placeholder': 'What do you want to share?',
+  'compose.type.label': 'TYPE · WHAT ARE YOU POSTING?',
+  'compose.type.discussion': 'Discussion',
+  'compose.type.discussion.hint': 'question, problem, exchange',
+  'compose.type.recommendation': 'Recommendation',
+  'compose.type.recommendation.hint': 'tip, place, person',
+  'compose.type.announcement': 'Announcement',
+  'compose.type.announcement.hint': 'info, notice, invite',
+  'compose.body.label': 'BODY · MARKDOWN OK',
+  'compose.body.placeholder': 'Write something helpful…',
+  'compose.body.tip': 'tip · @name mentions someone in the kiez',
+  'compose.images.label': 'IMAGES · MAX 5',
+  'compose.images.upload': 'upload',
+  'compose.images.formats': 'JPG, PNG, WebP · ≤5 MB · all images are screened',
+  'compose.tags.label': 'TAGS · 1–3',
+  'compose.tags.add': '+ tag',
+  'compose.tags.suggested': 'suggested:',
+  'compose.preview.kicker': 'PREVIEW · LIVE',
+  'compose.preview.you': 'you',
+  'compose.preview.now': 'now',
+  'compose.moderation.kicker': 'MODERATION',
+  'compose.moderation.body':
+    'Your post is briefly checked for language and content before going live. The check is anonymous — no personal data is used, only the text and images.',
+  'compose.cta.publish': 'publish →',
+  'compose.cta.draft': 'save as draft',
+  'compose.cta.discard': 'discard',
+  'compose.draft.saved': 'draft auto-saved',
+  'compose.terms':
+    "By publishing you accept the kiez rules. We're a neighbourhood, not an anonymous board.",
+
+  'moderating.kicker': 'YOUR POST IS BEING SCREENED',
+  'moderating.title.prefix': 'One',
+  'moderating.title.accent': 'moment',
+  'moderating.title.suffix': 'screening.',
+  'moderating.subtitle': 'Quick, anonymous screening. Nothing for you to do.',
+  'moderating.stage.language': 'Language checked',
+  'moderating.stage.language.hint': 'TR · DE · EN',
+  'moderating.stage.content': 'Content checked',
+  'moderating.stage.content.hint': 'nothing flagged',
+  'moderating.stage.context': 'Context check',
+  'moderating.stage.context.hint': 'running',
+  'moderating.stage.images': 'Images being screened',
+  'moderating.stage.images.hint': 'image {n}/{total}',
+  'moderating.stage.publish': 'Publish',
+  'moderating.stage.publish.hint': 'almost live',
+  'moderating.note':
+    "✦ Optimistic insert is already running — if everything's clean, your post is visible the moment you dismiss this dialog.",
+
+  'edit.banner.left': '✎ YOU\'RE EDITING YOUR POST · changes are marked „edited"',
+  'edit.banner.right': 'ESC = cancel',
+  'edit.published.line': 'PUBLISHED · {n} {unit} ago · {replies} replies',
+  'edit.versions.label': 'VERSION HISTORY',
+  'edit.versions.count': 'edited {n} times',
+  'edit.cta.save': 'save',
+  'edit.cta.cancel': 'cancel',
+  'edit.cta.delete': 'delete post…',
+  'edit.confirm.discard': 'Discard changes?',
+
+  'delete.kicker': 'DELETE POST?',
+  'delete.title.prefix': 'Really',
+  'delete.title.accent': 'delete',
+  'delete.title.suffix': '?',
+  'delete.body': '{replies} replies will disappear.',
+  'delete.body.zero': 'This post will be permanently deleted.',
+  'delete.confirm.label': 'TYPE „DELETE" TO CONFIRM',
+  'delete.confirm.placeholder': 'del…',
+  'delete.confirm.target': 'DELETE',
+  'delete.cta.confirm': 'delete forever',
+  'delete.cta.cancel': 'cancel',
+  'delete.friction':
+    'The left button stays disabled until you type „delete". Intentional friction — we protect the thread.',
+
+  'state.rate.body.short': '5 today · come back tomorrow.',
+
+  'feed.footer.live': '● LIVE · post just landed',
 
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox for the atomic components. Verify visual fidelity here before wiring them into the Forum.'
