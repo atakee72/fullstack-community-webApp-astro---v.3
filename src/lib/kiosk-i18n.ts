@@ -85,7 +85,6 @@ const de = {
   'forum.title.prefix': 'Was',
   'forum.title.accent': 'reden',
   'forum.title.suffix': 'wir heute?',
-  'forum.subtitle': 'Diskussionen aus deinem Kiez.',
   'forum.cta.newTopic': '+ neues thema',
   'forum.cta.readMore': 'mehr laden',
 
@@ -103,9 +102,12 @@ const de = {
   'filter.mine': 'Meine',
   'filter.tagsLabel': 'TAGS',
 
-  // pinned block
+  // pinned block + post-card straps
   'pinned.banner.label': 'OFFIZIELLE ANKÜNDIGUNG · KIEZRAT',
   'pinned.banner.tag': 'ANGEHEFTET',
+  'card.strap.recommendation': '✦ EMPFEHLUNG AUS DEM KIEZ',
+  'card.cta.read': 'lesen',
+  'card.saved': 'saved',
   'role.team': 'MAHALLE-TEAM',
 
   // post type chips
@@ -120,6 +122,35 @@ const de = {
   'status.flagged': 'ai-markiert',
   'status.reported': 'gemeldet',
   'status.warning': 'mit hinweis',
+
+  // detail page — breadcrumb + replies header + engagement strip
+  'detail.crumb.live': 'live',
+  'detail.crumb.reading': 'mitlesend',
+  'detail.replies.heading.one': 'Antwort',
+  'detail.replies.heading.other': 'Antworten',
+  'detail.replies.newest': 'neueste zuerst',
+  'detail.replies.unread': '{n} ungelesen',
+  'detail.engagement.thanks': 'danke',
+  'detail.engagement.replies': 'antworten',
+  'detail.engagement.saved': 'gespeichert',
+  'detail.share': 'teilen',
+  'detail.report': 'melden',
+  'detail.verified': 'VERIFIZIERT IM KIEZ',
+  'detail.memberSince': 'seit {year}',
+
+  // detail page — right rail sidebar
+  'detail.people.heading': 'WER MITREDET',
+  'detail.related.heading': 'ÄHNLICHE THEMEN',
+  'detail.compose.heading': 'DEINE ANTWORT',
+  'detail.compose.placeholder': 'Schreib was Hilfreiches…',
+  'detail.compose.attach': 'anhang',
+  'detail.compose.submit': 'antworten',
+  'detail.compose.modNote':
+    'Antworten werden automatisch geprüft (KI + Nachbarschaft). Sei direkt, sei freundlich.',
+  'detail.trust.quote':
+    '„Mahalle ist kein Forum für anonyme Wut. Jede Stimme hat eine Adresse — manchmal wörtlich."',
+  'detail.composeLogin': 'Anmelden, um mitzudiskutieren.',
+  'detail.empty.replies': 'Noch keine Antworten — sei die erste.',
 
   // footer
   'footer.copyright': '© {year} Ercan Atak — Mahalle.',
@@ -155,7 +186,6 @@ const en: Dict = {
   'forum.title.prefix': 'What are we',
   'forum.title.accent': 'talking',
   'forum.title.suffix': 'about today?',
-  'forum.subtitle': 'Conversations from your neighborhood.',
   'forum.cta.newTopic': '+ new topic',
   'forum.cta.readMore': 'load more',
 
@@ -173,7 +203,10 @@ const en: Dict = {
 
   'pinned.banner.label': 'OFFICIAL ANNOUNCEMENT · KIEZRAT',
   'pinned.banner.tag': 'PINNED',
-  'role.team': 'MAHALLE-TEAM',
+  'card.strap.recommendation': '✦ RECOMMENDED IN THE KIEZ',
+  'card.cta.read': 'read',
+  'card.saved': 'saved',
+  'role.team': 'MAHALLE TEAM',
 
   'chip.discussion': 'Discussion',
   'chip.recommendation': 'Recommendation',
@@ -185,6 +218,33 @@ const en: Dict = {
   'status.flagged': 'ai-flagged',
   'status.reported': 'reported',
   'status.warning': 'with notice',
+
+  'detail.crumb.live': 'live',
+  'detail.crumb.reading': 'reading',
+  'detail.replies.heading.one': 'reply',
+  'detail.replies.heading.other': 'replies',
+  'detail.replies.newest': 'newest first',
+  'detail.replies.unread': '{n} unread',
+  'detail.engagement.thanks': 'thanks',
+  'detail.engagement.replies': 'replies',
+  'detail.engagement.saved': 'saved',
+  'detail.share': 'share',
+  'detail.report': 'report',
+  'detail.verified': 'VERIFIED IN KIEZ',
+  'detail.memberSince': 'since {year}',
+
+  'detail.people.heading': "WHO'S IN",
+  'detail.related.heading': 'RELATED TOPICS',
+  'detail.compose.heading': 'YOUR REPLY',
+  'detail.compose.placeholder': 'Write something helpful…',
+  'detail.compose.attach': 'attach',
+  'detail.compose.submit': 'reply',
+  'detail.compose.modNote':
+    'Replies are auto-screened (AI + neighbours). Be direct, be kind.',
+  'detail.trust.quote':
+    "“Mahalle isn't a forum for anonymous rage. Every voice has an address — sometimes literally.”",
+  'detail.composeLogin': 'Sign in to join the conversation.',
+  'detail.empty.replies': 'No replies yet — be the first.',
 
   'footer.copyright': '© {year} Ercan Atak — Mahalle.',
   'footer.licensedUnder': 'Licensed under',
