@@ -1,0 +1,27 @@
+---
+// /topics/create — Editorial Kiosk compose page.
+//
+// Auth-gated by frontmatter: redirect to /login when there is no
+// session. Same pattern as /admin/moderation. The form's submit also
+// re-checks server-side via /api/topics/create's 401 handler.
+
+import KioskLayout from '../../layouts/KioskLayout.astro';
+import ComposePage from '../../components/forum/kiosk/compose/ComposePage.svelte';
+import { getSession } from 'auth-astro/server';
+
+const session = await getSession(Astro.request);
+
+if (!session?.user) {
+  return Astro.redirect('/login', 302);
+}
+
+const currentUser = {
+  id: session.user.id,
+  name: session.user.name ?? undefined,
+  image: session.user.image ?? null
+};
+---
+
+<KioskLayout title="Mahalle · neues Thema" description="Schreibe einen neuen Beitrag im Mahalle-Forum.">
+  <ComposePage client:only="svelte" currentUser={currentUser} />
+</KioskLayout>
