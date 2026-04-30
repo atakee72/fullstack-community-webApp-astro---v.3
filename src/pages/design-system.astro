@@ -8,6 +8,8 @@
 //   01–05  atoms          (KioskBtn, PostTypeChip, StatusBadge, KioskAvatar)
 //   06–09  forum molecules (post cards, featured pinned, state variants,
 //                           comment / reply card)
+//   10–17  state matrix   (skeleton, empty, error, offline, status banners,
+//                           rate-limit, feed footer)
 // Future phases append here too — never delete sections, just extend.
 
 import KioskLayout from '../layouts/KioskLayout.astro';
@@ -17,6 +19,16 @@ import StatusBadge from '../components/forum/kiosk/StatusBadge.svelte';
 import KioskAvatar from '../components/forum/kiosk/KioskAvatar.svelte';
 import ForumPostCard from '../components/forum/kiosk/ForumPostCard.svelte';
 import ForumComment from '../components/forum/kiosk/ForumComment.svelte';
+import SkelBar from '../components/forum/kiosk/states/SkelBar.svelte';
+import SkelCard from '../components/forum/kiosk/states/SkelCard.svelte';
+import ForumIndexSkeleton from '../components/forum/kiosk/states/ForumIndexSkeleton.svelte';
+import EmptyFilterPanel from '../components/forum/kiosk/states/EmptyFilterPanel.svelte';
+import EmptyZeroPanel from '../components/forum/kiosk/states/EmptyZeroPanel.svelte';
+import ErrorPanel from '../components/forum/kiosk/states/ErrorPanel.svelte';
+import OfflineBanner from '../components/forum/kiosk/states/OfflineBanner.svelte';
+import OwnStatusBanner from '../components/forum/kiosk/states/OwnStatusBanner.svelte';
+import FeedStatusFooter from '../components/forum/kiosk/states/FeedStatusFooter.svelte';
+import RateLimitPanel from '../components/forum/kiosk/states/RateLimitPanel.svelte';
 
 // ── Mock data ────────────────────────────────────────────────────────
 // Synthetic Schillerkiez topics so the cards render with realistic
@@ -121,7 +133,7 @@ const replyShort = {
   <main class="max-w-5xl mx-auto px-6 md:px-10 py-12">
     <header class="mb-10 pb-6 border-b-2 border-ink">
       <p class="font-dmmono text-[11px] uppercase tracking-[0.18em] text-ink-mute">
-        ◆ Phase 2–4a · Atoms + Forum Molecules
+        ◆ Phase 2–4b · Atoms + Forum Molecules + State Matrix
       </p>
       <h1 class="font-bricolage font-extrabold text-4xl md:text-5xl tracking-tight mt-2 leading-none">
         Editorial <em class="font-instrument italic font-normal">Kiosk</em>
@@ -351,6 +363,200 @@ const replyShort = {
         <ForumComment comment={replyRegular} client:load />
         <ForumComment comment={replyShort} client:load />
       </div>
+    </section>
+
+    {/* ── 10 · Skeleton primitives ─────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        10 · Skeleton primitives
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        <code class="font-dmmono text-[12px]">SkelBar</code> + <code class="font-dmmono text-[12px]">SkelCard</code> reuse the existing <code class="font-dmmono text-[12px]">.k-skeleton</code> shimmer keyframe from <code class="font-dmmono text-[12px]">styles/motion.css</code>. Three card variants mirror the real post-kind chrome.
+      </p>
+      <div class="mb-6 max-w-md space-y-2">
+        <SkelBar w="92%" h={18} client:load />
+        <SkelBar w="76%" h={18} client:load />
+        <SkelBar w={120} h={10} client:load />
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <SkelCard kind="topic" client:load />
+        <SkelCard kind="announcement" client:load />
+        <SkelCard kind="recommendation" client:load />
+      </div>
+    </section>
+
+    {/* ── 11 · ForumIndexSkeleton (full grid) ──────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        11 · ForumIndexSkeleton — full grid
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        Renders 1 announcement (col-span-3) + 5 mixed cards. Mirrors the
+        layout of <code class="font-dmmono text-[12px]">ForumDesktopLoading</code> in <code class="font-dmmono text-[12px]">kiosk-forum-states.jsx</code>. Drops in above the
+        existing grid in <code class="font-dmmono text-[12px]">ForumIndexInner</code> when
+        <code class="font-dmmono text-[12px]">query.isPending && !data</code>.
+      </p>
+      <ForumIndexSkeleton client:load />
+    </section>
+
+    {/* ── 12 · Empty states ────────────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        12 · Empty states — filter + zero
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        Two distinct moods: filter-empty is consolatory (paper-warm, dashed
+        rule, "still." flourish, related-tag suggestions), zero-empty is
+        celebratory (ink hero with riso sun, "Sei die erste Stimme.").
+      </p>
+      <EmptyFilterPanel
+        filterLabel="#kita"
+        relatedTags={['familie', 'spielplatz', 'schule', 'betreuung']}
+        onClear={() => {}}
+        client:load
+      />
+      <EmptyZeroPanel client:load />
+    </section>
+
+    {/* ── 13 · Error panel ─────────────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        13 · Error panel — 503
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        Manual reload only — TanStack Query has already retried with
+        exponential backoff by the time <code class="font-dmmono text-[12px]">isError</code> is true. The JSX
+        auto-retry countdown is dropped because a cosmetic timer that
+        doesn't trigger a real refetch is a lie.
+      </p>
+      <ErrorPanel onReload={() => {}} client:load />
+    </section>
+
+    {/* ── 14 · Offline banner + grayscale overlay ──────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        14 · Offline + cached overlay
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        Banner above the feed; <code class="font-dmmono text-[12px]">.k-grayscale-cached</code> on the grid
+        wrapper softens the cards by 40 % saturation + 15 % opacity so they
+        read as "stored, not live". Wired off the <code class="font-dmmono text-[12px]">online</code> store in <code class="font-dmmono text-[12px]">src/lib/onlineStore.ts</code>.
+      </p>
+      <OfflineBanner cachedMinutes={22} client:load />
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 k-grayscale-cached">
+        <ForumPostCard topic={topicSample} kind="discussion" client:load />
+        <ForumPostCard topic={recommendationSample} kind="recommendation" client:load />
+        <ForumPostCard topic={announcementSample} kind="announcement" team client:load />
+      </div>
+      <div class="mt-6">
+        <p class="font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute mb-2">
+          ◇ alternate body when no cached data exists
+        </p>
+        <OfflineBanner cachedMinutes={null} client:load />
+      </div>
+    </section>
+
+    {/* ── 15 · Author-status banners (placement rules) ─────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        15 · Author-status banners — pending · rejected · reported
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        Each state has a different placement rule in the real feed:
+        pending wraps banner + card in a dashed-warn border;
+        rejected stacks banner + ghosted card without a wrapper;
+        reported renders the banner ONCE at the top of the feed and the
+        affected cards sit in normal grid flow.
+      </p>
+
+      <p class="font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute mb-3">
+        ◇ pending — own post, dashed-warn wrapper around banner + ghosted card
+      </p>
+      <div class="mb-8 p-1 rounded-lg border-2 border-dashed border-warn">
+        <div class="px-2 pt-1.5 pb-2">
+          <OwnStatusBanner state="pending" client:load />
+        </div>
+        <ForumPostCard
+          topic={optimisticSample}
+          kind="discussion"
+          optimistic
+          statusBadgeOverride="pending"
+          client:load
+        />
+      </div>
+
+      <p class="font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute mb-3">
+        ◇ rejected — own post, banner + ghosted card (no wrapper)
+      </p>
+      <div class="mb-3">
+        <OwnStatusBanner state="rejected" client:load />
+      </div>
+      <div class="mb-8">
+        <ForumPostCard
+          topic={ghostedSample}
+          kind="discussion"
+          ghosted
+          statusBadgeOverride="rejected"
+          client:load
+        />
+      </div>
+
+      <p class="font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute mb-3">
+        ◇ reported — single feed-level banner + the affected card in flow
+      </p>
+      <div class="mb-3">
+        <OwnStatusBanner state="reported" client:load />
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <ForumPostCard
+          topic={topicSample}
+          kind="discussion"
+          ghosted
+          statusBadgeOverride="flagged"
+          client:load
+        />
+        <ForumPostCard topic={recommendationSample} kind="recommendation" client:load />
+        <ForumPostCard topic={announcementSample} kind="announcement" team client:load />
+      </div>
+    </section>
+
+    {/* ── 16 · Rate-limit panel ────────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        16 · Rate-limit panel
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        Sandbox-only in 4b — the compose form (which gates against this)
+        ships in 5b. Copy adapted to <b>5/Tag</b> to match the actual
+        <code class="font-dmmono text-[12px]">dailyLimit: 5</code> enforced by <code class="font-dmmono text-[12px]">/api/topics/create</code> (the JSX shows
+        5/Stunde, which the API never actually enforces).
+      </p>
+      <RateLimitPanel unlocksIn="04:47:12" client:load />
+    </section>
+
+    {/* ── 17 · Feed status footer ──────────────────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        17 · Feed status footer
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        Always rendered at the bottom of the forum index. The middle slot
+        carries the status indicator that switches per <code class="font-dmmono text-[12px]">mode</code>.
+        <code class="font-dmmono text-[12px]">'live'</code> mode (post-just-landed celebration) is deferred to 5b
+        with the optimistic compose mutation.
+      </p>
+      <p class="font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute mb-2">
+        ◇ fresh
+      </p>
+      <FeedStatusFooter mode="fresh" pageCount={18} currentPage={1} minutesSinceLast={28} client:load />
+      <p class="font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute mt-4 mb-2">
+        ◇ loading
+      </p>
+      <FeedStatusFooter mode="loading" pageCount={18} currentPage={1} client:load />
+      <p class="font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute mt-4 mb-2">
+        ◇ offline
+      </p>
+      <FeedStatusFooter mode="offline" pageCount={18} currentPage={1} client:load />
     </section>
   </main>
 </KioskLayout>
