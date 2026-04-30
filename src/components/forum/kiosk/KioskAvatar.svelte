@@ -89,7 +89,7 @@
 
   {#if isOP}
     <span
-      class="absolute -top-1 -right-1 px-1 py-px bg-ink text-paper rounded font-jetbrains font-bold uppercase tracking-[0.08em] text-[8px] leading-tight"
+      class="absolute -top-1 -right-1 px-1 py-px bg-ink text-paper rounded font-dmmono font-bold uppercase tracking-[0.08em] text-[8px] leading-tight"
       aria-label="original poster"
     >
       OP

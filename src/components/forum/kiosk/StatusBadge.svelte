@@ -66,7 +66,7 @@
 </script>
 
 <span
-  class={`inline-flex items-center rounded-md border font-jetbrains font-medium ${sizeClass} ${tone} ${extraClass}`}
+  class={`inline-flex items-center rounded-md border font-dmmono font-medium ${sizeClass} ${tone} ${extraClass}`}
 >
   <span aria-hidden="true" class={`leading-none ${isPulsing ? 'k-pulse-dot' : ''}`}>{icon}</span>
   {label ?? defaultLabel}

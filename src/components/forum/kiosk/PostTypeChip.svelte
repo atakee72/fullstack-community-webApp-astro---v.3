@@ -70,7 +70,7 @@
   type={onclick ? 'button' : undefined}
   role={onclick ? 'button' : undefined}
   {onclick}
-  class={`inline-flex items-center rounded-md font-jetbrains uppercase tracking-[0.12em] font-semibold border-2 ${sizeClass} ${
+  class={`inline-flex items-center rounded-md font-dmmono uppercase tracking-[0.12em] font-semibold border-2 ${sizeClass} ${
     selected ? filledBg : 'bg-transparent text-ink border-ink'
   } ${liftClass} ${interactive} ${extraClass}`}
 >

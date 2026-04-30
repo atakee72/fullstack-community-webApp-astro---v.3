@@ -11,7 +11,7 @@
 <footer
   class="relative z-10 mt-16 py-6 px-4 md:px-8 border-t border-rule"
 >
-  <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 text-center font-jetbrains text-[11px] text-ink-mute">
+  <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 text-center font-dmmono text-[11px] text-ink-mute">
     <span>{tStr($t['footer.copyright'], { year })}</span>
     <span>
       {$t['footer.licensedUnder']}

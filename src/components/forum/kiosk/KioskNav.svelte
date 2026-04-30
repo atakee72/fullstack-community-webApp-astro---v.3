@@ -55,7 +55,7 @@
         <span class="font-bricolage font-bold text-ink text-xl tracking-tight">
           {$t['brand.name']}
         </span>
-        <span class="font-jetbrains text-[10px] uppercase tracking-[0.18em] text-ink-mute">
+        <span class="font-dmmono text-[10px] uppercase tracking-[0.18em] text-ink-mute">
           {$t['brand.location']}
         </span>
       </span>
@@ -82,7 +82,7 @@
     <div class="flex items-center gap-3 shrink-0">
       <!-- DE/EN segmented pill -->
       <div
-        class="inline-flex items-center rounded-full border-2 border-ink overflow-hidden font-jetbrains text-[11px] uppercase tracking-[0.12em] bg-ink"
+        class="inline-flex items-center rounded-full border-2 border-ink overflow-hidden font-dmmono text-[11px] uppercase tracking-[0.12em] bg-ink"
         role="group"
         aria-label="Language"
       >
@@ -109,7 +109,7 @@
         <a
           href="/profile"
           aria-label={user.name}
-          class="w-9 h-9 rounded-full border-2 border-ink overflow-hidden flex items-center justify-center font-jetbrains font-bold text-[11px] uppercase tracking-wider bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
+          class="w-9 h-9 rounded-full border-2 border-ink overflow-hidden flex items-center justify-center font-dmmono font-bold text-[11px] uppercase tracking-wider bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
         >
           {#if user.image}
             <img src={user.image} alt="" class="w-full h-full object-cover" />
@@ -121,7 +121,7 @@
         <a
           href="/login"
           aria-label="Sign in"
-          class="w-9 h-9 rounded-full border-2 border-ink flex items-center justify-center font-jetbrains font-bold text-[11px] bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
+          class="w-9 h-9 rounded-full border-2 border-ink flex items-center justify-center font-dmmono font-bold text-[11px] bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
         >EA</a>
       {/if}
     </div>
@@ -137,7 +137,7 @@
     {#each bottomNav as item (item.href)}
       <a
         href={item.href}
-        class="flex-1 py-3 font-jetbrains text-[10px] uppercase tracking-[0.12em] text-center transition-colors {
+        class="flex-1 py-3 font-dmmono text-[10px] uppercase tracking-[0.12em] text-center transition-colors {
           isActive(item.match)
             ? 'text-ink font-bold bg-paper-warm'
             : 'text-ink-mute hover:text-ink'

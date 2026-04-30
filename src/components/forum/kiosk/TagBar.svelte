@@ -52,8 +52,8 @@
 
   const tagsLabelClass = $derived(
     tone === 'ink'
-      ? 'font-jetbrains text-[10px] uppercase tracking-[0.18em] text-paper/60'
-      : 'font-jetbrains text-[10px] uppercase tracking-[0.18em] text-ink-mute'
+      ? 'font-dmmono text-[10px] uppercase tracking-[0.18em] text-paper/60'
+      : 'font-dmmono text-[10px] uppercase tracking-[0.18em] text-ink-mute'
   );
 
   const sepClass = $derived(
