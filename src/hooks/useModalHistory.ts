@@ -17,8 +17,8 @@ import { useEffect, useRef } from 'react';
  *
  * Nested modals: each instance pushes a tagged entry onto a module-level
  * stack. A single module-level listener handles back navigation and pops
- * the topmost modal first (so ReportModal over ReadMoreModal closes in the
- * expected order).
+ * the topmost modal first, so a modal opened over another closes in the
+ * expected order.
  */
 
 type StackEntry = {
