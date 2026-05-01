@@ -22,7 +22,7 @@
   import EditModeBanner from './compose/EditModeBanner.svelte';
   import DeleteConfirmCard from './compose/DeleteConfirmCard.svelte';
   import CommentComposer from './compose/CommentComposer.svelte';
-  import { confirmAction } from '../../../utils/toast';
+  import { confirmAction, showError, showToast } from '../../../utils/toast';
   import { optimizeCloudinary } from '../../../utils/cloudinary';
 
   let { initialTopic, initialComments = [], currentUserId = null } = $props<{
@@ -202,6 +202,90 @@
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   });
+
+  // ─── Comment edit / delete ──────────────────────────────────────────
+  // Plain fetch (matches saveEdit / confirmDelete / submitComment patterns
+  // on this page — the topics svelte-query cache lives on `/`, not here).
+  // Optimistic patches operate on the local `comments` $state directly.
+
+  async function handleEditComment(commentId: string, newBody: string) {
+    const idx = comments.findIndex((c) => String(c._id) === String(commentId));
+    if (idx === -1) return;
+    const snapshot = comments;
+    const optimisticComment = {
+      ...comments[idx],
+      body: newBody,
+      editedAt: new Date().toISOString()
+    };
+    comments = [
+      ...comments.slice(0, idx),
+      optimisticComment,
+      ...comments.slice(idx + 1)
+    ];
+
+    try {
+      const res = await fetch(`/api/comments/edit/${commentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ body: newBody })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        comments = snapshot;
+        if (err.error === 'edit_window_expired') {
+          showToast($t['comment.toast.edit.window'], { type: 'warning' });
+        } else if (err.error === 'edit_blocked_by_moderation') {
+          showToast($t['comment.toast.edit.flagged'], { type: 'warning' });
+        } else {
+          showError($t['comment.toast.edit.error']);
+        }
+        throw new Error(err.error ?? 'edit_failed');
+      }
+      const json = await res.json();
+      const returned = json.comment;
+      if (returned?.moderationStatus && returned.moderationStatus !== 'approved') {
+        // Re-moderation flagged it — drop from local state to match the
+        // approved-only filter the GET endpoint applies on next refetch.
+        comments = comments.filter((c) => String(c._id) !== String(commentId));
+      } else {
+        // Replace the optimistic entry with the server's authoritative copy.
+        comments = comments.map((c) =>
+          String(c._id) === String(commentId) ? returned : c
+        );
+      }
+    } catch (err) {
+      // Rollback already done above when !res.ok; rethrow so the child can
+      // keep edit mode open on failure.
+      throw err;
+    }
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    const ok = await confirmAction($t['comment.delete.confirm.body'], {
+      title: $t['comment.delete.confirm.title'],
+      confirmLabel: $t['comment.delete.confirm.cta'],
+      variant: 'danger'
+    });
+    if (!ok) return;
+
+    const snapshot = comments;
+    comments = comments.filter((c) => String(c._id) !== String(commentId));
+
+    try {
+      const res = await fetch(`/api/comments/delete/${commentId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        comments = snapshot;
+        showError($t['comment.toast.delete.error']);
+      }
+    } catch {
+      comments = snapshot;
+      showError($t['comment.toast.delete.error']);
+    }
+  }
 
   // ─── Comment composer ───────────────────────────────────────────────
   let postingComment = $state(false);
@@ -427,6 +511,8 @@
           topicAuthorId={topic.author?._id ?? null}
           {currentUserId}
           unreadCount={0}
+          onEditComment={handleEditComment}
+          onDeleteComment={handleDeleteComment}
         />
       {/if}
     </article>

@@ -304,6 +304,20 @@ const de = {
   // Live mode for the feed footer.
   'feed.footer.live': '● LIVE · post just landed',
 
+  // ─── Comment edit / delete ─────────────────────────────────────────
+  'comment.actions.edit': 'bearbeiten',
+  'comment.actions.delete': 'löschen',
+  'comment.edited': 'bearbeitet',
+  'comment.edit.save': 'speichern',
+  'comment.edit.cancel': 'abbrechen',
+  'comment.delete.confirm.title': 'Kommentar löschen?',
+  'comment.delete.confirm.body': 'Wirklich löschen? Kann nicht rückgängig gemacht werden.',
+  'comment.delete.confirm.cta': 'endgültig löschen',
+  'comment.toast.edit.window': 'Bearbeiten nur in den ersten 15 Minuten möglich.',
+  'comment.toast.edit.flagged': 'Bearbeiten gesperrt — Kommentar wird moderiert.',
+  'comment.toast.edit.error': 'Konnte nicht gespeichert werden.',
+  'comment.toast.delete.error': 'Konnte nicht gelöscht werden.',
+
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox für die atomaren Komponenten. Visuelle Treue prüfen, bevor sie ins Forum übernommen werden.'
 } as const;
@@ -527,6 +541,19 @@ const en: Dict = {
   'state.rate.body.short': '5 today · come back tomorrow.',
 
   'feed.footer.live': '● LIVE · post just landed',
+
+  'comment.actions.edit': 'edit',
+  'comment.actions.delete': 'delete',
+  'comment.edited': 'edited',
+  'comment.edit.save': 'save',
+  'comment.edit.cancel': 'cancel',
+  'comment.delete.confirm.title': 'Delete comment?',
+  'comment.delete.confirm.body': 'Delete this comment? Cannot be undone.',
+  'comment.delete.confirm.cta': 'delete forever',
+  'comment.toast.edit.window': 'Edits are only allowed within the first 15 minutes.',
+  'comment.toast.edit.flagged': 'Editing locked — comment is under moderation.',
+  'comment.toast.edit.error': "Couldn't save your edit.",
+  'comment.toast.delete.error': "Couldn't delete the comment.",
 
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox for the atomic components. Verify visual fidelity here before wiring them into the Forum.'

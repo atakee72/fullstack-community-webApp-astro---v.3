@@ -13,12 +13,16 @@
     comments = [],
     topicAuthorId = null,
     currentUserId = null,
-    unreadCount = 0
+    unreadCount = 0,
+    onEditComment,
+    onDeleteComment
   } = $props<{
     comments?: any[];
     topicAuthorId?: string | null;
     currentUserId?: string | null;
     unreadCount?: number;
+    onEditComment?: (commentId: string, newBody: string) => Promise<void>;
+    onDeleteComment?: (commentId: string) => Promise<void>;
   }>();
 
   // Author IDs come back as strings or as { _id: '…' } depending on
@@ -72,8 +76,15 @@
     </p>
   {:else}
     <div>
-      {#each comments as comment (comment._id)}
-        <ForumComment {comment} isOP={isOPComment(comment)} />
+      {#each comments as comment, i (comment._id)}
+        <ForumComment
+          {comment}
+          isOP={isOPComment(comment)}
+          isLatest={i === 0}
+          {currentUserId}
+          onEdit={onEditComment ? (newBody) => onEditComment(comment._id, newBody) : undefined}
+          onDelete={onDeleteComment ? () => onDeleteComment(comment._id) : undefined}
+        />
       {/each}
     </div>
   {/if}
