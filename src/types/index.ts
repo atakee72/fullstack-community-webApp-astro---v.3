@@ -85,6 +85,7 @@ export interface Comment {
   // Timestamps
   createdAt?: Date;
   updatedAt?: Date;
+  editedAt?: Date;
 }
 
 // Announcement Types
