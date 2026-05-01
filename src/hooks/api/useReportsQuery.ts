@@ -8,8 +8,7 @@ export const MY_REPORTED_IDS_KEY = qk.myReportedIds;
 
 /**
  * Eager-loads the IDs of all content the current user has reported,
- * so flag buttons can render their "already reported" filled state on mount
- * (mirrors useSavedPostsQuery / liked-by patterns).
+ * so flag buttons can render their "already reported" filled state on mount.
  */
 export function useMyReportedIdsQuery(enabled: boolean) {
   return useQuery({
