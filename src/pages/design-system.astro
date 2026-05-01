@@ -138,7 +138,7 @@ const replyShort = {
   <main class="max-w-5xl mx-auto px-6 md:px-10 py-12">
     <header class="mb-10 pb-6 border-b-2 border-ink">
       <p class="font-dmmono text-[11px] uppercase tracking-[0.18em] text-ink-mute">
-        ◆ Phase 2–5b · Atoms + Forum Molecules + State Matrix + Compose
+        ◆ Phase 2–5b · Atoms + Forum Molecules + State Matrix + Compose + Comment edit/delete
       </p>
       <h1 class="font-bricolage font-extrabold text-4xl md:text-5xl tracking-tight mt-2 leading-none">
         Editorial <em class="font-instrument italic font-normal">Kiosk</em>
@@ -670,6 +670,110 @@ const replyShort = {
         the banner — the right-side label is decorative copy only.
       </p>
       <EditModeBanner client:load />
+    </section>
+
+    {/* ── 23 · ForumComment edit/delete states ─────────────────────── */}
+    <section class="mb-12">
+      <h2 class="font-dmmono text-xs uppercase tracking-[0.18em] text-ink-mute mb-2">
+        23 · ForumComment — edit / delete gating states
+      </h2>
+      <p class="font-bricolage text-sm text-ink-soft mb-6 max-w-2xl">
+        Author-only actions row. Pencil is gated by isLatest + 15-min
+        window + approved status; trash is visible whenever the viewer
+        is the author. Click the pencil to enter inline edit mode.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* State 1: author + within window + approved → both icons */}
+        <div class="bg-paper-warm border-[1.5px] border-ink rounded-md p-3">
+          <p class="font-dmmono text-[9.5px] uppercase tracking-[0.1em] text-ink-mute mb-2">
+            ① author · isLatest · &lt;15 min · approved → edit + delete
+          </p>
+          <ForumComment
+            client:load
+            comment={{
+              _id: 'demo-1',
+              body: 'Hier wäre eigentlich der Bäcker an der Ecke offen, oder?',
+              author: { _id: 'me', name: 'Du', image: null },
+              date: Date.now() - 2 * 60_000,
+              likes: 1,
+              moderationStatus: 'approved'
+            }}
+            isLatest={true}
+            currentUserId="me"
+            onEdit={async () => { /* sandbox no-op */ }}
+            onDelete={async () => { /* sandbox no-op */ }}
+          />
+        </div>
+
+        {/* State 2: author + window expired → only delete */}
+        <div class="bg-paper-warm border-[1.5px] border-ink rounded-md p-3">
+          <p class="font-dmmono text-[9.5px] uppercase tracking-[0.1em] text-ink-mute mb-2">
+            ② author · isLatest · 30 min ago → delete only
+          </p>
+          <ForumComment
+            client:load
+            comment={{
+              _id: 'demo-2',
+              body: 'Stimmt, der hat ab 6 Uhr offen.',
+              author: { _id: 'me', name: 'Du', image: null },
+              date: Date.now() - 30 * 60_000,
+              editedAt: new Date(Date.now() - 28 * 60_000).toISOString(),
+              likes: 3,
+              moderationStatus: 'approved'
+            }}
+            isLatest={true}
+            currentUserId="me"
+            onEdit={async () => {}}
+            onDelete={async () => {}}
+          />
+        </div>
+
+        {/* State 3: author + flagged (warning) → only delete */}
+        <div class="bg-paper-warm border-[1.5px] border-ink rounded-md p-3">
+          <p class="font-dmmono text-[9.5px] uppercase tracking-[0.1em] text-ink-mute mb-2">
+            ③ author · warning-labelled → delete only
+          </p>
+          <ForumComment
+            client:load
+            comment={{
+              _id: 'demo-3',
+              body: 'Diskussion ein bisschen hitzig — nicht mein Stil.',
+              author: { _id: 'me', name: 'Du', image: null },
+              date: Date.now() - 5 * 60_000,
+              likes: 0,
+              moderationStatus: 'approved',
+              hasWarningLabel: true
+            }}
+            isLatest={true}
+            currentUserId="me"
+            onEdit={async () => {}}
+            onDelete={async () => {}}
+          />
+        </div>
+
+        {/* State 4: other user's comment → no icons */}
+        <div class="bg-paper-warm border-[1.5px] border-ink rounded-md p-3">
+          <p class="font-dmmono text-[9.5px] uppercase tracking-[0.1em] text-ink-mute mb-2">
+            ④ other user's comment → no actions
+          </p>
+          <ForumComment
+            client:load
+            comment={{
+              _id: 'demo-4',
+              body: 'Habt ihr die neue Pizzeria im Schillerkiez schon getestet?',
+              author: { _id: 'someone-else', name: 'Lena K.', image: null },
+              date: Date.now() - 8 * 60_000,
+              likes: 5,
+              moderationStatus: 'approved'
+            }}
+            isLatest={true}
+            currentUserId="me"
+            onEdit={async () => {}}
+            onDelete={async () => {}}
+          />
+        </div>
+      </div>
     </section>
   </main>
 </KioskLayout>
