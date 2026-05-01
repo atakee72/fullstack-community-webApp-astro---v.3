@@ -318,6 +318,10 @@ const de = {
   'comment.toast.edit.error': 'Konnte nicht gespeichert werden.',
   'comment.toast.delete.error': 'Konnte nicht gelöscht werden.',
 
+  // Mobile sticky composer (CommentComposerMobile.svelte).
+  'comment.composer.placeholder.short': 'Antworten…',
+  'comment.composer.send': 'senden',
+
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox für die atomaren Komponenten. Visuelle Treue prüfen, bevor sie ins Forum übernommen werden.'
 } as const;
@@ -554,6 +558,9 @@ const en: Dict = {
   'comment.toast.edit.flagged': 'Editing locked — comment is under moderation.',
   'comment.toast.edit.error': "Couldn't save your edit.",
   'comment.toast.delete.error': "Couldn't delete the comment.",
+
+  'comment.composer.placeholder.short': 'Reply…',
+  'comment.composer.send': 'send',
 
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox for the atomic components. Verify visual fidelity here before wiring them into the Forum.'

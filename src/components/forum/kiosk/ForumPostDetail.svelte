@@ -22,6 +22,7 @@
   import EditModeBanner from './compose/EditModeBanner.svelte';
   import DeleteConfirmCard from './compose/DeleteConfirmCard.svelte';
   import CommentComposer from './compose/CommentComposer.svelte';
+  import CommentComposerMobile from './compose/CommentComposerMobile.svelte';
   import { confirmAction, showError, showToast } from '../../../utils/toast';
   import { optimizeCloudinary } from '../../../utils/cloudinary';
 
@@ -316,7 +317,7 @@
   }
 </script>
 
-<main class="max-w-7xl mx-auto px-4 md:px-8 lg:px-10 py-5 md:py-8">
+<main class="max-w-7xl mx-auto px-4 md:px-8 lg:px-10 pt-5 md:pt-8 pb-28 lg:pb-8">
   {#if editing}
     <EditModeBanner />
   {/if}
@@ -621,3 +622,14 @@
     </aside>
   </div>
 </main>
+
+<!-- Mobile sticky comment composer (lg:hidden, fixed bottom-12 above KioskNav) -->
+<CommentComposerMobile
+  {currentUserId}
+  currentUser={{
+    name: 'du',
+    image: null
+  }}
+  submitting={postingComment}
+  onSubmit={submitComment}
+/>
