@@ -20,7 +20,10 @@
 
   import ComposeForm, { type ComposeValues } from './ComposeForm.svelte';
   import ComposePreview from './ComposePreview.svelte';
+  import ComposeMiniPreview from './ComposeMiniPreview.svelte';
+  import ComposeStickyPublish from './ComposeStickyPublish.svelte';
   import ModeratingModal from './ModeratingModal.svelte';
+  import KioskBtn from '../KioskBtn.svelte';
   import RateLimitPanel from '../states/RateLimitPanel.svelte';
   import {
     topicDraft,
@@ -225,6 +228,55 @@
       </p>
     </div>
   {/if}
+
+  <!-- Mobile-only flow: mirrors the desktop sidebar order (preview →
+       moderation → submit row) but split between inline (Save Draft +
+       Discard) and the sticky bar (Publish). -->
+  <div class="lg:hidden px-6 pt-4">
+    <ComposeMiniPreview
+      values={values}
+      currentUser={{ name: currentUser.name, image: currentUser.image }}
+    />
+  </div>
+
+  <div class="lg:hidden px-6">
+    <div class="bg-paper border border-dashed border-rule rounded-sm px-3.5 py-3">
+      <p class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-teal mb-1.5">
+        ◆ {$t['compose.moderation.kicker']}
+      </p>
+      <p class="font-dmmono text-[10.5px] leading-[1.65] text-ink-soft">
+        {$t['compose.moderation.body']}
+      </p>
+    </div>
+  </div>
+
+  <div class="lg:hidden px-6 pt-4 flex flex-col gap-2.5">
+    <KioskBtn
+      variant="secondary"
+      size="lg"
+      onclick={onSaveDraft}
+      disabled={submitting}
+      class="w-full"
+    >
+      {$t['compose.cta.draft']}
+    </KioskBtn>
+    <KioskBtn
+      variant="ghost"
+      size="lg"
+      onclick={onDiscard}
+      disabled={submitting}
+      class="w-full"
+    >
+      {$t['compose.cta.discard']}
+    </KioskBtn>
+  </div>
+
+  <!-- Small bottom spacer. KioskFooter's mt-16 + its own height already
+       provide most of the sticky-bar clearance; this just adds a tiny
+       breathing margin so the inline buttons don't kiss the bar. -->
+  <div class="lg:hidden h-8" aria-hidden="true"></div>
+
+  <ComposeStickyPublish onPublish={onPublish} submitting={submitting} />
 
   <ModeratingModal open={modalOpen} onDismiss={() => (modalOpen = false)} />
 {/if}

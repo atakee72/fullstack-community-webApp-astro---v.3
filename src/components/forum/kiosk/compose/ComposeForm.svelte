@@ -162,7 +162,7 @@
         <button
           type="button"
           onclick={() => (kind = opt.k)}
-          class={`flex-1 text-left px-3 py-2.5 rounded-md border-[1.5px] transition-colors duration-[180ms] ease-out ${
+          class={`flex-1 text-left px-3 py-3.5 sm:py-2.5 rounded-md border-[1.5px] transition-colors duration-[180ms] ease-out ${
             active
               ? 'text-paper border-transparent'
               : 'bg-paper-warm text-ink border-ink hover:bg-paper-soft'
@@ -228,7 +228,7 @@
             type="button"
             onclick={() => removeExisting(i)}
             aria-label="Bild entfernen"
-            class="absolute top-1 right-1 w-[18px] h-[18px] rounded-full bg-ink text-paper text-[11px] leading-none flex items-center justify-center"
+            class="absolute top-1 right-1 w-6 h-6 sm:w-[18px] sm:h-[18px] rounded-full bg-ink text-paper text-[11px] leading-none flex items-center justify-center"
           >×</button>
           <span
             class="absolute bottom-1 left-1 font-dmmono text-[8px] text-ink bg-paper px-1 rounded-sm"
@@ -246,7 +246,7 @@
             type="button"
             onclick={() => removePending(i)}
             aria-label="Bild entfernen"
-            class="absolute top-1 right-1 w-[18px] h-[18px] rounded-full bg-ink text-paper text-[11px] leading-none flex items-center justify-center"
+            class="absolute top-1 right-1 w-6 h-6 sm:w-[18px] sm:h-[18px] rounded-full bg-ink text-paper text-[11px] leading-none flex items-center justify-center"
           >×</button>
           <span
             class="absolute bottom-1 left-1 font-dmmono text-[8px] text-ink bg-paper px-1 rounded-sm"
@@ -292,7 +292,7 @@
     <div class="flex flex-wrap items-center gap-1.5">
       {#each tags as tag (tag)}
         <span
-          class="inline-flex items-center gap-1 px-3 py-[5px] rounded-full bg-ink text-paper font-dmmono text-[12.5px] font-medium"
+          class="inline-flex items-center gap-1 px-3 py-2 sm:py-[5px] rounded-full bg-ink text-paper font-dmmono text-[12.5px] font-medium"
         >
           #{tag}
           <button
@@ -310,7 +310,7 @@
           bind:value={tagInput}
           onkeydown={onTagInputKey}
           placeholder={$t['compose.tags.add']}
-          class="px-3 py-[5px] rounded-full font-dmmono text-[12.5px] font-medium text-ink-mute border-[1.5px] border-dashed border-ink-mute outline-none bg-transparent placeholder:text-ink-mute focus:border-ink focus:text-ink min-w-[120px]"
+          class="px-3 py-2 sm:py-[5px] rounded-full font-dmmono text-[12.5px] font-medium text-ink-mute border-[1.5px] border-dashed border-ink-mute outline-none bg-transparent placeholder:text-ink-mute focus:border-ink focus:text-ink min-w-[120px]"
         />
       {/if}
 
