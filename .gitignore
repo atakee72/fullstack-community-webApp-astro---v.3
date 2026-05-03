@@ -93,6 +93,10 @@ public/7-*.png
 .claude/
 conversation-summary.md
 
+# Playwright CLI workspace (local config + sessions, never commit)
+.playwright/
+.playwright-cli/
+
 # project docs (local only)
 docs/
 .vercel

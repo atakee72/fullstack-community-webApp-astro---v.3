@@ -402,6 +402,17 @@ When I say yellow, red, green, I always mean the default variants of the project
 - **Rule**: at the end of an `lg:hidden` mobile flow, use a small breathing-room spacer (`h-8` = 32px) or skip the spacer entirely. With nothing extra, the last interactive element sits ~10px (iPhone) / ~34px (Android) above the bar's top edge — fully visible, tight but clean.
 - **First hit**: May 2026 — initial mobile-compose polish shipped with `h-24` (96px) spacer that double-counted the footer's clearance. Visible band of empty paper above the publish bar at scroll-bottom on real mobile (not just in screenshots). Trimmed to `h-8` after diagnosis.
 
+## UI Verification (playwright-cli)
+
+`@playwright/cli` (Microsoft, v0.1.x — released May 2026, **not** the old deprecated `playwright-cli` package) is installed globally for browser verification. Lets the assistant navigate the running dev server, capture token-efficient YAML snapshots of the a11y tree, click/fill elements, and read console logs — without needing the user to send screenshots.
+
+- **Install** (already done; one-time): `npm install -g @playwright/cli@latest && playwright-cli install-browser chromium && playwright-cli install`. System libs `libnspr4` + `libnss3` required on bare WSL Ubuntu (everything else usually pre-installed).
+- **Workspace files**: `.playwright/cli.config.json` (config) and `.playwright-cli/` (per-session snapshots + console logs). Both are gitignored.
+- **Common flow**: `playwright-cli open <url>` opens the browser, navigates, and captures a snapshot at `.playwright-cli/page-<timestamp>.yml`. Element refs (`[ref=eN]`) in the YAML are usable with `click`, `fill`, `type`, `hover`, etc. Always `playwright-cli close` at the end of a verification session — daemons survive across commands.
+- **Caveat: `client:only` Svelte/React islands**. The initial snapshot fires at `domcontentloaded`, before islands hydrate. `<main>` will look empty on Forum pages. Either re-snapshot after a delay, or use `wait-for` for a known post-hydration selector.
+- **Caveat: auth-gated routes**. `/topics/create`, `/admin/*` redirect to `/login`. Two ways to verify auth-only UI: (a) scripted login — `goto /login` → `fill` email + password → `click Login` (requires test creds in chat — avoid); (b) cookie reuse — user logs in once in their normal browser, copies session cookie, assistant sets it on the CLI session (preferred — no creds in chat history).
+- **When to use it**: any time the user reports a visual issue ("there's a gap", "looks wrong on mobile") OR you've made a UI change you want to verify before declaring done. Avoids the "I theorized it was invisible — actually no, the user could see it" trap from the May 2026 mobile-compose polish session.
+
 ## Secret Scanning
 - **Pre-commit**: `.husky/pre-commit` runs `gitleaks protect --staged` on every commit. Falls back to a warning (exit 0) if gitleaks isn't installed locally, so collaborators without it aren't blocked.
 - **CI safety net**: `.github/workflows/gitleaks.yml` runs `gitleaks/gitleaks-action@v2` on push to `main` and on PRs — catches anything that bypassed the local hook.
