@@ -396,6 +396,12 @@ When I say yellow, red, green, I always mean the default variants of the project
 - **Prevention**: after any SSR-touching change (new `Astro.locals` data threaded through, new shared util between page and component), **actually load the page in a browser** before declaring done. `pnpm build` is necessary but not sufficient.
 - **First hit**: April 2026 — `FORUM_QUERY_OPTIONS` lived in `topicsQuery.ts`, which imports `connectDB`. ForumContainer's browser chunk included MongoDB, forum never hydrated.
 
+### Sticky bottom bars + `KioskLayout` footer math
+- **`KioskLayout.astro` mounts `<KioskFooter>` after `<main class="flex-1">`**. The footer has `mt-16` (64px margin) + `py-6` + content (~82px total). That's ~146px of vertical space already sitting between the last in-flow element of any kiosk page and the document's bottom edge.
+- **For kiosk pages with a `position: fixed` bottom bar** (`ComposeStickyPublish` on `/topics/create`, `CommentComposerMobile` on `/topics/[id]`, future analogues): the bar at `bottom-12` covers the bottom 88px (iPhone notch) to 64px (Android / non-notch) of the viewport. The footer's mt-16 + content **already** provide more clearance than the bar needs to overlay safely. Don't add a big extra spacer for "scroll-end clearance" — you'll be double-counting and end up with a visible band of empty paper above the bar.
+- **Rule**: at the end of an `lg:hidden` mobile flow, use a small breathing-room spacer (`h-8` = 32px) or skip the spacer entirely. With nothing extra, the last interactive element sits ~10px (iPhone) / ~34px (Android) above the bar's top edge — fully visible, tight but clean.
+- **First hit**: May 2026 — initial mobile-compose polish shipped with `h-24` (96px) spacer that double-counted the footer's clearance. Visible band of empty paper above the publish bar at scroll-bottom on real mobile (not just in screenshots). Trimmed to `h-8` after diagnosis.
+
 ## Secret Scanning
 - **Pre-commit**: `.husky/pre-commit` runs `gitleaks protect --staged` on every commit. Falls back to a warning (exit 0) if gitleaks isn't installed locally, so collaborators without it aren't blocked.
 - **CI safety net**: `.github/workflows/gitleaks.yml` runs `gitleaks/gitleaks-action@v2` on push to `main` and on PRs — catches anything that bypassed the local hook.
