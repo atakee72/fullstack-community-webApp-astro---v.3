@@ -188,7 +188,9 @@
 </script>
 
 <article
-  class={`${cardBgClass} ${cardBorderClass} ${cardShadowClass} ${opacityClass} rounded-lg overflow-hidden transition-all duration-[180ms] ease-out hover:-translate-x-px hover:-translate-y-px`}
+  class={`${cardBgClass} ${cardBorderClass} ${cardShadowClass} ${opacityClass} h-full flex flex-col rounded-lg overflow-hidden transition-all duration-[180ms] ease-out hover:-translate-x-px hover:-translate-y-px ${
+    featured ? '' : 'min-h-[280px]'
+  }`}
 >
   {#if strapLabel}
     <!-- Editorial strap (announcement + recommendation) -->
@@ -295,7 +297,7 @@
     </h3>
 
     {#if body}
-      <p class={`${bodyFontClass} ${bodyToneClass} leading-[1.5] mb-3.5 ${bodySize}`}>
+      <p class={`${bodyFontClass} ${bodyToneClass} leading-[1.5] mb-3.5 line-clamp-3 ${bodySize}`}>
         {body}
       </p>
     {/if}
