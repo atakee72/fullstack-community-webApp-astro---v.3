@@ -189,7 +189,7 @@
 
 <article
   class={`${cardBgClass} ${cardBorderClass} ${cardShadowClass} ${opacityClass} h-full flex flex-col rounded-lg overflow-hidden transition-all duration-[180ms] ease-out hover:-translate-x-px hover:-translate-y-px ${
-    featured ? '' : 'min-h-[280px]'
+    featured ? '' : 'min-h-[340px]'
   }`}
 >
   {#if strapLabel}
