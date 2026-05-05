@@ -114,43 +114,13 @@ export const POST: APIRoute = async ({ request }) => {
 - Key fields: `moderationStatus`, `isUserReported`, `hasWarningLabel`, `warningText` on content
 
 ### Admin Moderation Table (`ModerationQueue.svelte`)
-- **Sortable columns**: Date (`createdAt`), Flagged For (`maxScore`), Decision (`reviewStatus`) — click header to toggle asc/desc
-- **Column visibility**: "Columns" dropdown to show/hide columns; Reason/Warning hidden by default
-- **Improved pagination**: Page size selector (10/25/50), First/Prev/Next/Last buttons, "Page X of Y"
-- **Bulk actions** (queue view only): Select items via checkboxes → Approve All / Reject All with `confirmAction()` dialogs
-- **Human-readable categories**: Raw strings like `spam_check:irrelevant_nonsense` displayed as "Irrelevant content", `image_safety:sexual` as "Sexual image", etc. (via `CATEGORY_LABELS` map + `formatCategory()`)
+See `src/components/admin/CLAUDE.md` — full notes load when working in that subtree.
 
 ### Newsboard
-- **Daily AI fetch**: Vercel cron (6 AM daily) triggers `/api/news/fetch-daily` which fetches from 9 RSS feeds + NewsData.io API
-- **RSS feeds**: Tagesspiegel, Berliner Zeitung, Berliner Kurier, nd-aktuell, taz, Kiez und Kneipe, Schillerpromenade, Facetten Neukölln, Pro Schillerkiez
-- **GPT-4o scoring**: All articles scored for Berlin/Neukölln relevance (threshold 70/100, max 20/day)
-- **Relevance sorting**: Articles sorted by day (`fetchDate`), then user-submitted first, then by `aiRelevanceScore` descending (most hyperlocal on top). User-submitted articles get `fetchDate` set at admin approval time, not submission time.
-- **Auto-approve**: AI-fetched articles are auto-approved (no moderation needed); only user-submitted news goes through moderation
-- **Image pipeline**: RSS media:content → enclosure → description `<img>` → og:image scrape → placeholder fallback
-- **Dedup**: By sourceUrl + title, with unique index on title
-- **Bookmarks**: Server-side persistence via `savedNews` collection (localStorage fallback for logged-out users)
-- **Filters**: Date range tabs (7d, 30d, 3m, 6m, 1y, Archive), live search with 300ms debounce
-- **Archive**: Articles older than 1 year shown in Archive tab with "Archived" badge
-- Key config: `vercel.json` (cron schedule), `src/pages/api/news/fetch-daily.ts` (RSS feeds, thresholds)
+See `src/pages/api/news/CLAUDE.md` — full notes load when working in that subtree (or read directly for UI work — frontend lives at `src/components/NewsCardsWrapper.tsx` and `src/components/ui/NewsCards.tsx`).
 
 ### Kiez Data Dashboard
-- **Data pipeline**: `scripts/sync-stats.ts` downloads XLSX from AfS (demographics) and MSS (social index), parses with `exceljs`, upserts to MongoDB
-- **Sync schedule**: GitHub Actions workflow runs 2x/year (March + September) + manual dispatch
-- **LOR codes**: Schillerkiez = 4 Planungsräume (2021+ LOR): `08100102` (Schillerpromenade Nord), `08100103` (Süd), `08100104` (Wartheplatz), `08100105` (Silbersteinstraße). Pre-2021: 2 PLRs `08010117` (Schillerpromenade) + `08010118` (Silbersteinstraße). Sync script auto-detects based on period.
-- **MSS column layout**: Pre-2023: S1=unemployment(col4), S2=long-term-unemp(col5), S3=transfer(col6), S4=child-poverty(col7). 2023+: S1=unemployment(col4), S2=child-poverty(col5), S3=youth-unemp(col6), S4=transfer(col7). Sync script handles this via period-aware column mapping.
-- **API**: `GET /api/kiez-stats` — public, no auth, 24h cache. Aggregates demographics + social data, pre-computes non-overlapping migration segments (MH includes AUSL)
-- **Frontend**: `KiezDashboard.svelte` — Svelte 5 with hand-drawn SVG charts (no chart library). German UI. Fetches data client-side via `onMount`.
-- **Charts**: Horizontal bar (age), donut (migration, gender), vertical bar (PLR areas), horizontal bar (social indicators). Uses project color palette.
-- **Page**: `/schillerkiez` — prerendered static shell, Svelte hydrates client-side
-- **Per-PLR carousels**: Each data section (stat cards + charts) is a horizontally scrollable carousel of 5 same-sized cards (CSS scroll-snap, no JS library). First card shows aggregate, next 4 show per-PLR data with the same chart type (bar chart, donut, etc.). Stat carousels use `lg:grid-cols-5` on desktop; chart carousels remain scrollable at all viewports (~3 visible on desktop).
-- **Air quality**: Live data from BLUME API station MC042 (Nansenstraße). `GET /api/kiez-air` proxies LQI grades (1–5) with 30 min cache. No auth, no MongoDB, no sync script. Cards show German pollutant names (Feinstaub, Stickstoffdioxid, Ozon, Kohlenmonoxid) with abbreviations below, plus a color-coded grade scale legend. Pollutants with no current reading show "keine Angabe" instead of being hidden.
-- **Carousel scroll-padding**: Chart carousels use `scroll-pl-*` classes matching the edge-bleed `px-*` padding, so `scroll-snap` lands the first card at `scrollLeft = 0`. Arrow visibility uses dynamic `paddingLeft` threshold to prevent flicker.
-- **Population trend**: SVG line chart (aggregate + per-PLR population) and stacked area chart (migration diversity %) over time. Uses proportional time axis from `date` field. Section hidden if <2 trend entries.
-- **Historical backfill (demographics)**: `bash scripts/backfill-history.sh` (one-time, 6 periods). Use `--dry-run` first.
-- **Historical backfill (social)**: `bash scripts/backfill-social.sh` (one-time, 5 MSS periods 2013–2021). Use `--dry-run` first.
-- **Social trend chart**: "Soziale Entwicklung" 4-card carousel showing unemployment, child poverty, and transfer benefits over ~10 years. Merges old/new LOR codes for continuous lines across 2021 boundary. Data from `socialTrend` + `plrSocialTrend` API fields.
-- **Entrance animation**: Scroll-triggered reveal via IntersectionObserver (`use:reveal` Svelte action). Each section fades in + slides up when it enters the viewport (15% threshold). Respects `prefers-reduced-motion`.
-- **Dry-run**: `pnpm tsx scripts/sync-stats.ts --dry-run` — parses XLSX without DB writes (for verifying structure)
+See `src/components/kiez/CLAUDE.md` — full notes (data pipeline, LOR codes, MSS column layout, charts, air quality, trend backfills) load when working in that subtree.
 
 ## Database Collections
 - `users` - User accounts (includes `moderationStrikes`, `isBanned` fields)
@@ -203,44 +173,8 @@ Complex React components use a wrapper pattern:
 - `CalendarWrapper.tsx` → `CalendarContainer.tsx`
 - `ForumWrapper.tsx` → `ForumContainer.tsx`
 
-### Forum List (Pagination)
-- **Sticky header**: Tabs + search bar stick at `top: 16px` (`sticky top-4 z-30`), CSS-only.
-- **Pagination**: Client-side slicing of `filteredItems` into pages of 12 (configurable 12/24/48). Uses the shared `Pagination` component (`src/components/ui/Pagination.tsx`) with wine accent (`#814256`). Page resets to 0 on tab switch or search. Scroll-to-top on page change.
-- **Applies to all 3 forums** (Topics, Announcements, Recommendations) via the shared `collectionType` prop.
-
-### Forum Performance (SSR prefetch + batched author lookup)
-- **Shared server util**: `src/lib/topicsQuery.ts` exports `fetchCollectionWithAuthors(collection, url, currentUserId)` — applies the standard moderation filter, paginates, and populates authors via a **single `$in` lookup** (replaces the old N+1 `findOne`-per-topic). Used by `/api/topics`, `/api/announcements`, `/api/recommendations`.
-- **SSR initialData**: `src/pages/index.astro` calls `fetchForumItemsForSSR('topics', userId)` in frontmatter and threads it as `initialTopics` through `ForumWrapper → ForumContainer`. The default tab hydrates with data already in react-query cache — no `/api/topics` round-trip on first paint. Other tabs fetch normally on click.
-- **queryKey match**: `src/lib/forumQueryOptions.ts` exports `FORUM_QUERY_OPTIONS` (fields, sortBy, sortOrder). Imported by both SSR fetch and the client `useTopicsQuery` call so the `queryKey: [type, options]` matches byte-for-byte — critical for initialData to hit. The constant lives in its own dependency-free file because `topicsQuery.ts` pulls in `connectDB` (see "Server-only modules bleeding" below).
-- **initialData plumbing**: `useTopicsQuery(type, options, extras?)` accepts `extras.initialData`. When present, it sets `initialDataUpdatedAt: Date.now()` so the hydrated data counts as fresh for the 60s `staleTime` window (no immediate refetch).
-
-### Forum Post Images
-- **Upload**: Up to 5 images per post (topics, announcements, recommendations), 5MB each. Uploaded to Cloudinary via `POST /api/posts/upload` (session auth, folder `mahalle/posts`, transform 1200x800 limit).
-- **Data model**: `images?: { url: string; publicId: string }[]` on Topic, Announcement, Recommendation types. Validated by `PostImageSchema` in `forum.schema.ts`.
-- **Moderation**: `checkImagesWithGPT()` runs in parallel with text moderation on create. Flagged images → post goes to `pending` review.
-- **Card layout (desktop, >= md)**: Cards with images use `flex-row` — left half (`w-1/2`) contains all content, right half shows cover image (`object-contain` on `#c9c4b9` background). Cards without images use normal `flex-col` layout. All cards have fixed height `h-[300px] md:h-[400px]`.
-- **Card layout (mobile, < md)**: Image cards use news-style overlay — hero image with gradient overlay, author/date bottom-left over gradient, title + icons below image. Image is clickable to open modal. Text-only cards unchanged.
-- **Icon toolbar**: All action icons (bookmark, comment, eye, heart, report, edit, delete) in a single `justify-evenly` row above the tags section. Removed from the teal author ribbon. Consistent across all screen sizes.
-- **PostModal**: Image picker section between body textarea and tags. File input with preview grid, X-to-remove, counter (N/5). Images uploaded to Cloudinary on form submit (not on select). Edit mode pre-populates existing images.
-- **ReadMoreModal**: CSS scroll-snap carousel (`w-[65%]` per image, shows 1.5 images). `object-contain` with `max-h-64 sm:max-h-80`. Arrow nav buttons (`<` / `>`) for 2+ images. Single image shows full width. Bookmark + like icons in modal footer.
-- **Comments**: Inline in ReadMoreModal (not on card face). Simple cards matching EventViewModal pattern, newest first. `useCommentsQuery(postId)` fetches full comment data.
-
-### Forum Save/Bookmark
-- **API**: `POST/GET /api/posts/save` — toggle save/unsave with `savedPosts` collection (`{ userId, postId, savedAt }`). Same pattern as newsboard's `savedNews`.
-- **Hooks**: `useSavePostMutation()` with optimistic update (instant toggle, rollback on error) + `useSavedPostsQuery(enabled)` with 5min staleTime. In `useTopicsQuery.ts`.
-- **UI**: BookmarkIcon from `lucide-react`. Wine-red fill when saved, wine-red outline when unsaved. Shown in card toolbar and ReadMoreModal footer. Only visible to logged-in users.
-
-### Forum Search & Tag Filtering
-- **Search bar**: Filters cards client-side by title, body/description, author name, and tags. X button to clear search. Result count shown below search bar when active.
-- **Clickable tags**: Tags on cards act as buttons — clicking sets search value to that tag, filtering all cards with that tag. Works across tab switches (search persists).
-- **Tab switch animation**: `AnimatePresence` + `motion.div` keyed by `collectionType + searchValue` — slide-up animation on tab switch and search changes. Smooth scroll to top on tab switch only; search preserves scroll position.
-
-### Forum Card Interactions
-- **Clickable content**: Post text and cover image are clickable to open ReadMoreModal (both mobile and desktop). On mobile image cards the **title is also tappable** (Read & Comment link omitted there to save space).
-- **EyeIcon / HeartBtn**: Accept optional `color` prop for white-on-image variants (mobile overlay). Default wine-red `#814256`.
-- **Author ribbon**: Semi-transparent teal `bg-[#4b9aaa]/70` (not solid).
-- **Read & Comment link**: Whitish `text-[#d4f0f4] hover:text-white`, italic, small (`text-[11px] md:text-xs`), underlined. Omitted on mobile image cards.
-- **Tag pills (cards + modal)**: `bg-[#4b9aaa]/30 border border-[#4b9aaa] text-[#d4f0f4]` (greenish-white outline). Card tags clickable → set search. Capped at **3 per card**; overflow shown as `+N more` button that opens the modal (full tag list there). Long single tags truncate at `max-w-[100px]` with `title=` tooltip on hover.
+### Forum patterns (List/Pagination, Performance/SSR, Post Images, Save/Bookmark, Search & Tag Filtering, Card Interactions)
+See `src/components/forum/kiosk/CLAUDE.md` — full notes load when working in that subtree. The forum spans dirs (`src/pages/api/topics/*`, `src/lib/topicsQuery.ts`, `src/lib/forumQueryOptions.ts`); read the area file directly when working on those server-side pieces.
 
 ### TanStack Query — optimistic updates (gotchas)
 - **Use real userId, not placeholders**: optimistic `setQueryData` that mutates `likedBy: [...ids, 'optimistic-user-id']` will not match the real user id in subsequent `.includes(user.id)` checks, so UI state (heart filled/unfilled) won't flip until server refetch. Pass the actual `user?.id` into the mutation hook. See `useLikeMutation.ts`.
@@ -265,12 +199,7 @@ Complex React components use a wrapper pattern:
 - **Accent colors**: Wine/burgundy for forum and newsboard, teal for marketplace/moderation, white-on-dark for blog
 
 ### Blog Tag Bar (Mobile)
-- **Component**: `src/components/blog/TagBarMobile.astro` — horizontal scrollable tag pills, visible only below `lg` (1024px)
-- **"All" pill**: First pill links to `/blog`, highlighted when no tag is active; recovers sidebar's "All Posts" link on mobile
-- **Active tag**: `currentTag` prop highlights the matching pill with `bg-white text-[#4b9aaa]`; inactive pills use `bg-white/20 text-white`
-- **Edge bleed**: `-mx-4 px-4 md:-mx-8 md:px-8` makes scroll area extend to viewport edges while parent content stays padded
-- **Sidebar swap**: Sidebar (`<aside>`) uses `hidden lg:block` — hidden on mobile (tags in bar), visible on desktop. No layout shift.
-- **Used on**: `/blog` (index) and `/blog/tag/[tag]` pages
+See `src/components/blog/CLAUDE.md` — full notes load when working in that subtree.
 
 ### Splash Screen
 - `SplashScreen.astro` — plays logo video with fade-out and 3D CSS effect
@@ -397,10 +326,7 @@ When I say yellow, red, green, I always mean the default variants of the project
 - **First hit**: April 2026 — `FORUM_QUERY_OPTIONS` lived in `topicsQuery.ts`, which imports `connectDB`. ForumContainer's browser chunk included MongoDB, forum never hydrated.
 
 ### Sticky bottom bars + `KioskLayout` footer math
-- **`KioskLayout.astro` mounts `<KioskFooter>` after `<main class="flex-1">`**. The footer has `mt-16` (64px margin) + `py-6` + content (~82px total). That's ~146px of vertical space already sitting between the last in-flow element of any kiosk page and the document's bottom edge.
-- **For kiosk pages with a `position: fixed` bottom bar** (`ComposeStickyPublish` on `/topics/create`, `CommentComposerMobile` on `/topics/[id]`, future analogues): the bar at `bottom-12` covers the bottom 88px (iPhone notch) to 64px (Android / non-notch) of the viewport. The footer's mt-16 + content **already** provide more clearance than the bar needs to overlay safely. Don't add a big extra spacer for "scroll-end clearance" — you'll be double-counting and end up with a visible band of empty paper above the bar.
-- **Rule**: at the end of an `lg:hidden` mobile flow, use a small breathing-room spacer (`h-8` = 32px) or skip the spacer entirely. With nothing extra, the last interactive element sits ~10px (iPhone) / ~34px (Android) above the bar's top edge — fully visible, tight but clean.
-- **First hit**: May 2026 — initial mobile-compose polish shipped with `h-24` (96px) spacer that double-counted the footer's clearance. Visible band of empty paper above the publish bar at scroll-bottom on real mobile (not just in screenshots). Trimmed to `h-8` after diagnosis.
+See `src/components/forum/kiosk/CLAUDE.md` — full notes load when working in that subtree (rule of thumb: don't add a big spacer above sticky bars on kiosk pages — the `KioskFooter` already provides clearance).
 
 ## UI Verification (playwright-cli)
 
