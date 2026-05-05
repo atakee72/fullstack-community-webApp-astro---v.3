@@ -23,6 +23,7 @@
   import DeleteConfirmCard from './compose/DeleteConfirmCard.svelte';
   import CommentComposer from './compose/CommentComposer.svelte';
   import CommentComposerMobile from './compose/CommentComposerMobile.svelte';
+  import OwnStatusBanner from './states/OwnStatusBanner.svelte';
   import { confirmAction, showError, showToast } from '../../../utils/toast';
   import { optimizeCloudinary } from '../../../utils/cloudinary';
 
@@ -92,6 +93,22 @@
     : topic.isUserReported ? 'reported'
     : topic.hasWarningLabel ? 'warning'
     : null
+  );
+
+  // Detail-page parity with the feed: when a non-author lands on a
+  // community-reported pending post directly, surface the same plum
+  // OwnStatusBanner shown once at the top of the feed.
+  //
+  // NOTE: this is an in-house extension — the design JSX
+  // (kiosk-forum-states.jsx ForumDesktopReported / ForumMobileReported)
+  // only specifies the feed-level reported state. Without this banner,
+  // a non-author who lands on a flagged post directly has zero context
+  // for why it appears among approved content. Content stays visible
+  // (matches the feed's ghost-but-readable treatment).
+  const showReportedBanner = $derived(
+    !isAuthor &&
+      !!topic.isUserReported &&
+      topic.moderationStatus === 'pending'
   );
 
   const likeCount = $derived(topic.likes ?? 0);
@@ -347,6 +364,12 @@
   <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-8 lg:gap-10">
     <!-- ── Main column ──────────────────────────────────────────── -->
     <article>
+      {#if showReportedBanner}
+        <div class="mb-4">
+          <OwnStatusBanner state="reported" />
+        </div>
+      {/if}
+
       <!-- Type chip + age + tags + status + edit button -->
       <div class="flex items-center flex-wrap gap-2.5 mb-3">
         <PostTypeChip {kind} />

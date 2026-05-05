@@ -30,15 +30,39 @@
   }
 }
 
-/* Kiosk paper-grain texture — risograph-print feel.
-   Inline SVG fractal-noise tile, multiplied over the cream paper color.
-   Apply on any surface that should read as "printed on paper": page bg,
-   cards, panels. The base color is `--k-paper` so the grain stays warm cream. */
+/* Kiosk paper canvas — warm cream base color.
+   Used by both the body (KioskLayout) and the sticky kiosk header
+   (KioskNav). Grain is applied separately via the `body.k-paper-bg`
+   rule below, scoped to body so the header's sticky positioning
+   isn't disturbed. */
 .k-paper-bg {
   background-color: var(--k-paper);
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.18 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-  background-repeat: repeat;
-  background-size: 240px 240px;
+}
+
+/* Riso paper-grain — direct port of `paperGrainStyle` from
+   design/handoffs/design_handoff_forum/forum-design-jsx-files/kiosk-system.jsx
+   (lines 77–82). Two radial-gradient dots tiled at 7px and 11px with
+   `mix-blend-mode: multiply` for a halftone-print feel — no images, no
+   SVG. Applied as `::before` (not as `background-image` on the element
+   directly) because multiply needs to blend against the parent's
+   background-color from a separate compositing layer.
+   Body-scoped via `body.k-paper-bg` so the same class can stay on
+   small surfaces (kiosk header, etc.) without each one duplicating
+   the grain. */
+body.k-paper-bg {
+  position: relative;
+}
+body.k-paper-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 25% 30%, rgba(27, 26, 23, 0.04) 1px, transparent 1.5px),
+    radial-gradient(circle at 75% 70%, rgba(27, 26, 23, 0.03) 1px, transparent 1.5px);
+  background-size: 7px 7px, 11px 11px;
+  mix-blend-mode: multiply;
+  z-index: 0;
 }
 
 /* CSS Variables for Brand Colors */

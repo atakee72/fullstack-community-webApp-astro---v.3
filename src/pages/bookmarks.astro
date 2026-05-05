@@ -1,0 +1,91 @@
+---
+// Bookmarks — kiosk-shell page listing saved forum topics.
+//
+// Auth-gated: redirects to /login if no session. SSR-fetches the user's
+// saved postIds, joins with the topics collection, applies the standard
+// moderation filter (so a saved post that later got rejected stays
+// hidden from non-authors), and threads the hydrated list into a Svelte
+// island for display.
+//
+// Scope note (v1): only `topics` are joined here. Announcements and
+// recommendations may also live in `savedPosts` from the legacy UI, but
+// the kiosk forum currently surfaces only topics — adding the other two
+// collections is a follow-up once they migrate to kiosk.
+
+import KioskLayout from '../layouts/KioskLayout.astro';
+import BookmarksPage from '../components/forum/kiosk/BookmarksPage.svelte';
+import { getSession } from 'auth-astro/server';
+import { connectDB } from '../lib/mongodb';
+import { buildModerationFilter, populateAuthors } from '../lib/topicsQuery';
+import { ObjectId } from 'mongodb';
+
+const session = await getSession(Astro.request);
+if (!session?.user?.id) {
+  return Astro.redirect('/login?redirect=/bookmarks');
+}
+
+const userId = session.user.id;
+
+let initialItems: any[] = [];
+try {
+  const db = await connectDB();
+  const savedDocs = await db
+    .collection('savedPosts')
+    .find({ userId })
+    .project({ postId: 1, savedAt: 1 })
+    .sort({ savedAt: -1 })
+    .toArray();
+
+  const savedIds = savedDocs
+    .map((d: any) => d.postId)
+    .filter((id: any): id is string => typeof id === 'string' && ObjectId.isValid(id));
+
+  if (savedIds.length > 0) {
+    // Map<postId, savedAt> preserves the per-item save timestamp so the
+    // kiosk list can render "⌂ heute"-style relative labels (design spec).
+    const savedAtMap = new Map<string, Date>();
+    for (const d of savedDocs as any[]) {
+      if (typeof d.postId === 'string' && d.savedAt instanceof Date) {
+        savedAtMap.set(d.postId, d.savedAt);
+      }
+    }
+
+    const objectIds = savedIds.map((id) => new ObjectId(id));
+    const moderationFilter = buildModerationFilter(userId);
+    // No `.sort({ date: -1 })` here — Mongo's `$in` doesn't preserve order
+    // anyway, and we want savedAt-desc ordering. Re-order client-side
+    // using `savedIds` (already savedAt-desc from the savedPosts sort).
+    const topics = await db
+      .collection('topics')
+      .find({ $and: [{ _id: { $in: objectIds } }, moderationFilter] })
+      .toArray();
+    const populated = await populateAuthors(topics);
+
+    const populatedMap = new Map<string, any>();
+    for (const t of populated) populatedMap.set(String(t._id), t);
+
+    const ordered = savedIds
+      .map((id) => populatedMap.get(id))
+      .filter(Boolean)
+      .map((t) => ({
+        ...t,
+        savedAt: savedAtMap.get(String(t._id))?.toISOString?.() ?? null,
+      }));
+
+    initialItems = JSON.parse(JSON.stringify(ordered));
+  }
+} catch (err) {
+  console.error('[bookmarks.astro] SSR bookmarks fetch failed:', err);
+}
+---
+
+<KioskLayout
+  title="Mahalle · Gespeichert"
+  description="Beiträge, die du gespeichert hast."
+>
+  <BookmarksPage
+    client:only="svelte"
+    initialItems={initialItems}
+    currentUserId={userId}
+  />
+</KioskLayout>
