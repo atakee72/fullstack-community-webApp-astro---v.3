@@ -23,7 +23,14 @@
 
   type State = 'pending' | 'rejected' | 'reported';
 
-  let { state } = $props<{ state: State }>();
+  let { state, reason } = $props<{
+    state: State;
+    /** Admin's rejection note, when state === 'rejected' and the
+     *  reviewer typed one. Rendered below the generic body as an
+     *  italic quote so the author sees exactly why their post was
+     *  declined. Other states ignore this prop. */
+    reason?: string;
+  }>();
 
   // Icon glyph + disc colour per state. These triple-up with the
   // StatusBadge inline so the banner is unmistakable even when colour
@@ -82,6 +89,13 @@
     <p class="font-bricolage text-[12.5px] text-ink-soft leading-relaxed mt-1">
       {$t[bodyKey]}
     </p>
+    {#if state === 'rejected' && reason}
+      <blockquote
+        class="mt-2 pl-3 border-l-2 border-danger/60 font-instrument italic text-[13px] text-ink leading-snug"
+      >
+        „{reason}"
+      </blockquote>
+    {/if}
     {#if config.badge}
       <div class="mt-2 flex items-center gap-2">
         <StatusBadge state={config.badge} size="sm" />

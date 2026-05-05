@@ -132,6 +132,17 @@
       .filter((it: any) =>
         !activeTag ? true : (it.tags ?? []).includes(activeTag)
       )
+      // Promote the author's own rejected posts to the top of the
+      // feed (just under the pinned official slot). They're the
+      // highest-priority "you need to act" signal — author should see
+      // them immediately without scrolling. Stable sort: items at the
+      // same priority preserve their date-desc order.
+      .slice()
+      .sort((a: any, b: any) => {
+        const aRej = ownStatusFor(a) === 'rejected' ? 0 : 1;
+        const bRej = ownStatusFor(b) === 'rejected' ? 0 : 1;
+        return aRej - bRej;
+      })
   );
 
   function topTags(input: any[], n = 6): string[] {
@@ -466,7 +477,7 @@
           </div>
         {:else if status === 'pending'}
           <div
-            class="md:col-span-2 lg:col-span-3 p-1 rounded-lg border-2 border-dashed border-warn"
+            class="p-1 rounded-lg border-2 border-dashed border-warn"
           >
             <div class="px-2 pt-1.5 pb-2">
               <OwnStatusBanner state="pending" />
@@ -486,25 +497,27 @@
             </a>
           </div>
         {:else if status === 'rejected'}
-          <div class="md:col-span-2 lg:col-span-3">
-            <OwnStatusBanner state="rejected" />
+          <div class="p-1 rounded-lg border-2 border-dashed border-danger">
+            <div class="px-2 pt-1.5 pb-2">
+              <OwnStatusBanner state="rejected" reason={topic.rejectionReason} />
+            </div>
+            <a
+              href={detailHref(topic)}
+              class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+            >
+              <ForumPostCard
+                {topic}
+                kind={topic.kind ?? 'discussion'}
+                ghosted
+                isOfficial={topic.isOfficial === true}
+                team={topic.author?.role === 'admin'}
+                statusBadgeOverride="rejected"
+              />
+            </a>
           </div>
-          <a
-            href={detailHref(topic)}
-            class="md:col-span-2 lg:col-span-3 block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
-          >
-            <ForumPostCard
-              {topic}
-              kind={topic.kind ?? 'discussion'}
-              ghosted
-              isOfficial={topic.isOfficial === true}
-              team={topic.author?.role === 'admin'}
-              statusBadgeOverride="rejected"
-            />
-          </a>
         {:else if status === 'reported'}
           <div
-            class="md:col-span-2 lg:col-span-3 p-1 rounded-lg border-2 border-dashed border-plum"
+            class="p-1 rounded-lg border-2 border-dashed border-plum"
           >
             <div class="px-2 pt-1.5 pb-2">
               <OwnStatusBanner state="reported" />

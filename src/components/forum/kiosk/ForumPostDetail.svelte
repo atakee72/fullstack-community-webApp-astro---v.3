@@ -139,6 +139,23 @@
       topic.moderationStatus === 'pending'
   );
 
+  // Author-side rejected banner — parity with the index's rejected
+  // branch. Shows the admin's `rejectionReason` (if they wrote one)
+  // as an italic quote below the generic body copy so the author
+  // sees exactly why their post was declined.
+  const showRejectedBanner = $derived(
+    isAuthor && topic.moderationStatus === 'rejected'
+  );
+
+  // Author-side pending banner — parity with the index. Covers BOTH
+  // AI-flagged pending (`!isUserReported`) and is left out for
+  // community-reported pending (which uses showReportedBanner above).
+  const showPendingBanner = $derived(
+    isAuthor &&
+      topic.moderationStatus === 'pending' &&
+      !topic.isUserReported
+  );
+
   // Edit gate. Mirrors the server-side check in
   // /api/{collection}/edit/[id].ts — edit is only allowed when the post
   // is fully approved AND not carrying a warning label. In-review or
@@ -403,9 +420,19 @@
   <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-8 lg:gap-10">
     <!-- ── Main column ──────────────────────────────────────────── -->
     <article>
+      {#if showPendingBanner}
+        <div class="mb-4">
+          <OwnStatusBanner state="pending" />
+        </div>
+      {/if}
       {#if showReportedBanner}
         <div class="mb-4">
           <OwnStatusBanner state="reported" />
+        </div>
+      {/if}
+      {#if showRejectedBanner}
+        <div class="mb-4">
+          <OwnStatusBanner state="rejected" reason={topic.rejectionReason} />
         </div>
       {/if}
 
@@ -423,11 +450,22 @@
         {#if badgeState}
           <StatusBadge state={badgeState} size="sm" />
         {/if}
-        {#if canEdit && !editing}
+        {#if isAuthor && !editing}
           <button
             type="button"
-            onclick={enterEdit}
-            class="ml-auto font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute hover:text-ink underline-offset-2 hover:underline"
+            onclick={canEdit ? enterEdit : undefined}
+            disabled={!canEdit}
+            title={canEdit
+              ? undefined
+              : ($locale === 'de'
+                  ? 'Bearbeiten nicht möglich, solange der Beitrag geprüft wird.'
+                  : 'Editing is locked while the post is under review.')}
+            aria-disabled={!canEdit}
+            class={`ml-auto font-dmmono text-[10.5px] uppercase tracking-[0.08em] underline-offset-2 ${
+              canEdit
+                ? 'text-ink-mute hover:text-ink hover:underline cursor-pointer'
+                : 'text-ink-mute/50 cursor-not-allowed line-through'
+            }`}
           >
             ✎ Bearbeiten
           </button>
