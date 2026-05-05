@@ -104,9 +104,9 @@ const de = {
 
   // pinned block + post-card straps
   'pinned.banner.label': 'OFFIZIELLE ANKÜNDIGUNG · MAHALLE-TEAM',
-  'card.strap.announcement': 'ANKÜNDIGUNG · NACHBARSCHAFT',
+  'card.strap.announcement': 'ANKÜNDIGUNG · VON NUTZER:INNEN',
   'pinned.banner.tag': 'ANGEHEFTET',
-  'card.strap.recommendation': '✦ EMPFEHLUNG AUS DEM KIEZ',
+  'card.strap.recommendation': '✦ EMPFEHLUNG · VON NUTZER:INNEN',
   'card.cta.read': 'lesen',
   'card.saved': 'saved',
   'role.team': 'MAHALLE-TEAM',
@@ -367,9 +367,9 @@ const en: Dict = {
   'filter.tagsLabel': 'TAGS',
 
   'pinned.banner.label': 'OFFICIAL ANNOUNCEMENT · MAHALLE-TEAM',
-  'card.strap.announcement': 'ANNOUNCEMENT · COMMUNITY',
+  'card.strap.announcement': 'ANNOUNCEMENT BY USERS',
   'pinned.banner.tag': 'PINNED',
-  'card.strap.recommendation': '✦ RECOMMENDED IN THE KIEZ',
+  'card.strap.recommendation': '✦ RECOMMENDED BY USERS',
   'card.cta.read': 'read',
   'card.saved': 'saved',
   'role.team': 'MAHALLE TEAM',
