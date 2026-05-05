@@ -61,6 +61,21 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
+    // Block edits while the post is under moderation (AI-flagged
+    // pending OR community-reported pending OR rejected) and on
+    // approved-with-warning posts. Mirrors the comment-edit gate at
+    // /api/comments/edit/[commentId].ts:71-76. Reason: in-review
+    // content shouldn't be silently rewritten while moderators are
+    // looking at the original, and warning-labelled content shouldn't
+    // bypass its label via an edit. Author can delete + recreate if
+    // they want to amend.
+    if (existingTopic.moderationStatus !== 'approved' || existingTopic.hasWarningLabel) {
+      return new Response(JSON.stringify({ error: 'edit_blocked_by_moderation' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     // Run content moderation on edited content (FAIL-SAFE: queues for review on any error)
     const moderationChecks: Promise<any>[] = [
       moderateText(`${title}\n\n${body}`)

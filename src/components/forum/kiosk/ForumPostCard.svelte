@@ -158,10 +158,16 @@
   );
 
   // StatusBadge: explicit override wins, else infer from moderation flags.
+  // Precedence: rejected > (pending && reported) > pending > warning.
+  // The reported case takes priority over generic pending so non-authors
+  // viewing a community-reported post see "⚑ GEMELDET" — the small mark
+  // says what kind of review is happening, more informative than the
+  // generic "in prüfung". A formerly-reported but now-approved post
+  // intentionally drops the chip (the report is resolved).
   const inferredBadge = $derived(
-    topic.moderationStatus === 'pending' ? 'pending'
-    : topic.moderationStatus === 'rejected' ? 'rejected'
-    : topic.isUserReported ? 'reported'
+    topic.moderationStatus === 'rejected' ? 'rejected'
+    : topic.isUserReported && topic.moderationStatus === 'pending' ? 'reported'
+    : topic.moderationStatus === 'pending' ? 'pending'
     : topic.hasWarningLabel ? 'warning'
     : null
   );

@@ -208,9 +208,9 @@ const de = {
   'state.own.rejected.title': 'Dein Beitrag wurde nicht freigegeben.',
   'state.own.rejected.body':
     'Andere Nachbar:innen sehen ihn nicht. Du siehst ihn weiterhin in deiner Übersicht. Wir behalten ihn intern, falls du dich an die Moderation wenden möchtest.',
-  'state.own.reported.title': 'Ein Beitrag wurde von Nachbar:innen gemeldet.',
+  'state.own.reported.title': 'Dein Beitrag wurde von Nachbar:innen gemeldet.',
   'state.own.reported.body':
-    'Während wir prüfen, ist er für andere ausgeblendet — du siehst nur, dass er existiert.',
+    'Wir prüfen ihn — er bleibt für alle sichtbar, bis wir entschieden haben.',
 
   // Feed footer rule.
   'feed.footer.pages': '{current} / {total} SEITEN',
@@ -459,9 +459,9 @@ const en: Dict = {
   'state.own.rejected.title': "Your post wasn't approved.",
   'state.own.rejected.body':
     "Other neighbours can't see it. You still see it in your own view. We keep it internally in case you want to reach out to moderation.",
-  'state.own.reported.title': 'A post was flagged by neighbors.',
+  'state.own.reported.title': 'Your post was flagged by neighbors.',
   'state.own.reported.body':
-    "While we review, it's hidden from others — you only see it exists.",
+    "We're reviewing it — it stays visible to everyone until we've decided.",
 
   'feed.footer.pages': '{current} / {total} PAGES',
   'feed.footer.fresh': '↻ live · last post {n} min ago',

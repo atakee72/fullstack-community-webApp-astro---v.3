@@ -57,6 +57,16 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
+    // Block edits while the recommendation is under moderation
+    // (pending) or carries a warning label. Mirrors the comment-edit
+    // and topic-edit gates.
+    if (existingRecommendation.moderationStatus !== 'approved' || existingRecommendation.hasWarningLabel) {
+      return new Response(JSON.stringify({ error: 'edit_blocked_by_moderation' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const editHistoryEntry: EditHistory = {
       originalTitle: existingRecommendation.title,
       originalBody: existingRecommendation.body || '',

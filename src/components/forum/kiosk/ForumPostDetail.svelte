@@ -126,20 +126,28 @@
     : null
   );
 
-  // Detail-page parity with the feed: when a non-author lands on a
-  // community-reported pending post directly, surface the same plum
-  // OwnStatusBanner shown once at the top of the feed.
-  //
-  // NOTE: this is an in-house extension — the design JSX
-  // (kiosk-forum-states.jsx ForumDesktopReported / ForumMobileReported)
-  // only specifies the feed-level reported state. Without this banner,
-  // a non-author who lands on a flagged post directly has zero context
-  // for why it appears among approved content. Content stays visible
-  // (matches the feed's ghost-but-readable treatment).
+  // Detail-page parity with the feed: when the AUTHOR lands on their
+  // own community-reported pending post, surface the plum
+  // OwnStatusBanner so they're informed their post got reported.
+  // Non-authors see the post normally — the small ⚑ GEMELDET chip in
+  // the breadcrumb's StatusBadge is enough mark for them; reports
+  // stay private to author + admin until acted on (anti-stigma + matches
+  // mature platform norms — HN, Reddit, X for low-severity reports).
   const showReportedBanner = $derived(
-    !isAuthor &&
+    isAuthor &&
       !!topic.isUserReported &&
       topic.moderationStatus === 'pending'
+  );
+
+  // Edit gate. Mirrors the server-side check in
+  // /api/{collection}/edit/[id].ts — edit is only allowed when the post
+  // is fully approved AND not carrying a warning label. In-review or
+  // warning-labelled content can't be silently rewritten while
+  // moderators are still looking at the original.
+  const canEdit = $derived(
+    isAuthor &&
+      topic.moderationStatus === 'approved' &&
+      !topic.hasWarningLabel
   );
 
   const likeCount = $derived(topic.likes ?? 0);
@@ -415,7 +423,7 @@
         {#if badgeState}
           <StatusBadge state={badgeState} size="sm" />
         {/if}
-        {#if isAuthor && !editing}
+        {#if canEdit && !editing}
           <button
             type="button"
             onclick={enterEdit}

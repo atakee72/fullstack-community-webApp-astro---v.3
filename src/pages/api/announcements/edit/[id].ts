@@ -57,6 +57,18 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
+    // Block edits while the announcement is under moderation
+    // (pending) or carries a warning label. Mirrors the comment-edit
+    // and topic-edit gates. Admin official announcements use the
+    // separate /api/admin/announcements/[id] PATCH endpoint and skip
+    // this gate (officials are always 'approved').
+    if (existingAnnouncement.moderationStatus !== 'approved' || existingAnnouncement.hasWarningLabel) {
+      return new Response(JSON.stringify({ error: 'edit_blocked_by_moderation' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const editHistoryEntry: EditHistory = {
       originalTitle: existingAnnouncement.title,
       originalBody: existingAnnouncement.body || '',

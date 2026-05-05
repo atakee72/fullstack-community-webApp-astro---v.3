@@ -224,31 +224,23 @@
 
   type OwnStatus = 'pending' | 'rejected' | 'reported' | null;
 
-  // Mirror of ForumPostCard's inferredBadge logic (line 139), extended
-  // to mark community-reported posts that the viewer is NOT the author of.
+  // Author-facing moderation state. Mirrors the i18n `state.own.*`
+  // namespace + the OwnStatusBanner component, both of which are
+  // explicitly author-only in intent. Non-authors never enter the
+  // dashed-warn / dashed-plum special branches; their "this post is
+  // under review" awareness comes from the small StatusBadge chip on
+  // the card itself (see ForumPostCard's inferredBadge derive).
   function ownStatusFor(topic: any): OwnStatus {
     const isAuthor =
       currentUserId && authorIdOf(topic.author) === currentUserId;
-    if (isAuthor && topic.moderationStatus === 'pending' && !topic.isUserReported) {
-      return 'pending';
-    }
-    if (isAuthor && topic.moderationStatus === 'rejected') return 'rejected';
-    if (
-      !isAuthor &&
-      topic.moderationStatus === 'pending' &&
-      topic.isUserReported
-    ) {
+    if (!isAuthor) return null;
+    if (topic.moderationStatus === 'rejected') return 'rejected';
+    if (topic.moderationStatus === 'pending' && topic.isUserReported) {
       return 'reported';
     }
+    if (topic.moderationStatus === 'pending') return 'pending';
     return null;
   }
-
-  // Whether ANY card in the rendered feed is community-reported. Drives
-  // the single feed-level plum banner — JSX shows it once per page,
-  // not once per affected card.
-  const hasReportedInFeed = $derived(
-    filteredRest.some((t: any) => ownStatusFor(t) === 'reported')
-  );
 
   // Localised label for the active filter (kind tab OR tag pill).
   // Keys here mirror the `filter.*` namespace in kiosk-i18n.ts.
@@ -433,18 +425,15 @@
         </div>
       {/if}
 
-      <!-- Single feed-level plum banner if any community-reported card exists. -->
-      {#if hasReportedInFeed}
-        <div class="md:col-span-2 lg:col-span-3">
-          <OwnStatusBanner state="reported" />
-        </div>
-      {/if}
-
       <!-- Regular feed. Per-topic moderation status drives placement:
-             pending  → dashed-warn wrapper around banner + own card (col-span-3)
-             rejected → standalone banner block + ghosted card (both col-span-3)
-             reported → ghosted card in normal grid flow (banner already at top)
-             else     → normal grid card                                       -->
+             pending   → dashed-warn wrapper around banner + own card (col-span-3, AUTHOR ONLY)
+             reported  → dashed-plum wrapper around banner + own card (col-span-3, AUTHOR ONLY)
+             rejected  → standalone banner block + ghosted card (both col-span-3, AUTHOR ONLY)
+             else      → normal grid card. Non-authors viewing
+                         community-reported pending posts hit this branch
+                         and see the post normally with a small ⚑ GEMELDET
+                         chip via the card's inferredBadge derive — that's
+                         the "subtle mark" treatment, no stigma. -->
       {#each filteredRest as topic (topic._id)}
         {@const status = ownStatusFor(topic)}
         {@const justPosted = isJustPosted(topic)}
@@ -514,19 +503,26 @@
             />
           </a>
         {:else if status === 'reported'}
-          <a
-            href={detailHref(topic)}
-            class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+          <div
+            class="md:col-span-2 lg:col-span-3 p-1 rounded-lg border-2 border-dashed border-plum"
           >
-            <ForumPostCard
-              {topic}
-              kind={topic.kind ?? 'discussion'}
-              ghosted
-              isOfficial={topic.isOfficial === true}
-              team={topic.author?.role === 'admin'}
-              statusBadgeOverride="flagged"
-            />
-          </a>
+            <div class="px-2 pt-1.5 pb-2">
+              <OwnStatusBanner state="reported" />
+            </div>
+            <a
+              href={detailHref(topic)}
+              class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+            >
+              <ForumPostCard
+                {topic}
+                kind={topic.kind ?? 'discussion'}
+                optimistic
+                isOfficial={topic.isOfficial === true}
+                team={topic.author?.role === 'admin'}
+                statusBadgeOverride="reported"
+              />
+            </a>
+          </div>
         {:else}
           <a
             href={detailHref(topic)}

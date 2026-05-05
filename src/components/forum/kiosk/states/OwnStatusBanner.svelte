@@ -7,9 +7,13 @@
   //               parent so the banner stays single-purpose).
   //   rejected  → moderation declined. Author-only visibility. Rendered
   //               as a standalone block above a ghosted card.
-  //   reported  → community-flagged, hidden from public. Rendered ONCE
-  //               at the top of the feed; the affected cards keep their
-  //               normal grid slot.
+  //   reported  → community-flagged. Author-only visibility (matches the
+  //               other `state.own.*` cases — `Own` namespace = author).
+  //               Rendered inside a dashed-plum wrapper above the
+  //               author's own card. Non-authors see the post normally
+  //               with a small ⚑ GEMELDET chip on the card itself; the
+  //               banner is NOT shown to them (reports stay private to
+  //               author + admin until acted on).
   //
   // Per-state colour maps to the JSX shadow-of-truth at lines 226 / 274 /
   // 332 of kiosk-forum-states.jsx — warn / danger / plum respectively.
