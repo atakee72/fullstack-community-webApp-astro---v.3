@@ -40,17 +40,34 @@
       const url = (type: string) =>
         `/api/${type}?fields=${fields}&sortBy=date&sortOrder=desc`;
       // allSettled mirrors the SSR resilience: a failed collection
-      // shouldn't blank the whole feed. Each handler also catches
-      // network/parse errors so partial responses still render.
+      // shouldn't blank the whole feed. Each handler catches
+      // network/parse errors so partial responses still render. We
+      // track per-fetch success and throw if NONE succeed — that's the
+      // "all-three-broken" failure mode that should trigger the
+      // ErrorPanel (offline state is handled separately by the
+      // navigator.onLine store + OfflineBanner).
+      let okCount = 0;
       const safe = (p: Promise<Response>) =>
         p
-          .then((res) => (res.ok ? res.json() : { items: [] }))
+          .then((res) => {
+            if (res.ok) {
+              okCount++;
+              return res.json();
+            }
+            return { items: [] };
+          })
           .catch(() => ({ items: [] }));
       const [tRes, aRes, rRes] = await Promise.allSettled([
         safe(fetch(url('topics'))),
         safe(fetch(url('announcements'))),
         safe(fetch(url('recommendations'))),
       ]);
+      if (okCount === 0) {
+        // All three endpoints failed — backend deploy gone wrong, DB
+        // outage, etc. Throw so query.isError flips and ErrorPanel
+        // renders with its functional "↻ neu laden" button.
+        throw new Error('forum-fetch-failed');
+      }
       const t = tRes.status === 'fulfilled' ? tRes.value : { items: [] };
       const a = aRes.status === 'fulfilled' ? aRes.value : { items: [] };
       const r = rRes.status === 'fulfilled' ? rRes.value : { items: [] };
