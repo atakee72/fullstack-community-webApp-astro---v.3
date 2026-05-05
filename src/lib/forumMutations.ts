@@ -86,7 +86,7 @@ async function createTopicReq(input: CreateTopicInput) {
 
 export function createTopicMutation(currentUser: { id: string; name?: string; image?: string | null }) {
   const queryClient = useQueryClient();
-  const queryKey = ['forum', 'topics'];
+  const queryKey = ['forum', 'all'];
 
   return createMutation(() => ({
     mutationFn: createTopicReq,
@@ -110,6 +110,12 @@ export function createTopicMutation(currentUser: { id: string; name?: string; im
         views: 0,
         date: new Date().toISOString(),
         moderationStatus: 'pending',
+        // Discussion is the only kind currently created from kiosk
+        // compose. The merged feed reads `kind` to choose the
+        // ForumPostCard treatment, so the optimistic insert needs it
+        // too — otherwise the temp card briefly renders without the
+        // wine-accent discussion treatment.
+        kind: 'discussion',
         author: {
           _id: currentUser.id,
           name: currentUser.name ?? 'du',
@@ -172,7 +178,7 @@ async function editTopicReq({ id, input }: { id: string; input: EditTopicInput }
 
 export function editTopicMutation() {
   const queryClient = useQueryClient();
-  const queryKey = ['forum', 'topics'];
+  const queryKey = ['forum', 'all'];
   return createMutation(() => ({
     mutationFn: editTopicReq,
     onMutate: async ({ id, input }) => {
@@ -208,7 +214,7 @@ async function deleteTopicReq(id: string) {
 
 export function deleteTopicMutation() {
   const queryClient = useQueryClient();
-  const queryKey = ['forum', 'topics'];
+  const queryKey = ['forum', 'all'];
   return createMutation(() => ({
     mutationFn: deleteTopicReq,
     onMutate: async (id) => {

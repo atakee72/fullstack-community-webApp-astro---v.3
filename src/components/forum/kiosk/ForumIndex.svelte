@@ -9,8 +9,8 @@
   import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
   import ForumIndexInner from './ForumIndexInner.svelte';
 
-  let { initialTopics = [], currentUserId = null } = $props<{
-    initialTopics?: any[];
+  let { initialItems = [], currentUserId = null } = $props<{
+    initialItems?: any[];
     currentUserId?: string | null;
   }>();
 
@@ -29,5 +29,5 @@
 </script>
 
 <QueryClientProvider {client}>
-  <ForumIndexInner {initialTopics} {currentUserId} />
+  <ForumIndexInner {initialItems} {currentUserId} />
 </QueryClientProvider>

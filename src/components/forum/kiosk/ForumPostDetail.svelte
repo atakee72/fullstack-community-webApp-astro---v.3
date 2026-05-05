@@ -27,10 +27,27 @@
   import { confirmAction, showError, showToast } from '../../../utils/toast';
   import { optimizeCloudinary } from '../../../utils/cloudinary';
 
-  let { initialTopic, initialComments = [], currentUserId = null } = $props<{
+  let {
+    initialTopic,
+    initialComments = [],
+    currentUserId = null,
+    collectionType = 'topics',
+    isOfficial = false
+  } = $props<{
     initialTopic: any;
     initialComments?: any[];
     currentUserId?: string | null;
+    /** Which forum sub-collection the post lives in. Drives the
+     *  edit/delete fetch URLs and the comment-create `collectionType`
+     *  field. Defaults to 'topics' so the existing /topics/[id] route
+     *  keeps working without changes. */
+    collectionType?: 'topics' | 'announcements' | 'recommendations';
+    /** Mirrors the card-level prop. When true (admin official
+     *  announcement), the breadcrumb chip + page header read
+     *  "OFFIZIELLE ANKÜNDIGUNG · MAHALLE-TEAM"; when false, the softer
+     *  "ANKÜNDIGUNG" label. Only meaningful for collectionType ===
+     *  'announcements'. */
+    isOfficial?: boolean;
   }>();
 
   let topic = $state(initialTopic);
@@ -47,8 +64,22 @@
     !!currentUserId && authorIdOf(topic.author) === currentUserId
   );
 
-  const kind: 'discussion' | 'recommendation' | 'announcement' = 'discussion';
-  const kindLabel = $derived($t['chip.discussion'].toUpperCase());
+  // Map sub-collection → ForumPostCard `kind` so the breadcrumb chip
+  // and tone match the index.
+  const kind: 'discussion' | 'recommendation' | 'announcement' = $derived(
+    collectionType === 'announcements'
+      ? 'announcement'
+      : collectionType === 'recommendations'
+      ? 'recommendation'
+      : 'discussion'
+  );
+  const kindLabel = $derived(
+    kind === 'announcement' && isOfficial
+      ? ($t['pinned.banner.label'] as string)
+      : kind === 'announcement'
+      ? ($t['card.strap.announcement'] as string)
+      : ($t[`chip.${kind}` as const] as string).toUpperCase()
+  );
 
   let now = $state(new Date());
   $effect(() => {
@@ -164,7 +195,7 @@
     saving = true;
     editError = null;
     try {
-      const res = await fetch(`/api/topics/edit/${topic._id}`, {
+      const res = await fetch(`/api/${collectionType}/edit/${topic._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -193,7 +224,7 @@
     if (deleting) return;
     deleting = true;
     try {
-      const res = await fetch(`/api/topics/delete/${topic._id}`, {
+      const res = await fetch(`/api/${collectionType}/delete/${topic._id}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -315,7 +346,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ body, topicId: topic._id, collectionType: 'topics' })
+        body: JSON.stringify({ body, topicId: topic._id, collectionType })
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));

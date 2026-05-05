@@ -1,0 +1,51 @@
+---
+// Admin · Official announcements composer + list.
+//
+// Auth-gated to admin role. SSR-fetches the existing officials list so
+// the panel renders without a follow-up roundtrip; subsequent
+// create/edit/pin/unpin/delete actions trigger a refetch via
+// `GET /api/admin/announcements`.
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getSession } from 'auth-astro/server';
+import { connectDB } from '../../lib/mongodb';
+import { populateAuthors } from '../../lib/topicsQuery';
+import AdminAnnouncementsPanel from '../../components/admin/AdminAnnouncementsPanel.svelte';
+
+const session = await getSession(Astro.request);
+if (!session?.user) {
+  return Astro.redirect('/login?redirect=/admin/announcements');
+}
+if (session.user.role !== 'admin') {
+  return Astro.redirect('/');
+}
+
+let initialItems: any[] = [];
+try {
+  const db = await connectDB();
+  const docs = await db
+    .collection('announcements')
+    .find({ isOfficial: true })
+    .sort({ createdAt: -1 })
+    .limit(50)
+    .toArray();
+  const populated = await populateAuthors(docs as any[]);
+  initialItems = JSON.parse(JSON.stringify(populated));
+} catch (err) {
+  console.error('[admin/announcements.astro] SSR officials fetch failed:', err);
+}
+---
+
+<BaseLayout title="Official Announcements">
+  <div class="mx-auto px-6 lg:px-12 py-8 pt-24 md:pt-28 max-w-4xl">
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-[#814256]">Official Announcements</h1>
+      <p class="text-gray-600 mt-2">
+        Compose, pin, edit and delete official announcements. New officials are
+        pinned to the top of the forum for 7 days, displacing any previous one.
+      </p>
+    </div>
+
+    <AdminAnnouncementsPanel client:load initialItems={initialItems} />
+  </div>
+</BaseLayout>

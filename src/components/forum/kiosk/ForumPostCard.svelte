@@ -41,7 +41,8 @@
     statusBadgeOverride = null,
     team = false,
     pinned = false,
-    bookmarked = false
+    bookmarked = false,
+    isOfficial = false
   } = $props<{
     topic: {
       _id: string;
@@ -67,22 +68,42 @@
     team?: boolean;
     pinned?: boolean;
     bookmarked?: boolean;
+    /** Set true when the announcement was posted by an admin via the
+     *  /admin/announcements composer (which sets isOfficial=true on
+     *  the doc). Switches the strap copy from the softer community
+     *  "ANKÜNDIGUNG · NACHBARSCHAFT" to the official "OFFIZIELLE
+     *  ANKÜNDIGUNG · MAHALLE-TEAM". Recommendations + discussions
+     *  ignore this prop. */
+    isOfficial?: boolean;
   }>();
 
   const isAnnouncement = $derived(kind === 'announcement');
   const isRecommendation = $derived(kind === 'recommendation');
+  // The "ink card" treatment (dark bg + paper text + teal print shadow)
+  // is reserved for OFFICIAL admin announcements. Community
+  // announcements share the regular paper-warm look — only the teal
+  // strap above the card differentiates them from discussions.
+  const isInkCard = $derived(isAnnouncement && isOfficial);
 
-  const cardBgClass = $derived(isAnnouncement ? 'bg-ink' : 'bg-paper-warm');
+  const cardBgClass = $derived(isInkCard ? 'bg-ink' : 'bg-paper-warm');
+  // Border colour matches the kind-accent — teal for announcements
+  // (official + community), moss for recommendations, wine for
+  // discussions (matches PostTypeChip's discussion accent). Uniform
+  // 1.5px thickness; discussions skip the print shadow so they stay
+  // visually quieter than the louder kinds (the "calm baseline").
   const cardBorderClass = $derived(
-    isAnnouncement ? 'border-2 border-ink'
+    isAnnouncement ? 'border-[1.5px] border-teal'
     : isRecommendation ? 'border-[1.5px] border-moss'
-    : 'border-[1.5px] border-ink'
+    : 'border border-wine'
   );
-  // Print shadow per kind. Topic gets none (canvas-true: it's the quiet
-  // kind, paper-warm card sits flat on paper).
+  // Print shadow per kind: announcements (official + community) carry
+  // the teal riso stamp — that's the kind identity, not the official-
+  // vs-community distinction. Recommendations get moss. Topics stay
+  // flat (the quiet kind). Same 2px offset across kinds for consistent
+  // visual weight; the colour signals the kind, not the thickness.
   const cardShadowClass = $derived(
     isAnnouncement
-      ? (featured ? 'shadow-[3px_3px_0_var(--k-teal)]' : 'shadow-[2px_2px_0_var(--k-teal)]')
+      ? 'shadow-[2px_2px_0_var(--k-teal)]'
     : isRecommendation
       ? 'shadow-[2px_2px_0_var(--k-moss)]'
     : ''
@@ -92,26 +113,27 @@
     isAnnouncement ? 'bg-teal' : isRecommendation ? 'bg-moss' : ''
   );
   const strapLabel = $derived(
-    isAnnouncement ? $t['pinned.banner.label']
+    isAnnouncement && isOfficial ? $t['pinned.banner.label']
+    : isAnnouncement ? $t['card.strap.announcement']
     : isRecommendation ? $t['card.strap.recommendation']
     : ''
   );
 
-  // Tone helpers — announcement card flips ink/paper, recommendation
-  // adds serif italic on the body.
-  const titleColor = $derived(isAnnouncement ? 'text-paper' : 'text-ink');
-  const authorColor = $derived(isAnnouncement ? 'text-paper' : 'text-ink');
+  // Tone helpers — only the ink (official) card flips text to paper.
+  // Community announcements + recommendations keep ink text on paper.
+  const titleColor = $derived(isInkCard ? 'text-paper' : 'text-ink');
+  const authorColor = $derived(isInkCard ? 'text-paper' : 'text-ink');
   const bodyToneClass = $derived(
-    isAnnouncement ? 'text-paper/80'
+    isInkCard ? 'text-paper/80'
     : isRecommendation ? 'text-ink-soft italic'
     : 'text-ink-soft'
   );
   const bodyFontClass = $derived(
     isRecommendation ? 'font-instrument' : 'font-bricolage'
   );
-  const metaColor = $derived(isAnnouncement ? 'text-paper/55' : 'text-ink-mute');
-  const metaBorderColor = $derived(isAnnouncement ? 'border-paper/25' : 'border-rule');
-  const tagColor = $derived(isAnnouncement ? 'text-paper/70' : 'text-ink-mute');
+  const metaColor = $derived(isInkCard ? 'text-paper/55' : 'text-ink-mute');
+  const metaBorderColor = $derived(isInkCard ? 'border-paper/25' : 'border-rule');
+  const tagColor = $derived(isInkCard ? 'text-paper/70' : 'text-ink-mute');
 
   // German short relative-time. EN strings come in Phase 4b/5b once
   // the design source's English variants are locked in.
@@ -195,7 +217,7 @@
             {#if team}
               <span
                 class={`shrink-0 font-dmmono text-[8.5px] font-semibold uppercase tracking-[0.08em] px-1.5 py-px rounded-sm border ${
-                  isAnnouncement
+                  isInkCard
                     ? 'bg-ochre text-ink border-ochre'
                     : 'bg-ink text-paper border-ink'
                 }`}
@@ -218,7 +240,24 @@
            below as a modifier. -->
       <div class="flex flex-col items-end gap-1.5 shrink-0">
         {#if !strapLabel}
-          <PostTypeChip {kind} />
+          <!-- Card kind-chip — direct port of the design HTML
+               (Mahalle Redesign.html). Filled with the kind color
+               (wine for discussion, teal for announcement, moss for
+               recommendation) + paper text + small DM Mono caps.
+               Distinct from PostTypeChip — that component is the
+               outlined PILL used in the filter rail and does double
+               duty there. -->
+          {@const chipBg = kind === 'announcement'
+            ? 'bg-teal'
+            : kind === 'recommendation'
+            ? 'bg-moss'
+            : 'bg-wine'}
+          {@const chipLabel = ($t[`chip.${kind}` as const] as string).toUpperCase()}
+          <span
+            class={`inline-flex items-center font-dmmono font-medium text-[10px] tracking-[0.08em] text-paper border border-ink rounded-lg px-[9px] py-[3px] ${chipBg}`}
+          >
+            {chipLabel}
+          </span>
         {/if}
         {#if badgeState}
           <StatusBadge state={badgeState} size="sm" />

@@ -1,0 +1,81 @@
+---
+// Announcement detail — Editorial Kiosk shell.
+//
+// Mirror of /topics/[id].astro, scoped to the `announcements` collection.
+// SSR-fetches the announcement by id (with the standard moderation
+// visibility filter) + populates the author + fetches the comment thread,
+// then threads everything to ForumPostDetail with collectionType so the
+// shared component routes edits/deletes/comment-creates to the right
+// /api/announcements/* endpoints.
+
+import KioskLayout from '../../layouts/KioskLayout.astro';
+import ForumPostDetail from '../../components/forum/kiosk/ForumPostDetail.svelte';
+import { getSession } from 'auth-astro/server';
+import { connectDB } from '../../lib/mongodb';
+import { ObjectId } from 'mongodb';
+import { buildModerationFilter, populateAuthors } from '../../lib/topicsQuery';
+
+const { id } = Astro.params;
+
+if (!id || !ObjectId.isValid(id)) {
+  return Astro.redirect('/', 302);
+}
+
+const session = await getSession(Astro.request);
+const currentUserId = session?.user?.id;
+
+const db = await connectDB();
+const collection = db.collection('announcements');
+const commentsCollection = db.collection('comments');
+
+const filter: Record<string, any> = {
+  _id: new ObjectId(id),
+  ...buildModerationFilter(currentUserId)
+};
+
+const doc = await collection.findOne(filter);
+
+if (!doc) {
+  return new Response('Not found', { status: 404 });
+}
+
+const [hydrated] = await populateAuthors([doc as any]);
+
+const commentFilter: Record<string, any> = {
+  relevantPostId: new ObjectId(id),
+  $or: [
+    { moderationStatus: 'approved' },
+    { moderationStatus: { $exists: false } },
+    { moderationStatus: 'pending', isUserReported: true },
+    ...(currentUserId
+      ? [
+          { author: currentUserId, moderationStatus: 'pending' },
+          { author: currentUserId, moderationStatus: 'rejected' }
+        ]
+      : [])
+  ]
+};
+
+const rawComments = await commentsCollection
+  .find(commentFilter)
+  .sort({ date: -1 })
+  .toArray();
+
+const comments = await populateAuthors(rawComments as any[]);
+
+const initialTopic = JSON.parse(JSON.stringify(hydrated));
+const initialComments = JSON.parse(JSON.stringify(comments));
+
+const pageTitle = doc.title ? `${doc.title} · Mahalle Forum` : 'Mahalle Forum';
+---
+
+<KioskLayout title={pageTitle} description={doc.body?.slice(0, 160) ?? ''}>
+  <ForumPostDetail
+    client:only="svelte"
+    initialTopic={initialTopic}
+    initialComments={initialComments}
+    currentUserId={currentUserId ?? null}
+    collectionType="announcements"
+    isOfficial={initialTopic.isOfficial === true}
+  />
+</KioskLayout>

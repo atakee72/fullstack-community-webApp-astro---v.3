@@ -12,6 +12,10 @@ export interface User {
   userPicture?: string;
   hobbies?: string[];
   roleBadge?: string;
+  // Authorisation role. `'admin'` unlocks the admin dashboard +
+  // official-announcement composer + bypasses AI moderation on
+  // /api/admin/announcements/create. Defaults to undefined / 'user'.
+  role?: 'user' | 'admin';
   topics?: string[];
   comments?: string[];
   likes?: string[];
@@ -110,6 +114,11 @@ export interface Announcement {
   moderationStatus?: 'approved' | 'pending' | 'rejected';
   hasWarningLabel?: boolean;
   warningText?: string;
+  // Official-announcement fields. Set only by the admin endpoints at
+  // /api/admin/announcements/*; never settable from the community
+  // /api/announcements/create endpoint (Zod strips unknown keys).
+  isOfficial?: boolean;
+  pinnedUntil?: Date | null;
   // Timestamps
   createdAt?: Date;
   updatedAt?: Date;

@@ -103,7 +103,8 @@ const de = {
   'filter.tagsLabel': 'TAGS',
 
   // pinned block + post-card straps
-  'pinned.banner.label': 'OFFIZIELLE ANKÜNDIGUNG · KIEZRAT',
+  'pinned.banner.label': 'OFFIZIELLE ANKÜNDIGUNG · MAHALLE-TEAM',
+  'card.strap.announcement': 'ANKÜNDIGUNG · NACHBARSCHAFT',
   'pinned.banner.tag': 'ANGEHEFTET',
   'card.strap.recommendation': '✦ EMPFEHLUNG AUS DEM KIEZ',
   'card.cta.read': 'lesen',
@@ -365,7 +366,8 @@ const en: Dict = {
   'filter.mine': 'Mine',
   'filter.tagsLabel': 'TAGS',
 
-  'pinned.banner.label': 'OFFICIAL ANNOUNCEMENT · KIEZRAT',
+  'pinned.banner.label': 'OFFICIAL ANNOUNCEMENT · MAHALLE-TEAM',
+  'card.strap.announcement': 'ANNOUNCEMENT · COMMUNITY',
   'pinned.banner.tag': 'PINNED',
   'card.strap.recommendation': '✦ RECOMMENDED IN THE KIEZ',
   'card.cta.read': 'read',

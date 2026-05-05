@@ -58,6 +58,31 @@ export const AnnouncementUpdateSchema = AnnouncementCreateSchema.partial().refin
   { message: 'At least one field must be provided for update' }
 );
 
+// Admin-only PATCH schema — extends the community update with an
+// optional `pinnedUntil` field. Accepts ISO datetime string (re-pin /
+// extend) or null (unpin). When a string is supplied it must parse to a
+// future date; past or invalid dates are rejected. The community
+// `/api/announcements/edit/[id]` endpoint uses AnnouncementUpdateSchema
+// (above) which excludes pinnedUntil — only admin endpoints may touch
+// the pinned-until clock.
+export const AdminAnnouncementUpdateSchema = AnnouncementCreateSchema.partial()
+  .extend({
+    pinnedUntil: z
+      .union([
+        z
+          .string()
+          .datetime()
+          .refine((v) => new Date(v).getTime() > Date.now(), {
+            message: 'pinnedUntil must be a future date'
+          }),
+        z.null()
+      ])
+      .optional()
+  })
+  .refine(data => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided for update'
+  });
+
 // Recommendation Schema
 export const RecommendationCreateSchema = z.object({
   title: z.string()
@@ -161,6 +186,7 @@ export type TopicCreate = z.infer<typeof TopicCreateSchema>;
 export type TopicUpdate = z.infer<typeof TopicUpdateSchema>;
 export type AnnouncementCreate = z.infer<typeof AnnouncementCreateSchema>;
 export type AnnouncementUpdate = z.infer<typeof AnnouncementUpdateSchema>;
+export type AdminAnnouncementUpdate = z.infer<typeof AdminAnnouncementUpdateSchema>;
 export type RecommendationCreate = z.infer<typeof RecommendationCreateSchema>;
 export type RecommendationUpdate = z.infer<typeof RecommendationUpdateSchema>;
 export type EventCreate = z.infer<typeof EventCreateSchema>;

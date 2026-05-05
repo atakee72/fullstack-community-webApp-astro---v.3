@@ -27,6 +27,12 @@ export const FORUM_QUERY_OPTIONS = {
     'rejectionReason',
     'hasWarningLabel',
     'warningText',
+    // Official-announcement fields. Required so the merged feed on `/`
+    // can identify the pinned official + thread the right strap variant
+    // through to ForumPostCard. Stripped from non-announcement docs by
+    // virtue of being absent on those collections.
+    'isOfficial',
+    'pinnedUntil',
   ],
   sortBy: 'date' as const,
   sortOrder: 'desc' as const,

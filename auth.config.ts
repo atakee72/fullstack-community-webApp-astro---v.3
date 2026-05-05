@@ -43,12 +43,15 @@ export default defineConfig({
                     return null;
                 }
 
-                // Return user object that will be stored in the session
+                // Return user object that will be stored in the session.
+                // `role` defaults to 'user' if the field is missing on the
+                // doc — admin role must be explicitly set in the DB.
                 return {
                     id: user._id.toString(),
                     email: user.email,
                     name: user.name || user.userName || '',
                     image: user.image || user.userPicture || '',
+                    role: (user.role === 'admin' ? 'admin' : 'user') as 'admin' | 'user',
                 };
             }
         })
@@ -63,12 +66,14 @@ export default defineConfig({
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
+                token.role = (user as any).role ?? 'user';
             }
             return token;
         },
         async session({ session, token }) {
             if (session.user) {
                 session.user.id = token.id as string;
+                session.user.role = (token as any).role ?? 'user';
             }
             return session;
         }

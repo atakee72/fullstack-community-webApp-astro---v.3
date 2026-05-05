@@ -1,6 +1,11 @@
 ---
 // Forum index — Editorial Kiosk shell (replaces dark-glass on this branch).
-// SSR pre-fetches the topic list so first paint shows real cards.
+// SSR pre-fetches all three forum collections (topics, announcements,
+// recommendations) in parallel and merges them into a single date-desc
+// feed so first paint shows the full kind-mix of cards. Each item is
+// decorated with `kind` so ForumPostCard can apply its three-treatment
+// switch (discussion = paper-warm flat / announcement = ink + teal
+// strap / recommendation = paper-warm + moss strap + serif italic).
 //
 // URL move (`/` → `/forum`) is deferred until the dashboard page exists.
 // For now the forum stays at `/`, which is what KioskNav points its Forum
@@ -12,19 +17,33 @@ import { getSession } from 'auth-astro/server';
 import { fetchForumItemsForSSR } from '../lib/topicsQuery';
 
 const session = await getSession(Astro.request);
+const userId = session?.user?.id;
 
-let initialTopics: any[] = [];
-try {
-  initialTopics = await fetchForumItemsForSSR('topics', session?.user?.id);
-} catch (err) {
-  console.error('[index.astro] SSR topics prefetch failed:', err);
-}
+// Promise.allSettled (not Promise.all) so one collection's failure
+// doesn't blank the whole feed — partial render beats empty grid.
+const results = await Promise.allSettled([
+  fetchForumItemsForSSR('topics', userId),
+  fetchForumItemsForSSR('announcements', userId),
+  fetchForumItemsForSSR('recommendations', userId),
+]);
+const collections = ['topics', 'announcements', 'recommendations'] as const;
+const [topics, announcements, recommendations] = results.map((r, i) => {
+  if (r.status === 'fulfilled') return r.value as any[];
+  console.error(`[index.astro] ${collections[i]} SSR prefetch failed:`, r.reason);
+  return [] as any[];
+});
+
+const initialItems = [
+  ...topics.map((t) => ({ ...t, kind: 'discussion' as const })),
+  ...announcements.map((a) => ({ ...a, kind: 'announcement' as const })),
+  ...recommendations.map((r) => ({ ...r, kind: 'recommendation' as const })),
+].sort((a, b) => +new Date(b.date ?? 0) - +new Date(a.date ?? 0));
 ---
 
 <KioskLayout title="Mahalle · Forum" description="Diskussionen aus deinem Kiez.">
   <ForumIndex
     client:only="svelte"
-    initialTopics={initialTopics}
-    currentUserId={session?.user?.id ?? null}
+    initialItems={initialItems}
+    currentUserId={userId ?? null}
   />
 </KioskLayout>

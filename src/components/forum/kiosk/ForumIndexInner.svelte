@@ -27,57 +27,94 @@
   import OwnStatusBanner from './states/OwnStatusBanner.svelte';
   import FeedStatusFooter from './states/FeedStatusFooter.svelte';
 
-  let { initialTopics = [], currentUserId = null } = $props<{
-    initialTopics?: any[];
+  let { initialItems = [], currentUserId = null } = $props<{
+    initialItems?: any[];
     currentUserId?: string | null;
   }>();
 
   const query = createQuery(() => ({
-    queryKey: ['forum', 'topics'],
+    queryKey: ['forum', 'all'],
     queryFn: async () => {
-      const res = await fetch(
-        '/api/topics?fields=_id,title,body,description,author,tags,images,comments,date,likes,likedBy,views,moderationStatus,isUserReported,hasWarningLabel&sortBy=date&sortOrder=desc'
+      const fields =
+        '_id,title,body,description,author,tags,images,comments,date,likes,likedBy,views,moderationStatus,isUserReported,hasWarningLabel';
+      const url = (type: string) =>
+        `/api/${type}?fields=${fields}&sortBy=date&sortOrder=desc`;
+      // allSettled mirrors the SSR resilience: a failed collection
+      // shouldn't blank the whole feed. Each handler also catches
+      // network/parse errors so partial responses still render.
+      const safe = (p: Promise<Response>) =>
+        p
+          .then((res) => (res.ok ? res.json() : { items: [] }))
+          .catch(() => ({ items: [] }));
+      const [tRes, aRes, rRes] = await Promise.allSettled([
+        safe(fetch(url('topics'))),
+        safe(fetch(url('announcements'))),
+        safe(fetch(url('recommendations'))),
+      ]);
+      const t = tRes.status === 'fulfilled' ? tRes.value : { items: [] };
+      const a = aRes.status === 'fulfilled' ? aRes.value : { items: [] };
+      const r = rRes.status === 'fulfilled' ? rRes.value : { items: [] };
+      const decorate = (arr: any[], kind: string) =>
+        (arr ?? []).map((it: any) => ({ ...it, kind }));
+      const merged = [
+        ...decorate(t.items ?? t, 'discussion'),
+        ...decorate(a.items ?? a, 'announcement'),
+        ...decorate(r.items ?? r, 'recommendation'),
+      ];
+      merged.sort(
+        (x: any, y: any) =>
+          +new Date(y.date ?? 0) - +new Date(x.date ?? 0)
       );
-      if (!res.ok) throw new Error('forum fetch failed');
-      const json = await res.json();
-      return (json.items ?? json) as any[];
+      return merged;
     },
-    initialData: initialTopics,
+    initialData: initialItems,
     initialDataUpdatedAt: Date.now()
   }));
 
   const items = $derived((query.data ?? []) as any[]);
 
-  // Synthetic Mahalle-Team welcome post — featured announcement card with
-  // pinned + team flags. Sits ABOVE the real data; the regular feed
-  // remains unaffected.
-  const pinnedTopic = {
-    _id: 'pinned-mahalle-team-001',
-    title: 'Willkommen im Forum — schreibt, lest, redet mit.',
-    body:
-      'Wir sind die Mahalle-Crew. Hier könnt ihr Diskussionen starten, ' +
-      'Empfehlungen teilen oder Kiez-Ankündigungen machen. Bitte respektvoll, ' +
-      'kurz und auf den Punkt — eure Nachbar:innen lesen mit. Bei Fragen: meldet euch.',
-    author: {
-      name: 'Mahalle Team',
-      image: null,
-      createdAt: '2025-01-01T00:00:00Z'
-    },
-    tags: ['willkommen', 'kiezrat'],
-    comments: [],
-    likes: 47,
-    date: new Date().toISOString()
-  };
+  // Pinned official announcement — at most one in the feed at a time
+  // (server displaces older officials on create; see
+  // /api/admin/announcements/create). After the 7-day pinnedUntil
+  // expires, the card slips into the regular feed and this find()
+  // returns undefined → top slot disappears.
+  const pinnedOfficial = $derived(
+    items.find(
+      (it: any) =>
+        it.kind === 'announcement' &&
+        it.isOfficial === true &&
+        it.pinnedUntil &&
+        new Date(it.pinnedUntil).getTime() > Date.now()
+    )
+  );
 
   // Filter state — Phase 4a applies tag filters locally only; type/saved/mine
   // filters toggle the active pill but don't reshape the data yet.
   let activeFilter = $state<Filter>('all');
   let activeTag = $state<string | null>(null);
 
+  // Filter ladder:
+  //   1. kind filter (discussion / announcement / recommendation) when
+  //      activeFilter is one of those — direct match against `it.kind`
+  //      (the SSR fetch + client query both decorate items with kind).
+  //   2. 'mine' filter → author-owned posts only (uses currentUserId).
+  //   3. 'saved' is route-handled by handleFilterChange (navigates to
+  //      /bookmarks) — never reaches this filter.
+  //   4. tag filter (if any tag pill is active).
   const filteredRest = $derived(
-    activeTag
-      ? items.filter((it) => (it.tags ?? []).includes(activeTag))
-      : items
+    items
+      // Pinned official renders separately at the top; exclude from
+      // the regular feed so it doesn't appear twice.
+      .filter((it: any) => it._id !== pinnedOfficial?._id)
+      .filter((it: any) => {
+        if (activeFilter === 'all') return true;
+        if (activeFilter === 'mine')
+          return authorIdOf(it.author) === currentUserId;
+        return it.kind === activeFilter;
+      })
+      .filter((it: any) =>
+        !activeTag ? true : (it.tags ?? []).includes(activeTag)
+      )
   );
 
   function topTags(input: any[], n = 6): string[] {
@@ -132,8 +169,13 @@
   );
 
   function handleFilterChange(f: Filter) {
+    // 'saved' routes to the dedicated /bookmarks page rather than
+    // duplicating savedPosts join logic in-page.
+    if (f === 'saved') {
+      if (typeof window !== 'undefined') window.location.href = '/bookmarks';
+      return;
+    }
     activeFilter = f;
-    // Phase 4b: trigger the relevant query / merge result.
   }
   function handleTagChange(tag: string | null) {
     activeTag = tag;
@@ -144,6 +186,16 @@
   }
 
   // ─── Phase 4b · state-matrix helpers ────────────────────────────────
+  // Per-kind detail route. Each forum sub-collection has its own
+  // [id].astro page so edits/deletes/comments hit the right
+  // /api/{collection}/* endpoints. Falls back to /topics for any
+  // legacy item without a kind decoration.
+  function detailHref(item: any): string {
+    if (item.kind === 'announcement') return `/announcements/${item._id}`;
+    if (item.kind === 'recommendation') return `/recommendations/${item._id}`;
+    return `/topics/${item._id}`;
+  }
+
   // Author-id extractor — schema returns either a string (raw _id) or a
   // populated `{ _id }` object depending on the SSR path.
   function authorIdOf(v: any): string | null {
@@ -342,22 +394,27 @@
         !$online ? 'k-grayscale-cached' : ''
       }`}
     >
-      <!-- Pinned welcome (synthetic) — always col-span-3 in the happy path. -->
-      <div class="md:col-span-2 lg:col-span-3">
-        <a
-          href="#"
-          class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
-          aria-label="Mahalle-Team Willkommensbeitrag"
-        >
-          <ForumPostCard
-            topic={pinnedTopic}
-            kind="announcement"
-            featured
-            pinned
-            team
-          />
-        </a>
-      </div>
+      <!-- Pinned official announcement (real DB doc). Hidden when the
+           user narrows by a kind that wouldn't include announcements,
+           and when no current official has pinnedUntil > now. -->
+      {#if pinnedOfficial && (activeFilter === 'all' || activeFilter === 'announcement')}
+        <div class="md:col-span-2 lg:col-span-3">
+          <a
+            href={detailHref(pinnedOfficial)}
+            class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+            aria-label="Offizielle Ankündigung"
+          >
+            <ForumPostCard
+              topic={pinnedOfficial}
+              kind="announcement"
+              featured
+              pinned
+              isOfficial
+              team={pinnedOfficial.author?.role === 'admin'}
+            />
+          </a>
+        </div>
+      {/if}
 
       <!-- Single feed-level plum banner if any community-reported card exists. -->
       {#if hasReportedInFeed}
@@ -388,13 +445,15 @@
               {$t['feed.footer.live']}
             </span>
             <a
-              href={`/topics/${topic._id}`}
+              href={detailHref(topic)}
               class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
             >
               <ForumPostCard
                 {topic}
-                kind="discussion"
+                kind={topic.kind ?? 'discussion'}
                 optimistic
+                isOfficial={topic.isOfficial === true}
+                team={topic.author?.role === 'admin'}
                 statusBadgeOverride={status === 'rejected' ? 'rejected' : 'pending'}
               />
             </a>
@@ -407,13 +466,15 @@
               <OwnStatusBanner state="pending" />
             </div>
             <a
-              href={`/topics/${topic._id}`}
+              href={detailHref(topic)}
               class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
             >
               <ForumPostCard
                 {topic}
-                kind="discussion"
+                kind={topic.kind ?? 'discussion'}
                 optimistic
+                isOfficial={topic.isOfficial === true}
+                team={topic.author?.role === 'admin'}
                 statusBadgeOverride="pending"
               />
             </a>
@@ -423,34 +484,43 @@
             <OwnStatusBanner state="rejected" />
           </div>
           <a
-            href={`/topics/${topic._id}`}
+            href={detailHref(topic)}
             class="md:col-span-2 lg:col-span-3 block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
           >
             <ForumPostCard
               {topic}
-              kind="discussion"
+              kind={topic.kind ?? 'discussion'}
               ghosted
+              isOfficial={topic.isOfficial === true}
+              team={topic.author?.role === 'admin'}
               statusBadgeOverride="rejected"
             />
           </a>
         {:else if status === 'reported'}
           <a
-            href={`/topics/${topic._id}`}
+            href={detailHref(topic)}
             class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
           >
             <ForumPostCard
               {topic}
-              kind="discussion"
+              kind={topic.kind ?? 'discussion'}
               ghosted
+              isOfficial={topic.isOfficial === true}
+              team={topic.author?.role === 'admin'}
               statusBadgeOverride="flagged"
             />
           </a>
         {:else}
           <a
-            href={`/topics/${topic._id}`}
+            href={detailHref(topic)}
             class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
           >
-            <ForumPostCard {topic} kind="discussion" />
+            <ForumPostCard
+              {topic}
+              kind={topic.kind ?? 'discussion'}
+              isOfficial={topic.isOfficial === true}
+              team={topic.author?.role === 'admin'}
+            />
           </a>
         {/if}
       {/each}
