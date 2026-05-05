@@ -64,11 +64,14 @@ src/
 ## Key Architecture Patterns
 
 ### Authentication Flow
-- Uses `auth-astro` wrapping NextAuth v5 beta
+- Uses `auth-astro` wrapping NextAuth v5 beta (which itself wraps `@auth/core`)
 - Credentials provider with bcrypt password hashing
 - MongoDB adapter for session storage
 - JWT strategy for stateless auth
 - Config in `auth.config.ts`
+- **Role**: users have `role?: 'user' | 'admin'` on their MongoDB doc. The `authorize` → `jwt` → `session` callback chain in `auth.config.ts` propagates it so `session.user.role` is available on every API route + page. Type augmentation lives in `src/types/next-auth.d.ts` (must augment `@auth/core/types` and `@auth/core/jwt`, not `next-auth/*` — that's the package the lib actually uses).
+- **Admin gate helper**: `requireAdminSession(request)` in `src/lib/auth.ts` returns `{ ok: true, userId }` or a pre-shaped 401/403 `Response`. Used by all `/api/admin/announcements/*` endpoints.
+- **Pre-existing security TODO**: `/api/admin/moderation/{review,bulk-review,index}.ts` still use a degraded `ADMIN_USER_IDS.length === 0 || includes(userId)` fallback (hardcoded array, empty by default → any logged-in user passes). Switch them to `session.user.role === 'admin'` (no fallback) in a follow-up PR.
 
 ### API Routes
 All API routes in `src/pages/api/` follow this pattern:
@@ -123,11 +126,11 @@ See `src/pages/api/news/CLAUDE.md` — full notes load when working in that subt
 See `src/components/kiez/CLAUDE.md` — full notes (data pipeline, LOR codes, MSS column layout, charts, air quality, trend backfills) load when working in that subtree.
 
 ## Database Collections
-- `users` - User accounts (includes `moderationStrikes`, `isBanned` fields)
-- `topics` - Forum posts (includes `moderationStatus`, `isUserReported`, `images` fields)
+- `users` - User accounts (includes `moderationStrikes`, `isBanned`, plus `role?: 'user' | 'admin'` — admin role unlocks `/admin/announcements`, the moderation queue, and the `isOfficial`-true admin-create endpoint; defaults to `'user'`)
+- `topics` - Forum posts (includes `moderationStatus`, `isUserReported`, `rejectionReason`, `images` fields)
 - `events` - Calendar events (includes `moderationStatus`, `isUserReported` fields)
-- `announcements` - Community announcements (includes `moderationStatus`, `isUserReported`, `images` fields)
-- `recommendations` - User recommendations (includes `moderationStatus`, `isUserReported`, `images` fields)
+- `announcements` - Community + official announcements (includes `moderationStatus`, `isUserReported`, `rejectionReason`, `images`, plus **`isOfficial?: boolean`** + **`pinnedUntil?: Date | null`** for admin-posted official announcements with the 7-day pin lifecycle — server-controlled, never settable from client input; see admin dashboard at `/admin/announcements`)
+- `recommendations` - User recommendations (includes `moderationStatus`, `isUserReported`, `rejectionReason`, `images` fields)
 - `comments` - Comments on posts (includes `moderationStatus` field)
 - `listings` - Marketplace listings (includes `moderationStatus`, `listingType`, `status` fields)
 - `news` - Newsboard articles (AI-fetched and user-submitted, includes `moderationStatus`, `aiRelevanceScore`, `fetchDate`, `sourceName`, `sourceUrl` fields)
