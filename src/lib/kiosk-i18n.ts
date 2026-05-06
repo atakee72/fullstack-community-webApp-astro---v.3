@@ -200,11 +200,11 @@ const de = {
     'In der Zwischenzeit: Lesen, Kommentieren, ein Beitrag merken. Auch Stille ist Teil der Nachbarschaft.',
 
   // Author-status banners — shown above the affected card in the feed.
-  'state.own.pending.title': 'Dein Beitrag wird gerade gelesen.',
+  'state.own.pending.title': 'Ein Mensch prüft deinen Beitrag.',
   'state.own.pending.body':
-    'Während der Prüfung sehen andere Nachbar:innen den Beitrag noch nicht. Du musst nichts tun. Danach wird er freigegeben — manchmal mit Hinweis — oder nicht freigegeben.',
+    'Während der Prüfung sehen andere Nachbar:innen den Beitrag noch nicht.',
   'state.own.pending.note': 'nur du siehst diesen Status',
-  'state.own.pending.usual': 'üblich: 30–90 sek',
+  'state.own.pending.usual': 'kann etwas dauern',
   'state.own.rejected.title': 'Dein Beitrag wurde nicht freigegeben.',
   'state.own.rejected.body':
     'Andere Nachbar:innen sehen ihn nicht. Du siehst ihn weiterhin in deiner Übersicht. Wir behalten ihn intern, falls du dich an die Moderation wenden möchtest.',
@@ -451,11 +451,11 @@ const en: Dict = {
   'state.rate.coda':
     'Meanwhile: read, comment, bookmark. Quiet time is part of the neighborhood too.',
 
-  'state.own.pending.title': "We're reading your post.",
+  'state.own.pending.title': 'A human is reviewing your post.',
   'state.own.pending.body':
-    "While we review, other neighbours don't see the post yet. Nothing for you to do. Afterwards it goes live — sometimes with a notice — or it doesn't.",
+    "While we review, other neighbours don't see the post yet.",
   'state.own.pending.note': 'only you see this status',
-  'state.own.pending.usual': 'usual: 30–90 sec',
+  'state.own.pending.usual': 'may take a moment',
   'state.own.rejected.title': "Your post wasn't approved.",
   'state.own.rejected.body':
     "Other neighbours can't see it. You still see it in your own view. We keep it internally in case you want to reach out to moderation.",

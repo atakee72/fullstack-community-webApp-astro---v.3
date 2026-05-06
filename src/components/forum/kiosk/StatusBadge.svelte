@@ -7,6 +7,8 @@
   //   reported — community reported via 🚩; awaiting admin
   //   warning  — approved-with-warning; content blurred until revealed
 
+  import { t } from '../../../lib/kiosk-i18n';
+
   let {
     state,
     size = 'md',
@@ -19,15 +21,8 @@
     class?: string;
   }>();
 
-  // German labels — lowercase to match the canvas treatment (i18n swap in Phase 3).
-  const defaultLabel = $derived({
-    pending:  'in prüfung',
-    approved: 'veröffentlicht',
-    rejected: 'abgelehnt',
-    flagged:  'ai-markiert',
-    reported: 'gemeldet',
-    warning:  'mit hinweis'
-  }[state]);
+  // Locale-aware label via the kiosk-i18n `status.*` keys (DE + EN tables).
+  const defaultLabel = $derived($t[`status.${state}` as const]);
 
   // Each state owns a unique glyph — readers can scan by shape, not just color.
   //   ● solid circle  → approved (settled, public)
