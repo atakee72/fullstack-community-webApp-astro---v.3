@@ -81,6 +81,15 @@
       : ($t[`chip.${kind}` as const] as string).toUpperCase()
   );
 
+  // Kind chip on the meta row — direct port of the card kind-chip
+  // (filled wine/moss/teal + paper text + 1px ink border + rounded-lg).
+  // Distinct from `<PostTypeChip>` — that component's `selected` mode
+  // adds a 2px border + print shadow for the filter pill.
+  const chipBg = $derived(
+    kind === 'announcement' ? 'bg-teal' : kind === 'recommendation' ? 'bg-moss' : 'bg-wine'
+  );
+  const chipLabel = $derived(($t[`chip.${kind}` as const] as string).toUpperCase());
+
   let now = $state(new Date());
   $effect(() => {
     const id = setInterval(() => (now = new Date()), 60_000);
@@ -438,7 +447,11 @@
 
       <!-- Type chip + age + tags + status + edit button -->
       <div class="flex items-center flex-wrap gap-2.5 mb-3">
-        <PostTypeChip {kind} />
+        <span
+          class={`inline-flex items-center font-dmmono font-medium text-[10px] tracking-[0.08em] text-paper border border-ink rounded-lg px-[9px] py-[3px] ${chipBg}`}
+        >
+          {chipLabel}
+        </span>
         <span class="font-dmmono text-[10.5px] uppercase tracking-[0.05em] text-ink-mute">
           · {relTime(topic.date)}
         </span>
