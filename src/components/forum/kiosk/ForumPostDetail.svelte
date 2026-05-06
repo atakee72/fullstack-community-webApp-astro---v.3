@@ -178,7 +178,43 @@
 
   const likeCount = $derived(topic.likes ?? 0);
   const replyCount = $derived(comments.length);
-  const bookmarked = $derived(false);
+
+  // Save / bookmark state — fetched once on mount via /api/posts/save (GET
+  // returns the user's saved-post id list). Toggled via POST {action:
+  // save|unsave}. Optimistic flip with rollback on network error.
+  let bookmarked = $state(false);
+  let bookmarkBusy = $state(false);
+  $effect(() => {
+    if (!currentUserId || !topic._id) return;
+    fetch('/api/posts/save', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.savedIds) {
+          bookmarked = data.savedIds.includes(String(topic._id));
+        }
+      })
+      .catch(() => {});
+  });
+  async function toggleBookmark() {
+    if (!currentUserId || bookmarkBusy) return;
+    const next = !bookmarked;
+    bookmarked = next;
+    bookmarkBusy = true;
+    try {
+      const res = await fetch('/api/posts/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ postId: String(topic._id), action: next ? 'save' : 'unsave' })
+      });
+      if (!res.ok) throw new Error(`save failed (${res.status})`);
+    } catch {
+      bookmarked = !next; // rollback
+      showError($locale === 'de' ? 'Speichern fehlgeschlagen.' : 'Could not save.');
+    } finally {
+      bookmarkBusy = false;
+    }
+  }
 
   const heroImage = $derived(
     topic.images?.[0]?.url ? optimizeCloudinary(topic.images[0].url) : null
@@ -603,7 +639,10 @@
           </button>
           <button
             type="button"
-            class={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-ink transition-colors font-semibold ${
+            onclick={toggleBookmark}
+            disabled={!currentUserId || bookmarkBusy}
+            aria-pressed={bookmarked}
+            class={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-ink transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
               bookmarked ? 'bg-ochre' : 'bg-transparent hover:bg-paper-warm'
             }`}
             aria-label={$t['detail.engagement.saved']}
