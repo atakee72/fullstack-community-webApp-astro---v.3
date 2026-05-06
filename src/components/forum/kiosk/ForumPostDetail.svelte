@@ -184,7 +184,10 @@
     topic.images?.[0]?.url ? optimizeCloudinary(topic.images[0].url) : null
   );
   const firstTag = $derived(topic.tags?.[0] ?? null);
-  const isVerified = $derived(topic.author?.verified === true);
+  // No verification pipeline yet — every signed-in kiez resident counts as
+  // "in kiez" for now. When real address-verification or onboarding ships,
+  // gate this on `topic.author?.verified === true`.
+  const isVerified = $derived(true);
   const editHistoryCount = $derived(topic.editHistory?.length ?? 0);
 
   // ─── Edit mode ──────────────────────────────────────────────────────
