@@ -679,9 +679,9 @@
     </article>
 
     <!-- ── Right rail (switches between read mode + edit mode) ──── -->
-    <aside class="hidden lg:block">
+    <aside class="hidden lg:block bg-paper-soft border-l border-dashed border-rule">
       <div
-        class="sticky top-24 space-y-5 py-5"
+        class="sticky top-24 space-y-5 px-5 py-7"
       >
         {#if editing}
           <!-- Edit mode: action row + delete confirm -->
