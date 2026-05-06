@@ -31,11 +31,6 @@
   const bodyExcerpt = $derived(
     values.body.length > 140 ? values.body.slice(0, 137).trimEnd() + '…' : values.body
   );
-
-  // Empty placeholders so the silhouette stays visible before the user
-  // types — feels more alive than a blank box.
-  const titleDisplay = $derived(values.title || '…');
-  const hasContent = $derived(values.title.length + values.body.length > 0);
 </script>
 
 <p class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-wine mb-2">
@@ -68,13 +63,17 @@
     />
   </div>
 
-  <div
-    class={`font-bricolage font-extrabold tracking-tight leading-tight mb-1.5 text-[14px] ${
-      hasContent ? 'text-ink' : 'text-ink-mute/50'
-    }`}
-  >
-    {titleDisplay}
-  </div>
+  {#if values.title}
+    <div
+      class="font-bricolage font-extrabold tracking-tight leading-tight mb-1.5 text-[14px] text-ink"
+    >
+      {values.title}
+    </div>
+  {:else}
+    <div class="font-instrument italic text-ink-mute/70 mb-1.5 text-[12px]">
+      {$t['compose.preview.titlePlaceholder']}
+    </div>
+  {/if}
   {#if bodyExcerpt}
     <p
       class={`text-[11.5px] leading-relaxed m-0 ${

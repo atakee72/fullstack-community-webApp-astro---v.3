@@ -244,6 +244,7 @@ const de = {
   'compose.preview.kicker': 'VORSCHAU · LIVE',
   'compose.preview.you': 'du',
   'compose.preview.now': 'gleich',
+  'compose.preview.titlePlaceholder': 'dein Beitrag erscheint hier',
   'compose.moderation.kicker': 'MODERATION',
   'compose.moderation.body':
     'Dein Beitrag wird kurz auf Sprache und Inhalt geprüft, bevor er veröffentlicht wird. Die Prüfung ist anonym — keine persönlichen Daten werden verwendet, nur der Text und die Bilder.',
@@ -492,6 +493,7 @@ const en: Dict = {
   'compose.preview.kicker': 'PREVIEW · LIVE',
   'compose.preview.you': 'you',
   'compose.preview.now': 'now',
+  'compose.preview.titlePlaceholder': 'your post will appear here',
   'compose.moderation.kicker': 'MODERATION',
   'compose.moderation.body':
     'Your post is briefly checked for language and content before going live. The check is anonymous — no personal data is used, only the text and images.',
