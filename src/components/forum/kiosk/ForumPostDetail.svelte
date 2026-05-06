@@ -516,7 +516,12 @@
 
       {#if heroImage && !editing}
         <div class="mb-5 rounded-md border-[1.5px] border-ink overflow-hidden max-w-prose">
-          <img src={heroImage} alt={topic.title} class="w-full h-auto" loading="lazy" />
+          <img
+            src={heroImage}
+            alt={topic.title}
+            class="w-full h-auto max-h-[600px] object-contain bg-paper-soft"
+            loading="lazy"
+          />
         </div>
       {/if}
 
@@ -621,7 +626,7 @@
     <!-- ── Right rail (switches between read mode + edit mode) ──── -->
     <aside class="hidden lg:block">
       <div
-        class="sticky top-24 space-y-5 bg-paper-soft border-l border-dashed border-rule pl-5 -ml-5 py-5"
+        class="sticky top-24 space-y-5 py-5"
       >
         {#if editing}
           <!-- Edit mode: action row + delete confirm -->
@@ -713,7 +718,7 @@
 
           <!-- Trust-note serif italic quote -->
           <section
-            class="bg-paper border border-dashed border-rule rounded-sm px-3 py-2.5 font-instrument italic text-[11.5px] text-ink-soft leading-[1.5]"
+            class="border-l-2 border-rule pl-3 font-instrument italic text-[11.5px] text-ink-soft leading-[1.5]"
           >
             {$t['detail.trust.quote']}
           </section>

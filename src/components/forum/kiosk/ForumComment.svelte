@@ -166,7 +166,7 @@
   }
 </script>
 
-<article class="flex gap-3 py-3.5 border-t border-dashed border-rule first:border-t-0">
+<article class="group flex gap-3 py-5">
   <!-- Avatar column with heart count below -->
   <div class="flex flex-col items-center gap-1.5 shrink-0">
     <KioskAvatar
@@ -202,7 +202,9 @@
         </span>
       {/if}
       {#if (canEdit || canDelete) && !editing}
-        <span class="ml-auto inline-flex items-center gap-2.5">
+        <span
+          class="ml-auto inline-flex items-center gap-2.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150"
+        >
           {#if canEdit}
             <button
               type="button"
