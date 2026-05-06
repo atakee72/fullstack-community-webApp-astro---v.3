@@ -166,7 +166,7 @@
   }
 </script>
 
-<article class="group flex gap-3 py-5">
+<article class="group flex gap-3 py-5 border-t border-dotted border-rule first:border-t-0">
   <!-- Avatar column with heart count below -->
   <div class="flex flex-col items-center gap-1.5 shrink-0">
     <KioskAvatar
