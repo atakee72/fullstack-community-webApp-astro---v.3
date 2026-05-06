@@ -37,10 +37,12 @@
   let {
     initialValues,
     suggestedTags = [],
+    showBreadcrumb = false,
     onChange
   } = $props<{
     initialValues?: Partial<ComposeValues>;
     suggestedTags?: string[];
+    showBreadcrumb?: boolean;
     onChange: (values: ComposeValues) => void;
   }>();
 
@@ -132,6 +134,19 @@
   class="px-6 md:px-9 py-6 md:py-7 bg-paper"
   onsubmit={(e) => e.preventDefault()}
 >
+  {#if showBreadcrumb}
+    <div
+      class="flex items-center mb-5 pb-2.5 border-b border-dashed border-rule font-dmmono text-[10.5px] uppercase tracking-[0.05em] text-ink-mute"
+    >
+      <a href="/" class="inline-flex items-center gap-2 hover:text-ink transition-colors">
+        <span aria-hidden="true">←</span>
+        <span>{$t['compose.crumb.forum']}</span>
+      </a>
+      <span aria-hidden="true" class="mx-2">·</span>
+      <span class="underline decoration-dashed underline-offset-[3px]">{$t['compose.crumb.new']}</span>
+    </div>
+  {/if}
+
   <!-- ── Kicker ────────────────────────────────────────────────────── -->
   <p class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-wine mb-1.5">
     ◆ {$t['compose.kicker']}
@@ -314,24 +329,22 @@
         />
       {/if}
 
-      {#if suggestedTags.length}
-        <span
-          class="ml-2 font-dmmono text-[10px] text-ink-mute self-center"
-        >
-          {$t['compose.tags.suggested']}
-        </span>
-        {#each suggestedTags as tag (tag)}
-          {#if !tags.includes(tag)}
-            <button
-              type="button"
-              onclick={() => addTag(tag)}
-              class="font-dmmono text-[12px] text-ink-mute hover:text-ink underline-offset-2 hover:underline"
-            >
-              #{tag}
-            </button>
-          {/if}
-        {/each}
-      {/if}
+      <span
+        class="ml-2 font-dmmono text-[10px] text-ink-mute self-center"
+      >
+        {$t['compose.tags.suggested']}
+      </span>
+      {#each suggestedTags as tag (tag)}
+        {#if !tags.includes(tag)}
+          <button
+            type="button"
+            onclick={() => addTag(tag)}
+            class="font-dmmono text-[12px] text-ink-mute hover:text-ink underline-offset-2 hover:underline"
+          >
+            #{tag}
+          </button>
+        {/if}
+      {/each}
     </div>
   </div>
 </form>

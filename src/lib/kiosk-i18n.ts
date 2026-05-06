@@ -222,6 +222,8 @@ const de = {
   // sandbox
   // ─── Phase 5b · compose / edit / moderating / delete ───────────────
   // Compose form (create + edit shared sections).
+  'compose.crumb.forum': 'FORUM',
+  'compose.crumb.new': 'NEUES THEMA',
   'compose.kicker': 'WORÜBER REDEN WIR HEUTE?',
   'compose.title.label': 'TITEL',
   'compose.title.placeholder': 'Was willst du teilen?',
@@ -471,6 +473,8 @@ const en: Dict = {
   'feed.footer.loadMore': 'LOAD MORE ↓',
 
   // ─── Phase 5b · compose / edit / moderating / delete ───────────────
+  'compose.crumb.forum': 'FORUM',
+  'compose.crumb.new': 'NEW TOPIC',
   'compose.kicker': "WHAT'S ON YOUR MIND?",
   'compose.title.label': 'TITLE',
   'compose.title.placeholder': 'What do you want to share?',

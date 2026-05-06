@@ -207,6 +207,7 @@
     <ComposeForm
       initialValues={initialValues}
       onChange={handleChange}
+      showBreadcrumb={true}
     />
     <ComposePreview
       values={values}
