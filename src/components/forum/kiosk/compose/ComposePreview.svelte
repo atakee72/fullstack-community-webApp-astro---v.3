@@ -50,7 +50,7 @@
 </script>
 
 <aside
-  class="hidden lg:flex bg-paper-soft border-l border-dashed border-rule px-5 py-7 flex-col h-full"
+  class="hidden lg:flex bg-paper-warm border-l border-dashed border-rule px-5 py-7 flex-col h-full"
 >
   <ComposeMiniPreview values={values} currentUser={currentUser} />
 
