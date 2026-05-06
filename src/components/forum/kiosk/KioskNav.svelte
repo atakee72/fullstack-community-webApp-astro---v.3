@@ -14,8 +14,13 @@
     user?: { name?: string; image?: string | null } | null;
   }>();
 
+  // Forum item's `match` covers `/`, the legacy `/forum`, and the three
+  // per-kind detail/create routes — so the Forum tab stays highlighted on
+  // /topics/create, /topics/{id}, /announcements/{id}, /recommendations/{id}.
+  const FORUM_MATCH = ['/', '/forum', '/topics', '/announcements', '/recommendations'];
+
   const topNav = $derived([
-    { href: '/',             label: $t['nav.forum'],       match: ['/', '/forum'] },
+    { href: '/',             label: $t['nav.forum'],       match: FORUM_MATCH },
     { href: '/calendar',     label: $t['nav.calendar'],    match: ['/calendar'] },
     { href: '/newsboard',    label: $t['nav.news'],        match: ['/newsboard'] },
     { href: '/marketplace',  label: $t['nav.marketplace'], match: ['/marketplace'] },
@@ -24,7 +29,7 @@
   ]);
 
   const bottomNav = $derived([
-    { href: '/',             label: $t['nav.short.forum'],       match: ['/', '/forum'] },
+    { href: '/',             label: $t['nav.short.forum'],       match: FORUM_MATCH },
     { href: '/calendar',     label: $t['nav.short.calendar'],    match: ['/calendar'] },
     { href: '/newsboard',    label: $t['nav.short.news'],        match: ['/newsboard'] },
     { href: '/marketplace',  label: $t['nav.short.marketplace'], match: ['/marketplace'] },
