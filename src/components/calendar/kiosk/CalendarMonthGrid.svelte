@@ -44,13 +44,27 @@
     visibleMonth = new Date(),
     events = [],
     onPickEvent,
-    onSelectionConfirmed
+    onSelectionConfirmed,
+    onPrevMonth,
+    onNextMonth,
+    prevMonthLabel = '',
+    nextMonthLabel = '',
+    liveCount = 0
   } = $props<{
     visibleMonth?: Date;
     events?: EventDoc[];
     onPickEvent?: (ev: EventDoc) => void;
     onSelectionConfirmed?: (from: Date, to: Date) => void;
+    onPrevMonth?: () => void;
+    onNextMonth?: () => void;
+    prevMonthLabel?: string;
+    nextMonthLabel?: string;
+    liveCount?: number;
   }>();
+
+  function liveLine(n: number): string {
+    return ($t['cal.footer.live'] as string).replace('{n}', String(n));
+  }
 
   // Day-of-week labels — short, locale-specific. Hardcoded (matches
   // CD's JSX `DOW[lang]`); a date-fns `format(d, 'EEEEEE')` route would
@@ -310,5 +324,33 @@
       onConfirm={confirmPin}
       onCancel={clearSelection}
     />
+  {/if}
+
+  <!-- Month nav footer: prev / live indicator / next.
+       Per CD's design — DM Mono 10px, dashed top rule, full-width. -->
+  {#if onPrevMonth || onNextMonth}
+    <div
+      class="mt-2 pt-2 flex justify-between items-center font-dmmono text-[10px] uppercase tracking-[0.05em] text-ink-mute border-t border-dashed border-rule"
+    >
+      <button
+        type="button"
+        onclick={onPrevMonth}
+        disabled={!onPrevMonth}
+        class="hover:text-ink transition-colors disabled:opacity-50"
+      >
+        ← {prevMonthLabel}
+      </button>
+      <span class="text-wine">
+        {liveLine(liveCount)}
+      </span>
+      <button
+        type="button"
+        onclick={onNextMonth}
+        disabled={!onNextMonth}
+        class="hover:text-ink transition-colors disabled:opacity-50"
+      >
+        {nextMonthLabel} →
+      </button>
+    </div>
   {/if}
 </div>

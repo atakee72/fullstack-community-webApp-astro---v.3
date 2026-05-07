@@ -10,7 +10,15 @@
   // modal off the events list.
 
   import { createQuery } from '@tanstack/svelte-query';
-  import { format, startOfWeek, endOfWeek } from 'date-fns';
+  import {
+    format,
+    startOfWeek,
+    endOfWeek,
+    startOfMonth,
+    endOfMonth,
+    addMonths,
+    subMonths
+  } from 'date-fns';
   import { de as deLocale, enUS } from 'date-fns/locale';
 
   import CalendarTitleBlock from './CalendarTitleBlock.svelte';
@@ -53,16 +61,31 @@
     saved = false;
   }
 
+  // ─── Visible month + month navigation ─────────────────────────────
+  // Tracked as $state so the bottom month-nav (← MÄRZ / MAI →) can
+  // walk through months. Defaults to today.
+  let visibleMonth = $state(new Date());
+
+  function goPrevMonth() {
+    visibleMonth = subMonths(visibleMonth, 1);
+  }
+  function goNextMonth() {
+    visibleMonth = addMonths(visibleMonth, 1);
+  }
+
   // ─── Query ─────────────────────────────────────────────────────────
-  const queryOpts = getDefaultCalendarQueryOptions();
-  const queryKey = ['calendar', 'events', queryOpts] as const;
+  // queryOpts depends on visibleMonth so the events query refetches when
+  // the user navigates months. The thunk form of createQuery() lets
+  // Svelte-Query v6 see the reactive queryKey change.
+  const queryOpts = $derived(getDefaultCalendarQueryOptions(visibleMonth));
 
   async function fetchEvents(): Promise<EventDoc[]> {
+    const opts = queryOpts;
     const params = new URLSearchParams();
-    params.set('sortBy', queryOpts.sortBy);
-    params.set('sortOrder', queryOpts.sortOrder);
-    params.set('dateFrom', queryOpts.dateFrom.toISOString());
-    params.set('dateTo', queryOpts.dateTo.toISOString());
+    params.set('sortBy', opts.sortBy);
+    params.set('sortOrder', opts.sortOrder);
+    params.set('dateFrom', opts.dateFrom.toISOString());
+    params.set('dateTo', opts.dateTo.toISOString());
     const res = await fetch(`/api/events?${params.toString()}`, {
       credentials: 'include'
     });
@@ -71,10 +94,8 @@
     return (json.events ?? []) as EventDoc[];
   }
 
-  // TanStack Svelte Query v6 requires the thunk form `() => options`
-  // (NOT a plain options object). The plain-object signature is v5.
   const eventsQuery = createQuery<EventDoc[]>(() => ({
-    queryKey: queryKey as unknown as readonly unknown[],
+    queryKey: ['calendar', 'events', queryOpts] as readonly unknown[],
     queryFn: fetchEvents,
     initialData:
       initialEvents.length > 0 ? (initialEvents as EventDoc[]) : undefined,
@@ -85,10 +106,35 @@
   const events = $derived(eventsQuery.data ?? []);
 
   // ─── Derived display data ─────────────────────────────────────────
+  // Kicker reflects the months actually visible in the grid (Mon-start
+  // weeks pull in trailing days from the previous month and leading
+  // days from the next). When the visible window straddles two
+  // months, label them as a range — `APRIL — MAI 2026` per CD's
+  // header design.
   const monthLabel = $derived.by(() => {
     const loc = $locale === 'de' ? deLocale : enUS;
-    return format(new Date(), 'MMMM yyyy', { locale: loc }).toUpperCase();
+    const gridStart = startOfWeek(startOfMonth(visibleMonth), { weekStartsOn: 1 });
+    const gridEnd = endOfWeek(endOfMonth(visibleMonth), { weekStartsOn: 1 });
+    const sameMonth = gridStart.getMonth() === gridEnd.getMonth();
+    const year = format(visibleMonth, 'yyyy', { locale: loc });
+    if (sameMonth) {
+      return format(visibleMonth, 'MMMM yyyy', { locale: loc }).toUpperCase();
+    }
+    const lo = format(gridStart, 'MMMM', { locale: loc }).toUpperCase();
+    const hi = format(gridEnd, 'MMMM', { locale: loc }).toUpperCase();
+    return `${lo} — ${hi} ${year}`;
   });
+
+  const prevMonthLabel = $derived(
+    format(subMonths(visibleMonth, 1), 'MMMM', {
+      locale: $locale === 'de' ? deLocale : enUS
+    }).toUpperCase()
+  );
+  const nextMonthLabel = $derived(
+    format(addMonths(visibleMonth, 1), 'MMMM', {
+      locale: $locale === 'de' ? deLocale : enUS
+    }).toUpperCase()
+  );
 
   const displayedEvents = $derived(
     events.filter((ev) => {
@@ -122,8 +168,6 @@
     }
     return total;
   });
-
-  const visibleMonth = $derived(new Date());
 
   // ─── Detail modal state ─────────────────────────────────────────
   let selectedEvent = $state<EventDoc | null>(null);
@@ -174,6 +218,11 @@
       {visibleMonth}
       events={displayedEvents}
       onPickEvent={onPickEvent}
+      onPrevMonth={goPrevMonth}
+      onNextMonth={goNextMonth}
+      {prevMonthLabel}
+      {nextMonthLabel}
+      liveCount={liveNow}
     />
   {:else if view === 'agenda'}
     <CalendarAgendaView

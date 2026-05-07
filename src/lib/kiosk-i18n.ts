@@ -348,6 +348,7 @@ const de = {
   'cal.cat.sport.label': 'Sport',
   'cal.cat.privat.label': 'Privat',
   'cal.live.indicator': '↻ live · {n} gerade',
+  'cal.footer.live': '↻ live · {n} termine gerade',
   'cal.live.label': 'LIVE',
 
   'cal.allDay': 'ganztags',
@@ -705,6 +706,7 @@ const en: Dict = {
   'cal.cat.sport.label': 'Sport',
   'cal.cat.privat.label': 'Private',
   'cal.live.indicator': '↻ live · {n} now',
+  'cal.footer.live': '↻ live · {n} events now',
   'cal.live.label': 'LIVE',
 
   'cal.allDay': 'all-day',

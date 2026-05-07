@@ -8,6 +8,7 @@
   import { format } from 'date-fns';
   import { de as deLocale, enUS } from 'date-fns/locale';
   import { CATEGORIES } from '../../../lib/calendar/categories';
+  import { eventSpanDays } from '../../../lib/calendar/eventTime';
   import { locale, t } from '../../../lib/kiosk-i18n';
   import type { Event as EventDoc, EventCategory } from '../../../types';
 
@@ -35,7 +36,13 @@
   const style = $derived(CATEGORIES[cat]);
   const dateLocale = $derived($locale === 'de' ? deLocale : enUS);
 
-  const title = $derived(ev.title);
+  // Multi-day events render with a `· N Tage` suffix on the title
+  // (per CD's spec: "Tag der offenen Höfe · 4 Tage"). Single-day
+  // events keep the bare title.
+  const span = $derived(eventSpanDays(ev));
+  const title = $derived(
+    span > 1 ? `${ev.title} · ${span} ${$t['cal.span.days']}` : ev.title
+  );
   const startDate = $derived(ev.startDate instanceof Date ? ev.startDate : new Date(ev.startDate));
   const timeLabel = $derived(
     ev.allDay ? $t['cal.allDay'] ?? '' : format(startDate, 'HH:mm', { locale: dateLocale })
