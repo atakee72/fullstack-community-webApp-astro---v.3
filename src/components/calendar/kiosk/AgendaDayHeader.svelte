@@ -9,10 +9,16 @@
 
   let { day } = $props<{ day: Date }>();
 
+  // Short DOW per CD's design — '27. Mo', '30. Do', etc. Same hardcoded
+  // arrays as CalendarMonthGrid's column header so the period-free DE
+  // convention ('Mo' not 'Mo.') stays consistent.
+  const DOW_DE = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+  const DOW_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
   const dateLocale = $derived($locale === 'de' ? deLocale : enUS);
   const today = $derived(isTodayDate(day));
   const dayNum = $derived(day.getDate());
-  const dowLong = $derived(format(day, 'EEEE', { locale: dateLocale }));
+  const dowShort = $derived(($locale === 'de' ? DOW_DE : DOW_EN)[day.getDay()]);
   const monthLong = $derived(format(day, 'MMMM yyyy', { locale: dateLocale }));
   const timeNow = $derived(format(new Date(), 'HH:mm'));
 </script>
@@ -27,7 +33,7 @@
   >{dayNum}.</span>
 
   <span class="font-instrument italic text-[18px] text-ink-soft">
-    {dowLong}
+    {dowShort}
   </span>
 
   {#if today}
