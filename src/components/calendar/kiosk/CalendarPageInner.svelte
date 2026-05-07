@@ -18,6 +18,10 @@
   import CalendarMonthGrid from './CalendarMonthGrid.svelte';
   import CalendarAgendaView from './CalendarAgendaView.svelte';
   import EventDetailModal from './EventDetailModal.svelte';
+  import CalendarSkeleton from './states/CalendarSkeleton.svelte';
+  import CalendarEmpty from './states/CalendarEmpty.svelte';
+  import CalendarFilteredEmpty from './states/CalendarFilteredEmpty.svelte';
+  import CalendarError from './states/CalendarError.svelte';
 
   import { CATEGORY_ORDER } from '../../../lib/calendar/categories';
   import { countLiveNow, countEventsThisWeek } from '../../../lib/calendar/eventTime';
@@ -40,6 +44,13 @@
   function toggleCat(cat: EventCategory) {
     if (active.has(cat)) active.delete(cat);
     else active.add(cat);
+  }
+
+  function clearFilters() {
+    // Re-enable all categories + drop "Meine RSVPs" + "Gespeichert"
+    active = new Set(CATEGORY_ORDER);
+    myRsvps = false;
+    saved = false;
   }
 
   // ─── Query ─────────────────────────────────────────────────────────
@@ -151,17 +162,13 @@
   />
 
   {#if eventsQuery.isPending && !events.length}
-    <div class="px-4 md:px-9 lg:px-10 py-12">
-      <p class="font-dmmono text-[11px] uppercase tracking-[0.1em] text-ink-mute">
-        ◆ Laden…
-      </p>
-    </div>
+    <CalendarSkeleton />
   {:else if eventsQuery.isError}
-    <div class="px-4 md:px-9 lg:px-10 py-12">
-      <p class="font-dmmono text-[11px] uppercase tracking-[0.1em] text-danger">
-        ◆ Fehler beim Laden.
-      </p>
-    </div>
+    <CalendarError onRetry={() => eventsQuery.refetch()} />
+  {:else if events.length === 0}
+    <CalendarEmpty />
+  {:else if displayedEvents.length === 0}
+    <CalendarFilteredEmpty onClear={clearFilters} />
   {:else if view === 'month'}
     <CalendarMonthGrid
       {visibleMonth}

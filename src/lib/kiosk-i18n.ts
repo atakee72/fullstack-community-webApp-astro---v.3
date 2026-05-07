@@ -428,6 +428,17 @@ const de = {
   'cal.detail.close': 'schließen',
   'cal.detail.loginPrompt': 'Anmelden, um zuzusagen.',
 
+  // ─── States ──────────────────────────────────────────────────────
+  'cal.state.empty.title': 'Im Kiez ist gerade Pause.',
+  'cal.state.empty.body': 'Diese Woche: 0 Termine.',
+  'cal.state.filtered.title': 'Nichts Passendes diese Woche.',
+  'cal.state.filtered.body': 'Versuche andere Filter oder zeige alles.',
+  'cal.state.filtered.clear': 'filter zurücksetzen',
+  'cal.state.filtered.showAll': 'alle anzeigen →',
+  'cal.state.error.kicker': 'VERBINDUNG VERLOREN',
+  'cal.state.error.title': 'Wir konnten die Termine nicht laden.',
+  'cal.state.error.retry': 'nochmal',
+
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox für die atomaren Komponenten. Visuelle Treue prüfen, bevor sie ins Forum übernommen werden.'
 } as const;
@@ -773,6 +784,17 @@ const en: Dict = {
   'cal.detail.report': 'REPORT',
   'cal.detail.close': 'close',
   'cal.detail.loginPrompt': 'Sign in to RSVP.',
+
+  // States
+  'cal.state.empty.title': 'The Kiez is on a break.',
+  'cal.state.empty.body': 'This week: 0 events.',
+  'cal.state.filtered.title': 'No matches this week.',
+  'cal.state.filtered.body': 'Try different filters or show everything.',
+  'cal.state.filtered.clear': 'clear filters',
+  'cal.state.filtered.showAll': 'show all →',
+  'cal.state.error.kicker': 'CONNECTION LOST',
+  'cal.state.error.title': "We couldn't load the events.",
+  'cal.state.error.retry': 'retry',
 
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox for the atomic components. Verify visual fidelity here before wiring them into the Forum.'
