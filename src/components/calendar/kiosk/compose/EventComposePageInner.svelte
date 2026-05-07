@@ -62,6 +62,7 @@
         allDay: allDayParam,
         location: '',
         capacity: null,
+        visibility: 'public',
         tags: []
       };
     }
@@ -78,6 +79,7 @@
         allDay: s.allDay,
         location: s.location,
         capacity: s.capacity,
+        visibility: s.visibility ?? 'public',
         tags: s.tags
       };
     }
@@ -98,6 +100,7 @@
     allDay: false,
     location: '',
     capacity: null,
+    visibility: 'public',
     tags: []
   });
 
@@ -115,6 +118,7 @@
       allDay: values.allDay,
       location: values.location,
       capacity: values.capacity,
+      visibility: values.visibility,
       tags: values.tags
     };
     if (!snapshot.title && !snapshot.body && !snapshot.location) return;
@@ -176,6 +180,7 @@
         category: values.category,
         capacity: values.capacity ?? null,
         allDay: values.allDay,
+        visibility: values.visibility,
         location: values.location.trim() || undefined,
         tags: values.tags
       });

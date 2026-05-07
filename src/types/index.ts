@@ -176,6 +176,7 @@ export interface Event {
   category?: EventCategory;
   capacity?: number;
   allDay?: boolean;
+  visibility?: 'public' | 'private';
   isOfficial?: boolean;
   tags: string[];
   comments: (ObjectId | string)[];

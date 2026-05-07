@@ -51,14 +51,26 @@
     <li>{$t['cal.compose.preview.appear.newsletter']}</li>
   </ul>
 
-  <!-- Submit row -->
-  <div class="mt-auto flex flex-col gap-2.5 pt-4 border-t-[1.5px] border-ink">
-    <KioskBtn variant="primary" size="md" onclick={onPublish} disabled={submitting}>
+  <!-- Submit row — sits right under the 'wird erscheinen bei' list
+       (no mt-auto), both CTAs are solid ink-fill with wine print
+       shadow per CD's design. -->
+  <div class="flex flex-col gap-2.5 pt-4 border-t-[1.5px] border-ink">
+    <button
+      type="button"
+      onclick={onPublish}
+      disabled={submitting}
+      class="inline-flex items-center justify-center px-4 py-2 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-bold text-[14px] shadow-[3px_3px_0_var(--k-wine,#b23a5b)] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_var(--k-wine,#b23a5b)] disabled:opacity-60 disabled:cursor-not-allowed transition-[transform,box-shadow] duration-[120ms] ease-out"
+    >
       {$t['cal.compose.cta.publish']}
-    </KioskBtn>
-    <KioskBtn variant="ghost" size="md" onclick={onDiscard} disabled={submitting}>
+    </button>
+    <button
+      type="button"
+      onclick={onDiscard}
+      disabled={submitting}
+      class="inline-flex items-center justify-center px-4 py-2 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-semibold text-[14px] shadow-[3px_3px_0_var(--k-wine,#b23a5b)] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_var(--k-wine,#b23a5b)] disabled:opacity-60 disabled:cursor-not-allowed transition-[transform,box-shadow] duration-[120ms] ease-out"
+    >
       {$t['cal.compose.cta.discard']}
-    </KioskBtn>
+    </button>
     <p class="font-dmmono text-[9.5px] text-ink-mute leading-relaxed mt-1.5">
       {$t['cal.compose.aiNote']}
     </p>

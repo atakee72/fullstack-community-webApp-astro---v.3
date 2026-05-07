@@ -21,6 +21,7 @@ export type EventDraftValues = {
   allDay: boolean;
   location: string;
   capacity: number | null;
+  visibility: 'public' | 'private';
   tags: string[];
 };
 

@@ -49,7 +49,7 @@ export const POST: APIRoute = async ({ request }) => {
       return validation.response;
     }
 
-    const { title, body, startDate, endDate, location, category, capacity, allDay, tags } = validation.data;
+    const { title, body, startDate, endDate, location, category, capacity, allDay, visibility, tags } = validation.data;
 
     // Run content moderation + spam check in parallel (FAIL-SAFE: queues for review on any error)
     const contentText = `${title}\n\n${body || ''}\n\n${location || ''}`;
@@ -82,6 +82,7 @@ export const POST: APIRoute = async ({ request }) => {
       category: category || 'kiez',
       capacity: capacity ?? null,
       allDay: allDay ?? false,
+      visibility: visibility ?? 'public',
       tags: tags || [],
       comments: [],
       views: 0,

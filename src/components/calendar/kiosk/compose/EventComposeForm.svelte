@@ -10,6 +10,7 @@
     allDay: boolean;
     location: string;
     capacity: number | null;
+    visibility: 'public' | 'private';
     tags: string[];
   };
 </script>
@@ -66,6 +67,7 @@
   let allDay = $state(initialValues?.allDay ?? false);
   let location = $state(initialValues?.location ?? '');
   let capacity = $state<number | null>(initialValues?.capacity ?? null);
+  let visibility = $state<'public' | 'private'>(initialValues?.visibility ?? 'public');
   let tagsInput = $state((initialValues?.tags ?? []).join(' '));
 
   // Bubble up on every change.
@@ -81,6 +83,7 @@
       allDay,
       location,
       capacity,
+      visibility,
       tags: tagsInput.trim().split(/\s+/).filter(Boolean).slice(0, 5)
     });
   });
@@ -97,11 +100,15 @@
 >
   {#if showBreadcrumb}
     <div
-      class="flex items-center mb-3 font-dmmono text-[10.5px] uppercase tracking-[0.05em] text-wine"
+      class="flex items-center mb-3 font-dmmono text-[10.5px] uppercase tracking-[0.05em] text-ink-mute"
     >
-      <a href="/calendar" class="inline-flex items-center gap-2 hover:text-ink transition-colors">
+      <a href="/calendar" class="inline-flex items-center gap-2 text-wine hover:text-ink transition-colors">
         <span>{$t['cal.compose.cta.back']}</span>
       </a>
+      <span aria-hidden="true" class="mx-2">·</span>
+      <span class="underline decoration-dashed underline-offset-[3px]">
+        {$t['cal.compose.crumb.new']}
+      </span>
     </div>
 
     <h1
@@ -271,18 +278,32 @@
         {$t['cal.compose.step.options']}
       </span>
     </div>
-    <label class="block max-w-[200px]">
-      <span class="block font-dmmono text-[9px] uppercase tracking-[0.1em] text-ink-mute mb-0.5">
-        {$t['cal.compose.field.capacity']}
-      </span>
-      <input
-        type="number"
-        min="1"
-        max="10000"
-        bind:value={capacity}
-        placeholder={$t['cal.compose.field.capacity.placeholder']}
-        class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
-      />
-    </label>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-[480px]">
+      <label class="block">
+        <span class="block font-dmmono text-[9px] uppercase tracking-[0.1em] text-ink-mute mb-0.5">
+          {$t['cal.compose.field.capacity']}
+        </span>
+        <input
+          type="number"
+          min="1"
+          max="10000"
+          bind:value={capacity}
+          placeholder={$t['cal.compose.field.capacity.placeholder']}
+          class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
+        />
+      </label>
+      <label class="block">
+        <span class="block font-dmmono text-[9px] uppercase tracking-[0.1em] text-ink-mute mb-0.5">
+          {$t['cal.compose.field.visibility']}
+        </span>
+        <select
+          bind:value={visibility}
+          class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
+        >
+          <option value="public">{$t['cal.compose.field.visibility.public']}</option>
+          <option value="private">{$t['cal.compose.field.visibility.private']}</option>
+        </select>
+      </label>
+    </div>
   </div>
 </form>

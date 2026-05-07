@@ -139,6 +139,7 @@ const EventBaseSchema = z.object({
   ]).optional().default('kiez'),
   capacity: z.number().int().min(1).max(10000).optional(),
   allDay: z.boolean().optional().default(false),
+  visibility: z.enum(['public', 'private']).optional().default('public'),
   // `isOfficial` is server-controlled (admin-create only); user POSTs are
   // ignored even if present. Same pattern as announcements.
   isOfficial: z.boolean().optional(),

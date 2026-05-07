@@ -22,6 +22,7 @@ export type CreateEventInput = {
   category: string;
   capacity?: number | null;
   allDay?: boolean;
+  visibility?: 'public' | 'private';
   location?: string;
   tags?: string[];
 };
