@@ -150,6 +150,9 @@
       <span class="font-bricolage text-[14px] font-bold tracking-[-0.01em]">
         {$t['cal.compose.step.category']}
       </span>
+      <span class="font-instrument italic text-[12px] text-ink-mute">
+        — {$t['cal.compose.step.category.hint']}
+      </span>
     </div>
     <div class="no-scrollbar flex gap-1.5 overflow-x-auto -mx-4 md:-mx-9 lg:-mx-10 px-4 md:px-9 lg:px-10">
       {#each CATEGORY_ORDER as cat (cat)}
