@@ -237,6 +237,7 @@ const de = {
   'compose.body.label': 'TEXT · MARKDOWN OK',
   'compose.body.placeholder': 'Schreib was Hilfreiches…',
   'compose.body.tip': 'tipp · @name erwähnt jemanden im kiez',
+  'compose.requiredNote': '* Pflichtfeld',
   'compose.images.label': 'BILDER · MAX 5',
   'compose.images.upload': 'hochladen',
   'compose.images.formats': 'JPG, PNG, WebP · ≤5 MB · alle Bilder werden geprüft',
@@ -409,6 +410,7 @@ const de = {
   'cal.compose.cta.discard': 'verwerfen',
   'cal.compose.cta.back': '← ZURÜCK ZUM KALENDER',
   'cal.compose.aiNote': 'Wird durch die Mahalle-KI geprüft (≈ 8s) bevor es im Kiez sichtbar wird.',
+  'cal.compose.requiredNote': '* Pflichtfeld',
 
   // ─── Drag-select tooltip ─────────────────────────────────────────
   'cal.drag.kicker.day': '1 TAG AUSGEWÄHLT',
@@ -629,6 +631,7 @@ const en: Dict = {
   'compose.body.label': 'BODY · MARKDOWN OK',
   'compose.body.placeholder': 'Write something helpful…',
   'compose.body.tip': 'tip · @name mentions someone in the kiez',
+  'compose.requiredNote': '* required field',
   'compose.images.label': 'IMAGES · MAX 5',
   'compose.images.upload': 'upload',
   'compose.images.formats': 'JPG, PNG, WebP · ≤5 MB · all images are screened',
@@ -794,6 +797,7 @@ const en: Dict = {
   'cal.compose.cta.discard': 'discard',
   'cal.compose.cta.back': '← BACK TO CALENDAR',
   'cal.compose.aiNote': 'Reviewed by Mahalle-AI (≈ 8s) before going live in the Kiez.',
+  'cal.compose.requiredNote': '* required field',
 
   // Drag-select tooltip
   'cal.drag.kicker.day': '1 DAY SELECTED',

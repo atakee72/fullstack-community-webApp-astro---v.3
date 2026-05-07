@@ -152,17 +152,18 @@
     ◆ {$t['compose.kicker']}
   </p>
 
-  <!-- ── Title input ───────────────────────────────────────────────── -->
+  <!-- ── Title input (required) ────────────────────────────────────── -->
   <div class="relative mb-4 pb-1.5 border-b-[1.5px] border-ink">
     <input
       type="text"
       maxlength={TITLE_MAX}
       bind:value={title}
       placeholder={$t['compose.title.placeholder']}
-      class="w-full bg-transparent border-0 outline-none font-bricolage font-extrabold tracking-tight text-2xl md:text-[36px] leading-[1.1] text-ink placeholder:text-ink-mute/45 pr-16"
+      aria-required="true"
+      class="w-full bg-transparent border-0 outline-none font-bricolage font-extrabold tracking-tight text-2xl md:text-[36px] leading-[1.1] text-ink placeholder:text-ink-mute/45 pr-20"
     />
     <span class="absolute right-0 bottom-2 font-dmmono text-[10px] text-ink-mute">
-      {titleCount}
+      <span class="font-bold text-wine mr-1" aria-hidden="true">*</span>{titleCount}
     </span>
   </div>
 
@@ -204,7 +205,10 @@
     <div
       class="flex justify-between items-center font-dmmono text-[10px] uppercase tracking-[0.1em] text-ink-mute mb-1.5"
     >
-      <span>{$t['compose.body.label']}</span>
+      <span>
+        {$t['compose.body.label']}
+        <span class="text-wine font-bold ml-0.5" aria-hidden="true">*</span>
+      </span>
       <span class="flex gap-2.5 normal-case tracking-normal">
         <b>B</b>
         <span class="italic">i</span>
@@ -217,6 +221,7 @@
       maxlength={BODY_MAX}
       bind:value={body}
       placeholder={$t['compose.body.placeholder']}
+      aria-required="true"
       rows="6"
       class="w-full bg-paper-soft border-[1.5px] border-ink rounded-md px-4 py-3.5 font-bricolage text-[14px] leading-relaxed text-ink placeholder:text-ink-mute/55 outline-none focus:border-wine resize-y min-h-[130px]"
     ></textarea>
@@ -347,4 +352,9 @@
       {/each}
     </div>
   </div>
+
+  <!-- Footnote — explains the wine '*' marker on required fields. -->
+  <p class="mt-4 font-dmmono text-[10px] text-ink-mute">
+    <span class="text-wine font-bold" aria-hidden="true">*</span> {$t['compose.requiredNote'].replace(/^\*\s*/, '')}
+  </p>
 </form>

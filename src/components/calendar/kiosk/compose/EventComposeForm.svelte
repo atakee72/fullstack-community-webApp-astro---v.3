@@ -346,4 +346,9 @@
       </label>
     </div>
   </div>
+
+  <!-- Footnote — explains the wine '*' marker on required fields. -->
+  <p class="mt-4 font-dmmono text-[10px] text-ink-mute">
+    <span class="text-wine font-bold" aria-hidden="true">*</span> {$t['cal.compose.requiredNote'].replace(/^\*\s*/, '')}
+  </p>
 </form>
