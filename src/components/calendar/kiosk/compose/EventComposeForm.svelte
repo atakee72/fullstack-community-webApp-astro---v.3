@@ -97,16 +97,21 @@
 >
   {#if showBreadcrumb}
     <div
-      class="flex items-center mb-5 pb-2.5 border-b border-dashed border-rule font-dmmono text-[10.5px] uppercase tracking-[0.05em] text-ink-mute"
+      class="flex items-center mb-3 font-dmmono text-[10.5px] uppercase tracking-[0.05em] text-wine"
     >
       <a href="/calendar" class="inline-flex items-center gap-2 hover:text-ink transition-colors">
         <span>{$t['cal.compose.cta.back']}</span>
       </a>
-      <span aria-hidden="true" class="mx-2">·</span>
-      <span class="underline decoration-dashed underline-offset-[3px]">
-        {$t['cal.compose.crumb.new']}
-      </span>
     </div>
+
+    <h1
+      class="font-bricolage font-extrabold text-[40px] md:text-[48px] tracking-[-0.03em] leading-[0.95] m-0 mb-6 pb-3 border-b border-dashed border-rule"
+    >
+      {$t['cal.compose.title.q1']}
+      <span class="font-instrument italic font-normal text-wine">
+        {$t['cal.compose.title.q2']}
+      </span>
+    </h1>
   {/if}
 
   <!-- 01 · Category -->
