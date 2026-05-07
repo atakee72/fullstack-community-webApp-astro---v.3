@@ -221,6 +221,24 @@
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   });
+
+  // Click-outside dismiss — when the pin is mounted, any pointerdown
+  // that isn't on the pin itself OR on a grid cell (which would start
+  // a fresh selection via the cell's own handler) clears the pin.
+  // Capture phase so we run before stopPropagation handlers higher up.
+  $effect(() => {
+    if (!pin) return;
+    function onOutside(e: PointerEvent) {
+      const t = e.target as HTMLElement | null;
+      if (!t) return;
+      if (t.closest('.k-cal-pin')) return;
+      if (t.closest('[data-cell-date]')) return;
+      clearSelection();
+    }
+    if (typeof document === 'undefined') return;
+    document.addEventListener('pointerdown', onOutside, true);
+    return () => document.removeEventListener('pointerdown', onOutside, true);
+  });
 </script>
 
 <div class="px-4 md:px-9 lg:px-10 pb-6 relative" bind:this={gridWrapper}>

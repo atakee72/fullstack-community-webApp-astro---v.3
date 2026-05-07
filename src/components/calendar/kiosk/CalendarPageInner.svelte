@@ -72,6 +72,19 @@
   function goNextMonth() {
     visibleMonth = addMonths(visibleMonth, 1);
   }
+  function goToday() {
+    visibleMonth = new Date();
+  }
+
+  // Show the "Heute" snap-back button only when the user has navigated
+  // away from the current calendar month.
+  const isOnTodayMonth = $derived.by(() => {
+    const now = new Date();
+    return (
+      visibleMonth.getFullYear() === now.getFullYear() &&
+      visibleMonth.getMonth() === now.getMonth()
+    );
+  });
 
   // ─── Query ─────────────────────────────────────────────────────────
   // queryOpts depends on visibleMonth so the events query refetches when
@@ -193,6 +206,8 @@
     {weekEvents}
     {liveNow}
     {goingToday}
+    showToday={!isOnTodayMonth}
+    onToday={goToday}
   />
 
   <CalCategoryRail
