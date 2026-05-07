@@ -114,7 +114,9 @@ export const RecommendationUpdateSchema = RecommendationCreateSchema.partial().r
   { message: 'At least one field must be provided for update' }
 );
 
-// Event Schema (Calendar)
+// Event Schema (Calendar) — kiosk redesign uses 6 categories
+// (kiez/oeffentlich/markt/kultur/sport/privat). Capacity + allDay
+// are optional in v1; recurring/visibility/isOfficial deferred to v1.1+.
 const EventBaseSchema = z.object({
   title: z.string()
     .min(5, 'Title must be at least 5 characters')
@@ -128,11 +130,15 @@ const EventBaseSchema = z.object({
   endDate: z.coerce.date(),
   location: z.string().max(200).optional(),
   category: z.enum([
-    'community',
-    'sports-health',
-    'culture-education',
-    'other'
-  ]).optional().default('other'),
+    'kiez',
+    'oeffentlich',
+    'markt',
+    'kultur',
+    'sport',
+    'privat'
+  ]).optional().default('kiez'),
+  capacity: z.number().int().min(1).max(10000).optional(),
+  allDay: z.boolean().optional().default(false),
   tags: z.array(z.string().max(30))
     .max(5, 'Maximum 5 tags allowed')
     .default([]),

@@ -1,0 +1,90 @@
+/* ════════════════════════════════════════════════════════════════
+   MAHALLE · KIOSK · CALENDAR MOTION · v1.0
+   Calendar-specific keyframes. Drop after motion.css. The 12 Forum
+   animations still apply (skeleton, pulse, fade-in, etc.).
+   ════════════════════════════════════════════════════════════════ */
+
+/* C01 · Live now · pulsing dot on currently-running events
+        loop · 1400ms · ease-in-out */
+@keyframes k-cal-pulse-live {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%      { transform: scale(1.4); opacity: 0.55; }
+}
+.k-cal-live-dot {
+  display: inline-block;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--k-cal-live, #d9b238);
+  border: 1px solid var(--k-ink, #1b1a17);
+  animation: k-cal-pulse-live var(--k-dur-pulse, 1400ms) ease-in-out infinite;
+}
+
+/* C02 · Drag-select scanning line · over selection rect during drag
+        loop · 800ms · linear */
+@keyframes k-cal-drag-dash {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -16; }
+}
+.k-cal-drag-rect {
+  fill: var(--k-cal-sel-fill, rgba(122,66,86,0.15));
+  stroke: var(--k-cal-sel-stroke, #7a4256);
+  stroke-width: 2;
+  stroke-dasharray: 8 8;
+  animation: k-cal-drag-dash 800ms linear infinite;
+}
+
+/* C03 · Tooltip pop (drag-release "+" pin) · once · 320ms · spring */
+@keyframes k-cal-pin-pop {
+  0%   { transform: translateY(8px) scale(0.9); opacity: 0; }
+  70%  { transform: translateY(-2px) scale(1.04); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.k-cal-pin {
+  animation: k-cal-pin-pop var(--k-dur-pin, 600ms)
+             var(--k-ease-spring, cubic-bezier(.34,1.56,.64,1)) both;
+}
+
+/* C04 · RSVP optimistic check · post button-click before server-sync
+        once · 260ms · ease-out */
+@keyframes k-cal-rsvp-check {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+.k-cal-rsvp-check { animation: k-cal-rsvp-check var(--k-dur-rsvp, 260ms) var(--k-ease-out, cubic-bezier(.4,0,.2,1)) both; }
+
+/* C05 · RSVP sync ring · spinning dashed circle around RSVP button
+        loop · 800ms · linear */
+@keyframes k-cal-rsvp-spin {
+  to { stroke-dashoffset: -24; }
+}
+.k-cal-rsvp-ring {
+  stroke: currentColor; stroke-width: 2; fill: none;
+  stroke-dasharray: 6 6; stroke-linecap: round;
+  animation: k-cal-rsvp-spin 800ms linear infinite;
+  transform-origin: center;
+}
+
+/* C06 · Modal open · event detail slides up from card
+        once · 320ms · ease-in-out */
+@keyframes k-cal-modal-in {
+  from { transform: translateY(24px) scale(0.985); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);     opacity: 1; }
+}
+.k-cal-modal-in { animation: k-cal-modal-in var(--k-dur-modal, 320ms) var(--k-ease-in-out, cubic-bezier(.2,.7,.3,1)) both; }
+
+/* C07 · Capacity bar fill · once event loads
+        once · 720ms · ease-out */
+@keyframes k-cal-capacity-fill {
+  from { width: 0; }
+}
+.k-cal-capacity-bar { animation: k-cal-capacity-fill 720ms var(--k-ease-out, cubic-bezier(.4,0,.2,1)) both; }
+
+/* C08 · Heartbeat re-tick · Live counter increments
+        once per tick · 380ms · ease-out */
+@keyframes k-cal-tick {
+  0%   { background: rgba(217, 178, 56, 0.35); }
+  100% { background: transparent; }
+}
+.k-cal-tick { animation: k-cal-tick 380ms var(--k-ease-out, cubic-bezier(.4,0,.2,1)) both; }
+
+/* Reduced motion already handled in tokens.css */

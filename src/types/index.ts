@@ -152,7 +152,19 @@ export interface Recommendation {
   updatedAt?: Date;
 }
 
-// Event Types (Calendar)
+// Event Types (Calendar) — kiosk redesign:
+//   - 6 categories (kiez/oeffentlich/markt/kultur/sport/privat)
+//   - capacity?: cap on going-RSVPs (UI-only enforcement in v1; API allows over-cap)
+//   - allDay?: explicit flag; otherwise time component of startDate/endDate is shown
+//   - rsvps?: embedded arrays of user IDs. v1 single-neighbourhood scale.
+export type EventCategory =
+  | 'kiez'
+  | 'oeffentlich'
+  | 'markt'
+  | 'kultur'
+  | 'sport'
+  | 'privat';
+
 export interface Event {
   _id?: ObjectId | string;
   title: string;
@@ -161,12 +173,18 @@ export interface Event {
   startDate: Date;
   endDate: Date;
   location?: string;
-  category?: 'community' | 'sports-health' | 'culture-education' | 'other';
+  category?: EventCategory;
+  capacity?: number;
+  allDay?: boolean;
   tags: string[];
   comments: (ObjectId | string)[];
   views: number;
   likes: number;
   likedBy: (ObjectId | string)[];
+  rsvps?: {
+    going: (ObjectId | string)[];
+    maybe: (ObjectId | string)[];
+  };
   date: number; // creation timestamp
   editHistory?: EditHistory[];
   isEdited?: boolean;

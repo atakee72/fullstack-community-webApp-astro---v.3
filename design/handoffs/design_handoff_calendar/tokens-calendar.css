@@ -1,0 +1,64 @@
+/* ════════════════════════════════════════════════════════════════
+   MAHALLE · KIOSK · CALENDAR TOKENS · v1.0
+   Extends tokens.css with Calendar-specific custom properties.
+   Drop after tokens.css. Forum tokens unchanged.
+   ════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Calendar · category palette ─────────────────────────────────
+     Six categories. Each has a color (already in tokens.css), a glyph,
+     and a per-category data attribute hook for use in CSS.
+  */
+  --k-cat-kiez:        var(--k-wine);   /* ◆ neighbourhood */
+  --k-cat-oeffentlich: var(--k-teal);   /* ▲ public / city */
+  --k-cat-markt:       var(--k-ochre);  /* ● market        */
+  --k-cat-kultur:      #6F2F59;         /* ✦ culture       */
+  --k-cat-sport:       var(--k-moss);   /* ▶ sport         */
+  --k-cat-privat:      var(--k-ink-soft); /* ◇ private     */
+
+  /* ── Calendar · grid metrics (desktop) ───────────────────────── */
+  --k-cal-cell-min:    96px;            /* min row height               */
+  --k-cal-cell-pad:    5px 6px 4px;     /* per-cell padding             */
+  --k-cal-pill-h:      18px;            /* event pill height            */
+  --k-cal-pill-radius: 4px;             /* event pill rounding          */
+  --k-cal-grid-rule:   1px dashed var(--k-rule);
+  --k-cal-today-bg:    var(--k-paper-warm);
+  --k-cal-weekend-bg:  rgba(178, 58, 91, 0.025);
+
+  /* ── Calendar · selection (drag-select) ──────────────────────── */
+  --k-cal-sel-fill:    rgba(122, 66, 86, 0.15);
+  --k-cal-sel-stroke:  var(--k-wine);
+  --k-cal-sel-pattern: repeating-linear-gradient(
+                          45deg,
+                          rgba(122, 66, 86, 0.16) 0 6px,
+                          var(--k-paper-warm)     6px 12px);
+
+  /* ── Calendar · live indicator ───────────────────────────────── */
+  --k-cal-live:        var(--k-ochre);
+
+  /* ── Calendar · motion timings (calendar-specific) ───────────── */
+  --k-dur-rsvp:        260ms;           /* RSVP optimistic update      */
+  --k-dur-pulse:       1400ms;          /* live-now pulse loop         */
+  --k-dur-modal:       320ms;           /* event detail modal in/out   */
+  --k-dur-pin:         600ms;           /* pin tooltip on drag-end     */
+}
+
+/* ── Selectors using category data attribute ──────────────────────
+   Apply to event chips/pills:  <div class="k-event" data-cat="kiez">
+*/
+.k-event[data-cat="kiez"]        { background: var(--k-cat-kiez);        color: var(--k-paper); }
+.k-event[data-cat="oeffentlich"] { background: var(--k-cat-oeffentlich); color: var(--k-paper); }
+.k-event[data-cat="markt"]       { background: var(--k-cat-markt);       color: var(--k-ink);   }
+.k-event[data-cat="kultur"]      { background: var(--k-cat-kultur);      color: var(--k-paper); }
+.k-event[data-cat="sport"]       { background: var(--k-cat-sport);       color: var(--k-paper); }
+.k-event[data-cat="privat"]      { background: var(--k-cat-privat);      color: var(--k-paper); }
+
+/* ── Calendar root scope ────────────────────────────────────────── */
+[data-page="calendar"] {
+  --k-accent: var(--k-teal);
+}
+
+/* ── Multi-day event banner (start / mid / end pieces) ─────────── */
+.k-event--span-start  { border-radius: var(--k-cal-pill-radius) 0 0 var(--k-cal-pill-radius); }
+.k-event--span-mid    { border-radius: 0; margin-left: -1px; margin-right: -1px; }
+.k-event--span-end    { border-radius: 0 var(--k-cal-pill-radius) var(--k-cal-pill-radius) 0; }

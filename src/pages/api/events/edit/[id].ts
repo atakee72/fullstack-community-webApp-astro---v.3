@@ -35,7 +35,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
       return validation.response;
     }
 
-    const { title, body, startDate, endDate, location, category, tags } = validation.data;
+    const { title, body, startDate, endDate, location, category, capacity, allDay, tags } = validation.data;
 
     const db = await connectDB();
     const eventsCollection = db.collection<Event>('events');
@@ -76,6 +76,8 @@ export const PUT: APIRoute = async ({ request, params }) => {
     if (endDate !== undefined) updateFields.endDate = new Date(endDate);
     if (location !== undefined) updateFields.location = location;
     if (category !== undefined) updateFields.category = category;
+    if (capacity !== undefined) updateFields.capacity = capacity;
+    if (allDay !== undefined) updateFields.allDay = allDay;
     if (tags !== undefined) updateFields.tags = tags;
 
     const updateResult = await eventsCollection.findOneAndUpdate(

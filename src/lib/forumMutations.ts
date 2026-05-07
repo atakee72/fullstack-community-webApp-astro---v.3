@@ -36,16 +36,10 @@ function flagLive() {
 }
 
 // ─── Typed errors ──────────────────────────────────────────────────────
-export class RateLimitError extends Error {
-  dailyLimit: number;
-  currentCount: number;
-  constructor(dailyLimit: number, currentCount: number, message: string) {
-    super(message);
-    this.name = 'RateLimitError';
-    this.dailyLimit = dailyLimit;
-    this.currentCount = currentCount;
-  }
-}
+// Re-exported from the shared module so existing import sites
+// (`import { RateLimitError } from '../lib/forumMutations'`) keep working.
+export { RateLimitError } from './errors';
+import { RateLimitError } from './errors';
 
 // ─── Topic create ──────────────────────────────────────────────────────
 
