@@ -426,6 +426,8 @@ const de = {
   'cal.mobile.thisWeek': 'diese Woche · {n} Termine',
   'cal.mobile.cta.aria': 'Neuen Termin erstellen',
   'cal.mobile.dayEmpty': 'Keine Termine an diesem Tag.',
+  'cal.mobile.guidance':
+    'Tippe auf einen Tag, um seine Termine zu sehen. Drücke lang, dann tippe auf einen anderen Tag, um einen Zeitraum auszuwählen.',
 
   // ─── Detail modal ────────────────────────────────────────────────
   'cal.detail.when': 'WANN',
@@ -803,6 +805,8 @@ const en: Dict = {
   'cal.mobile.thisWeek': 'this week · {n} events',
   'cal.mobile.cta.aria': 'Create new event',
   'cal.mobile.dayEmpty': 'No events on this day.',
+  'cal.mobile.guidance':
+    'Tap a day to see its events. Long-press, then tap another day to select a range.',
 
   // Detail modal
   'cal.detail.when': 'WHEN',

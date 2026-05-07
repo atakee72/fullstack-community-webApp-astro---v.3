@@ -172,7 +172,16 @@
 
   // Pin positioning — when rangeStart/rangeEnd change, look up the
   // target cell's bounds and stash the pin's x/y. Cells expose a
-  // `data-cell-date={cell.toISOString()}` attribute below.
+  // `data-cell-date={cell.toISOString()}` attribute below. Coordinates
+  // are clamped to the wrapper rect so the pin never bleeds past the
+  // viewport edges (left/right) and flips above the cell when the
+  // cell sits in the bottom half of the grid (else the pin would
+  // render below the visible area).
+  // Conservative width estimate so the pin always fits inside the
+  // grid wrapper. Min-width is 180 but the rendered card grows to
+  // ~220 with the '+ neuer termin' + 'abbrechen' buttons inside.
+  const PIN_W = 230;
+  const PIN_H = 100;
   $effect(() => {
     if (!rangeStart || !gridWrapper) {
       pin = null;
@@ -184,14 +193,25 @@
     if (!cell) return;
     const cellRect = cell.getBoundingClientRect();
     const wrapRect = gridWrapper.getBoundingClientRect();
+
     const lo = rangeEnd && rangeStart < rangeEnd ? rangeStart : (rangeEnd ?? rangeStart);
     const hi = rangeEnd && rangeStart < rangeEnd ? rangeEnd : rangeStart;
-    pin = {
-      x: Math.max(8, cellRect.left - wrapRect.left + cellRect.width / 2 - 120),
-      y: cellRect.bottom - wrapRect.top + 8,
-      from: lo,
-      to: hi
-    };
+
+    // Horizontal clamp — keep [8 .. wrapRect.width − PIN_W − 8].
+    const ideal = cellRect.left - wrapRect.left + cellRect.width / 2 - PIN_W / 2;
+    const x = Math.max(8, Math.min(wrapRect.width - PIN_W - 8, ideal));
+
+    // Vertical placement — by default below the cell. If the cell
+    // sits in the bottom half of the grid, flip ABOVE so the pin
+    // doesn't fall off the visible area.
+    const cellTopRel = cellRect.top - wrapRect.top;
+    const cellBottomRel = cellRect.bottom - wrapRect.top;
+    const wouldOverflowDown = cellBottomRel + 8 + PIN_H > wrapRect.height;
+    const y = wouldOverflowDown
+      ? Math.max(8, cellTopRel - PIN_H - 8)
+      : cellBottomRel + 8;
+
+    pin = { x, y, from: lo, to: hi };
   });
 
   function clearSelection() {
@@ -410,6 +430,13 @@
       />
     {/if}
   </div>
+
+  <!-- Usage guidance — small italic note explaining tap vs long-press. -->
+  <p
+    class="px-4 mt-3 font-instrument italic text-[12px] text-ink-mute leading-[1.5]"
+  >
+    {$t['cal.mobile.guidance']}
+  </p>
 
   <!-- Bottom day panel -->
   <div class="px-4 pt-4 mt-2 border-t-[1.5px] border-ink">

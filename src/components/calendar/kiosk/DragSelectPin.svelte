@@ -63,33 +63,33 @@
   aria-label={kicker}
 >
   <div
-    class="relative bg-ink text-paper border-2 border-ink rounded-md px-3.5 py-2.5 shadow-[6px_6px_0_var(--k-wine,#b23a5b)] min-w-[240px]"
+    class="relative bg-ink text-paper border-2 border-ink rounded-md px-2.5 py-1.5 shadow-[4px_4px_0_var(--k-wine,#b23a5b)] min-w-[180px]"
   >
     <!-- Tail pointing up to the pointerup cell -->
     <div
-      class="absolute -top-2 left-4 w-0 h-0 border-l-[8px] border-r-[8px] border-l-transparent border-r-transparent border-b-[8px] border-b-ink"
+      class="absolute -top-1.5 left-3 w-0 h-0 border-l-[6px] border-r-[6px] border-l-transparent border-r-transparent border-b-[6px] border-b-ink"
       aria-hidden="true"
     ></div>
 
-    <div class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-ochre mb-1">
+    <div class="font-dmmono text-[9px] uppercase tracking-[0.12em] text-ochre">
       ◆ {kicker}
     </div>
-    <div class="font-bricolage font-bold text-[14px] mb-2 tracking-[-0.01em]">
+    <div class="font-bricolage font-bold text-[12.5px] mb-1.5 tracking-[-0.01em]">
       {dateLabel}
     </div>
 
-    <div class="flex gap-1.5">
+    <div class="flex gap-1.5 whitespace-nowrap">
       <button
         type="button"
         onclick={onConfirm}
-        class="bg-ochre text-ink border-[1.5px] border-paper rounded-full px-3 py-1 font-bricolage font-bold text-[12px] hover:scale-[1.02] transition-transform duration-[180ms] ease-out"
+        class="bg-ochre text-ink border-[1.5px] border-paper rounded-full px-2.5 py-0.5 font-bricolage font-bold text-[12px] hover:scale-[1.02] transition-transform duration-[180ms] ease-out"
       >
         {ctaLabel}
       </button>
       <button
         type="button"
         onclick={onCancel}
-        class="bg-transparent text-paper border-[1.5px] border-paper rounded-full px-3 py-1 font-bricolage font-semibold text-[12px] hover:bg-paper hover:text-ink transition-colors"
+        class="bg-transparent text-paper border-[1.5px] border-paper rounded-full px-2.5 py-0.5 font-bricolage font-semibold text-[12px] hover:bg-paper hover:text-ink transition-colors"
       >
         {$t['cal.drag.cancel']}
       </button>
