@@ -411,6 +411,7 @@ const de = {
   'cal.drag.kicker.day': '1 TAG AUSGEWÄHLT',
   'cal.drag.kicker.days': '{n} TAGE AUSGEWÄHLT',
   'cal.drag.cancel': 'abbrechen',
+  'cal.drag.confirm': '+ termin',
 
   // Drag-select first-time coachmark — sticky-note copy.
   'cal.coachmark.kicker': 'INTERAKTION',
@@ -790,6 +791,7 @@ const en: Dict = {
   'cal.drag.kicker.day': '1 DAY SELECTED',
   'cal.drag.kicker.days': '{n} DAYS SELECTED',
   'cal.drag.cancel': 'cancel',
+  'cal.drag.confirm': '+ event',
 
   // Drag-select first-time coachmark
   'cal.coachmark.kicker': 'INTERACTION',

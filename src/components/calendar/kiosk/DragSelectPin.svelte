@@ -52,7 +52,10 @@
       : ($t['cal.drag.kicker.days'] as string).replace('{n}', String(days))
   );
 
-  const ctaLabel = $derived(($t['cal.cta.newEvent'] as string).replace(/^[+\s]+/, '+ '));
+  // Pin uses a shorter label than the desktop CTA — '+ termin' /
+  // '+ event' instead of '+ Neuer Termin' / '+ New Event' — so the
+  // tooltip card stays compact.
+  const ctaLabel = $derived($t['cal.drag.confirm']);
 </script>
 
 <div
