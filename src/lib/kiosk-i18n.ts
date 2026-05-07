@@ -410,7 +410,7 @@ const de = {
   // ─── Drag-select tooltip ─────────────────────────────────────────
   'cal.drag.kicker.day': '1 TAG AUSGEWÄHLT',
   'cal.drag.kicker.days': '{n} TAGE AUSGEWÄHLT',
-  'cal.drag.cancel': 'abbrechen',
+  'cal.drag.cancel': 'abbr.',
   'cal.drag.confirm': '+ termin',
 
   // Drag-select first-time coachmark — sticky-note copy.
