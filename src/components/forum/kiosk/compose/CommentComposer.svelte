@@ -75,7 +75,7 @@
         onkeydown={onKey}
         placeholder={$t['detail.compose.placeholder']}
         rows="3"
-        class="w-full bg-transparent border-[1.5px] border-ink rounded-md px-3 py-2 font-bricolage text-[13px] leading-relaxed text-ink placeholder:text-ink-mute/55 outline-none focus:border-wine resize-y min-h-[72px]"
+        class="w-full appearance-none bg-transparent border-0 border-b border-dashed border-rule rounded-none px-1 py-2 font-bricolage text-[13px] leading-relaxed text-ink placeholder:text-ink-mute/55 outline-none focus:border-wine resize-y min-h-[72px]"
         disabled={submitting}
       ></textarea>
     </div>
