@@ -37,23 +37,29 @@
 <aside
   class="hidden lg:flex bg-paper-soft border-l border-dashed border-rule px-5 py-7 flex-col h-full lg:-mr-10 lg:pr-8"
 >
-  <EventComposeMiniPreview {values} />
+  <!-- Internal pl-4 pr-8 on each child mirrors the agenda sidebar's
+       breathing room so widgets sit inset from the right edge. -->
+  <div class="pl-4 pr-8">
+    <EventComposeMiniPreview {values} />
+  </div>
 
   <!-- "Wird erscheinen bei" -->
-  <div class="font-dmmono text-[10px] uppercase tracking-[0.1em] text-ink-mute mb-2">
-    ◆ {$t['cal.compose.preview.willAppear']}
+  <div class="pl-4 pr-8">
+    <div class="font-dmmono text-[10px] uppercase tracking-[0.1em] text-ink-mute mb-2">
+      ◆ {$t['cal.compose.preview.willAppear']}
+    </div>
+    <ul
+      class="font-instrument text-[13px] leading-[1.7] text-ink pl-4 mb-4 list-disc marker:text-wine"
+    >
+      <li>{$t['cal.compose.preview.appear.calendar']}</li>
+      <li>{$t['cal.compose.preview.appear.weekly']}</li>
+      <li>{$t['cal.compose.preview.appear.newsletter']}</li>
+    </ul>
   </div>
-  <ul
-    class="font-instrument text-[13px] leading-[1.7] text-ink pl-4 mb-4 list-disc marker:text-wine"
-  >
-    <li>{$t['cal.compose.preview.appear.calendar']}</li>
-    <li>{$t['cal.compose.preview.appear.weekly']}</li>
-    <li>{$t['cal.compose.preview.appear.newsletter']}</li>
-  </ul>
 
-  <!-- Submit row — both CTAs side-by-side, equal width, ink-fill
-       with wine print shadow per CD's design. -->
-  <div class="pt-4 border-t-[1.5px] border-ink">
+  <!-- Submit row — both CTAs side-by-side, ink-fill with wine
+       print shadow per CD's design. -->
+  <div class="pl-4 pr-8 pt-4 border-t-[1.5px] border-ink">
     <div class="flex flex-row justify-between items-center">
       <button
         type="button"
