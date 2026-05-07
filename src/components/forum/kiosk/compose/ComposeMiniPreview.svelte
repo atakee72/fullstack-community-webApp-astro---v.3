@@ -10,7 +10,6 @@
   //     the form and the moderation note)
 
   import KioskAvatar from '../KioskAvatar.svelte';
-  import PostTypeChip from '../PostTypeChip.svelte';
   import { t } from '../../../../lib/kiosk-i18n';
 
   type Kind = 'discussion' | 'recommendation' | 'announcement';
@@ -31,6 +30,17 @@
   const bodyExcerpt = $derived(
     values.body.length > 140 ? values.body.slice(0, 137).trimEnd() + '…' : values.body
   );
+
+  // Mirrors the inline filled kind-chip on ForumPostCard / detail page —
+  // wine/moss/teal fill, paper text, 1px ink border, rounded-lg.
+  const chipBg = $derived(
+    values.kind === 'announcement'
+      ? 'bg-teal'
+      : values.kind === 'recommendation'
+      ? 'bg-moss'
+      : 'bg-wine'
+  );
+  const chipLabel = $derived(($t[`chip.${values.kind}` as const] as string).toUpperCase());
 </script>
 
 <p class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-wine mb-2">
@@ -56,11 +66,11 @@
         </div>
       </div>
     </div>
-    <PostTypeChip
-      kind={values.kind === 'discussion' ? 'discussion'
-          : values.kind === 'recommendation' ? 'recommendation'
-          : 'announcement'}
-    />
+    <span
+      class={`inline-flex items-center font-dmmono font-medium text-[10px] tracking-[0.08em] text-paper border border-ink rounded-lg px-[9px] py-[3px] ${chipBg}`}
+    >
+      {chipLabel}
+    </span>
   </div>
 
   {#if values.title}
