@@ -184,6 +184,7 @@
       <span class="font-bricolage text-[14px] font-bold tracking-[-0.01em]">
         {$t['cal.compose.step.title']}
       </span>
+      <span class="font-bricolage text-[14px] font-bold text-wine" aria-hidden="true">*</span>
     </div>
     <input
       type="text"
@@ -206,6 +207,7 @@
       <span class="font-bricolage text-[14px] font-bold tracking-[-0.01em]">
         {$t['cal.compose.step.when']}
       </span>
+      <span class="font-bricolage text-[14px] font-bold text-wine" aria-hidden="true">*</span>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
       <label class="block">
@@ -295,6 +297,7 @@
       <span class="font-bricolage text-[14px] font-bold tracking-[-0.01em]">
         {$t['cal.compose.step.description']}
       </span>
+      <span class="font-bricolage text-[14px] font-bold text-wine" aria-hidden="true">*</span>
     </div>
     <textarea
       bind:value={body}
