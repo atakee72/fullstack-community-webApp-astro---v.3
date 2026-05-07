@@ -679,7 +679,10 @@
     </article>
 
     <!-- ── Right rail (switches between read mode + edit mode) ──── -->
-    <aside class="hidden lg:block bg-paper-warm border-l border-dashed border-rule">
+    <!-- ::after pseudo bleeds the paper-warm bg past the max-w-7xl edge
+         to the viewport's right (page-edge anchored). html { overflow-x:
+         clip } prevents horizontal scroll. -->
+    <aside class="hidden lg:block relative bg-paper-warm border-l border-dashed border-rule after:content-[''] after:absolute after:top-0 after:bottom-0 after:left-full after:w-screen after:bg-paper-warm after:-z-10">
       <div
         class="sticky top-24 space-y-5 px-5 py-7"
       >
