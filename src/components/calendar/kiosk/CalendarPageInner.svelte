@@ -25,6 +25,7 @@
   import CalCategoryRail from './CalCategoryRail.svelte';
   import CalendarMonthGrid from './CalendarMonthGrid.svelte';
   import CalendarAgendaView from './CalendarAgendaView.svelte';
+  import CalendarDayView from './CalendarDayView.svelte';
   import EventDetailModal from './EventDetailModal.svelte';
   import CalendarSkeleton from './states/CalendarSkeleton.svelte';
   import CalendarEmpty from './states/CalendarEmpty.svelte';
@@ -247,12 +248,11 @@
       onRsvp={onPickEvent}
     />
   {:else}
-    <!-- Day view — slim v1 stub; CD's artboard prioritises month + agenda. -->
-    <div class="px-4 md:px-9 lg:px-10 py-8">
-      <p class="font-dmmono text-[11px] uppercase tracking-[0.1em] text-ink-mute">
-        ◆ Day-View kommt in einer späteren Phase.
-      </p>
-    </div>
+    <CalendarDayView
+      events={displayedEvents}
+      onPickEvent={onPickEvent}
+      onRsvp={onPickEvent}
+    />
   {/if}
 
   <EventDetailModal
