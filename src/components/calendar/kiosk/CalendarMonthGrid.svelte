@@ -23,10 +23,13 @@
     eachDayOfInterval,
     isSameMonth,
     isToday as isTodayDate,
-    getDay
+    getDay,
+    format,
+    isSameDay
   } from 'date-fns';
 
   import EventPill from './EventPill.svelte';
+  import DragSelectPin from './DragSelectPin.svelte';
   import {
     eventCoversDay,
     isLiveNow,
@@ -40,11 +43,13 @@
   let {
     visibleMonth = new Date(),
     events = [],
-    onPickEvent
+    onPickEvent,
+    onSelectionConfirmed
   } = $props<{
     visibleMonth?: Date;
     events?: EventDoc[];
     onPickEvent?: (ev: EventDoc) => void;
+    onSelectionConfirmed?: (from: Date, to: Date) => void;
   }>();
 
   // Day-of-week labels — short, locale-specific. Hardcoded (matches
@@ -68,9 +73,143 @@
     const g = getDay(d);
     return g === 0 || g === 6;
   }
+
+  // ─── Drag-select state ────────────────────────────────────────────
+  let gridWrapper: HTMLDivElement;
+  let dragStart = $state<Date | null>(null);
+  let dragEnd = $state<Date | null>(null);
+  let dragging = $state(false);
+  let pin = $state<{ x: number; y: number; from: Date; to: Date } | null>(null);
+  let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Range bounds (always [lo, hi] regardless of drag direction)
+  const dragLo = $derived(
+    dragStart && dragEnd
+      ? dragStart < dragEnd
+        ? dragStart
+        : dragEnd
+      : null
+  );
+  const dragHi = $derived(
+    dragStart && dragEnd
+      ? dragStart < dragEnd
+        ? dragEnd
+        : dragStart
+      : null
+  );
+
+  function inDragRange(d: Date): boolean {
+    if (!dragLo || !dragHi) return false;
+    return d >= dragLo && d <= dragHi;
+  }
+
+  function getDateFromPointer(e: PointerEvent): Date | null {
+    const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+    const cell = el?.closest('[data-cell-date]') as HTMLElement | null;
+    const iso = cell?.getAttribute('data-cell-date');
+    return iso ? new Date(iso) : null;
+  }
+
+  function activate(day: Date, e: PointerEvent) {
+    pin = null;
+    dragStart = day;
+    dragEnd = day;
+    dragging = true;
+    try {
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* some browsers refuse pointer capture in odd states */
+    }
+  }
+
+  function onCellPointerDown(e: PointerEvent, day: Date, isInMonth: boolean) {
+    if (!isInMonth) return; // greyed cells are inert
+    if (e.pointerType === 'touch') {
+      // Long-press to disambiguate scroll from drag-select on touch.
+      longPressTimer = setTimeout(() => activate(day, e), 400);
+    } else {
+      activate(day, e);
+    }
+  }
+
+  function onCellPointerMove(e: PointerEvent) {
+    if (!dragging) return;
+    const day = getDateFromPointer(e);
+    if (day) dragEnd = day;
+  }
+
+  function onCellPointerUp(e: PointerEvent) {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    if (!dragging) return;
+    dragging = false;
+
+    const lo = dragLo;
+    const hi = dragHi;
+    if (!lo || !hi) {
+      dragStart = null;
+      dragEnd = null;
+      return;
+    }
+
+    // Pin position relative to the wrapper, tucked just below the
+    // pointerup point.
+    const rect = gridWrapper.getBoundingClientRect();
+    pin = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top + 12,
+      from: lo,
+      to: hi
+    };
+  }
+
+  function onCellPointerCancel() {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    dragging = false;
+  }
+
+  function clearSelection() {
+    pin = null;
+    dragStart = null;
+    dragEnd = null;
+  }
+
+  function confirmPin() {
+    if (!pin) return;
+    const fromIso = format(pin.from, 'yyyy-MM-dd');
+    const toIso = format(pin.to, 'yyyy-MM-dd');
+    if (onSelectionConfirmed) {
+      onSelectionConfirmed(pin.from, pin.to);
+    } else if (typeof window !== 'undefined') {
+      window.location.href = `/events/create?from=${fromIso}&to=${toIso}`;
+    }
+    clearSelection();
+  }
+
+  // ESC dismisses the pin / drag selection.
+  $effect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        clearSelection();
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+        dragging = false;
+      }
+    }
+    if (typeof document === 'undefined') return;
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  });
 </script>
 
-<div class="px-4 md:px-9 lg:px-10 pb-6">
+<div class="px-4 md:px-9 lg:px-10 pb-6 relative" bind:this={gridWrapper}>
   <!-- DOW header -->
   <div
     class="grid grid-cols-7 border-b-[1.5px] border-ink"
@@ -90,9 +229,13 @@
 
   <!-- Grid cells -->
   <div
-    class="grid grid-cols-7 border-l border-dashed border-rule"
+    class="grid grid-cols-7 border-l border-dashed border-rule select-none"
     style:grid-template-rows={`repeat(${rows}, minmax(96px, 1fr))`}
+    style:touch-action="pan-y"
     role="rowgroup"
+    onpointermove={onCellPointerMove}
+    onpointerup={onCellPointerUp}
+    onpointercancel={onCellPointerCancel}
   >
     {#each cells as cell, i (cell.toISOString())}
       {@const inMonth = isSameMonth(cell, visibleMonth)}
@@ -100,10 +243,19 @@
       {@const weekend = isWeekend(cell)}
       {@const dayEvents = sortEventsForDay(events.filter((ev) => eventCoversDay(ev, cell))).slice(0, 3)}
       {@const overflow = events.filter((ev) => eventCoversDay(ev, cell)).length - dayEvents.length}
+      {@const inSel = inDragRange(cell)}
       <div
+        data-cell-date={cell.toISOString()}
+        onpointerdown={(e) => onCellPointerDown(e, cell, inMonth)}
         class={`relative border-r border-b border-dashed border-rule p-1.5 overflow-hidden flex flex-col gap-1 ${
-          today ? 'bg-paper-warm' : weekend ? 'bg-wine/[0.025]' : ''
-        } ${inMonth ? '' : 'opacity-35'}`}
+          inSel
+            ? 'bg-[repeating-linear-gradient(45deg,rgba(178,58,91,0.16)_0_6px,var(--k-paper-warm,#f7f0de)_6px_12px)]'
+            : today
+            ? 'bg-paper-warm'
+            : weekend
+            ? 'bg-wine/[0.025]'
+            : ''
+        } ${inMonth ? '' : 'opacity-35'} ${inMonth ? 'cursor-pointer' : ''}`}
         role="gridcell"
       >
         <!-- Date number row -->
@@ -148,4 +300,15 @@
       </div>
     {/each}
   </div>
+
+  {#if pin}
+    <DragSelectPin
+      x={pin.x}
+      y={pin.y}
+      from={pin.from}
+      to={pin.to}
+      onConfirm={confirmPin}
+      onCancel={clearSelection}
+    />
+  {/if}
 </div>

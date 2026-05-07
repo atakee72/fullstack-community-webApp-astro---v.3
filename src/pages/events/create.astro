@@ -1,0 +1,33 @@
+---
+// /events/create — Editorial Kiosk event compose page.
+//
+// Auth-gated: redirect to /login when there is no session. Mirrors
+// /topics/create.astro. The form's submit re-checks server-side via
+// /api/events/create's 401 handler.
+//
+// Drag-select on the calendar's month grid lands here with prefill
+// query params (?from=YYYY-MM-DD&to=YYYY-MM-DD&allDay=1) — the inner
+// component reads them in onMount.
+
+import KioskLayout from '../../layouts/KioskLayout.astro';
+import EventComposePage from '../../components/calendar/kiosk/compose/EventComposePage.svelte';
+import { getSession } from 'auth-astro/server';
+
+const session = await getSession(Astro.request);
+
+if (!session?.user) {
+  return Astro.redirect('/login', 302);
+}
+
+const currentUser = {
+  id: session.user.id,
+  name: session.user.name ?? undefined,
+  image: session.user.image ?? null
+};
+---
+
+<KioskLayout title="Mahalle · neuer Termin" description="Erstelle einen neuen Termin im Mahalle-Kalender.">
+  <div class="carved-title" style="--carved-accent: #2e6f7a">
+    <EventComposePage client:only="svelte" currentUser={currentUser} />
+  </div>
+</KioskLayout>

@@ -1,0 +1,283 @@
+<script lang="ts" module>
+  export type EventComposeValues = {
+    title: string;
+    body: string;
+    category: import('../../../../types').EventCategory;
+    startDate: string;
+    startTime: string;
+    endDate: string;
+    endTime: string;
+    allDay: boolean;
+    location: string;
+    capacity: number | null;
+    tags: string[];
+  };
+</script>
+
+<script lang="ts">
+  // Event compose form — 6 numbered field groups per CD's
+  // CreateEventArtboard (`kiosk-calendar-flows.jsx:281–404`).
+  //
+  // Each field group has a step number (01–06) + dashed-bottom-rule
+  // header, mirroring forum's compose form labelling. The form is
+  // controlled — values bubble up via `onChange` so the page can
+  // observe them for the preview sidebar and submit handler.
+
+  import { onMount } from 'svelte';
+  import { CATEGORIES, CATEGORY_ORDER } from '../../../../lib/calendar/categories';
+  import { t } from '../../../../lib/kiosk-i18n';
+  import type { EventCategory } from '../../../../types';
+
+  let {
+    initialValues,
+    onChange,
+    showBreadcrumb = false
+  } = $props<{
+    initialValues?: Partial<EventComposeValues>;
+    onChange: (v: EventComposeValues) => void;
+    showBreadcrumb?: boolean;
+  }>();
+
+  // ─── State ─────────────────────────────────────────────────────────
+  // Defaults computed at mount: today + 09:00–17:00 (or "next full hour"
+  // if today and now is past 09:00). Mirrors the existing calendar's
+  // tooltip prefill behaviour.
+  function defaultStartHHMM(): string {
+    const now = new Date();
+    const next = now.getHours() < 9 ? 9 : Math.min(23, now.getHours() + 1);
+    return next.toString().padStart(2, '0') + ':00';
+  }
+  function defaultEndHHMM(): string {
+    const now = new Date();
+    const next = now.getHours() < 9 ? 17 : Math.min(23, now.getHours() + 4);
+    return next.toString().padStart(2, '0') + ':00';
+  }
+  function todayISO(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  let title = $state(initialValues?.title ?? '');
+  let body = $state(initialValues?.body ?? '');
+  let category = $state<EventCategory>(initialValues?.category ?? 'kiez');
+  let startDate = $state(initialValues?.startDate ?? todayISO());
+  let startTime = $state(initialValues?.startTime ?? defaultStartHHMM());
+  let endDate = $state(initialValues?.endDate ?? initialValues?.startDate ?? todayISO());
+  let endTime = $state(initialValues?.endTime ?? defaultEndHHMM());
+  let allDay = $state(initialValues?.allDay ?? false);
+  let location = $state(initialValues?.location ?? '');
+  let capacity = $state<number | null>(initialValues?.capacity ?? null);
+  let tagsInput = $state((initialValues?.tags ?? []).join(' '));
+
+  // Bubble up on every change.
+  $effect(() => {
+    onChange({
+      title,
+      body,
+      category,
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+      allDay,
+      location,
+      capacity,
+      tags: tagsInput.trim().split(/\s+/).filter(Boolean).slice(0, 5)
+    });
+  });
+
+  // Title hint with character counter (uses {n} interpolation).
+  function titleHint(n: number): string {
+    return ($t['cal.compose.field.titleHint'] as string).replace('{n}', String(n));
+  }
+</script>
+
+<form
+  class="px-4 md:px-9 lg:px-10 py-6 overflow-auto"
+  onsubmit={(e) => e.preventDefault()}
+>
+  {#if showBreadcrumb}
+    <div
+      class="flex items-center mb-5 pb-2.5 border-b border-dashed border-rule font-dmmono text-[10.5px] uppercase tracking-[0.05em] text-ink-mute"
+    >
+      <a href="/calendar" class="inline-flex items-center gap-2 hover:text-ink transition-colors">
+        <span>{$t['cal.compose.cta.back']}</span>
+      </a>
+      <span aria-hidden="true" class="mx-2">·</span>
+      <span class="underline decoration-dashed underline-offset-[3px]">
+        {$t['cal.compose.crumb.new']}
+      </span>
+    </div>
+  {/if}
+
+  <!-- 01 · Category -->
+  <div class="mb-6">
+    <div
+      class="flex items-baseline gap-2 mb-2 pb-1 border-b border-dashed border-rule"
+    >
+      <span class="font-dmmono text-[9.5px] tracking-[0.1em] font-bold text-wine">01</span>
+      <span class="font-bricolage text-[14px] font-bold tracking-[-0.01em]">
+        {$t['cal.compose.step.category']}
+      </span>
+    </div>
+    <div class="flex gap-1.5 flex-wrap">
+      {#each CATEGORY_ORDER as cat (cat)}
+        {@const style = CATEGORIES[cat]}
+        {@const on = category === cat}
+        <button
+          type="button"
+          onclick={() => (category = cat)}
+          aria-pressed={on}
+          class={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bricolage font-semibold text-[13px] border-[1.5px] transition-all ${
+            on
+              ? `${style.bgClass} ${style.borderClass} ${style.textOnFill} shadow-[2px_2px_0_var(--k-ink,#1b1a17)]`
+              : `bg-transparent ${style.borderClass} ${style.textClass}`
+          }`}
+        >
+          <span aria-hidden="true">{style.glyph}</span>
+          <span>{$t[`cal.cat.${cat}.label` as const]}</span>
+        </button>
+      {/each}
+    </div>
+  </div>
+
+  <!-- 02 · Title -->
+  <div class="mb-6">
+    <div
+      class="flex items-baseline gap-2 mb-2 pb-1 border-b border-dashed border-rule"
+    >
+      <span class="font-dmmono text-[9.5px] tracking-[0.1em] font-bold text-wine">02</span>
+      <span class="font-bricolage text-[14px] font-bold tracking-[-0.01em]">
+        {$t['cal.compose.step.title']}
+      </span>
+    </div>
+    <input
+      type="text"
+      bind:value={title}
+      maxlength="80"
+      placeholder={$t['cal.compose.field.title.placeholder']}
+      class="w-full appearance-none bg-paper-warm border-[1.5px] border-ink rounded-md px-3 py-2 font-bricolage text-[15px] text-ink placeholder:text-ink-mute/55 outline-none focus:border-wine"
+    />
+    <div class="font-dmmono text-[10.5px] text-ink-mute mt-1">
+      {titleHint(title.length)}
+    </div>
+  </div>
+
+  <!-- 03 · When -->
+  <div class="mb-6">
+    <div
+      class="flex items-baseline gap-2 mb-2 pb-1 border-b border-dashed border-rule"
+    >
+      <span class="font-dmmono text-[9.5px] tracking-[0.1em] font-bold text-wine">03</span>
+      <span class="font-bricolage text-[14px] font-bold tracking-[-0.01em]">
+        {$t['cal.compose.step.when']}
+      </span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+      <label class="block">
+        <span class="block font-dmmono text-[9px] uppercase tracking-[0.1em] text-ink-mute mb-0.5">
+          {$t['cal.compose.field.date']}
+        </span>
+        <input
+          type="date"
+          bind:value={startDate}
+          oninput={() => {
+            // Keep endDate >= startDate
+            if (endDate && endDate < startDate) endDate = startDate;
+          }}
+          class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
+        />
+      </label>
+      <label class="block">
+        <span class="block font-dmmono text-[9px] uppercase tracking-[0.1em] text-ink-mute mb-0.5">
+          {$t['cal.compose.field.start']}
+        </span>
+        <input
+          type="time"
+          bind:value={startTime}
+          disabled={allDay}
+          class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px] disabled:opacity-50"
+        />
+      </label>
+      <label class="block">
+        <span class="block font-dmmono text-[9px] uppercase tracking-[0.1em] text-ink-mute mb-0.5">
+          {$t['cal.compose.field.end']}
+        </span>
+        <input
+          type="time"
+          bind:value={endTime}
+          disabled={allDay}
+          class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px] disabled:opacity-50"
+        />
+      </label>
+    </div>
+    <div class="flex gap-3.5 mt-2 font-dmmono text-[11px] text-ink-mute">
+      <label class="inline-flex items-center gap-1">
+        <input type="checkbox" bind:checked={allDay} />
+        {$t['cal.compose.field.allDay']}
+      </label>
+    </div>
+  </div>
+
+  <!-- 04 · Where -->
+  <div class="mb-6">
+    <div
+      class="flex items-baseline gap-2 mb-2 pb-1 border-b border-dashed border-rule"
+    >
+      <span class="font-dmmono text-[9.5px] tracking-[0.1em] font-bold text-wine">04</span>
+      <span class="font-bricolage text-[14px] font-bold tracking-[-0.01em]">
+        {$t['cal.compose.step.where']}
+      </span>
+    </div>
+    <input
+      type="text"
+      bind:value={location}
+      maxlength="200"
+      placeholder={$t['cal.compose.field.location.placeholder']}
+      class="w-full appearance-none bg-paper-warm border-[1.5px] border-ink rounded-md px-3 py-2 font-bricolage text-[14px] text-ink placeholder:text-ink-mute/55 outline-none focus:border-wine"
+    />
+  </div>
+
+  <!-- 05 · Description -->
+  <div class="mb-6">
+    <div
+      class="flex items-baseline gap-2 mb-2 pb-1 border-b border-dashed border-rule"
+    >
+      <span class="font-dmmono text-[9.5px] tracking-[0.1em] font-bold text-wine">05</span>
+      <span class="font-bricolage text-[14px] font-bold tracking-[-0.01em]">
+        {$t['cal.compose.step.description']}
+      </span>
+    </div>
+    <textarea
+      bind:value={body}
+      rows="5"
+      maxlength="5000"
+      placeholder={$t['cal.compose.field.body.placeholder']}
+      class="w-full appearance-none bg-paper-warm border-[1.5px] border-ink rounded-md px-3 py-2 font-bricolage text-[14px] leading-relaxed text-ink placeholder:text-ink-mute/55 outline-none focus:border-wine resize-y min-h-[120px]"
+    ></textarea>
+  </div>
+
+  <!-- 06 · Options (Capacity) -->
+  <div class="mb-6">
+    <div
+      class="flex items-baseline gap-2 mb-2 pb-1 border-b border-dashed border-rule"
+    >
+      <span class="font-dmmono text-[9.5px] tracking-[0.1em] font-bold text-wine">06</span>
+      <span class="font-bricolage text-[14px] font-bold tracking-[-0.01em]">
+        {$t['cal.compose.step.options']}
+      </span>
+    </div>
+    <label class="block max-w-[200px]">
+      <span class="block font-dmmono text-[9px] uppercase tracking-[0.1em] text-ink-mute mb-0.5">
+        {$t['cal.compose.field.capacity']}
+      </span>
+      <input
+        type="number"
+        min="1"
+        max="10000"
+        bind:value={capacity}
+        placeholder={$t['cal.compose.field.capacity.placeholder']}
+        class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
+      />
+    </label>
+  </div>
+</form>

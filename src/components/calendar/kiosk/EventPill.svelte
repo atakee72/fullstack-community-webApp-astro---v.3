@@ -45,6 +45,7 @@
 <button
   type="button"
   {onclick}
+  onpointerdown={(e) => e.stopPropagation()}
   aria-label={title}
   class={`block w-full text-left ${style.bgClass} ${style.textOnFill} font-bricolage font-semibold text-[10.5px] leading-[1.3] px-1.5 py-px relative overflow-hidden whitespace-nowrap text-ellipsis border-y border-ink ${
     isLeading ? 'border-l rounded-l-[4px]' : ''
