@@ -777,7 +777,7 @@
 
           <!-- Trust-note serif italic quote -->
           <section
-            class="border-l-2 border-rule pl-3 font-instrument italic text-[11.5px] text-ink-soft leading-[1.5]"
+            class="font-instrument italic text-[11.5px] text-ink-soft leading-[1.5]"
           >
             {$t['detail.trust.quote']}
           </section>
