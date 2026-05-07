@@ -679,10 +679,11 @@
     </article>
 
     <!-- ── Right rail (switches between read mode + edit mode) ──── -->
-    <!-- ::after pseudo bleeds the paper-warm bg past the max-w-7xl edge
-         to the viewport's right (page-edge anchored). html { overflow-x:
-         clip } prevents horizontal scroll. -->
-    <aside class="hidden lg:block relative bg-paper-warm border-l border-dashed border-rule after:content-[''] after:absolute after:top-0 after:bottom-0 after:left-full after:w-screen after:bg-paper-warm after:-z-10">
+    <!-- `-mr-10 pr-10` pushes the bg out to fill main's right padding so
+         the rail sits flush with the page edge (per prototype); inner
+         content position is unchanged because the same amount is added
+         back as right padding on the aside. -->
+    <aside class="hidden lg:block bg-paper-soft border-l border-dashed border-rule lg:-mr-10 lg:pr-10">
       <div
         class="sticky top-24 space-y-5 px-5 py-7"
       >
