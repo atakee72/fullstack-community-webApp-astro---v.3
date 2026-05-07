@@ -54,12 +54,12 @@
   <!-- Submit row — both CTAs side-by-side, equal width, ink-fill
        with wine print shadow per CD's design. -->
   <div class="pt-4 border-t-[1.5px] border-ink">
-    <div class="flex flex-row gap-2.5">
+    <div class="flex flex-row justify-between items-center">
       <button
         type="button"
         onclick={onPublish}
         disabled={submitting}
-        class="flex-1 inline-flex items-center justify-center px-4 py-2 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-bold text-[14px] shadow-[3px_3px_0_var(--k-wine,#b23a5b)] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_var(--k-wine,#b23a5b)] disabled:opacity-60 disabled:cursor-not-allowed transition-[transform,box-shadow] duration-[120ms] ease-out"
+        class="inline-flex items-center px-3 py-1 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-bold text-[12.5px] shadow-[3px_3px_0_var(--k-wine,#b23a5b)] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_var(--k-wine,#b23a5b)] disabled:opacity-60 disabled:cursor-not-allowed transition-[transform,box-shadow] duration-[120ms] ease-out"
       >
         {$t['cal.compose.cta.publish']}
       </button>
@@ -67,7 +67,7 @@
         type="button"
         onclick={onDiscard}
         disabled={submitting}
-        class="flex-1 inline-flex items-center justify-center px-4 py-2 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-semibold text-[14px] shadow-[3px_3px_0_var(--k-wine,#b23a5b)] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_var(--k-wine,#b23a5b)] disabled:opacity-60 disabled:cursor-not-allowed transition-[transform,box-shadow] duration-[120ms] ease-out"
+        class="inline-flex items-center px-3 py-1 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-semibold text-[12.5px] shadow-[3px_3px_0_var(--k-wine,#b23a5b)] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_var(--k-wine,#b23a5b)] disabled:opacity-60 disabled:cursor-not-allowed transition-[transform,box-shadow] duration-[120ms] ease-out"
       >
         {$t['cal.compose.cta.discard']}
       </button>
