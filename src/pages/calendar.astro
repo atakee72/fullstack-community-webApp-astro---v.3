@@ -15,11 +15,9 @@ try {
 ---
 
 <KioskLayout title="Kalender">
-  <div class="carved-title" style="--carved-accent: #2e6f7a">
-    <CalendarPage
-      client:only="svelte"
-      initialEvents={initialEvents}
-      currentUserId={session?.user?.id ?? null}
-    />
-  </div>
+  <CalendarPage
+    client:only="svelte"
+    initialEvents={initialEvents}
+    currentUserId={session?.user?.id ?? null}
+  />
 </KioskLayout>
