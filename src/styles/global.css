@@ -695,6 +695,33 @@ option:disabled {
   display: none;               /* Chromium / Safari */
 }
 
+/* ─── Scroll-shadow / edge-fade utility ────────────────────────────
+   Pair with .no-scrollbar on a horizontally-scrolling row. The host
+   sets data-scroll-left / data-scroll-right (true|false) to reflect
+   whether more content exists in each direction; CSS applies a
+   mask-image fade on the corresponding edge so the cut reads as
+   "fades into more content" rather than "ends here".
+
+   When used inside a viewport-responsive layout (e.g. lg:contents
+   to dissolve the wrapper on desktop), the mask self-disables —
+   display:contents elements have no box, so scrollWidth/clientWidth
+   read 0 and the host stays in the no-fade default state. */
+.kiosk-scroll-fade {
+  --kiosk-fade: 32px;
+}
+.kiosk-scroll-fade[data-scroll-right="true"][data-scroll-left="false"] {
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - var(--kiosk-fade)), transparent 100%);
+          mask-image: linear-gradient(to right, #000 0, #000 calc(100% - var(--kiosk-fade)), transparent 100%);
+}
+.kiosk-scroll-fade[data-scroll-right="true"][data-scroll-left="true"] {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--kiosk-fade), #000 calc(100% - var(--kiosk-fade)), transparent 100%);
+          mask-image: linear-gradient(to right, transparent 0, #000 var(--kiosk-fade), #000 calc(100% - var(--kiosk-fade)), transparent 100%);
+}
+.kiosk-scroll-fade[data-scroll-right="false"][data-scroll-left="true"] {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--kiosk-fade), #000 100%);
+          mask-image: linear-gradient(to right, transparent 0, #000 var(--kiosk-fade), #000 100%);
+}
+
 /* Long-press pulse — visual fallback for iOS where the Vibration
    API isn't available. 400ms scale flash on the cell that just
    committed a long-press. */
