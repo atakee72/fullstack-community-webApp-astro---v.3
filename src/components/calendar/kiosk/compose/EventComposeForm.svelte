@@ -151,7 +151,7 @@
         {$t['cal.compose.step.category']}
       </span>
     </div>
-    <div class="flex gap-1.5 flex-wrap">
+    <div class="no-scrollbar flex gap-1.5 overflow-x-auto -mx-4 md:-mx-9 lg:-mx-10 px-4 md:px-9 lg:px-10">
       {#each CATEGORY_ORDER as cat (cat)}
         {@const style = CATEGORIES[cat]}
         {@const on = category === cat}
@@ -159,7 +159,7 @@
           type="button"
           onclick={() => (category = cat)}
           aria-pressed={on}
-          class={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bricolage font-semibold text-[13px] border-[1.5px] transition-all ${
+          class={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bricolage font-semibold text-[13px] border-[1.5px] transition-all flex-shrink-0 ${
             on
               ? `${style.bgClass} ${style.borderClass} ${style.textOnFill} shadow-[2px_2px_0_var(--k-ink,#1b1a17)]`
               : `bg-transparent ${style.borderClass} ${style.textClass}`
