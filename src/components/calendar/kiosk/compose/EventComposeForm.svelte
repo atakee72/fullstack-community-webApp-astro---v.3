@@ -70,6 +70,26 @@
   let visibility = $state<'public' | 'private'>(initialValues?.visibility ?? 'public');
   let tagsInput = $state((initialValues?.tags ?? []).join(' '));
 
+  // Multi-day mode — auto-on when the URL prefill brings a different
+  // start/end (drag-select pin path). User can toggle via the
+  // 'mehrtägig' checkbox in the When section.
+  let multiDay = $state(
+    !!(initialValues?.startDate &&
+      initialValues?.endDate &&
+      initialValues.startDate !== initialValues.endDate)
+  );
+
+  // Single source of truth for date sync. Reactive on multiDay,
+  // startDate, endDate — covers single-day mirror, the multi-day
+  // backwards-clamp, and the toggle transition.
+  $effect(() => {
+    if (!multiDay) {
+      if (endDate !== startDate) endDate = startDate;
+    } else if (endDate && endDate < startDate) {
+      endDate = startDate;
+    }
+  });
+
   // Bubble up on every change.
   $effect(() => {
     onChange({
@@ -192,10 +212,6 @@
         <input
           type="date"
           bind:value={startDate}
-          oninput={() => {
-            // Keep endDate >= startDate
-            if (endDate && endDate < startDate) endDate = startDate;
-          }}
           class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
         />
       </label>
@@ -222,10 +238,28 @@
         />
       </label>
     </div>
+    {#if multiDay}
+      <label class="block mt-2 max-w-[260px]">
+        <span class="block font-dmmono text-[9px] uppercase tracking-[0.1em] text-ink-mute mb-0.5">
+          {$t['cal.compose.field.endDate']}
+        </span>
+        <input
+          type="date"
+          bind:value={endDate}
+          min={startDate}
+          class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
+        />
+      </label>
+    {/if}
+
     <div class="flex gap-3.5 mt-2 font-dmmono text-[11px] text-ink-mute">
       <label class="inline-flex items-center gap-1">
         <input type="checkbox" bind:checked={allDay} />
         {$t['cal.compose.field.allDay']}
+      </label>
+      <label class="inline-flex items-center gap-1">
+        <input type="checkbox" bind:checked={multiDay} />
+        {$t['cal.compose.field.multiDay']}
       </label>
     </div>
   </div>
