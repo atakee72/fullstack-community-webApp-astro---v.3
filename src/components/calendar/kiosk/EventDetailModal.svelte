@@ -116,6 +116,36 @@
       : ''
   );
 
+  // Mahalle-Team detection — for the second pill label next to the
+  // category strip. Currently isOfficial ships as a server-only flag;
+  // we ALSO honor an author-name heuristic so seeded "Mahalle-Team"
+  // events render the badge before any admin-create endpoint exists.
+  const isOfficial = $derived(
+    !!event?.isOfficial || /mahalle.?team/i.test(authorName)
+  );
+
+  // Title carved-italic split — when the title is exactly two
+  // whitespace-separated words, render the second as italic-serif
+  // wine (matches CD's 'Straßenfest / Herrfurthplatz' treatment).
+  // Longer / shorter titles fall through to the single-line render.
+  const titleParts = $derived.by(() => {
+    const raw = (event?.title ?? '').trim();
+    if (!raw) return { single: '', split: null as null | { lead: string; tail: string } };
+    const parts = raw.split(/\s+/);
+    if (parts.length === 2) {
+      return { single: '', split: { lead: parts[0], tail: parts[1] } };
+    }
+    return { single: raw, split: null };
+  });
+
+  // Practical-info chips reuse the event.tags array — design shows
+  // 'kostenfrei / kinderfreundlich / BYO' as outlined DM Mono pills.
+  // Whatever the user typed as tags gets rendered with the same
+  // visual treatment.
+  const practicalChips = $derived<string[]>(
+    Array.isArray(event?.tags) ? (event!.tags as string[]) : []
+  );
+
   const eventId = $derived(event?._id ? String(event._id) : '');
 
   function onReportClick() {
@@ -145,19 +175,34 @@
       <div
         class="px-7 py-7 md:border-r md:border-dashed md:border-rule overflow-auto max-h-[calc(100vh-80px)]"
       >
-        <!-- Category strip -->
+        <!-- Category strip — adds an inline 'MAHALLE-TEAM' second
+             label when the event is official (server flag) or the
+             author name matches the team heuristic. -->
         <div
           class={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${style.bgClass} ${style.textOnFill} border-2 border-ink font-bricolage font-bold text-[12px] tracking-[0.04em] mb-3.5`}
         >
           <span aria-hidden="true">{style.glyph}</span>
           <span>{($t[`cal.cat.${cat}.label` as const] as string)?.toUpperCase()}</span>
+          {#if isOfficial}
+            <span class="w-px h-3 bg-paper/50" aria-hidden="true"></span>
+            <span class="text-[10px] tracking-[0.08em]">{($t['cal.team'] as string)?.toUpperCase()}</span>
+          {/if}
         </div>
 
-        <!-- Title -->
+        <!-- Title — two-word events get the carved-italic accent on the
+             second word per CD's design. Longer titles render as a
+             single solid line. -->
         <h1
           class="font-bricolage font-extrabold text-[36px] md:text-[42px] tracking-[-0.03em] leading-[1] [text-wrap:balance] m-0 mb-3"
         >
-          {event.title}
+          {#if titleParts.split}
+            <span class="block">{titleParts.split.lead}</span>
+            <span class="block font-instrument italic font-normal text-wine">
+              {titleParts.split.tail}
+            </span>
+          {:else}
+            {titleParts.single}
+          {/if}
         </h1>
 
         <!-- When / where / by slab -->
@@ -184,6 +229,13 @@
               <div class="font-bricolage font-semibold text-[15.5px]">
                 {event.location}
               </div>
+              <!-- Striped diagonal map placeholder — visual cue only;
+                   real OSM/Mapbox embed is a future feature. -->
+              <div
+                class="mt-2 px-3.5 py-3 rounded-sm border border-dashed border-rule bg-[repeating-linear-gradient(45deg,var(--k-paper-warm,#f7f0de)_0_8px,var(--k-paper,#f3ead8)_8px_16px)] font-dmmono text-[10px] tracking-[0.1em] text-ink-mute text-center"
+              >
+                ◆ KARTE · OSM-PIN
+              </div>
             </div>
           {/if}
 
@@ -195,6 +247,9 @@
               <KioskAvatar name={authorName} image={null} size="sm" />
               <div>
                 <div class="font-bricolage font-semibold text-[13px]">{authorName}</div>
+                <div class="font-dmmono text-[10px] text-ink-mute">
+                  {$t['cal.detail.verifiziert']}
+                </div>
               </div>
             </div>
           {/if}
@@ -206,6 +261,19 @@
             class="font-instrument text-[15px] leading-[1.6] text-ink pt-3 border-t border-dashed border-rule whitespace-pre-line"
           >
             {event.body}
+          </div>
+        {/if}
+
+        <!-- Practical info chips (rendered from event.tags). -->
+        {#if practicalChips.length > 0}
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            {#each practicalChips as chip (chip)}
+              <span
+                class="inline-flex items-center px-2.5 py-1 rounded-full border border-rule font-dmmono text-[11px] text-ink-soft"
+              >
+                {chip}
+              </span>
+            {/each}
           </div>
         {/if}
       </div>
@@ -245,7 +313,7 @@
             class="flex items-baseline justify-between border-b-[1.5px] border-ink pb-1 mb-2"
           >
             <span
-              class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-ink"
+              class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-wine"
             >{$t['cal.detail.attendance.kicker']}</span>
             {#if event.capacity}
               <span class="font-dmmono text-[11px] font-semibold">
@@ -277,10 +345,16 @@
           <div
             class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-1.5"
           >{$t['cal.detail.export']}</div>
+          <!-- Solid ink-filled pills per CD's design (was ghost-outlined). -->
           <div class="flex gap-1.5">
-            <KioskBtn variant="ghost" size="sm">.ics</KioskBtn>
-            <KioskBtn variant="ghost" size="sm">Google</KioskBtn>
-            <KioskBtn variant="ghost" size="sm">{$t['cal.detail.export.share']}</KioskBtn>
+            {#each ['.ics', 'Google', $t['cal.detail.export.share']] as label, i (i)}
+              <button
+                type="button"
+                class="inline-flex items-center px-3 py-1 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-semibold text-[12px] hover:scale-[1.02] transition-transform duration-[180ms] ease-out"
+              >
+                {label}
+              </button>
+            {/each}
           </div>
           <div
             class="mt-4 pt-2.5 border-t border-dashed border-rule flex justify-between font-dmmono text-[10px] text-ink-mute"

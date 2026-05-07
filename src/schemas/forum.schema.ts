@@ -139,6 +139,9 @@ const EventBaseSchema = z.object({
   ]).optional().default('kiez'),
   capacity: z.number().int().min(1).max(10000).optional(),
   allDay: z.boolean().optional().default(false),
+  // `isOfficial` is server-controlled (admin-create only); user POSTs are
+  // ignored even if present. Same pattern as announcements.
+  isOfficial: z.boolean().optional(),
   tags: z.array(z.string().max(30))
     .max(5, 'Maximum 5 tags allowed')
     .default([]),

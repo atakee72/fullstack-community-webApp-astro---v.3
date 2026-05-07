@@ -438,6 +438,7 @@ const de = {
   'cal.detail.report': 'MELDEN',
   'cal.detail.close': 'schließen',
   'cal.detail.loginPrompt': 'Anmelden, um zuzusagen.',
+  'cal.detail.verifiziert': 'verifiziert · seit 2024',
 
   // ─── States ──────────────────────────────────────────────────────
   'cal.state.empty.title': 'Im Kiez ist gerade Pause.',
@@ -806,6 +807,7 @@ const en: Dict = {
   'cal.detail.report': 'REPORT',
   'cal.detail.close': 'close',
   'cal.detail.loginPrompt': 'Sign in to RSVP.',
+  'cal.detail.verifiziert': 'verified · since 2024',
 
   // States
   'cal.state.empty.title': 'The Kiez is on a break.',
