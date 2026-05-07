@@ -775,9 +775,10 @@
             </p>
           </section>
 
-          <!-- Trust-note serif italic quote -->
+          <!-- Trust-note serif italic quote — boxed with dashed border + lighter
+               bg per prototype, sits as a contained quote on the rail surface. -->
           <section
-            class="font-instrument italic text-[11.5px] text-ink-soft leading-[1.5]"
+            class="bg-paper-warm border border-dashed border-rule rounded-sm px-3 py-2.5 font-instrument italic text-[11.5px] text-ink-soft leading-[1.5]"
           >
             {$t['detail.trust.quote']}
           </section>
