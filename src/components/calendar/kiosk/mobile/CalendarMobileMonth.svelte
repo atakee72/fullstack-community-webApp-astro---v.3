@@ -323,7 +323,7 @@
     <a
       href={createHref}
       aria-label={$t['cal.mobile.cta.aria']}
-      class="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-bold text-[20px] sm:text-[22px] leading-none shadow-[3px_3px_0_var(--k-wine,#b23a5b)] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_var(--k-wine,#b23a5b)] transition-[transform,box-shadow] duration-[120ms] ease-out shrink-0"
+      class="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-bold text-[24px] sm:text-[28px] leading-none shadow-[3px_3px_0_var(--k-wine,#b23a5b)] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_var(--k-wine,#b23a5b)] transition-[transform,box-shadow] duration-[120ms] ease-out shrink-0"
     >+</a>
   </header>
 
