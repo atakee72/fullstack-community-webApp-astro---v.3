@@ -571,7 +571,7 @@
           <img
             src={heroImage}
             alt={topic.title}
-            class="w-full h-auto max-h-[600px] object-contain bg-paper-soft"
+            class="w-full h-auto max-h-[440px] object-contain bg-paper-soft"
             loading="lazy"
           />
         </div>
