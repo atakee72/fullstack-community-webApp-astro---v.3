@@ -587,3 +587,98 @@ option:checked {
 option:disabled {
   color: rgba(255, 255, 255, 0.35);
 }
+
+/* ════════════════════════════════════════════════════════════════
+   KIOSK · CALENDAR · MOTION
+   8 keyframes + their utility classes from CD handoff
+   `motion-calendar.css`. Used by EventPill (live dot), MonthGrid
+   (drag-select rect), DragSelectPin, RsvpButtons, EventDetailModal,
+   CapacityBar.
+   ════════════════════════════════════════════════════════════════ */
+
+/* C01 · live-now pulsing dot */
+@keyframes k-cal-pulse-live {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.4); opacity: 0.55; }
+}
+.k-cal-live-dot {
+  animation: k-cal-pulse-live 1400ms ease-in-out infinite;
+}
+
+/* C02 · drag-select scanning dashes */
+@keyframes k-cal-drag-dash {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -16; }
+}
+.k-cal-drag-rect {
+  animation: k-cal-drag-dash 800ms linear infinite;
+}
+
+/* C03 · "+" pin pop on drag-release */
+@keyframes k-cal-pin-pop {
+  0%   { transform: translateY(8px) scale(0.9); opacity: 0; }
+  70%  { transform: translateY(-2px) scale(1.04); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.k-cal-pin {
+  animation: k-cal-pin-pop 600ms cubic-bezier(.34, 1.56, .64, 1) both;
+}
+
+/* C04 · RSVP optimistic check */
+@keyframes k-cal-rsvp-check {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.k-cal-rsvp-check {
+  animation: k-cal-rsvp-check 260ms cubic-bezier(.4, 0, .2, 1) both;
+}
+
+/* C05 · RSVP sync spinner ring */
+@keyframes k-cal-rsvp-spin {
+  to { stroke-dashoffset: -24; }
+}
+.k-cal-rsvp-ring {
+  animation: k-cal-rsvp-spin 800ms linear infinite;
+  transform-origin: center;
+}
+
+/* C06 · event-detail modal slide-up */
+@keyframes k-cal-modal-in {
+  from { transform: translateY(24px) scale(0.985); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);     opacity: 1; }
+}
+.k-cal-modal-in {
+  animation: k-cal-modal-in 320ms cubic-bezier(.2, .7, .3, 1) both;
+}
+
+/* C07 · capacity bar grow on mount */
+@keyframes k-cal-capacity-fill {
+  from { width: 0; }
+}
+.k-cal-capacity-bar {
+  animation: k-cal-capacity-fill 720ms cubic-bezier(.4, 0, .2, 1) both;
+}
+
+/* C08 · live-counter tick highlight */
+@keyframes k-cal-tick {
+  0%   { background: rgba(217, 178, 56, 0.35); }
+  100% { background: transparent; }
+}
+.k-cal-tick {
+  animation: k-cal-tick 380ms cubic-bezier(.4, 0, .2, 1) both;
+}
+
+/* Reduced-motion fallback */
+@media (prefers-reduced-motion: reduce) {
+  .k-cal-live-dot,
+  .k-cal-drag-rect,
+  .k-cal-pin,
+  .k-cal-rsvp-check,
+  .k-cal-rsvp-ring,
+  .k-cal-modal-in,
+  .k-cal-capacity-bar,
+  .k-cal-tick {
+    animation: none !important;
+  }
+}

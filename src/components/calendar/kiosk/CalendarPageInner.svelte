@@ -10,13 +10,16 @@
   // modal off the events list.
 
   import { createQuery } from '@tanstack/svelte-query';
-  import { format } from 'date-fns';
+  import { format, startOfWeek, endOfWeek } from 'date-fns';
   import { de as deLocale, enUS } from 'date-fns/locale';
 
   import CalendarTitleBlock from './CalendarTitleBlock.svelte';
   import CalCategoryRail from './CalCategoryRail.svelte';
+  import CalendarMonthGrid from './CalendarMonthGrid.svelte';
+  import CalendarAgendaView from './CalendarAgendaView.svelte';
 
   import { CATEGORY_ORDER } from '../../../lib/calendar/categories';
+  import { countLiveNow, countEventsThisWeek } from '../../../lib/calendar/eventTime';
   import { locale } from '../../../lib/kiosk-i18n';
   import { getDefaultCalendarQueryOptions } from '../../../lib/calendarQueryOptions';
   import type { EventCategory, Event as EventDoc } from '../../../types';
@@ -56,16 +59,18 @@
     return (json.events ?? []) as EventDoc[];
   }
 
-  const eventsQuery = createQuery<EventDoc[]>({
+  // TanStack Svelte Query v6 requires the thunk form `() => options`
+  // (NOT a plain options object). The plain-object signature is v5.
+  const eventsQuery = createQuery<EventDoc[]>(() => ({
     queryKey: queryKey as unknown as readonly unknown[],
     queryFn: fetchEvents,
     initialData:
       initialEvents.length > 0 ? (initialEvents as EventDoc[]) : undefined,
     initialDataUpdatedAt:
       initialEvents.length > 0 ? Date.now() : undefined
-  });
+  }));
 
-  const events = $derived($eventsQuery.data ?? []);
+  const events = $derived(eventsQuery.data ?? []);
 
   // ─── Derived display data ─────────────────────────────────────────
   const monthLabel = $derived.by(() => {
@@ -82,12 +87,31 @@
     })
   );
 
-  // Stub stats — Phase 3 plugs in eventTime helpers (isInThisWeek,
-  // isLive, goingTodayCount). Keep neutral defaults so the stat row
-  // still renders without misleading numbers.
-  const weekEvents = $derived(displayedEvents.length);
-  const liveNow = 0;
-  const goingToday = 0;
+  // Stats — derived from current event list. `goingToday` is the
+  // total RSVPs across all events occurring today (cheap to compute).
+  const weekStart = $derived(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const weekEnd = $derived(endOfWeek(new Date(), { weekStartsOn: 1 }));
+  const weekEvents = $derived(
+    countEventsThisWeek(displayedEvents, weekStart, weekEnd)
+  );
+  const liveNow = $derived(countLiveNow(displayedEvents));
+  const goingToday = $derived.by(() => {
+    const today = new Date();
+    let total = 0;
+    for (const ev of displayedEvents) {
+      const start = ev.startDate instanceof Date ? ev.startDate : new Date(ev.startDate);
+      if (
+        start.getFullYear() === today.getFullYear() &&
+        start.getMonth() === today.getMonth() &&
+        start.getDate() === today.getDate()
+      ) {
+        total += ev.rsvps?.going?.length ?? 0;
+      }
+    }
+    return total;
+  });
+
+  const visibleMonth = $derived(new Date());
 </script>
 
 <div data-page="calendar">
@@ -110,22 +134,40 @@
     liveCount={liveNow}
   />
 
-  <div class="px-4 md:px-9 lg:px-10 py-12">
-    {#if $eventsQuery.isLoading}
+  {#if eventsQuery.isPending && !events.length}
+    <div class="px-4 md:px-9 lg:px-10 py-12">
       <p class="font-dmmono text-[11px] uppercase tracking-[0.1em] text-ink-mute">
         ◆ Laden…
       </p>
-    {:else if $eventsQuery.isError}
+    </div>
+  {:else if eventsQuery.isError}
+    <div class="px-4 md:px-9 lg:px-10 py-12">
       <p class="font-dmmono text-[11px] uppercase tracking-[0.1em] text-danger">
         ◆ Fehler beim Laden.
       </p>
-    {:else}
-      <!-- Phase 3 will mount <CalendarMonthGrid />, <CalendarAgendaView />,
-           <CalendarDayView /> here based on `view`. For now show a tight
-           dev-only summary so the data layer is visibly working. -->
-      <div class="font-dmmono text-[11px] uppercase tracking-[0.1em] text-ink-mute">
-        ◆ {displayedEvents.length} Termine · view = {view} · Phase 3 mounts the grid hier.
-      </div>
-    {/if}
-  </div>
+    </div>
+  {:else if view === 'month'}
+    <CalendarMonthGrid
+      {visibleMonth}
+      events={displayedEvents}
+      onPickEvent={(ev) => {
+        // Phase 5 will mount the detail modal off this callback.
+        console.debug('[calendar] pick event', ev._id);
+      }}
+    />
+  {:else if view === 'agenda'}
+    <CalendarAgendaView
+      events={displayedEvents}
+      {visibleMonth}
+      onPickEvent={(ev) => console.debug('[calendar] pick event', ev._id)}
+      onRsvp={(ev) => console.debug('[calendar] rsvp', ev._id)}
+    />
+  {:else}
+    <!-- Day view — slim v1 stub; CD's artboard prioritises month + agenda. -->
+    <div class="px-4 md:px-9 lg:px-10 py-8">
+      <p class="font-dmmono text-[11px] uppercase tracking-[0.1em] text-ink-mute">
+        ◆ Day-View kommt in einer späteren Phase.
+      </p>
+    </div>
+  {/if}
 </div>
