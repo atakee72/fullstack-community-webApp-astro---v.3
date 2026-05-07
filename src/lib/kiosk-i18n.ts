@@ -410,8 +410,10 @@ const de = {
   // ─── Drag-select tooltip ─────────────────────────────────────────
   'cal.drag.kicker.day': '1 TAG AUSGEWÄHLT',
   'cal.drag.kicker.days': '{n} TAGE AUSGEWÄHLT',
-  'cal.drag.cancel': 'abbr.',
-  'cal.drag.confirm': '+ termin',
+  'cal.drag.cancel': 'abbrechen',
+  'cal.drag.cancel.short': 'abbr.',
+  'cal.drag.confirm': '+ neuer termin',
+  'cal.drag.confirm.short': '+ termin',
 
   // Drag-select first-time coachmark — sticky-note copy.
   'cal.coachmark.kicker': 'INTERAKTION',
@@ -791,7 +793,9 @@ const en: Dict = {
   'cal.drag.kicker.day': '1 DAY SELECTED',
   'cal.drag.kicker.days': '{n} DAYS SELECTED',
   'cal.drag.cancel': 'cancel',
-  'cal.drag.confirm': '+ event',
+  'cal.drag.cancel.short': 'cancel',
+  'cal.drag.confirm': '+ new event',
+  'cal.drag.confirm.short': '+ event',
 
   // Drag-select first-time coachmark
   'cal.coachmark.kicker': 'INTERACTION',

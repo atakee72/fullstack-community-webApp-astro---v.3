@@ -52,10 +52,11 @@
       : ($t['cal.drag.kicker.days'] as string).replace('{n}', String(days))
   );
 
-  // Pin uses a shorter label than the desktop CTA — '+ termin' /
-  // '+ event' instead of '+ Neuer Termin' / '+ New Event' — so the
-  // tooltip card stays compact.
-  const ctaLabel = $derived($t['cal.drag.confirm']);
+  // The pin renders BOTH a long and a short label for each button —
+  // CSS picks which to show via responsive visibility classes:
+  //   < lg → short ('+ termin' / 'abbr.')
+  //   ≥ lg → long  ('+ neuer termin' / 'abbrechen')
+  // Keeps the mobile tooltip compact without sacrificing desktop clarity.
 </script>
 
 <div
@@ -87,14 +88,16 @@
         onclick={onConfirm}
         class="bg-ochre text-ink border-[1.5px] border-paper rounded-full px-2.5 py-0.5 font-bricolage font-bold text-[12px] hover:scale-[1.02] transition-transform duration-[180ms] ease-out"
       >
-        {ctaLabel}
+        <span class="lg:hidden">{$t['cal.drag.confirm.short']}</span>
+        <span class="hidden lg:inline">{$t['cal.drag.confirm']}</span>
       </button>
       <button
         type="button"
         onclick={onCancel}
         class="bg-transparent text-paper border-[1.5px] border-paper rounded-full px-2.5 py-0.5 font-bricolage font-semibold text-[12px] hover:bg-paper hover:text-ink transition-colors"
       >
-        {$t['cal.drag.cancel']}
+        <span class="lg:hidden">{$t['cal.drag.cancel.short']}</span>
+        <span class="hidden lg:inline">{$t['cal.drag.cancel']}</span>
       </button>
     </div>
   </div>
