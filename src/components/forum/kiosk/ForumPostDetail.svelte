@@ -761,18 +761,41 @@
             {/if}
           </section>
 
-          <!-- ◆ ÄHNLICHE THEMEN -->
+          <!-- ◆ ÄHNLICHE THEMEN — hardcoded placeholders per the prototype.
+               Marker for later: replace this list with a real "related"
+               query (e.g. by shared tag or kind, ranked by recency + reply
+               count). When wired, swap the static array below for an
+               actual data source — markup pattern stays the same. -->
           <section>
             <p
               class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-moss mb-2 flex items-center gap-1.5"
             >
               <span aria-hidden="true">◆</span> {$t['detail.related.heading']}
             </p>
-            <p class="font-dmmono text-[10px] text-ink-mute leading-[1.5]">
-              {$locale === 'de'
-                ? 'Verwandte Themen folgen in einer späteren Phase.'
-                : 'Related topics ship in a later phase.'}
-            </p>
+            <ul class="space-y-2.5">
+              {#each ($locale === 'de'
+                ? [
+                    { title: 'Müllabfuhr fehlt seit Mittwoch', meta: '14 antworten · vor 2 t' },
+                    { title: 'Hauseingangs-Aushang Vorlage?',  meta: '8 antworten · vor 5 t' },
+                    { title: 'Erfahrungen mit Pestmann?',       meta: '19 antworten · vor 1 w' }
+                  ]
+                : [
+                    { title: 'No bin pickup since Wednesday', meta: '14 replies · 2d' },
+                    { title: 'Stairwell notice template?',    meta: '8 replies · 5d' },
+                    { title: 'Anyone used Pestmann?',          meta: '19 replies · 1w' }
+                  ]) as item, i (item.title)}
+                <li
+                  class={`pb-2.5 ${i < 2 ? 'border-b border-dashed border-rule' : ''}`}
+                >
+                  <p class="font-bricolage font-bold text-[12.5px] text-ink leading-tight">
+                    {item.title}
+                  </p>
+                  <p class="font-dmmono text-[10px] text-ink-mute mt-0.5">
+                    {item.meta}
+                  </p>
+                </li>
+              {/each}
+            </ul>
           </section>
 
           <!-- Trust-note serif italic quote — boxed with dashed border + lighter
