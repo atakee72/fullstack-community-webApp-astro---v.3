@@ -313,7 +313,7 @@
             class="flex items-baseline justify-between border-b-[1.5px] border-ink pb-1 mb-2"
           >
             <span
-              class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-wine"
+              class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-ink"
             >{$t['cal.detail.attendance.kicker']}</span>
             {#if event.capacity}
               <span class="font-dmmono text-[11px] font-semibold">
