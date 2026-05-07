@@ -408,6 +408,26 @@ const de = {
   'cal.drag.kicker.days': '{n} TAGE AUSGEWÄHLT',
   'cal.drag.cancel': 'abbrechen',
 
+  // ─── Detail modal ────────────────────────────────────────────────
+  'cal.detail.when': 'WANN',
+  'cal.detail.where': 'WO',
+  'cal.detail.by': 'VON',
+  'cal.detail.rsvp.kicker': 'DEINE ZUSAGE',
+  'cal.detail.rsvp.confirm.going': 'Du hast zugesagt.',
+  'cal.detail.rsvp.confirm.maybe': 'Du hast vielleicht zugesagt.',
+  'cal.detail.rsvp.others.one': 'Eine Nachbar:in kommt auch.',
+  'cal.detail.rsvp.others.many': '{n} deiner Nachbar:innen kommen auch.',
+  'cal.detail.attendance.kicker': 'WER KOMMT',
+  'cal.detail.attendance.going': 'kommen',
+  'cal.detail.attendance.maybe': 'vielleicht',
+  'cal.detail.attendance.others': 'und {n} weitere',
+  'cal.detail.export': 'EXPORT',
+  'cal.detail.export.share': 'teilen',
+  'cal.detail.back': '← zurück',
+  'cal.detail.report': 'MELDEN',
+  'cal.detail.close': 'schließen',
+  'cal.detail.loginPrompt': 'Anmelden, um zuzusagen.',
+
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox für die atomaren Komponenten. Visuelle Treue prüfen, bevor sie ins Forum übernommen werden.'
 } as const;
@@ -733,6 +753,26 @@ const en: Dict = {
   'cal.drag.kicker.day': '1 DAY SELECTED',
   'cal.drag.kicker.days': '{n} DAYS SELECTED',
   'cal.drag.cancel': 'cancel',
+
+  // Detail modal
+  'cal.detail.when': 'WHEN',
+  'cal.detail.where': 'WHERE',
+  'cal.detail.by': 'BY',
+  'cal.detail.rsvp.kicker': 'YOUR RSVP',
+  'cal.detail.rsvp.confirm.going': 'You said yes.',
+  'cal.detail.rsvp.confirm.maybe': 'You said maybe.',
+  'cal.detail.rsvp.others.one': 'One neighbour is also going.',
+  'cal.detail.rsvp.others.many': '{n} of your neighbours are also going.',
+  'cal.detail.attendance.kicker': "WHO'S COMING",
+  'cal.detail.attendance.going': 'going',
+  'cal.detail.attendance.maybe': 'maybe',
+  'cal.detail.attendance.others': 'and {n} others',
+  'cal.detail.export': 'EXPORT',
+  'cal.detail.export.share': 'share',
+  'cal.detail.back': '← back',
+  'cal.detail.report': 'REPORT',
+  'cal.detail.close': 'close',
+  'cal.detail.loginPrompt': 'Sign in to RSVP.',
 
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox for the atomic components. Verify visual fidelity here before wiring them into the Forum.'

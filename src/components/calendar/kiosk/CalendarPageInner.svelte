@@ -17,6 +17,7 @@
   import CalCategoryRail from './CalCategoryRail.svelte';
   import CalendarMonthGrid from './CalendarMonthGrid.svelte';
   import CalendarAgendaView from './CalendarAgendaView.svelte';
+  import EventDetailModal from './EventDetailModal.svelte';
 
   import { CATEGORY_ORDER } from '../../../lib/calendar/categories';
   import { countLiveNow, countEventsThisWeek } from '../../../lib/calendar/eventTime';
@@ -112,6 +113,21 @@
   });
 
   const visibleMonth = $derived(new Date());
+
+  // ─── Detail modal state ─────────────────────────────────────────
+  let selectedEvent = $state<EventDoc | null>(null);
+
+  function onPickEvent(ev: EventDoc) {
+    selectedEvent = ev;
+  }
+
+  // Re-derive selected event from the live cache so RSVP optimistic
+  // updates flow through to the open modal without re-opening it.
+  const liveSelected = $derived.by(() => {
+    if (!selectedEvent) return null;
+    const id = String(selectedEvent._id);
+    return (events.find((e) => String(e._id) === id) as EventDoc | undefined) ?? selectedEvent;
+  });
 </script>
 
 <div data-page="calendar">
@@ -150,17 +166,14 @@
     <CalendarMonthGrid
       {visibleMonth}
       events={displayedEvents}
-      onPickEvent={(ev) => {
-        // Phase 5 will mount the detail modal off this callback.
-        console.debug('[calendar] pick event', ev._id);
-      }}
+      onPickEvent={onPickEvent}
     />
   {:else if view === 'agenda'}
     <CalendarAgendaView
       events={displayedEvents}
       {visibleMonth}
-      onPickEvent={(ev) => console.debug('[calendar] pick event', ev._id)}
-      onRsvp={(ev) => console.debug('[calendar] rsvp', ev._id)}
+      onPickEvent={onPickEvent}
+      onRsvp={onPickEvent}
     />
   {:else}
     <!-- Day view — slim v1 stub; CD's artboard prioritises month + agenda. -->
@@ -170,4 +183,11 @@
       </p>
     </div>
   {/if}
+
+  <EventDetailModal
+    event={liveSelected}
+    open={!!liveSelected}
+    currentUserId={currentUserId}
+    onClose={() => (selectedEvent = null)}
+  />
 </div>
