@@ -17,6 +17,7 @@
   } from './EventComposeForm.svelte';
   import EventComposePreview from './EventComposePreview.svelte';
   import EventComposeMiniPreview from './EventComposeMiniPreview.svelte';
+  import EventComposeStickyPublish from './EventComposeStickyPublish.svelte';
   import ModeratingModal from '../../../forum/kiosk/compose/ModeratingModal.svelte';
   import KioskBtn from '../../../forum/kiosk/KioskBtn.svelte';
   import RateLimitPanel from '../../../forum/kiosk/states/RateLimitPanel.svelte';
@@ -238,20 +239,15 @@
     </div>
   {/if}
 
-  <!-- Mobile flow: mini preview + sticky publish at the bottom -->
+  <!-- Mobile flow: mini preview + inline discard + AI footnote.
+       Publish lives in the sticky bar below so it stays on-screen
+       across the long form. Bottom h-32 spacer clears the sticky
+       bar (~50–60px) + bottom mobile nav (h-12) so the AI footnote
+       isn't hidden behind them. -->
   <div class="lg:hidden px-4 pt-4">
     <EventComposeMiniPreview {values} />
   </div>
-  <div class="lg:hidden px-4 flex flex-col gap-2.5 pb-6">
-    <KioskBtn
-      variant="primary"
-      size="lg"
-      onclick={onPublish}
-      disabled={submitting}
-      class="w-full"
-    >
-      {$t['cal.compose.cta.publish']}
-    </KioskBtn>
+  <div class="lg:hidden px-4 flex flex-col gap-2.5">
     <KioskBtn
       variant="ghost"
       size="lg"
@@ -265,6 +261,9 @@
       {$t['cal.compose.aiNote']}
     </p>
   </div>
+  <div class="lg:hidden h-32" aria-hidden="true"></div>
+
+  <EventComposeStickyPublish {onPublish} {submitting} />
 
   <ModeratingModal open={modalOpen} onDismiss={() => (modalOpen = false)} />
 {/if}
