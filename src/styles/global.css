@@ -682,3 +682,15 @@ option:disabled {
     animation: none !important;
   }
 }
+
+/* ─── Hidden scrollbar utility ─────────────────────────────────────
+   Used on horizontally-scrolling chip rails (mobile category rail
+   etc.) where the scrollbar adds visual noise. Keeps native scroll
+   behaviour, just hides the bar. */
+.no-scrollbar {
+  scrollbar-width: none;       /* Firefox */
+  -ms-overflow-style: none;    /* old Edge / IE */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;               /* Chromium / Safari */
+}

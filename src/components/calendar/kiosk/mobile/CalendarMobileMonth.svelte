@@ -113,12 +113,20 @@
     if (!isInMonth) return;
     selectedDay = day;
   }
+
+  // Pre-fill /events/create with the currently-selected day so tapping
+  // the `+` disc after browsing a future date drops the user into the
+  // compose form already set to that day.
+  const createHref = $derived.by(() => {
+    const iso = format(selectedDay, 'yyyy-MM-dd');
+    return `/events/create?from=${iso}&to=${iso}`;
+  });
 </script>
 
 <div class="lg:hidden">
   <!-- Header strip — kicker + stat title + tiny `+` disc CTA -->
   <header
-    class="flex justify-between items-end gap-3 px-4 pt-4 pb-3 border-b border-dashed border-rule"
+    class="flex justify-between items-end gap-3 px-4 pt-3 pb-2 border-b border-dashed border-rule"
   >
     <div class="min-w-0">
       <div class="font-dmmono text-[9.5px] uppercase tracking-[0.1em] text-wine">
@@ -129,16 +137,18 @@
       </div>
     </div>
     <a
-      href="/events/create"
+      href={createHref}
       aria-label={$t['cal.mobile.cta.aria']}
-      class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-wine text-paper border-2 border-ink font-bricolage font-bold text-[22px] leading-none shadow-[3px_3px_0_var(--k-ink,#1b1a17)] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_var(--k-ink,#1b1a17)] transition-[transform,box-shadow] duration-[120ms] ease-out shrink-0"
+      class="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-bold text-[20px] sm:text-[22px] leading-none shadow-[3px_3px_0_var(--k-wine,#b23a5b)] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_var(--k-wine,#b23a5b)] transition-[transform,box-shadow] duration-[120ms] ease-out shrink-0"
     >+</a>
   </header>
 
   <!-- Filter rail — own compact render of the 6 category pills,
-       horizontally scrollable (overflow-x-auto + flex-shrink-0). -->
+       horizontally scrollable (overflow-x-auto + flex-shrink-0).
+       Scrollbar hidden via the `.no-scrollbar` rule below — the
+       category-color cues are enough; an extra scrollbar is noise. -->
   <div
-    class="flex gap-1.5 overflow-x-auto px-4 py-2.5 border-b border-dashed border-rule"
+    class="no-scrollbar flex gap-1.5 overflow-x-auto px-4 py-2.5 border-b border-dashed border-rule"
   >
     {#each CATEGORY_ORDER as cat (cat)}
       {@const style = CATEGORIES[cat]}
@@ -194,7 +204,7 @@
           <span
             class={`flex items-center justify-center text-[13px] ${
               today
-                ? 'w-7 h-7 rounded-full border-2 border-wine font-extrabold text-wine'
+                ? 'w-7 h-7 rounded-full bg-wine border-2 border-ink font-extrabold text-paper'
                 : 'font-medium text-ink'
             }`}
           >
