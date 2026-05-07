@@ -18,6 +18,8 @@
     isSameMonth,
     isSameDay,
     isToday as isTodayDate,
+    isBefore,
+    startOfDay,
     format
   } from 'date-fns';
   import { de as deLocale, enUS } from 'date-fns/locale';
@@ -30,6 +32,7 @@
   } from '../../../../lib/calendar/eventTime';
   import { t, locale } from '../../../../lib/kiosk-i18n';
   import type { EventCategory, Event as EventDoc } from '../../../../types';
+  import DragSelectPin from '../DragSelectPin.svelte';
 
   let {
     visibleMonth = new Date(),
@@ -58,6 +61,172 @@
   }>();
 
   let selectedDay = $state(new Date());
+
+  // ─── Range-select state-machine ───────────────────────────────────
+  // Ported 1:1 from origin/main:CalendarContainer.tsx:305 (handleDateClick)
+  // — long-press arms range, next plain tap commits, plain tap on a
+  // third day clears the range, long-press anywhere restarts.
+  let rangeStart = $state<Date | null>(null);
+  let rangeEnd = $state<Date | null>(null);
+  let isRangeArmed = $state(false);
+  let pulseCellKey = $state<string | null>(null);
+  let pin = $state<{ x: number; y: number; from: Date; to: Date } | null>(null);
+
+  // Non-reactive locals — internal flags only.
+  let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  let longPressFired = false;
+  let gridWrapper: HTMLDivElement | undefined = $state();
+
+  function clearLongPress() {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+  }
+
+  // 1:1 port of the legacy state machine (RANGED → ANCHORED on plain
+  // tap, long-press always re-anchors + arms, etc).
+  function handleDateTap(date: Date, viaLongPress: boolean) {
+    const isPast = isBefore(startOfDay(date), startOfDay(new Date()));
+
+    // Always update the bottom-panel day.
+    selectedDay = date;
+
+    // Past date: clear all selection state. Bottom panel still shows
+    // events for that day (above), but no range can start in the past.
+    if (isPast) {
+      rangeStart = null;
+      rangeEnd = null;
+      isRangeArmed = false;
+      return;
+    }
+
+    const hasRange = !!(rangeStart && rangeEnd);
+    const sameAsAnchor = rangeStart && isSameDay(date, rangeStart);
+
+    // Long-press always re-anchors + arms.
+    if (viaLongPress) {
+      rangeStart = date;
+      rangeEnd = null;
+      isRangeArmed = true;
+      return;
+    }
+
+    // RANGED state — plain tap clears range, anchors at D.
+    if (hasRange) {
+      rangeStart = date;
+      rangeEnd = null;
+      isRangeArmed = false;
+      return;
+    }
+
+    // ANCHORED(-armed) + tap on the same day → no-op.
+    if (sameAsAnchor) return;
+
+    // ARMED + plain tap on a different day → form the range.
+    if (rangeStart && isRangeArmed) {
+      if (isBefore(date, rangeStart)) {
+        rangeEnd = rangeStart;
+        rangeStart = date;
+      } else {
+        rangeEnd = date;
+      }
+      isRangeArmed = false;
+      return;
+    }
+
+    // IDLE / ANCHORED + plain tap on a different day → move/set anchor.
+    rangeStart = date;
+    rangeEnd = null;
+    isRangeArmed = false;
+  }
+
+  function cellPointerDown(e: PointerEvent, date: Date, isInMonth: boolean) {
+    longPressFired = false;
+    if (e.pointerType !== 'touch' || !isInMonth) return;
+    clearLongPress();
+    longPressTimer = setTimeout(() => {
+      longPressFired = true;
+      if ('vibrate' in navigator) {
+        try { navigator.vibrate([30, 30, 30]); } catch { /* ignore */ }
+      }
+      pulseCellKey = date.toISOString();
+      setTimeout(() => (pulseCellKey = null), 400);
+      // Commit IN the timer — iOS Safari swallows the post-long-press
+      // synthetic click, so onclick won't fire reliably.
+      handleDateTap(date, true);
+    }, 450);
+  }
+
+  function cellClick(e: MouseEvent, date: Date, isInMonth: boolean) {
+    if (longPressFired) {
+      // Android sometimes still fires a click after the long-press
+      // timer commits — swallow it so we don't double-trigger.
+      longPressFired = false;
+      e.preventDefault();
+      return;
+    }
+    if (!isInMonth) return;
+    handleDateTap(date, false);
+  }
+
+  // Pin positioning — when rangeStart/rangeEnd change, look up the
+  // target cell's bounds and stash the pin's x/y. Cells expose a
+  // `data-cell-date={cell.toISOString()}` attribute below.
+  $effect(() => {
+    if (!rangeStart || !gridWrapper) {
+      pin = null;
+      return;
+    }
+    const target = rangeEnd ?? rangeStart;
+    const sel = `[data-cell-date="${target.toISOString()}"]`;
+    const cell = gridWrapper.querySelector<HTMLElement>(sel);
+    if (!cell) return;
+    const cellRect = cell.getBoundingClientRect();
+    const wrapRect = gridWrapper.getBoundingClientRect();
+    const lo = rangeEnd && rangeStart < rangeEnd ? rangeStart : (rangeEnd ?? rangeStart);
+    const hi = rangeEnd && rangeStart < rangeEnd ? rangeEnd : rangeStart;
+    pin = {
+      x: Math.max(8, cellRect.left - wrapRect.left + cellRect.width / 2 - 120),
+      y: cellRect.bottom - wrapRect.top + 8,
+      from: lo,
+      to: hi
+    };
+  });
+
+  function clearSelection() {
+    rangeStart = null;
+    rangeEnd = null;
+    isRangeArmed = false;
+    pin = null;
+  }
+
+  function confirmPin() {
+    if (!pin) return;
+    const fromIso = format(pin.from, 'yyyy-MM-dd');
+    const toIso = format(pin.to, 'yyyy-MM-dd');
+    if (typeof window !== 'undefined') {
+      window.location.href = `/events/create?from=${fromIso}&to=${toIso}`;
+    }
+    clearSelection();
+  }
+
+  // Helpers used by the cell template.
+  function inCommittedRange(date: Date): boolean {
+    if (!rangeStart || !rangeEnd) return false;
+    const lo = rangeStart < rangeEnd ? rangeStart : rangeEnd;
+    const hi = rangeStart < rangeEnd ? rangeEnd : rangeStart;
+    return date >= lo && date <= hi;
+  }
+  function isEndpoint(date: Date): boolean {
+    return (
+      (rangeStart != null && isSameDay(rangeStart, date)) ||
+      (rangeEnd != null && isSameDay(rangeEnd, date))
+    );
+  }
+  function isArmedAnchor(date: Date): boolean {
+    return !!(isRangeArmed && rangeStart && isSameDay(rangeStart, date));
+  }
 
   const dateLocale = $derived($locale === 'de' ? deLocale : enUS);
 
@@ -107,11 +276,6 @@
 
   function liveLine(n: number): string {
     return ($t['cal.footer.live'] as string).replace('{n}', String(n));
-  }
-
-  function onCellTap(day: Date, isInMonth: boolean) {
-    if (!isInMonth) return;
-    selectedDay = day;
   }
 
   // Pre-fill /events/create with the currently-selected day so tapping
@@ -170,7 +334,7 @@
   </div>
 
   <!-- Mini dot-grid -->
-  <div class="px-2 pt-2">
+  <div class="px-2 pt-2 relative" bind:this={gridWrapper}>
     <div class="grid grid-cols-7 border-b border-ink">
       {#each dowLabels as label, i (label + '-' + i)}
         <div
@@ -185,26 +349,38 @@
     <div
       class="grid grid-cols-7"
       style:grid-template-rows={`repeat(${rows}, minmax(52px, 1fr))`}
+      style:touch-action="manipulation"
     >
       {#each cells as cell, i (cell.toISOString())}
         {@const inMonth = isSameMonth(cell, visibleMonth)}
         {@const today = isTodayDate(cell)}
         {@const selected = isSameDay(cell, selectedDay)}
+        {@const inRange = inCommittedRange(cell)}
+        {@const endpoint = isEndpoint(cell)}
+        {@const armed = isArmedAnchor(cell)}
+        {@const pulsing = pulseCellKey === cell.toISOString()}
         {@const cellEvents = sortEventsForDay(
           events.filter((ev) => eventCoversDay(ev, cell))
         ).slice(0, 3)}
         <button
           type="button"
-          onclick={() => onCellTap(cell, inMonth)}
+          data-cell-date={cell.toISOString()}
+          onclick={(e) => cellClick(e, cell, inMonth)}
+          onpointerdown={(e) => cellPointerDown(e, cell, inMonth)}
+          onpointerup={clearLongPress}
+          onpointercancel={clearLongPress}
+          onpointerleave={clearLongPress}
           disabled={!inMonth}
           class={`flex flex-col items-center justify-center gap-1 py-2 transition-colors ${
-            selected && !today ? 'bg-wine/10' : ''
-          } ${inMonth ? '' : 'opacity-35'} disabled:cursor-default`}
+            inRange ? 'bg-wine/10' : selected && !today && !armed ? 'bg-wine/10' : ''
+          } ${pulsing ? 'longpress-pulse' : ''} ${inMonth ? '' : 'opacity-35'} disabled:cursor-default`}
         >
           <span
             class={`flex items-center justify-center text-[13px] ${
-              today
+              today || endpoint
                 ? 'w-7 h-7 rounded-full bg-wine border-2 border-ink font-extrabold text-paper'
+                : armed
+                ? 'w-7 h-7 rounded-full bg-paper border-2 border-wine font-extrabold text-wine'
                 : 'font-medium text-ink'
             }`}
           >
@@ -222,6 +398,17 @@
         </button>
       {/each}
     </div>
+
+    {#if pin}
+      <DragSelectPin
+        x={pin.x}
+        y={pin.y}
+        from={pin.from}
+        to={pin.to}
+        onConfirm={confirmPin}
+        onCancel={clearSelection}
+      />
+    {/if}
   </div>
 
   <!-- Bottom day panel -->

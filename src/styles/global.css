@@ -694,3 +694,15 @@ option:disabled {
 .no-scrollbar::-webkit-scrollbar {
   display: none;               /* Chromium / Safari */
 }
+
+/* Long-press pulse — visual fallback for iOS where the Vibration
+   API isn't available. 400ms scale flash on the cell that just
+   committed a long-press. */
+@keyframes longpress-pulse {
+  0%   { transform: scale(1);    background-color: rgba(178, 58, 91, 0); }
+  40%  { transform: scale(1.06); background-color: rgba(178, 58, 91, 0.18); }
+  100% { transform: scale(1);    background-color: rgba(178, 58, 91, 0); }
+}
+.longpress-pulse {
+  animation: longpress-pulse 400ms ease-out both;
+}
