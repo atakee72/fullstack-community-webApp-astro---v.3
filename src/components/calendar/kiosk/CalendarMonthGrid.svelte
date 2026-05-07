@@ -30,6 +30,7 @@
 
   import EventPill from './EventPill.svelte';
   import DragSelectPin from './DragSelectPin.svelte';
+  import DragSelectCoachmark from './DragSelectCoachmark.svelte';
   import {
     eventCoversDay,
     isLiveNow,
@@ -90,6 +91,7 @@
 
   // ─── Drag-select state ────────────────────────────────────────────
   let gridWrapper: HTMLDivElement;
+  let coachmark: { dismiss: () => void } | undefined = $state();
   let dragStart = $state<Date | null>(null);
   let dragEnd = $state<Date | null>(null);
   let dragging = $state(false);
@@ -125,6 +127,9 @@
   }
 
   function activate(day: Date, e: PointerEvent) {
+    // First successful drag-select activation also dismisses the
+    // coachmark — the user has now used the feature.
+    coachmark?.dismiss();
     pin = null;
     dragStart = day;
     dragEnd = day;
@@ -343,6 +348,8 @@
       onCancel={clearSelection}
     />
   {/if}
+
+  <DragSelectCoachmark bind:this={coachmark} />
 
   <!-- Month nav footer: prev / live indicator / next.
        Per CD's design — DM Mono 10px, dashed top rule, full-width. -->

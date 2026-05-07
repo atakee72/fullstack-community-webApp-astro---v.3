@@ -409,6 +409,15 @@ const de = {
   'cal.drag.kicker.days': '{n} TAGE AUSGEWÄHLT',
   'cal.drag.cancel': 'abbrechen',
 
+  // Drag-select first-time coachmark — sticky-note copy.
+  'cal.coachmark.kicker': 'INTERAKTION',
+  'cal.coachmark.line1': 'klick auf ein datum',
+  'cal.coachmark.line2': '→ über tage ziehen',
+  'cal.coachmark.line3': '→ loslassen zeigt tooltip',
+  'cal.coachmark.line4': '→ „+ neuer termin“ füllt datum aus',
+  'cal.coachmark.esc': 'ESC = auswahl abbrechen',
+  'cal.coachmark.dismiss': 'verstanden',
+
   // ─── Detail modal ────────────────────────────────────────────────
   'cal.detail.when': 'WANN',
   'cal.detail.where': 'WO',
@@ -766,6 +775,15 @@ const en: Dict = {
   'cal.drag.kicker.day': '1 DAY SELECTED',
   'cal.drag.kicker.days': '{n} DAYS SELECTED',
   'cal.drag.cancel': 'cancel',
+
+  // Drag-select first-time coachmark
+  'cal.coachmark.kicker': 'INTERACTION',
+  'cal.coachmark.line1': 'mousedown on a date',
+  'cal.coachmark.line2': '→ drag across days',
+  'cal.coachmark.line3': '→ release shows tooltip',
+  'cal.coachmark.line4': '→ "+ new event" pre-fills the range',
+  'cal.coachmark.esc': 'ESC = cancel selection',
+  'cal.coachmark.dismiss': 'got it',
 
   // Detail modal
   'cal.detail.when': 'WHEN',
