@@ -154,7 +154,7 @@
         — {$t['cal.compose.step.category.hint']}
       </span>
     </div>
-    <div class="no-scrollbar flex gap-1.5 overflow-x-auto -mx-4 md:-mx-9 lg:-mx-10 px-4 md:px-9 lg:px-10">
+    <div class="no-scrollbar flex gap-1.5 overflow-x-auto pt-0.5 pb-3 -mx-4 md:-mx-9 lg:-mx-10 px-4 md:px-9 lg:px-10">
       {#each CATEGORY_ORDER as cat (cat)}
         {@const style = CATEGORIES[cat]}
         {@const on = category === cat}
