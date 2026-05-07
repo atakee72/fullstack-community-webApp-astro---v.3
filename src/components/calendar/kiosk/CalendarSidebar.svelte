@@ -56,7 +56,7 @@
   class="hidden lg:block bg-paper-soft border-l border-dashed border-rule lg:-mr-10 lg:pr-8 px-6 py-7"
 >
   <!-- Mini month -->
-  <div class="mb-5 pr-4">
+  <div class="mb-5 px-4">
     <div class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-wine mb-2.5">
       ◆ {monthLabel}
     </div>
@@ -89,7 +89,7 @@
   {#if liveEvent}
     {@const liveCat = (liveEvent.category ?? 'kiez') as EventCategory}
     {@const liveStyle = CATEGORIES[liveCat]}
-    <div class="mb-5 pr-4">
+    <div class="mb-5 px-4">
       <div
         class="flex items-center gap-1.5 font-dmmono text-[10px] uppercase tracking-[0.12em] text-ochre mb-2"
       >
@@ -115,7 +115,7 @@
   {/if}
 
   <!-- Quick add (v1 visual placeholder) -->
-  <div class="mb-5 pr-4">
+  <div class="mb-5 px-4">
     <div class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-teal mb-2">
       ◆ {$t['cal.agenda.quick.kicker']}
     </div>
