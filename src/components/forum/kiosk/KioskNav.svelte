@@ -19,9 +19,13 @@
   // /topics/create, /topics/{id}, /announcements/{id}, /recommendations/{id}.
   const FORUM_MATCH = ['/', '/forum', '/topics', '/announcements', '/recommendations'];
 
+  // Calendar covers `/calendar` plus the per-event create/detail routes
+  // (e.g. `/events/create`, eventually `/events/{id}`).
+  const CALENDAR_MATCH = ['/calendar', '/events'];
+
   const topNav = $derived([
     { href: '/',             label: $t['nav.forum'],       match: FORUM_MATCH },
-    { href: '/calendar',     label: $t['nav.calendar'],    match: ['/calendar'] },
+    { href: '/calendar',     label: $t['nav.calendar'],    match: CALENDAR_MATCH },
     { href: '/newsboard',    label: $t['nav.news'],        match: ['/newsboard'] },
     { href: '/marketplace',  label: $t['nav.marketplace'], match: ['/marketplace'] },
     { href: '/schillerkiez', label: $t['nav.kiez'],        match: ['/schillerkiez'] },
@@ -30,7 +34,7 @@
 
   const bottomNav = $derived([
     { href: '/',             label: $t['nav.short.forum'],       match: FORUM_MATCH },
-    { href: '/calendar',     label: $t['nav.short.calendar'],    match: ['/calendar'] },
+    { href: '/calendar',     label: $t['nav.short.calendar'],    match: CALENDAR_MATCH },
     { href: '/newsboard',    label: $t['nav.short.news'],        match: ['/newsboard'] },
     { href: '/marketplace',  label: $t['nav.short.marketplace'], match: ['/marketplace'] },
     { href: '/schillerkiez', label: $t['nav.short.kiez'],        match: ['/schillerkiez'] }

@@ -326,6 +326,29 @@ const de = {
   'comment.composer.placeholder.short': 'Antworten…',
   'comment.composer.send': 'senden',
 
+  // ─── Calendar (kiosk redesign) ─────────────────────────────────────
+  'cal.title.kicker': 'KALENDER',
+  'cal.title.q1': 'Was',
+  'cal.title.q2': 'passiert',
+  'cal.title.q3': 'im Kiez?',
+  'cal.stat.weekEvents': 'Termine diese Woche',
+  'cal.stat.liveNow': 'gerade live',
+  'cal.stat.goingToday': 'Nachbar:innen kommen heute',
+  'cal.view.month': 'Monat',
+  'cal.view.agenda': 'Agenda',
+  'cal.view.day': 'Tag',
+  'cal.cta.newEvent': '+ neuer termin',
+  'cal.filter.show': 'ZEIGEN',
+  'cal.filter.myRsvps': 'Meine RSVPs',
+  'cal.filter.saved': 'Gespeichert',
+  'cal.cat.kiez.label': 'Kiez',
+  'cal.cat.oeffentlich.label': 'Öffentlich',
+  'cal.cat.markt.label': 'Markt',
+  'cal.cat.kultur.label': 'Kultur',
+  'cal.cat.sport.label': 'Sport',
+  'cal.cat.privat.label': 'Privat',
+  'cal.live.indicator': '↻ live · {n} gerade',
+
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox für die atomaren Komponenten. Visuelle Treue prüfen, bevor sie ins Forum übernommen werden.'
 } as const;
@@ -569,6 +592,29 @@ const en: Dict = {
 
   'comment.composer.placeholder.short': 'Reply…',
   'comment.composer.send': 'send',
+
+  // Calendar
+  'cal.title.kicker': 'CALENDAR',
+  'cal.title.q1': "What's",
+  'cal.title.q2': 'happening',
+  'cal.title.q3': 'in the Kiez?',
+  'cal.stat.weekEvents': 'events this week',
+  'cal.stat.liveNow': 'live now',
+  'cal.stat.goingToday': 'neighbours going today',
+  'cal.view.month': 'Month',
+  'cal.view.agenda': 'Agenda',
+  'cal.view.day': 'Day',
+  'cal.cta.newEvent': '+ new event',
+  'cal.filter.show': 'SHOW',
+  'cal.filter.myRsvps': 'My RSVPs',
+  'cal.filter.saved': 'Saved',
+  'cal.cat.kiez.label': 'Kiez',
+  'cal.cat.oeffentlich.label': 'Public',
+  'cal.cat.markt.label': 'Market',
+  'cal.cat.kultur.label': 'Culture',
+  'cal.cat.sport.label': 'Sport',
+  'cal.cat.privat.label': 'Private',
+  'cal.live.indicator': '↻ live · {n} now',
 
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox for the atomic components. Verify visual fidelity here before wiring them into the Forum.'
