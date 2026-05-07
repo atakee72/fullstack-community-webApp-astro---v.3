@@ -14,6 +14,10 @@
 
   const STORAGE_KEY = 'kiosk-coachmark.drag-select';
 
+  // Custom-event channel so the title block's `?` reopen affordance
+  // can summon us without prop-drilling through 3 components.
+  const REOPEN_EVENT = 'kiosk-calendar:coachmark.show';
+
   let visible = $state(false);
 
   onMount(() => {
@@ -27,10 +31,19 @@
     } catch {
       /* privacy mode etc — silently skip */
     }
+
+    function onReopen() {
+      visible = true;
+    }
+    window.addEventListener(REOPEN_EVENT, onReopen);
+    return () => window.removeEventListener(REOPEN_EVENT, onReopen);
   });
 
   // Expose a dismiss() the parent (CalendarMonthGrid) can call after
   // the user has successfully activated drag-select for the first time.
+  // Also flips the localStorage flag so the note doesn't auto-show
+  // again next session — but it can still be reopened via the `?`
+  // button (which uses the event channel above and bypasses storage).
   export function dismiss() {
     visible = false;
     if (typeof localStorage !== 'undefined') {

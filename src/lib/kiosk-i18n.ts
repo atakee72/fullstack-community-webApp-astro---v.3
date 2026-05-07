@@ -417,6 +417,7 @@ const de = {
   'cal.coachmark.line4': '→ „+ neuer termin“ füllt datum aus',
   'cal.coachmark.esc': 'ESC = auswahl abbrechen',
   'cal.coachmark.dismiss': 'verstanden',
+  'cal.coachmark.reopen.aria': 'Hilfe zur Datumsauswahl anzeigen',
 
   // ─── Detail modal ────────────────────────────────────────────────
   'cal.detail.when': 'WANN',
@@ -784,6 +785,7 @@ const en: Dict = {
   'cal.coachmark.line4': '→ "+ new event" pre-fills the range',
   'cal.coachmark.esc': 'ESC = cancel selection',
   'cal.coachmark.dismiss': 'got it',
+  'cal.coachmark.reopen.aria': 'Show date-selection help',
 
   // Detail modal
   'cal.detail.when': 'WHEN',

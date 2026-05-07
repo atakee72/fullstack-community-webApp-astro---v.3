@@ -58,6 +58,22 @@
   </div>
 
   <div class="flex items-center gap-2 self-end md:self-auto">
+    <!-- "?" — reopens the drag-select coachmark. Bridges to
+         DragSelectCoachmark via a window CustomEvent so we don't
+         have to prop-drill through CalendarPageInner + MonthGrid. -->
+    <button
+      type="button"
+      onclick={() => {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('kiosk-calendar:coachmark.show'));
+        }
+      }}
+      aria-label={$t['cal.coachmark.reopen.aria']}
+      class="inline-flex items-center justify-center w-7 h-7 rounded-full border border-rule font-dmmono text-[12px] font-semibold text-ink-soft hover:text-ink hover:border-ink transition-colors"
+    >
+      ?
+    </button>
+
     <!-- "Heute" — appears only when visibleMonth has drifted off today. -->
     {#if showToday}
       <button
