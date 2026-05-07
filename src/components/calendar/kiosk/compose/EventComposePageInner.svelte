@@ -249,7 +249,7 @@
   </div>
   <div class="lg:hidden px-4 flex flex-col gap-2.5">
     <KioskBtn
-      variant="ghost"
+      variant="secondary"
       size="lg"
       onclick={onDiscard}
       disabled={submitting}
