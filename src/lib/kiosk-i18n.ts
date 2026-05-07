@@ -422,6 +422,11 @@ const de = {
   'cal.coachmark.dismiss': 'verstanden',
   'cal.coachmark.reopen.aria': 'Hilfe zur Datumsauswahl anzeigen',
 
+  // ─── Mobile month view ──────────────────────────────────────────
+  'cal.mobile.thisWeek': 'diese Woche · {n} Termine',
+  'cal.mobile.cta.aria': 'Neuen Termin erstellen',
+  'cal.mobile.dayEmpty': 'Keine Termine an diesem Tag.',
+
   // ─── Detail modal ────────────────────────────────────────────────
   'cal.detail.when': 'WANN',
   'cal.detail.where': 'WO',
@@ -793,6 +798,11 @@ const en: Dict = {
   'cal.coachmark.esc': 'ESC = cancel selection',
   'cal.coachmark.dismiss': 'got it',
   'cal.coachmark.reopen.aria': 'Show date-selection help',
+
+  // Mobile month view
+  'cal.mobile.thisWeek': 'this week · {n} events',
+  'cal.mobile.cta.aria': 'Create new event',
+  'cal.mobile.dayEmpty': 'No events on this day.',
 
   // Detail modal
   'cal.detail.when': 'WHEN',

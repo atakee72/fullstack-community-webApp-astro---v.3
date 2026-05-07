@@ -24,6 +24,7 @@
   import CalendarTitleBlock from './CalendarTitleBlock.svelte';
   import CalCategoryRail from './CalCategoryRail.svelte';
   import CalendarMonthGrid from './CalendarMonthGrid.svelte';
+  import CalendarMobileMonth from './mobile/CalendarMobileMonth.svelte';
   import CalendarAgendaView from './CalendarAgendaView.svelte';
   import CalendarDayView from './CalendarDayView.svelte';
   import EventDetailModal from './EventDetailModal.svelte';
@@ -200,26 +201,30 @@
 </script>
 
 <div data-page="calendar">
-  <CalendarTitleBlock
-    {view}
-    onView={(v) => (view = v)}
-    {monthLabel}
-    {weekEvents}
-    {liveNow}
-    {goingToday}
-    showToday={!isOnTodayMonth}
-    onToday={goToday}
-  />
+  <!-- Title block + category rail are hidden on mobile when month view —
+       CalendarMobileMonth owns its own header + filter rail there. -->
+  <div class={view === 'month' ? 'hidden lg:block' : 'block'}>
+    <CalendarTitleBlock
+      {view}
+      onView={(v) => (view = v)}
+      {monthLabel}
+      {weekEvents}
+      {liveNow}
+      {goingToday}
+      showToday={!isOnTodayMonth}
+      onToday={goToday}
+    />
 
-  <CalCategoryRail
-    {active}
-    onToggle={toggleCat}
-    {myRsvps}
-    {saved}
-    onMyRsvps={() => (myRsvps = !myRsvps)}
-    onSaved={() => (saved = !saved)}
-    liveCount={liveNow}
-  />
+    <CalCategoryRail
+      {active}
+      onToggle={toggleCat}
+      {myRsvps}
+      {saved}
+      onMyRsvps={() => (myRsvps = !myRsvps)}
+      onSaved={() => (saved = !saved)}
+      liveCount={liveNow}
+    />
+  </div>
 
   {#if eventsQuery.isPending && !events.length}
     <CalendarSkeleton />
@@ -230,16 +235,35 @@
   {:else if displayedEvents.length === 0}
     <CalendarFilteredEmpty onClear={clearFilters} />
   {:else if view === 'month'}
-    <CalendarMonthGrid
-      {visibleMonth}
-      events={displayedEvents}
-      onPickEvent={onPickEvent}
-      onPrevMonth={goPrevMonth}
-      onNextMonth={goNextMonth}
-      {prevMonthLabel}
-      {nextMonthLabel}
-      liveCount={liveNow}
-    />
+    <!-- Mobile month: dot-grid + day-detail panel (owns its own header). -->
+    <div class="lg:hidden">
+      <CalendarMobileMonth
+        {visibleMonth}
+        events={displayedEvents}
+        {active}
+        onToggleCat={toggleCat}
+        onPickEvent={onPickEvent}
+        onPrevMonth={goPrevMonth}
+        onNextMonth={goNextMonth}
+        {prevMonthLabel}
+        {nextMonthLabel}
+        {weekEvents}
+        liveCount={liveNow}
+      />
+    </div>
+    <!-- Desktop month: full grid with event pills + drag-select. -->
+    <div class="hidden lg:block">
+      <CalendarMonthGrid
+        {visibleMonth}
+        events={displayedEvents}
+        onPickEvent={onPickEvent}
+        onPrevMonth={goPrevMonth}
+        onNextMonth={goNextMonth}
+        {prevMonthLabel}
+        {nextMonthLabel}
+        liveCount={liveNow}
+      />
+    </div>
   {:else if view === 'agenda'}
     <CalendarAgendaView
       events={displayedEvents}
