@@ -75,7 +75,7 @@
 
   {#if values.title}
     <div
-      class="font-bricolage font-extrabold tracking-tight leading-tight mb-1.5 text-[14px] text-ink"
+      class="font-bricolage font-extrabold tracking-tight leading-tight mb-1.5 text-[14px] text-ink break-words hyphens-auto"
     >
       {values.title}
     </div>
@@ -86,7 +86,7 @@
   {/if}
   {#if bodyExcerpt}
     <p
-      class={`text-[11.5px] leading-relaxed m-0 ${
+      class={`text-[11.5px] leading-relaxed m-0 break-words hyphens-auto ${
         values.kind === 'recommendation' ? 'font-instrument italic' : 'font-bricolage'
       } text-ink-soft`}
     >
