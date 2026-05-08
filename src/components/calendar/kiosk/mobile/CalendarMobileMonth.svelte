@@ -25,6 +25,7 @@
   import { de as deLocale, enUS } from 'date-fns/locale';
 
   import { CATEGORIES, CATEGORY_ORDER } from '../../../../lib/calendar/categories';
+  import { scrollFade } from '../../../../lib/scrollFade';
   import {
     eventCoversDay,
     isLiveNow,
@@ -332,7 +333,8 @@
        Scrollbar hidden via the `.no-scrollbar` rule below — the
        category-color cues are enough; an extra scrollbar is noise. -->
   <div
-    class="no-scrollbar flex gap-1.5 overflow-x-auto px-4 py-2.5 border-b border-dashed border-rule"
+    use:scrollFade
+    class="kiosk-scroll-fade no-scrollbar flex gap-1.5 overflow-x-auto px-4 py-2.5 border-b border-dashed border-rule"
   >
     {#each CATEGORY_ORDER as cat (cat)}
       {@const style = CATEGORIES[cat]}

@@ -26,6 +26,7 @@
 
   import { onMount } from 'svelte';
   import { CATEGORIES, CATEGORY_ORDER } from '../../../../lib/calendar/categories';
+  import { scrollFade } from '../../../../lib/scrollFade';
   import { t } from '../../../../lib/kiosk-i18n';
   import type { EventCategory } from '../../../../types';
 
@@ -154,7 +155,10 @@
         — {$t['cal.compose.step.category.hint']}
       </span>
     </div>
-    <div class="no-scrollbar flex gap-1.5 overflow-x-auto pt-0.5 pb-3 -mx-4 md:-mx-9 lg:-mx-10 px-4 md:px-9 lg:px-10">
+    <div
+      use:scrollFade
+      class="kiosk-scroll-fade no-scrollbar flex gap-1.5 overflow-x-auto pt-0.5 pb-3 -mx-4 md:-mx-9 lg:-mx-10 px-4 md:px-9 lg:px-10"
+    >
       {#each CATEGORY_ORDER as cat (cat)}
         {@const style = CATEGORIES[cat]}
         {@const on = category === cat}
