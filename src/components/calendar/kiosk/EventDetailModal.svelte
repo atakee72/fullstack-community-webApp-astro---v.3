@@ -197,7 +197,7 @@
         >
           {#if titleParts.split}
             <span class="block">{titleParts.split.lead}</span>
-            <span class="block font-instrument italic font-normal text-wine">
+            <span class="block font-instrument italic font-normal text-teal">
               {titleParts.split.tail}
             </span>
           {:else}

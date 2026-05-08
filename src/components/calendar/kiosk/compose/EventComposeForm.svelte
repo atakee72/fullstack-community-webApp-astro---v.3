@@ -136,7 +136,7 @@
       class="font-bricolage font-extrabold text-[40px] md:text-[48px] tracking-[-0.03em] leading-[0.95] m-0 mb-6 pb-3 border-b border-dashed border-rule"
     >
       {$t['cal.compose.title.q1']}
-      <span class="font-instrument italic font-normal text-wine">
+      <span class="font-instrument italic font-normal text-teal">
         {$t['cal.compose.title.q2']}
       </span>
     </h1>

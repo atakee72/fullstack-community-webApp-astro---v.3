@@ -38,14 +38,14 @@
   class="px-4 md:px-9 lg:px-10 pt-6 pb-4 grid grid-cols-1 md:grid-cols-[1fr_auto] items-end gap-5 border-b border-dashed border-rule"
 >
   <div>
-    <div class="font-dmmono text-[11px] uppercase tracking-[0.12em] text-wine">
+    <div class="font-dmmono text-[11px] uppercase tracking-[0.12em] text-teal">
       {$t['cal.title.kicker']}{#if monthLabel} · {monthLabel}{/if}
     </div>
     <h1
       class="font-bricolage font-extrabold text-ink leading-[0.95] tracking-tight mt-1.5 text-[40px] md:text-[48px] lg:text-[56px]"
     >
       {$t['cal.title.q1']}
-      <span class="font-instrument italic font-normal text-wine">
+      <span class="font-instrument italic font-normal text-teal">
         {$t['cal.title.q2']}
       </span>
       {$t['cal.title.q3']}

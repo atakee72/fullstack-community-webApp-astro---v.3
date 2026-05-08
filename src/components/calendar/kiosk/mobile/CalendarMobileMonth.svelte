@@ -314,7 +314,7 @@
     class="flex justify-between items-end gap-3 px-4 pt-3 pb-2 border-b border-dashed border-rule"
   >
     <div class="min-w-0">
-      <div class="font-dmmono text-[9.5px] uppercase tracking-[0.1em] text-wine">
+      <div class="font-dmmono text-[9.5px] uppercase tracking-[0.1em] text-teal">
         ◆ {monthKicker}
       </div>
       <div class="font-bricolage font-extrabold text-[22px] tracking-[-0.025em] mt-0.5 leading-[1.1]">
@@ -442,7 +442,7 @@
 
   <!-- Bottom day panel -->
   <div class="px-4 pt-4 mt-2 border-t-[1.5px] border-ink">
-    <div class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-wine mb-2">
+    <div class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-teal mb-2">
       {dayKicker}
     </div>
     {#if dayEvents.length === 0}

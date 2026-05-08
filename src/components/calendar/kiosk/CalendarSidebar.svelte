@@ -57,7 +57,7 @@
 >
   <!-- Mini month -->
   <div class="mb-5 pl-4 pr-8">
-    <div class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-wine mb-2.5">
+    <div class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-teal mb-2.5">
       ◆ {monthLabel}
     </div>
     <div class="grid grid-cols-7 gap-[2px] font-dmmono text-[9.5px]">

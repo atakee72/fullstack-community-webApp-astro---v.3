@@ -55,7 +55,7 @@
   );
 </script>
 
-<p class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-wine mb-2">
+<p class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-teal mb-2">
   ◆ {$t['cal.compose.preview.kicker']}
 </p>
 
