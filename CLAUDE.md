@@ -266,6 +266,26 @@ if ((navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) ||
 ### `content-visibility: auto` for heavy card lists
 Forum cards wear `[content-visibility:auto] [contain-intrinsic-size:400px]`. Offscreen cards skip layout, paint, AND filter passes — browser treats them as the intrinsic size until they enter the viewport. On a 12-card page with only 4 visible, 8 cards' `backdrop-filter` + SVG wobble never run. Layout jumps avoided via `contain-intrinsic-size` matching the real `h-[400px]`. Apply to any list where items have expensive filters/shadows AND fixed/predictable height. Don't use on items with unpredictable height — `contain-intrinsic-size` will mis-estimate and cause scrollbar jitter.
 
+### Horizontal scroll-fade utility (peek + scroll shadow)
+Reusable pattern for horizontally-scrolling pill/chip rows where you want the off-screen edge to read as "fades into more content" rather than "ends here". Two pieces:
+
+- **CSS class `.kiosk-scroll-fade`** in `global.css` — applies a `mask-image` gradient keyed off `data-scroll-left` / `data-scroll-right` attributes (3 states: right-fade only, both-fade, left-fade only).
+- **Svelte action `scrollFade`** in `src/lib/scrollFade.ts` — writes those data-attributes from a scroll listener + `ResizeObserver`. Cleans up on destroy.
+
+Usage:
+```svelte
+<script>
+  import { scrollFade } from '../../../lib/scrollFade';
+</script>
+<div use:scrollFade class="kiosk-scroll-fade no-scrollbar flex overflow-x-auto gap-2">
+  {#each items as item}
+    <button class="shrink-0">…</button>   <!-- shrink-0 is essential — keeps pills at natural width so the row scrolls -->
+  {/each}
+</div>
+```
+
+Self-disables when the host has no box (e.g. `lg:contents` to dissolve the wrapper on desktop): `scrollWidth/clientWidth` read 0, no attrs match, no fade applies. So you can pair it with responsive layouts that switch from "scroll on mobile" to "flex-wrap on desktop" without extra responsive CSS. **Caveat:** `mask-image` masks the entire painted output including borders — if the scroll host has a `border-b border-dashed`, the dashed line will fade at the edges in mid-scroll. Move the border to a sibling element if that looks distracting. React-side: import the function directly and drive it from a `useEffect` — the lifecycle just doesn't get the Svelte action's automatic mount/destroy. Used today: forum TagBar (filters + tag rows), calendar mobile category rail, event-compose category rail.
+
 ### Animation (Motion Library)
 - **Navbar**: `motion/react` — spring-based menu slide (`AnimatePresence`), staggered nav item entrance
 - **Calendar**: `motion/react` — spring-physics slide on month change (grid slides horizontally, month name slides vertically). `AnimatePresence mode="popLayout"` for smooth height transitions between 4/5/6-week months. Direction tracked via `useRef`.
@@ -281,6 +301,17 @@ The project uses these CSS variables (defined in `global.css`):
 - `--color-gray`: #aca89f (Gray/Beige)
 
 When I say yellow, red, green, I always mean the default variants of the project.
+
+### Page-accent rule (kiosk)
+Each main page has its own accent color used for **kickers** (mono-uppercase eyebrows) and **carved-italic title accents**. The pairing:
+
+| Page | Accent | Tailwind |
+|---|---|---|
+| Forum | wine | `text-wine` (`#b23a5b`) |
+| Calendar | teal | `text-teal` (`#3f8f9f`) |
+| Newsboard / Marketplace / Profile / Blog | TBD | — |
+
+When migrating a surface into kiosk, swap kicker + italic-accent text to the page's color. **Don't touch:** live-now indicators, today indicator, weekend day labels, required-field asterisks, compose step numbers (`01`, `02`, …), CTA wine-shadows, modal wine-shadows, or wine-filled FABs — those are semantic/sticker accents, not brand accent, and stay wine across all surfaces.
 
 ## Common Errors to Avoid
 

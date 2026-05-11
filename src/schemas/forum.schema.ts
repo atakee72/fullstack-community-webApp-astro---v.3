@@ -137,7 +137,7 @@ const EventBaseSchema = z.object({
     'sport',
     'privat'
   ]).optional().default('kiez'),
-  capacity: z.number().int().min(1).max(10000).optional(),
+  capacity: z.number().int().min(1).max(10000).nullish(),
   allDay: z.boolean().optional().default(false),
   visibility: z.enum(['public', 'private']).optional().default('public'),
   // `isOfficial` is server-controlled (admin-create only); user POSTs are

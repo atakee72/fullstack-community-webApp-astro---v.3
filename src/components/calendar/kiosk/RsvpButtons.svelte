@@ -55,10 +55,10 @@
         onclick={() => setStatus('going')}
         disabled={rsvp.isPending}
         aria-pressed={myStatus === 'going'}
-        class={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bricolage font-bold text-[13px] border-2 border-ink transition-transform hover:scale-[1.02] disabled:opacity-60 ${
+        class={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bricolage font-bold text-[13px] border-2 transition-transform hover:scale-[1.02] disabled:opacity-60 ${
           myStatus === 'going'
-            ? 'bg-ink text-paper'
-            : 'bg-paper text-ink hover:bg-paper-warm'
+            ? 'bg-moss text-paper border-moss'
+            : 'bg-paper text-ink border-ink hover:bg-paper-warm'
         }`}
       >
         {#if myStatus === 'going'}

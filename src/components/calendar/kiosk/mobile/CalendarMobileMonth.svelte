@@ -31,9 +31,14 @@
     isLiveNow,
     sortEventsForDay
   } from '../../../../lib/calendar/eventTime';
+  import { now } from '../../../../lib/calendar/nowTicker';
   import { t, locale } from '../../../../lib/kiosk-i18n';
+  import { rsvpMutation } from '../../../../lib/calendarMutations';
+  import { showError } from '../../../../utils/toast';
   import type { EventCategory, Event as EventDoc } from '../../../../types';
   import DragSelectPin from '../DragSelectPin.svelte';
+
+  type View = 'month' | 'agenda' | 'day';
 
   let {
     visibleMonth = new Date(),
@@ -43,10 +48,16 @@
     onPickEvent,
     onPrevMonth,
     onNextMonth,
-    prevMonthLabel = '',
-    nextMonthLabel = '',
-    weekEvents = 0,
-    liveCount = 0
+    liveCount = 0,
+    currentUserId = null,
+    showToday = false,
+    onToday,
+    myRsvps = false,
+    saved = false,
+    onMyRsvps,
+    onSaved,
+    view = 'month',
+    onView
   } = $props<{
     visibleMonth?: Date;
     events?: EventDoc[];
@@ -55,11 +66,48 @@
     onPickEvent?: (ev: EventDoc) => void;
     onPrevMonth?: () => void;
     onNextMonth?: () => void;
-    prevMonthLabel?: string;
-    nextMonthLabel?: string;
-    weekEvents?: number;
     liveCount?: number;
+    currentUserId?: string | null;
+    showToday?: boolean;
+    onToday?: () => void;
+    myRsvps?: boolean;
+    saved?: boolean;
+    onMyRsvps?: () => void;
+    onSaved?: () => void;
+    view?: View;
+    onView?: (v: View) => void;
   }>();
+
+  const views: { k: View; label: () => string }[] = [
+    { k: 'month',  label: () => $t['cal.view.month']  },
+    { k: 'agenda', label: () => $t['cal.view.agenda'] },
+    { k: 'day',    label: () => $t['cal.view.day']    }
+  ];
+
+  // RSVP toggle for the day-panel rows. Mutation is bound to the
+  // current user id at component init; clicking +/✓ on a row flips
+  // between 'going' and 'cancel'. Logged-out users see no button.
+  const rsvp = rsvpMutation(currentUserId ?? '__anon__');
+
+  function isGoing(ev: EventDoc): boolean {
+    if (!currentUserId) return false;
+    const arr = (ev.rsvps?.going ?? []).map(String);
+    return arr.includes(currentUserId);
+  }
+
+  function toggleRsvp(ev: EventDoc) {
+    if (!currentUserId) return;
+    const eventId = String(ev._id);
+    const next: 'going' | 'cancel' = isGoing(ev) ? 'cancel' : 'going';
+    rsvp.mutate(
+      { eventId, status: next },
+      {
+        onError: (err) => {
+          showError(err instanceof Error ? err.message : 'RSVP fehlgeschlagen.');
+        }
+      }
+    );
+  }
 
   let selectedDay = $state(new Date());
 
@@ -270,12 +318,19 @@
   const cells = $derived(eachDayOfInterval({ start: gridStart, end: gridEnd }));
   const rows = $derived(Math.ceil(cells.length / 7));
 
-  const monthKicker = $derived(
-    format(visibleMonth, 'MMMM yyyy', { locale: dateLocale }).toUpperCase()
+  // Hero header derivations.
+  // - todayKicker: today's full date label (e.g., "MITTWOCH 6. MAI").
+  //   Reads from $now so it ticks across midnight without a refresh.
+  // - timeNow: live wall-clock "HH:mm", same $now ticker.
+  // - italicMonth / visibleYear: split for the italic-serif + bold pair.
+  const todayKicker = $derived(
+    format($now, 'EEEE d. MMM', { locale: dateLocale }).toUpperCase()
   );
-
-  const titleText = $derived(
-    ($t['cal.mobile.thisWeek'] as string).replace('{n}', String(weekEvents))
+  const timeNow = $derived(format($now, 'HH:mm'));
+  const italicMonth = $derived(format(visibleMonth, 'MMMM', { locale: dateLocale }));
+  const visibleYear = $derived(format(visibleMonth, 'yyyy'));
+  const visibleMonthLabel = $derived(
+    format(visibleMonth, 'MMMM yyyy', { locale: dateLocale }).toUpperCase()
   );
 
   // Bottom-panel data
@@ -295,37 +350,90 @@
     return `◆ ${dow} ${d}. ${month}`;
   });
 
-  function liveLine(n: number): string {
-    return ($t['cal.footer.live'] as string).replace('{n}', String(n));
-  }
-
-  // Pre-fill /events/create with the currently-selected day so tapping
-  // the `+` disc after browsing a future date drops the user into the
-  // compose form already set to that day.
-  const createHref = $derived.by(() => {
-    const iso = format(selectedDay, 'yyyy-MM-dd');
-    return `/events/create?from=${iso}&to=${iso}`;
-  });
 </script>
 
 <div class="lg:hidden">
-  <!-- Header strip — kicker + stat title + tiny `+` disc CTA -->
-  <header
-    class="flex justify-between items-end gap-3 px-4 pt-3 pb-2 border-b border-dashed border-rule"
-  >
-    <div class="min-w-0">
-      <div class="font-dmmono text-[9.5px] uppercase tracking-[0.1em] text-teal">
-        ◆ {monthKicker}
+  <!-- Hero: today+time kicker · italic month + bold year · prev/next
+       arrow steppers · month stats line. FAB moved to a fixed
+       bottom-right element at the end of the component. -->
+  <header class="px-4 pt-5 pb-3 border-b border-dashed border-rule">
+    <div class="font-dmmono text-[10px] uppercase tracking-[0.1em] text-teal mb-2">
+      {todayKicker} · {timeNow}
+    </div>
+
+    <!-- Hero title (mirrors the desktop CalendarTitleBlock H1). -->
+    <h1
+      class="font-bricolage font-extrabold text-ink leading-[0.95] tracking-tight mt-6 text-[40px] md:text-[48px]"
+    >
+      {$t['cal.title.q1']}
+      <span class="font-instrument italic font-normal text-teal">
+        {$t['cal.title.q2']}
+      </span>
+      {$t['cal.title.q3']}
+    </h1>
+
+    <!-- Combined month stepper: ‹ {Mai} {2026} › — italic teal month +
+         bold year inside the same pill as the prev/next buttons. -->
+    <div class="flex items-center justify-end gap-2 mt-5">
+      <div
+        class="inline-flex items-center border-[1.5px] border-ink rounded-full overflow-hidden font-dmmono text-[11px] font-semibold leading-none"
+      >
+        <button
+          type="button"
+          onclick={onPrevMonth}
+          aria-label={$t['cal.nav.prevMonth.aria']}
+          class="px-2.5 py-1 hover:bg-paper-warm transition-colors"
+        >‹</button>
+        <span
+          class="px-3 py-1 border-l-[1.5px] border-r-[1.5px] border-ink uppercase tracking-[0.05em]"
+        >
+          {visibleMonthLabel}
+        </span>
+        <button
+          type="button"
+          onclick={onNextMonth}
+          aria-label={$t['cal.nav.nextMonth.aria']}
+          class="px-2.5 py-1 hover:bg-paper-warm transition-colors"
+        >›</button>
       </div>
-      <div class="font-bricolage font-extrabold text-[22px] tracking-[-0.025em] mt-0.5 leading-[1.1]">
-        {titleText}
+      {#if showToday}
+        <button
+          type="button"
+          onclick={onToday}
+          class="inline-flex items-center px-3 py-1.5 rounded-full border-[1.5px] border-ink font-dmmono text-[10px] uppercase tracking-[0.06em] hover:bg-paper-warm transition-colors shrink-0"
+        >
+          {$t['cal.cell.today']}
+        </button>
+      {/if}
+    </div>
+
+    <div class="flex items-center justify-between gap-3 mt-3">
+      <div class="font-dmmono text-[11px] text-ink-mute">
+        <b class="text-ink">{events.length}</b> {$t['cal.mobile.statsMonthEvents']}
+        {#if liveCount > 0}
+          · <b class="text-ochre">{liveCount}</b> {$t['cal.mobile.statsLiveNow']}
+        {/if}
+      </div>
+      <div
+        class="inline-flex border-2 border-ink rounded-full overflow-hidden font-dmmono text-[12px] font-semibold shrink-0"
+        role="tablist"
+        aria-label="View"
+      >
+        {#each views as v, i (v.k)}
+          <button
+            type="button"
+            role="tab"
+            aria-selected={view === v.k}
+            onclick={() => onView?.(v.k)}
+            class="px-3 py-1 transition-colors {
+              view === v.k ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
+            } {i > 0 ? 'border-l-2 border-ink' : ''}"
+          >
+            {v.label()}
+          </button>
+        {/each}
       </div>
     </div>
-    <a
-      href={createHref}
-      aria-label={$t['cal.mobile.cta.aria']}
-      class="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-bold text-[24px] sm:text-[28px] leading-none shadow-[3px_3px_0_var(--k-wine,#b23a5b)] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_var(--k-wine,#b23a5b)] transition-[transform,box-shadow] duration-[120ms] ease-out shrink-0"
-    >+</a>
   </header>
 
   <!-- Filter rail — own compact render of the 6 category pills,
@@ -353,6 +461,30 @@
         <span>{$t[`cal.cat.${cat}.label` as const]}</span>
       </button>
     {/each}
+
+    <span class="w-px h-[18px] bg-rule mx-1 shrink-0" aria-hidden="true"></span>
+
+    <button
+      type="button"
+      onclick={onMyRsvps}
+      aria-pressed={myRsvps}
+      class={`inline-flex items-center px-2 py-0.5 rounded-full font-bricolage font-semibold text-[11px] border-[1.5px] border-ink transition-colors flex-shrink-0 ${
+        myRsvps ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
+      }`}
+    >
+      {$t['cal.filter.myRsvps']}
+    </button>
+
+    <button
+      type="button"
+      onclick={onSaved}
+      aria-pressed={saved}
+      class={`inline-flex items-center px-2 py-0.5 rounded-full font-bricolage font-semibold text-[11px] border-[1.5px] border-ink transition-colors flex-shrink-0 ${
+        saved ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
+      }`}
+    >
+      {$t['cal.filter.saved']}
+    </button>
   </div>
 
   <!-- Mini dot-grid -->
@@ -452,13 +584,14 @@
     {:else}
       <ul class="m-0 p-0 list-none">
         {#each dayEvents as ev (String(ev._id))}
-          {@const live = isLiveNow(ev)}
+          {@const live = isLiveNow(ev, $now)}
           {@const start = ev.startDate instanceof Date ? ev.startDate : new Date(ev.startDate)}
-          <li class="border-b border-dashed border-rule">
+          {@const going = isGoing(ev)}
+          <li class="flex items-center gap-2 border-b border-dashed border-rule">
             <button
               type="button"
               onclick={() => onPickEvent?.(ev)}
-              class="grid grid-cols-[44px_1fr] gap-2 py-2 w-full text-left items-start"
+              class="flex-1 min-w-0 grid grid-cols-[44px_1fr] gap-2 py-2 text-left items-start"
             >
               <span
                 class={`font-dmmono text-[11px] font-semibold pt-0.5 ${
@@ -480,24 +613,24 @@
                 {/if}
               </div>
             </button>
+
+            {#if currentUserId}
+              <button
+                type="button"
+                onclick={() => toggleRsvp(ev)}
+                aria-pressed={going}
+                aria-label={going ? $t['cal.mobile.rsvp.cancel.aria'] : $t['cal.mobile.rsvp.going.aria']}
+                class={`shrink-0 w-9 h-9 rounded-full border-[1.5px] border-ink flex items-center justify-center font-bricolage font-bold text-[16px] leading-none transition-colors ${
+                  going ? 'bg-moss text-paper' : 'bg-paper text-ink hover:bg-paper-warm'
+                }`}
+              >
+                {going ? '✓' : '+'}
+              </button>
+            {/if}
           </li>
         {/each}
       </ul>
     {/if}
   </div>
 
-  <!-- Footer month-nav -->
-  {#if onPrevMonth || onNextMonth}
-    <div
-      class="mx-4 mt-4 pt-2 pb-4 flex justify-between items-center font-dmmono text-[10px] uppercase tracking-[0.05em] text-ink-mute border-t border-dashed border-rule"
-    >
-      <button type="button" onclick={onPrevMonth} class="hover:text-ink transition-colors">
-        ← {prevMonthLabel}
-      </button>
-      <span class="text-wine">{liveLine(liveCount)}</span>
-      <button type="button" onclick={onNextMonth} class="hover:text-ink transition-colors">
-        {nextMonthLabel} →
-      </button>
-    </div>
-  {/if}
 </div>

@@ -158,5 +158,3 @@
     {/each}
   </div>
 </nav>
-
-<div class="lg:hidden h-12" aria-hidden="true"></div>

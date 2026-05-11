@@ -35,8 +35,9 @@
 
   import { CATEGORY_ORDER } from '../../../lib/calendar/categories';
   import { countLiveNow, countEventsThisWeek } from '../../../lib/calendar/eventTime';
-  import { locale } from '../../../lib/kiosk-i18n';
+  import { locale, t } from '../../../lib/kiosk-i18n';
   import { getDefaultCalendarQueryOptions } from '../../../lib/calendarQueryOptions';
+  import { createSavedEventsQuery, createSaveEventMutation } from '../../../lib/savedEventsQueries';
   import type { EventCategory, Event as EventDoc } from '../../../types';
 
   let { initialEvents = [], currentUserId = null } = $props<{
@@ -51,9 +52,30 @@
   let myRsvps = $state(false);
   let saved = $state(false);
 
+  // Desktop category rail uses single-select-with-all-reset semantics:
+  //   Alle click → all categories on.
+  //   Category click → isolate that category.
+  //   Click already-isolated category → revert to "all".
+  // Mobile filter rail (CalendarMobileMonth) still uses multi-toggle
+  // via `toggleCat` — kept for backwards compatibility.
+  const isAllActive = $derived(active.size === CATEGORY_ORDER.length);
+
+  function selectAll() {
+    active = new Set(CATEGORY_ORDER);
+  }
+
+  function selectOnly(cat: EventCategory) {
+    if (active.size === 1 && active.has(cat)) {
+      selectAll();
+    } else {
+      active = new Set([cat]);
+    }
+  }
+
   function toggleCat(cat: EventCategory) {
     if (active.has(cat)) active.delete(cat);
     else active.add(cat);
+    active = new Set(active);
   }
 
   function clearFilters() {
@@ -120,6 +142,27 @@
 
   const events = $derived(eventsQuery.data ?? []);
 
+  // ─── Saved events ─────────────────────────────────────────────────
+  // Query is gated on having a logged-in user; the mutation is the
+  // single source of truth for the saved set (both the MERKEN button
+  // state per row and the "Gespeichert" filter read from this cache).
+  const savedEventsQuery = createSavedEventsQuery(() => !!currentUserId);
+  const saveMutation = createSaveEventMutation();
+
+  const savedIds = $derived.by(() => {
+    const data = savedEventsQuery.data;
+    return {
+      ready: data !== undefined,
+      ids: new Set(data ?? [])
+    };
+  });
+
+  function onToggleSave(eventId: string) {
+    if (!currentUserId) return;
+    const action = savedIds.ids.has(eventId) ? 'unsave' : 'save';
+    saveMutation.mutate({ eventId, action });
+  }
+
   // ─── Derived display data ─────────────────────────────────────────
   // Kicker reflects the months actually visible in the grid (Mon-start
   // weeks pull in trailing days from the previous month and leading
@@ -140,6 +183,14 @@
     return `${lo} — ${hi} ${year}`;
   });
 
+  // Single-month form for the desktop header stepper — always `MAI 2026`,
+  // never the grid-straddle range. Kicker keeps the range form via `monthLabel`.
+  const visibleMonthLabel = $derived(
+    format(visibleMonth, 'MMMM yyyy', {
+      locale: $locale === 'de' ? deLocale : enUS
+    }).toUpperCase()
+  );
+
   const prevMonthLabel = $derived(
     format(subMonths(visibleMonth, 1), 'MMMM', {
       locale: $locale === 'de' ? deLocale : enUS
@@ -154,8 +205,17 @@
   const displayedEvents = $derived(
     events.filter((ev) => {
       if (ev.category && !active.has(ev.category as EventCategory)) return false;
-      // myRsvps + saved filters wire in Phase 5/6 (need user RSVPs +
-      // the saved-events list). For now they short-circuit to no-op.
+      if (myRsvps && currentUserId) {
+        const going = ev.rsvps?.going ?? [];
+        const maybe = ev.rsvps?.maybe ?? [];
+        const inRsvps =
+          going.some((id) => String(id) === currentUserId) ||
+          maybe.some((id) => String(id) === currentUserId);
+        if (!inRsvps) return false;
+      }
+      // Skip the saved filter until the savedEvents query hydrates —
+      // otherwise the list flashes empty before resolving.
+      if (saved && savedIds.ready && !savedIds.ids.has(String(ev._id))) return false;
       return true;
     })
   );
@@ -205,24 +265,29 @@
        CalendarMobileMonth owns its own header + filter rail there. -->
   <div class={view === 'month' ? 'hidden lg:block' : 'block'}>
     <CalendarTitleBlock
-      {view}
-      onView={(v) => (view = v)}
       {monthLabel}
+      {visibleMonthLabel}
       {weekEvents}
       {liveNow}
       {goingToday}
-      showToday={!isOnTodayMonth}
-      onToday={goToday}
+      onPrevMonth={goPrevMonth}
+      onNextMonth={goNextMonth}
+      {view}
+      onView={(v) => (view = v)}
     />
 
     <CalCategoryRail
       {active}
-      onToggle={toggleCat}
+      {isAllActive}
+      onSelectAll={selectAll}
+      onSelectOnly={selectOnly}
       {myRsvps}
       {saved}
       onMyRsvps={() => (myRsvps = !myRsvps)}
       onSaved={() => (saved = !saved)}
-      liveCount={liveNow}
+      {view}
+      showToday={!isOnTodayMonth}
+      onToday={goToday}
     />
   </div>
 
@@ -245,10 +310,16 @@
         onPickEvent={onPickEvent}
         onPrevMonth={goPrevMonth}
         onNextMonth={goNextMonth}
-        {prevMonthLabel}
-        {nextMonthLabel}
-        {weekEvents}
         liveCount={liveNow}
+        {currentUserId}
+        showToday={!isOnTodayMonth}
+        onToday={goToday}
+        {myRsvps}
+        {saved}
+        onMyRsvps={() => (myRsvps = !myRsvps)}
+        onSaved={() => (saved = !saved)}
+        {view}
+        onView={(v) => (view = v)}
       />
     </div>
     <!-- Desktop month: full grid with event pills + drag-select. -->
@@ -270,6 +341,9 @@
       {visibleMonth}
       onPickEvent={onPickEvent}
       onRsvp={onPickEvent}
+      savedIds={savedIds.ids}
+      onToggleSave={currentUserId ? onToggleSave : undefined}
+      {currentUserId}
     />
   {:else}
     <CalendarDayView
@@ -285,4 +359,13 @@
     currentUserId={currentUserId}
     onClose={() => (selectedEvent = null)}
   />
+
+  <!-- Floating add-event FAB (mobile-only, all views). Parked above
+       the bottom mobile nav (h-12 at z-40) with 16px clearance. Wine
+       fill + ink print-shadow matches the kiosk vocabulary. -->
+  <a
+    href="/events/create"
+    aria-label={$t['cal.mobile.cta.aria']}
+    class="fixed bottom-16 right-4 z-30 w-14 h-14 rounded-full bg-wine text-paper border-2 border-ink font-bricolage font-bold text-[28px] leading-none shadow-[3px_3px_0_var(--k-ink,#0e1033)] flex items-center justify-center lg:hidden"
+  >+</a>
 </div>

@@ -21,7 +21,10 @@
   import KioskBtn from '../../forum/kiosk/KioskBtn.svelte';
 
   import { CATEGORIES } from '../../../lib/calendar/categories';
+  import { isLiveNow } from '../../../lib/calendar/eventTime';
+  import { now } from '../../../lib/calendar/nowTicker';
   import { t, locale } from '../../../lib/kiosk-i18n';
+  import { createUserProfilesQuery } from '../../../lib/userProfilesQueries';
   import type { Event as EventDoc, EventCategory } from '../../../types';
 
   let {
@@ -148,6 +151,20 @@
 
   const eventId = $derived(event?._id ? String(event._id) : '');
 
+  // Live-now status, reactive on the shared minute-tick store so the
+  // badge appears and disappears while the modal stays open.
+  const live = $derived(event ? isLiveNow(event, $now) : false);
+
+  // Attendee avatars — fetch real profiles (name + picture) only while
+  // the modal is open. Empty when closed → query is disabled, no
+  // background polling. The AttendeeStack receives both `users` (real
+  // avatars) and `userIds` (colored-disc placeholders) so the cluster
+  // paints immediately and upgrades when profiles resolve.
+  const profilesQuery = createUserProfilesQuery(() =>
+    open && goingArr.length > 0 ? goingArr : []
+  );
+  const attendees = $derived(profilesQuery.data ?? []);
+
   function onReportClick() {
     // Phase 6 wires this to the existing report modal. v1: no-op.
     if (typeof window !== 'undefined') {
@@ -169,11 +186,19 @@
   {#if event}
     {@const goingCountFx = goingCount}
     <div
-      class="k-cal-modal-in mx-auto my-[40px] max-w-[1100px] w-[min(94vw,1100px)] relative bg-paper text-ink border-2 border-ink rounded-lg overflow-hidden grid grid-cols-1 md:grid-cols-[1.3fr_1fr] shadow-[12px_12px_0_var(--k-wine,#b23a5b)]"
+      class="k-cal-modal-in mx-auto my-3 md:my-[40px] max-w-[1100px] w-[min(94vw,1100px)] max-h-[calc(100dvh-24px)] md:max-h-[calc(100dvh-80px)] relative bg-paper text-ink border-2 border-ink rounded-lg overflow-y-auto md:overflow-hidden grid grid-cols-1 md:grid-cols-[1.3fr_1fr] shadow-[12px_12px_0_var(--k-wine,#b23a5b)]"
     >
+      <!-- Mobile-only close button — sticks to top of scrolling card. -->
+      <button
+        type="button"
+        onclick={onClose}
+        aria-label={$t['cal.detail.back']}
+        class="md:hidden sticky top-2 z-20 justify-self-end mr-3 mt-3 -mb-9 w-9 h-9 rounded-full bg-paper border-[1.5px] border-ink flex items-center justify-center text-[18px] leading-none font-dmmono shadow-[2px_2px_0_var(--k-ink,#0e1033)]"
+      >×</button>
+
       <!-- Left — content -->
       <div
-        class="px-7 py-7 md:border-r md:border-dashed md:border-rule overflow-auto max-h-[calc(100vh-80px)]"
+        class="px-7 py-7 md:border-r md:border-dashed md:border-rule md:overflow-auto md:max-h-[calc(100vh-80px)]"
       >
         <!-- Category strip — adds an inline 'MAHALLE-TEAM' second
              label when the event is official (server flag) or the
@@ -216,8 +241,19 @@
             <div class="font-bricolage font-bold text-[16.5px] tracking-[-0.01em]">
               {dateLabel}
             </div>
-            <div class="font-dmmono text-[12.5px] text-ink-soft mt-px">
-              {timeLabel}
+            <div class="font-dmmono text-[12.5px] text-ink-soft mt-px flex items-center flex-wrap gap-x-2 gap-y-1">
+              <span>{timeLabel}</span>
+              {#if live}
+                <span
+                  class="inline-flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full bg-ochre/15 border border-ochre font-dmmono uppercase tracking-[0.1em] text-[10px] font-semibold text-ink"
+                >
+                  <span
+                    class="inline-block w-[8px] h-[8px] rounded-full bg-ochre border border-ink k-cal-live-dot"
+                    aria-hidden="true"
+                  ></span>
+                  {$t['cal.live.label']}
+                </span>
+              {/if}
             </div>
           </div>
 
@@ -280,7 +316,7 @@
 
       <!-- Right — RSVP rail -->
       <div
-        class="px-6 py-7 bg-paper-soft flex flex-col gap-4 overflow-auto max-h-[calc(100vh-80px)]"
+        class="px-5 py-5 md:px-6 md:py-6 bg-paper-soft flex flex-col gap-3 md:overflow-auto md:max-h-[calc(100vh-80px)]"
       >
         <RsvpButtons
           eventId={eventId}
@@ -323,12 +359,12 @@
           </div>
 
           {#if event.capacity}
-            <div class="mb-3">
+            <div class="mb-2">
               <CapacityBar going={goingCount} maybe={maybeCount} capacity={event.capacity} />
             </div>
           {/if}
 
-          <div class="font-dmmono text-[10.5px] text-ink-mute mb-2">
+          <div class="font-dmmono text-[10.5px] text-ink-mute mb-1.5">
             <b class="text-success">{goingCount}</b>
             {$t['cal.detail.attendance.going']}
             <span class="ml-3">
@@ -337,7 +373,24 @@
             </span>
           </div>
 
-          <AttendeeStack userIds={goingArr} />
+          <div class="flex items-center flex-wrap gap-x-3 gap-y-1.5">
+            <AttendeeStack users={attendees} userIds={goingArr} />
+            {#if attendees.length > 0}
+              {@const previewNames = attendees
+                .slice(0, 2)
+                .map((a) => (a.name ?? '').trim().split(/\s+/)[0])
+                .filter(Boolean)
+                .join(', ')}
+              {@const more = Math.max(0, goingCount - 2)}
+              <span class="font-dmmono text-[10.5px] text-ink-soft">
+                {previewNames}{#if more > 0}
+                  <span class="text-ink-mute">
+                    {' '}{($t['cal.detail.attendance.others'] as string).replace('{n}', String(more))}
+                  </span>
+                {/if}
+              </span>
+            {/if}
+          </div>
         </div>
 
         <!-- Export + footer -->

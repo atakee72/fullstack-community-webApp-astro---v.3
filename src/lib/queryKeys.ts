@@ -56,6 +56,7 @@ export const qk = {
 
   // User-scoped sets
   savedPosts: ['savedPosts'] as const,
+  savedEvents: ['savedEvents'] as const,
   myReportedIds: ['my-reported-ids'] as const,
 
   // Comments (keyed by postId)

@@ -38,6 +38,7 @@
     isSpanEnd,
     sortEventsForDay
   } from '../../../lib/calendar/eventTime';
+  import { now } from '../../../lib/calendar/nowTicker';
   import { t, locale } from '../../../lib/kiosk-i18n';
   import type { Event as EventDoc } from '../../../types';
 
@@ -324,7 +325,7 @@
               spanStart={sStart}
               spanMid={sMid}
               spanEnd={sEnd}
-              isLive={isLiveNow(ev)}
+              isLive={isLiveNow(ev, $now)}
               onclick={() => onPickEvent?.(ev)}
             />
           {/each}

@@ -20,6 +20,7 @@
   import { de as deLocale, enUS } from 'date-fns/locale';
   import { CATEGORIES } from '../../../lib/calendar/categories';
   import { eventCoversDay, isLiveNow } from '../../../lib/calendar/eventTime';
+  import { now } from '../../../lib/calendar/nowTicker';
   import { t, locale } from '../../../lib/kiosk-i18n';
   import type { Event as EventDoc, EventCategory } from '../../../types';
 
@@ -42,7 +43,7 @@
   const cells = $derived(eachDayOfInterval({ start: gridStart, end: gridEnd }));
   const monthLabel = $derived(format(visibleMonth, 'MMMM yyyy', { locale: dateLocale }).toUpperCase());
 
-  const liveEvent = $derived(events.find((ev) => isLiveNow(ev)));
+  const liveEvent = $derived(events.find((ev) => isLiveNow(ev, $now)));
 
   function eventDotColor(d: Date): string | null {
     const ev = events.find((e) => eventCoversDay(e, d));
