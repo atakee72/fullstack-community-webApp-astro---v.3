@@ -179,6 +179,9 @@ Complex React components use a wrapper pattern:
 ### Forum patterns (List/Pagination, Performance/SSR, Post Images, Save/Bookmark, Search & Tag Filtering, Card Interactions)
 See `src/components/forum/kiosk/CLAUDE.md` — full notes load when working in that subtree. The forum spans dirs (`src/pages/api/topics/*`, `src/lib/topicsQuery.ts`, `src/lib/forumQueryOptions.ts`); read the area file directly when working on those server-side pieces.
 
+### Calendar (kiosk) patterns (live ticker, saved events, attendee profiles, moderation parity, ghosting, edit-path moderation, compose toast, report flow)
+See `src/components/calendar/kiosk/CLAUDE.md` — full notes load when working in that subtree. Spans `src/lib/calendar/*`, `src/lib/savedEventsQueries.ts`, `src/lib/userProfilesQueries.ts`, `src/pages/api/events/*`; read the area file directly when working on those.
+
 ### TanStack Query — optimistic updates (gotchas)
 - **Use real userId, not placeholders**: optimistic `setQueryData` that mutates `likedBy: [...ids, 'optimistic-user-id']` will not match the real user id in subsequent `.includes(user.id)` checks, so UI state (heart filled/unfilled) won't flip until server refetch. Pass the actual `user?.id` into the mutation hook. See `useLikeMutation.ts`.
 - **Don't stack `onSuccess` + `onSettled` invalidations** with `refetchType: 'all'` — the double refetch overwrites the optimistic state and causes visible flicker/delay. Canonical v5 pattern: `onMutate` does the optimistic write + snapshot, `onError` rolls back, `onSettled` runs a single `invalidateQueries`. Drop `onSuccess` entirely.
