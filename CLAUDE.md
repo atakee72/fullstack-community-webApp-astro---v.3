@@ -228,6 +228,7 @@ See `src/components/blog/CLAUDE.md` — full notes load when working in that sub
 - **Confirm dialog**: Custom `<dialog>`-based modal replaces all `window.confirm()` calls. Uses `CustomEvent` bridge (`app:confirm`) with `confirmAction()` returning `Promise<boolean>`. Works across React and Svelte.
 - Both are mounted globally in `ToastProvider.tsx` (rendered in layouts) — no per-component state needed
 - `confirmAction(message, { title, confirmLabel, variant })` — `variant: 'danger'` shows red confirm button
+- **Kiosk skin**: sonner is mounted with `unstyled: true` + `classNames` map → `.kiosk-toast*` classes in `global.css`. Paper-warm bg + ink-2 border + Bricolage font + print-shadow per type (success=green, info=wine, warning=ochre, error=danger). `richColors` is dropped — `unstyled` strips sonner's defaults entirely so the kiosk CSS isn't fighting `!important`-laden defaults. Description copy lands in Instrument italic. Pattern lifts to any design system that ships its own palette: don't try to override sonner's defaults — strip them, then rebuild.
 
 ### Cloudinary URL Optimization
 - **Utility**: `src/utils/cloudinary.ts` exports `optimizeCloudinary(url)` — rewrites any Cloudinary URL to inject `f_auto,q_auto` (auto format + auto quality) for ~30-60% smaller transfers. No-op for non-Cloudinary URLs or URLs that already have those transforms.

@@ -25,12 +25,14 @@
     values,
     submitting = false,
     onPublish,
-    onDiscard
+    onDiscard,
+    editing = false
   } = $props<{
     values: Values;
     submitting?: boolean;
     onPublish: () => void;
     onDiscard: () => void;
+    editing?: boolean;
   }>();
 </script>
 
@@ -67,7 +69,7 @@
         disabled={submitting}
         class="inline-flex items-center px-3 py-1 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-bold text-[12.5px] shadow-[3px_3px_0_var(--k-wine,#b23a5b)] hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_var(--k-wine,#b23a5b)] disabled:opacity-60 disabled:cursor-not-allowed transition-[transform,box-shadow] duration-[120ms] ease-out"
       >
-        {$t['cal.compose.cta.publish']}
+        {editing ? $t['cal.compose.submit.edit'] : $t['cal.compose.cta.publish']}
       </button>
       <button
         type="button"

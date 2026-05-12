@@ -1,0 +1,66 @@
+---
+// /events/edit/[id] — Editorial Kiosk event edit page.
+//
+// Auth + author + moderation gates server-side. The API at
+// /api/events/edit/[id] re-checks all three; this page is the UX
+// shortcut so a stranger never sees the form.
+
+import KioskLayout from '../../../layouts/KioskLayout.astro';
+import EventComposePage from '../../../components/calendar/kiosk/compose/EventComposePage.svelte';
+import { getSession } from 'auth-astro/server';
+import { connectDB } from '../../../lib/mongodb';
+import { ObjectId } from 'mongodb';
+import { isOwner } from '../../../utils/authHelpers';
+
+const { id } = Astro.params;
+
+if (!id || !ObjectId.isValid(id)) {
+  return Astro.redirect('/calendar', 302);
+}
+
+const session = await getSession(Astro.request);
+
+if (!session?.user) {
+  return Astro.redirect(`/login?redirect=/events/edit/${id}`, 302);
+}
+
+const db = await connectDB();
+const event = await db.collection('events').findOne({ _id: new ObjectId(id) });
+
+if (!event) {
+  return Astro.redirect('/calendar', 302);
+}
+
+if (!isOwner(event.author, session.user.id)) {
+  // Silent — not the user's event.
+  return Astro.redirect('/calendar', 302);
+}
+
+if (event.moderationStatus !== 'approved' || event.hasWarningLabel) {
+  // Mirror the API 403. Show a flash on the calendar so the author
+  // sees why they bounced.
+  return Astro.redirect('/calendar?edit_blocked=1', 302);
+}
+
+// Date/ObjectId → string across the SSR boundary.
+const initialEvent = JSON.parse(JSON.stringify(event));
+
+const currentUser = {
+  id: session.user.id,
+  name: session.user.name ?? undefined,
+  image: session.user.image ?? null
+};
+
+const pageTitle = event.title
+  ? `${event.title} · bearbeiten · Mahalle`
+  : 'Termin bearbeiten · Mahalle';
+---
+
+<KioskLayout title={pageTitle} description="Bearbeite deinen Termin im Mahalle-Kalender.">
+  <EventComposePage
+    client:only="svelte"
+    currentUser={currentUser}
+    mode="edit"
+    initialEvent={initialEvent}
+  />
+</KioskLayout>

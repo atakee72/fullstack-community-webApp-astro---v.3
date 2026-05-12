@@ -5,9 +5,12 @@
 
   import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
   import EventComposePageInner from './EventComposePageInner.svelte';
+  import type { Event as EventDoc } from '../../../../types';
 
-  let { currentUser } = $props<{
+  let { currentUser, mode = 'create', initialEvent } = $props<{
     currentUser: { id: string; name?: string; image?: string | null };
+    mode?: 'create' | 'edit';
+    initialEvent?: EventDoc;
   }>();
 
   const client = new QueryClient({
@@ -18,5 +21,5 @@
 </script>
 
 <QueryClientProvider {client}>
-  <EventComposePageInner {currentUser} />
+  <EventComposePageInner {currentUser} {mode} {initialEvent} />
 </QueryClientProvider>

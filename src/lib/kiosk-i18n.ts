@@ -259,6 +259,10 @@ const de = {
     'Indem du veröffentlichst, akzeptierst du die Kiez-Regeln. Wir sind eine Nachbarschaft, kein anonymes Board.',
   'compose.toast.pending': 'Dein Beitrag wird überprüft.',
   'compose.toast.approved': 'Veröffentlicht.',
+  'compose.toast.editPending': 'Änderung wird überprüft.',
+  'compose.toast.editApproved': 'Aktualisiert.',
+  'compose.error.editBlocked':
+    'Du kannst diesen Termin gerade nicht bearbeiten.',
 
   // Community report modal (shared across forum + calendar surfaces).
   'report.modal.title': 'Inhalt melden',
@@ -412,8 +416,14 @@ const de = {
   // ─── Compose (event create flow) ─────────────────────────────────
   'cal.compose.crumb.calendar': 'KALENDER',
   'cal.compose.crumb.new': 'NEUER TERMIN',
+  'cal.compose.crumb.edit': 'TERMIN BEARBEITEN',
   'cal.compose.title.q1': 'neuer',
   'cal.compose.title.q2': 'termin',
+  'cal.compose.title.edit.q1': 'termin',
+  'cal.compose.title.edit.q2': 'bearbeiten',
+  'cal.compose.submit.edit': 'speichern →',
+  'calendar.flash.editBlocked':
+    'Bearbeiten gesperrt: dieser Termin wird gerade geprüft.',
   'cal.compose.step.category': 'Kategorie',
   'cal.compose.step.category.hint': 'wähle eine Kategorie',
   'cal.compose.step.title': 'Titel',
@@ -495,6 +505,9 @@ const de = {
   'cal.detail.export.share': 'teilen',
   'cal.detail.back': '← zurück',
   'cal.detail.report': 'MELDEN',
+  'detail.edit.label': 'bearbeiten',
+  'detail.edit.tooltip': 'Termin bearbeiten',
+  'detail.edit.blocked': 'Bearbeiten gesperrt während der Prüfung',
   'cal.detail.close': 'schließen',
   'cal.detail.loginPrompt': 'Anmelden, um zuzusagen.',
   'cal.detail.verifiziert': 'verifiziert · seit 2024',
@@ -694,6 +707,9 @@ const en: Dict = {
     "By publishing you accept the kiez rules. We're a neighbourhood, not an anonymous board.",
   'compose.toast.pending': 'Your submission is under review.',
   'compose.toast.approved': 'Published.',
+  'compose.toast.editPending': 'Your changes are under review.',
+  'compose.toast.editApproved': 'Updated.',
+  'compose.error.editBlocked': "You can't edit this event right now.",
 
   'report.modal.title': 'Report content',
   'report.modal.subtitle': "You're reporting:",
@@ -839,8 +855,14 @@ const en: Dict = {
   // Compose
   'cal.compose.crumb.calendar': 'CALENDAR',
   'cal.compose.crumb.new': 'NEW EVENT',
+  'cal.compose.crumb.edit': 'EDIT EVENT',
   'cal.compose.title.q1': 'new',
   'cal.compose.title.q2': 'event',
+  'cal.compose.title.edit.q1': 'edit',
+  'cal.compose.title.edit.q2': 'event',
+  'cal.compose.submit.edit': 'save →',
+  'calendar.flash.editBlocked':
+    'Edits blocked: this event is under review.',
   'cal.compose.step.category': 'Category',
   'cal.compose.step.category.hint': 'select a tag',
   'cal.compose.step.title': 'Title',
@@ -922,6 +944,9 @@ const en: Dict = {
   'cal.detail.export.share': 'share',
   'cal.detail.back': '← back',
   'cal.detail.report': 'REPORT',
+  'detail.edit.label': 'edit',
+  'detail.edit.tooltip': 'Edit event',
+  'detail.edit.blocked': 'Edits blocked during review',
   'cal.detail.close': 'close',
   'cal.detail.loginPrompt': 'Sign in to RSVP.',
   'cal.detail.verifiziert': 'verified · since 2024',

@@ -33,11 +33,13 @@
   let {
     initialValues,
     onChange,
-    showBreadcrumb = false
+    showBreadcrumb = false,
+    editing = false
   } = $props<{
     initialValues?: Partial<EventComposeValues>;
     onChange: (v: EventComposeValues) => void;
     showBreadcrumb?: boolean;
+    editing?: boolean;
   }>();
 
   // ─── State ─────────────────────────────────────────────────────────
@@ -128,16 +130,16 @@
       </a>
       <span aria-hidden="true" class="mx-2">·</span>
       <span class="underline decoration-dashed underline-offset-[3px]">
-        {$t['cal.compose.crumb.new']}
+        {editing ? $t['cal.compose.crumb.edit'] : $t['cal.compose.crumb.new']}
       </span>
     </div>
 
     <h1
       class="font-bricolage font-extrabold text-[40px] md:text-[48px] tracking-[-0.03em] leading-[0.95] m-0 mb-6 pb-3 border-b border-dashed border-rule"
     >
-      {$t['cal.compose.title.q1']}
+      {editing ? $t['cal.compose.title.edit.q1'] : $t['cal.compose.title.q1']}
       <span class="font-instrument italic font-normal text-teal">
-        {$t['cal.compose.title.q2']}
+        {editing ? $t['cal.compose.title.edit.q2'] : $t['cal.compose.title.q2']}
       </span>
     </h1>
   {/if}

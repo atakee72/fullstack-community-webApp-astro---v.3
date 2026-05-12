@@ -4,6 +4,11 @@ import { getSession } from 'auth-astro/server';
 import CalendarPage from '../components/calendar/kiosk/CalendarPage.svelte';
 import { fetchEventsForSSR } from '../lib/eventsQuery';
 
+// Calendar SSR data is per-user (author sees own pending/rejected) and
+// changes on every edit. Prevent browser HTTP cache from serving stale
+// HTML on the post-edit redirect.
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
+
 const session = await getSession(Astro.request);
 
 let initialEvents: any[] = [];

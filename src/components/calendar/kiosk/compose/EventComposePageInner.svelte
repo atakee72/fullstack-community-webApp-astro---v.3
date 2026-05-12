@@ -24,16 +24,25 @@
 
   import {
     createEventMutation,
+    editEventMutation,
     RateLimitError
   } from '../../../../lib/calendarMutations';
   import { eventDraft, type EventDraftValues } from '../../../../lib/eventDraftStore';
   import { t } from '../../../../lib/kiosk-i18n';
   import { showToast, showSuccess } from '../../../../utils/toast';
-  import type { EventCategory } from '../../../../types';
+  import type { EventCategory, Event as EventDoc } from '../../../../types';
 
-  let { currentUser } = $props<{
+  let {
+    currentUser,
+    mode = 'create',
+    initialEvent
+  } = $props<{
     currentUser: { id: string; name?: string; image?: string | null };
+    mode?: 'create' | 'edit';
+    initialEvent?: EventDoc;
   }>();
+
+  const isEditing = mode === 'edit';
 
   // ─── Initial values — computed synchronously at script-top.
   // This component runs client-only (`client:only="svelte"` on the
@@ -42,6 +51,31 @@
   // means EventComposeForm's `$state` seeders fire with the right
   // values on first render.
   function computeInitialValues(): Partial<EventComposeValues> {
+    // Edit mode wins outright — populate from the existing event,
+    // never read URL prefill or draft store.
+    if (isEditing && initialEvent) {
+      const start = new Date(initialEvent.startDate as any);
+      const end = new Date(initialEvent.endDate as any);
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const dateStr = (d: Date) =>
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const timeStr = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      return {
+        title: initialEvent.title ?? '',
+        body: initialEvent.body ?? '',
+        category: (initialEvent.category ?? 'kiez') as EventCategory,
+        startDate: dateStr(start),
+        startTime: initialEvent.allDay ? '00:00' : timeStr(start),
+        endDate: dateStr(end),
+        endTime: initialEvent.allDay ? '23:59' : timeStr(end),
+        allDay: !!initialEvent.allDay,
+        location: initialEvent.location ?? '',
+        capacity: initialEvent.capacity ?? null,
+        visibility: (initialEvent.visibility ?? 'public') as 'public' | 'private',
+        tags: initialEvent.tags ?? []
+      };
+    }
+
     const search =
       typeof window !== 'undefined'
         ? new URLSearchParams(window.location.search)
@@ -91,24 +125,29 @@
   const initialValues: Partial<EventComposeValues> = computeInitialValues();
 
   // ─── Form values ─────────────────────────────────────────────────
+  // Seed from initialValues so the preview rail matches first-paint
+  // (otherwise edit mode would briefly show today's date until the
+  // form's onChange fires).
   let values = $state<EventComposeValues>({
-    title: '',
-    body: '',
-    category: 'kiez' as EventCategory,
-    startDate: new Date().toISOString().slice(0, 10),
-    startTime: '09:00',
-    endDate: new Date().toISOString().slice(0, 10),
-    endTime: '17:00',
-    allDay: false,
-    location: '',
-    capacity: null,
-    visibility: 'public',
-    tags: []
+    title: initialValues.title ?? '',
+    body: initialValues.body ?? '',
+    category: (initialValues.category ?? 'kiez') as EventCategory,
+    startDate: initialValues.startDate ?? new Date().toISOString().slice(0, 10),
+    startTime: initialValues.startTime ?? '09:00',
+    endDate: initialValues.endDate ?? new Date().toISOString().slice(0, 10),
+    endTime: initialValues.endTime ?? '17:00',
+    allDay: initialValues.allDay ?? false,
+    location: initialValues.location ?? '',
+    capacity: initialValues.capacity ?? null,
+    visibility: initialValues.visibility ?? 'public',
+    tags: initialValues.tags ?? []
   });
 
   // Auto-save debounced — same pattern as forum compose.
+  // Skipped entirely in edit mode: drafts are scoped to the create flow.
   let draftTimer: ReturnType<typeof setTimeout> | null = null;
   $effect(() => {
+    if (isEditing) return;
     const snapshot: EventDraftValues = {
       title: values.title,
       body: values.body,
@@ -137,6 +176,7 @@
 
   // ─── Mutation ───────────────────────────────────────────────────
   const create = createEventMutation();
+  const edit = editEventMutation();
 
   let submitting = $state(false);
   let modalOpen = $state(false);
@@ -174,7 +214,7 @@
         ? new Date(`${values.endDate}T23:59:59.000Z`).toISOString()
         : composeIso(values.endDate, values.endTime, false);
 
-      const result = await create.mutateAsync({
+      const payload = {
         title: values.title.trim(),
         body: values.body.trim(),
         startDate: startISO,
@@ -185,31 +225,50 @@
         visibility: values.visibility,
         location: values.location.trim() || undefined,
         tags: values.tags
-      });
+      };
 
-      eventDraft.clearDraft();
+      const result = isEditing && initialEvent
+        ? await edit.mutateAsync({ id: String(initialEvent._id), input: payload })
+        : await create.mutateAsync(payload);
+
+      if (!isEditing) eventDraft.clearDraft();
       modalOpen = false;
 
-      // Toast survives the full-page redirect because <ToastProvider>
-      // is mounted in the global layout and listens to `app:toast`
-      // events for the lifetime of the next page too.
+      // Toast: dispatched onto window now, but the full-page redirect
+      // tears down the toast listener immediately. The flash query on
+      // the next page (CalendarPageInner) re-fires the toast on mount
+      // so the user actually sees it post-redirect.
       if (result?.moderationStatus === 'pending') {
-        showToast(result.message || ($t['compose.toast.pending'] as string), {
-          type: 'info',
-          duration: 6000
-        });
+        showToast(
+          result.message ||
+            ($t[isEditing ? 'compose.toast.editPending' : 'compose.toast.pending'] as string),
+          { type: 'info', duration: 6000 }
+        );
       } else {
-        showSuccess($t['compose.toast.approved'] as string);
+        showSuccess(
+          $t[isEditing ? 'compose.toast.editApproved' : 'compose.toast.approved'] as string
+        );
       }
 
       if (typeof window !== 'undefined') {
-        window.location.href = '/calendar?just_posted=1';
+        const flash = isEditing
+          ? result?.moderationStatus === 'pending'
+            ? 'just_edited=pending'
+            : 'just_edited=1'
+          : 'just_posted=1';
+        window.location.href = `/calendar?${flash}`;
       }
     } catch (caught) {
       modalOpen = false;
       submitting = false;
       if (caught instanceof RateLimitError) {
         rateLimited = true;
+      } else if (
+        isEditing &&
+        caught instanceof Error &&
+        caught.message === 'edit_blocked_by_moderation'
+      ) {
+        inlineError = $t['compose.error.editBlocked'] as string;
       } else {
         inlineError =
           caught instanceof Error ? caught.message : 'Veröffentlichen fehlgeschlagen.';
@@ -218,7 +277,7 @@
   }
 
   function onDiscard() {
-    eventDraft.clearDraft();
+    if (!isEditing) eventDraft.clearDraft();
     if (typeof window !== 'undefined') window.location.href = '/calendar';
   }
 </script>
@@ -233,12 +292,14 @@
       {initialValues}
       onChange={handleChange}
       showBreadcrumb={true}
+      editing={isEditing}
     />
     <EventComposePreview
       {values}
       submitting={submitting}
       onPublish={onPublish}
       onDiscard={onDiscard}
+      editing={isEditing}
     />
   </div>
 
@@ -277,7 +338,7 @@
   </div>
   <div class="lg:hidden h-32" aria-hidden="true"></div>
 
-  <EventComposeStickyPublish {onPublish} {submitting} />
+  <EventComposeStickyPublish {onPublish} {submitting} editing={isEditing} />
 
   <ModeratingModal open={modalOpen} onDismiss={() => (modalOpen = false)} />
 {/if}

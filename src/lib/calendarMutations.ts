@@ -70,6 +70,42 @@ export function createEventMutation() {
   }));
 }
 
+// ─── Edit event ────────────────────────────────────────────────────────
+
+export type EditEventInput = CreateEventInput;
+
+async function editEventReq({ id, input }: { id: string; input: EditEventInput }) {
+  const res = await fetch(`${API_URL}/events/edit/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(input)
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    const details = error.details
+      ? Object.values(error.details).join(', ')
+      : '';
+    throw new Error(details || error.error || 'Failed to update event');
+  }
+  return res.json() as Promise<{
+    event: any;
+    message: string;
+    moderationStatus?: 'pending' | 'approved' | 'rejected';
+  }>;
+}
+
+export function editEventMutation() {
+  const queryClient = useQueryClient();
+
+  return createMutation(() => ({
+    mutationFn: editEventReq,
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar', 'events'] });
+    }
+  }));
+}
+
 // ─── RSVP ──────────────────────────────────────────────────────────────
 
 export type RsvpInput = {

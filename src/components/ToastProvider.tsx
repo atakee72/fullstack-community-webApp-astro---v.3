@@ -21,7 +21,23 @@ export default function ToastProvider() {
 
   return (
     <>
-      <Toaster position="top-center" richColors toastOptions={{ style: { fontFamily: 'inherit' } }} />
+      <Toaster
+        position="top-center"
+        theme="light"
+        toastOptions={{
+          unstyled: true,
+          classNames: {
+            toast: 'kiosk-toast',
+            title: 'kiosk-toast__title',
+            description: 'kiosk-toast__desc',
+            success: 'kiosk-toast--success',
+            error: 'kiosk-toast--error',
+            warning: 'kiosk-toast--warning',
+            info: 'kiosk-toast--info',
+            closeButton: 'kiosk-toast__close'
+          }
+        }}
+      />
       <ConfirmDialog />
     </>
   );

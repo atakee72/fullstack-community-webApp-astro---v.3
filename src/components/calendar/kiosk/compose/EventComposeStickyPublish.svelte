@@ -8,9 +8,10 @@
   import KioskBtn from '../../../forum/kiosk/KioskBtn.svelte';
   import { t } from '../../../../lib/kiosk-i18n';
 
-  let { onPublish, submitting = false } = $props<{
+  let { onPublish, submitting = false, editing = false } = $props<{
     onPublish: () => void;
     submitting?: boolean;
+    editing?: boolean;
   }>();
 </script>
 
@@ -25,6 +26,6 @@
     disabled={submitting}
     class="w-full"
   >
-    {$t['cal.compose.cta.publish']}
+    {editing ? $t['cal.compose.submit.edit'] : $t['cal.compose.cta.publish']}
   </KioskBtn>
 </div>

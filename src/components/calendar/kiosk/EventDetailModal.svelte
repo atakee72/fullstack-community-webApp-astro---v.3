@@ -98,6 +98,15 @@
     return null;
   });
 
+  // Edit allowed only when the event is approved and not warning-labelled
+  // — mirrors the API gate at /api/events/edit/[id].ts and the forum's
+  // canEdit derive at ForumPostDetail.svelte:516-535.
+  const canEdit = $derived(
+    isAuthor &&
+      event?.moderationStatus === 'approved' &&
+      !event?.hasWarningLabel
+  );
+
   const startDate = $derived(
     event?.startDate
       ? event.startDate instanceof Date
@@ -460,6 +469,19 @@
             <button type="button" onclick={onClose} class="hover:text-ink">
               {$t['cal.detail.back']}
             </button>
+            {#if isAuthor}
+              <a
+                href={canEdit ? `/events/edit/${event._id}` : undefined}
+                title={canEdit ? $t['detail.edit.tooltip'] : $t['detail.edit.blocked']}
+                aria-disabled={!canEdit}
+                onclick={canEdit ? undefined : (e) => e.preventDefault()}
+                class={canEdit
+                  ? 'hover:text-wine'
+                  : 'text-ink-mute/50 cursor-not-allowed line-through'}
+              >
+                ✎ {$t['detail.edit.label']}
+              </a>
+            {/if}
             {#if currentUserId && !isAuthor}
               <button type="button" onclick={onReportClick} class="hover:text-danger">
                 {$t['cal.detail.report']}

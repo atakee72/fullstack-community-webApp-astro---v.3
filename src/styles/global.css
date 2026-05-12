@@ -733,3 +733,47 @@ option:disabled {
 .longpress-pulse {
   animation: longpress-pulse 400ms ease-out both;
 }
+/* Kiosk-skinned sonner toast — see ToastProvider.tsx (unstyled:true +
+   classNames map). Paper-warm bg, ink-2 border, Bricolage type, print
+   shadow per type. Required because sonner's default theme clashed
+   with the kiosk vocabulary. */
+.kiosk-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 280px;
+  max-width: 480px;
+  padding: 14px 18px;
+  background: var(--k-paper);
+  color: var(--k-ink);
+  border: 2px solid var(--k-ink);
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 var(--k-ink);
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.kiosk-toast__title { font-weight: 600; }
+.kiosk-toast__desc {
+  margin-top: 2px;
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--k-ink-mute);
+}
+.kiosk-toast--success { box-shadow: 4px 4px 0 var(--k-success); }
+.kiosk-toast--info    { box-shadow: 4px 4px 0 var(--k-wine); }
+.kiosk-toast--warning { box-shadow: 4px 4px 0 var(--k-warn); }
+.kiosk-toast--error   { box-shadow: 4px 4px 0 var(--k-danger); }
+.kiosk-toast__close {
+  margin-left: auto;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--k-ink);
+  border-radius: 999px;
+  background: var(--k-paper);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}

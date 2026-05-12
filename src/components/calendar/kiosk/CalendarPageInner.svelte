@@ -9,7 +9,7 @@
   // Phase 4 will add drag-select state. Phase 5 will mount the detail
   // modal off the events list.
 
-  import { createQuery } from '@tanstack/svelte-query';
+  import { createQuery, useQueryClient } from '@tanstack/svelte-query';
   import {
     format,
     startOfWeek,
@@ -38,12 +38,61 @@
   import { locale, t } from '../../../lib/kiosk-i18n';
   import { getDefaultCalendarQueryOptions } from '../../../lib/calendarQueryOptions';
   import { createSavedEventsQuery, createSaveEventMutation } from '../../../lib/savedEventsQueries';
+  import { showToast, showSuccess } from '../../../utils/toast';
   import type { EventCategory, Event as EventDoc } from '../../../types';
 
   let { initialEvents = [], currentUserId = null } = $props<{
     initialEvents?: any[];
     currentUserId?: string | null;
   }>();
+
+  // useQueryClient must be called during component setup (it reads from
+  // QueryClientProvider context). Used by the flash-effect below to
+  // cache-bust the events query so the UI catches up to the DB write.
+  const queryClient = useQueryClient();
+
+  // ─── Flash toasts on redirect from compose / edit ───────────────────
+  // The compose page dispatches a toast before window.location.href, but
+  // the full-page reload tears down the listener immediately. Reading the
+  // query param here on mount re-fires the toast so the user actually
+  // sees it. URL-cleanup keeps the flash from re-firing on back/forward.
+  $effect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const justPosted = params.get('just_posted');
+    const justEdited = params.get('just_edited');
+    const editBlocked = params.get('edit_blocked');
+
+    if (justPosted === '1') {
+      showSuccess($t['compose.toast.approved'] as string);
+    } else if (justEdited === '1') {
+      showSuccess($t['compose.toast.editApproved'] as string);
+    } else if (justEdited === 'pending') {
+      showToast($t['compose.toast.editPending'] as string, {
+        type: 'info',
+        duration: 6000
+      });
+    } else if (editBlocked === '1') {
+      showToast($t['calendar.flash.editBlocked'] as string, {
+        type: 'warning',
+        duration: 6000
+      });
+    }
+
+    if (justPosted || justEdited || editBlocked) {
+      // Cache-bust: SSR data can momentarily lag the DB write (browser
+      // HTTP cache, MongoDB read-after-write timing). Background refetch
+      // so the UI catches up within ~150ms without a loading spinner.
+      queryClient.invalidateQueries({ queryKey: ['calendar', 'events'] });
+
+      params.delete('just_posted');
+      params.delete('just_edited');
+      params.delete('edit_blocked');
+      const qs = params.toString();
+      const clean = window.location.pathname + (qs ? `?${qs}` : '');
+      window.history.replaceState({}, '', clean);
+    }
+  });
 
   type View = 'month' | 'agenda' | 'day';
 
