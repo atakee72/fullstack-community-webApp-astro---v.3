@@ -333,6 +333,7 @@
         {prevMonthLabel}
         {nextMonthLabel}
         liveCount={liveNow}
+        {currentUserId}
       />
     </div>
   {:else if view === 'agenda'}
@@ -350,6 +351,7 @@
       events={displayedEvents}
       onPickEvent={onPickEvent}
       onRsvp={onPickEvent}
+      {currentUserId}
     />
   {/if}
 

@@ -18,6 +18,7 @@
     spanMid = false,
     spanEnd = true,
     isLive = false,
+    currentUserId = null,
     onclick
   } = $props<{
     ev: EventDoc;
@@ -25,8 +26,33 @@
     spanMid?: boolean;
     spanEnd?: boolean;
     isLive?: boolean;
+    currentUserId?: string | null;
     onclick?: () => void;
   }>();
+
+  // Ghosting for the author's own pending/reported/rejected pill —
+  // dashed-color border replaces the solid ink top/bottom, reduced
+  // opacity on the whole pill (title is short, badge can't fit, so
+  // tinting the whole pill is the only readable signal at this size).
+  const authorId = $derived.by(() => {
+    const a = ev.author as any;
+    if (!a) return null;
+    if (typeof a === 'string') return a;
+    if (a._id) return typeof a._id === 'string' ? a._id : a._id.toString?.() ?? null;
+    return null;
+  });
+  const isAuthor = $derived(!!currentUserId && currentUserId === authorId);
+  const ghostBorder = $derived.by(() => {
+    if (!isAuthor) return '';
+    if (ev.moderationStatus === 'rejected')
+      return 'border-dashed !border-danger !border-y-2';
+    if (ev.isUserReported && ev.moderationStatus === 'pending')
+      return 'border-dashed !border-plum !border-y-2';
+    if (ev.moderationStatus === 'pending')
+      return 'border-dashed !border-warn !border-y-2';
+    return '';
+  });
+  const ghostOpacity = $derived(ghostBorder ? 'opacity-60' : '');
 
   // Normalise — single-day events arrive with all three flags = true.
   const isLeading = $derived(spanStart || (!spanMid && !spanEnd));
@@ -58,7 +84,7 @@
     isLeading ? 'border-l rounded-l-[4px]' : ''
   } ${isTrailing ? 'border-r rounded-r-[4px]' : ''} ${
     spanMid || spanStart ? '-mr-px' : ''
-  } hover:brightness-95 transition-[filter] duration-150`}
+  } ${ghostBorder} ${ghostOpacity} hover:brightness-95 transition-[filter] duration-150`}
 >
   {#if isLeading}
     <span class="inline-flex items-center gap-1">

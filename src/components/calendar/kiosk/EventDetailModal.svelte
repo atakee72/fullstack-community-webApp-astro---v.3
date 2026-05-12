@@ -19,6 +19,9 @@
   import AttendeeStack from './AttendeeStack.svelte';
   import KioskAvatar from '../../forum/kiosk/KioskAvatar.svelte';
   import KioskBtn from '../../forum/kiosk/KioskBtn.svelte';
+  import StatusBadge from '../../forum/kiosk/StatusBadge.svelte';
+  import OwnStatusBanner from '../../forum/kiosk/states/OwnStatusBanner.svelte';
+  import KioskReportModal from '../../forum/kiosk/KioskReportModal.svelte';
 
   import { CATEGORIES } from '../../../lib/calendar/categories';
   import { isLiveNow } from '../../../lib/calendar/eventTime';
@@ -64,6 +67,36 @@
   const dateLocale = $derived($locale === 'de' ? deLocale : enUS);
   const cat = $derived((event?.category ?? 'kiez') as EventCategory);
   const style = $derived(CATEGORIES[cat]);
+
+  // ─── Moderation state (badge + own-banner) ───────────────────────
+  // Badge precedence mirrors the forum cards (ForumPostCard.svelte:167-173).
+  const inferredBadge = $derived(
+    event?.moderationStatus === 'rejected' ? 'rejected'
+    : event?.isUserReported && event?.moderationStatus === 'pending' ? 'reported'
+    : event?.moderationStatus === 'pending' ? 'pending'
+    : event?.hasWarningLabel ? 'warning'
+    : null
+  );
+
+  // event.author can be a populated user object OR a plain id string,
+  // depending on which endpoint produced the doc. Handle both.
+  const authorId = $derived.by(() => {
+    const a = event?.author as any;
+    if (!a) return null;
+    if (typeof a === 'string') return a;
+    if (a._id) return typeof a._id === 'string' ? a._id : a._id.toString?.() ?? null;
+    return null;
+  });
+  const isAuthor = $derived(!!currentUserId && currentUserId === authorId);
+
+  // Author-only banner state. Non-authors get null → no banner.
+  const ownState = $derived.by(() => {
+    if (!isAuthor) return null;
+    if (event?.moderationStatus === 'rejected') return 'rejected' as const;
+    if (event?.isUserReported && event?.moderationStatus === 'pending') return 'reported' as const;
+    if (event?.moderationStatus === 'pending') return 'pending' as const;
+    return null;
+  });
 
   const startDate = $derived(
     event?.startDate
@@ -165,15 +198,10 @@
   );
   const attendees = $derived(profilesQuery.data ?? []);
 
+  let reportOpen = $state(false);
   function onReportClick() {
-    // Phase 6 wires this to the existing report modal. v1: no-op.
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(
-        new CustomEvent('app:toast', {
-          detail: { type: 'info', message: $t['cal.detail.report'] }
-        })
-      );
-    }
+    if (!currentUserId || isAuthor) return;
+    reportOpen = true;
   }
 </script>
 
@@ -202,15 +230,22 @@
       >
         <!-- Category strip — adds an inline 'MAHALLE-TEAM' second
              label when the event is official (server flag) or the
-             author name matches the team heuristic. -->
-        <div
-          class={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${style.bgClass} ${style.textOnFill} border-2 border-ink font-bricolage font-bold text-[12px] tracking-[0.04em] mb-3.5`}
-        >
-          <span aria-hidden="true">{style.glyph}</span>
-          <span>{($t[`cal.cat.${cat}.label` as const] as string)?.toUpperCase()}</span>
-          {#if isOfficial}
-            <span class="w-px h-3 bg-paper/50" aria-hidden="true"></span>
-            <span class="text-[10px] tracking-[0.08em]">{($t['cal.team'] as string)?.toUpperCase()}</span>
+             author name matches the team heuristic. Moderation badge
+             sits next to it when the event is pending/reported/rejected
+             or warning-labelled. -->
+        <div class="flex items-center flex-wrap gap-2 mb-3.5">
+          <div
+            class={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${style.bgClass} ${style.textOnFill} border-2 border-ink font-bricolage font-bold text-[12px] tracking-[0.04em]`}
+          >
+            <span aria-hidden="true">{style.glyph}</span>
+            <span>{($t[`cal.cat.${cat}.label` as const] as string)?.toUpperCase()}</span>
+            {#if isOfficial}
+              <span class="w-px h-3 bg-paper/50" aria-hidden="true"></span>
+              <span class="text-[10px] tracking-[0.08em]">{($t['cal.team'] as string)?.toUpperCase()}</span>
+            {/if}
+          </div>
+          {#if inferredBadge}
+            <StatusBadge state={inferredBadge} size="md" />
           {/if}
         </div>
 
@@ -290,6 +325,16 @@
             </div>
           {/if}
         </div>
+
+        <!-- Author-only moderation banner. Shows above the description
+             when the event is pending / rejected / community-reported and
+             the viewer is the author. Reuses the forum's banner component
+             so copy + visuals match across surfaces. -->
+        {#if ownState}
+          <div class="mb-4">
+            <OwnStatusBanner state={ownState} reason={event.rejectionReason} />
+          </div>
+        {/if}
 
         <!-- Description -->
         {#if event.body}
@@ -415,9 +460,11 @@
             <button type="button" onclick={onClose} class="hover:text-ink">
               {$t['cal.detail.back']}
             </button>
-            <button type="button" onclick={onReportClick} class="hover:text-danger">
-              {$t['cal.detail.report']}
-            </button>
+            {#if currentUserId && !isAuthor}
+              <button type="button" onclick={onReportClick} class="hover:text-danger">
+                {$t['cal.detail.report']}
+              </button>
+            {/if}
           </div>
         </div>
       </div>
@@ -432,3 +479,13 @@
     </div>
   {/if}
 </dialog>
+
+{#if event}
+  <KioskReportModal
+    open={reportOpen}
+    contentId={String(event._id)}
+    contentType="event"
+    contentTitle={event.title}
+    onClose={() => (reportOpen = false)}
+  />
+{/if}

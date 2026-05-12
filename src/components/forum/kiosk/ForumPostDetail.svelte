@@ -24,6 +24,7 @@
   import CommentComposer from './compose/CommentComposer.svelte';
   import CommentComposerMobile from './compose/CommentComposerMobile.svelte';
   import OwnStatusBanner from './states/OwnStatusBanner.svelte';
+  import KioskReportModal from './KioskReportModal.svelte';
   import { confirmAction, showError, showToast } from '../../../utils/toast';
   import { optimizeCloudinary } from '../../../utils/cloudinary';
 
@@ -63,6 +64,16 @@
   const isAuthor = $derived(
     !!currentUserId && authorIdOf(topic.author) === currentUserId
   );
+
+  // Map plural collectionType → singular API contentType for /api/reports/submit.
+  const reportContentType = $derived(
+    collectionType === 'announcements'
+      ? ('announcement' as const)
+      : collectionType === 'recommendations'
+      ? ('recommendation' as const)
+      : ('topic' as const)
+  );
+  let reportOpen = $state(false);
 
   // Map sub-collection → ForumPostCard `kind` so the breadcrumb chip
   // and tone match the index.
@@ -657,12 +668,15 @@
             >
               <span aria-hidden="true">↗</span> {$t['detail.share']}
             </button>
-            <button
-              type="button"
-              class="inline-flex items-center gap-1 hover:text-ink transition-colors"
-            >
-              <span aria-hidden="true">⚑</span> {$t['detail.report']}
-            </button>
+            {#if currentUserId && !isAuthor}
+              <button
+                type="button"
+                onclick={() => (reportOpen = true)}
+                class="inline-flex items-center gap-1 hover:text-ink transition-colors"
+              >
+                <span aria-hidden="true">⚑</span> {$t['detail.report']}
+              </button>
+            {/if}
           </span>
         </div>
 
@@ -820,4 +834,12 @@
   }}
   submitting={postingComment}
   onSubmit={submitComment}
+/>
+
+<KioskReportModal
+  open={reportOpen}
+  contentId={String(topic._id)}
+  contentType={reportContentType}
+  contentTitle={topic.title}
+  onClose={() => (reportOpen = false)}
 />

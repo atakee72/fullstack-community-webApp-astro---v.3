@@ -6,7 +6,7 @@ import type { Topic, EditHistory, FlaggedContent } from '../../../../types';
 import { TopicCreateSchema } from '../../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../../schemas/validation.utils';
 import { isOwner } from '../../../../utils/authHelpers';
-import { moderateText, checkImagesWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../../lib/moderation';
+import { moderateText, checkSpamWithGPT, checkImagesWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../../lib/moderation';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
@@ -76,9 +76,12 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
-    // Run content moderation on edited content (FAIL-SAFE: queues for review on any error)
+    // Run content moderation on edited content (FAIL-SAFE: queues for review on any error).
+    // Mirrors the create-path checks: moderateText + checkSpamWithGPT + tag moderation + image moderation.
+    const contentText = `${title}\n\n${body}`;
     const moderationChecks: Promise<any>[] = [
-      moderateText(`${title}\n\n${body}`)
+      moderateText(contentText),
+      checkSpamWithGPT(contentText, 'neighborhood community forum post')
     ];
     if (tags?.length) {
       moderationChecks.push(moderateText(tags.join(' ')));
@@ -87,10 +90,10 @@ export const PUT: APIRoute = async ({ request, params }) => {
       moderationChecks.push(checkImagesWithGPT(images.map(img => img.url)));
     }
 
-    const [mainModerationResult, tagsModerationResult, imageModerationResult] = await Promise.all(moderationChecks);
+    const [mainModerationResult, spamResult, tagsModerationResult, imageModerationResult] = await Promise.all(moderationChecks);
 
     // Merge all moderation results
-    const resultsToMerge = [mainModerationResult];
+    const resultsToMerge = [mainModerationResult, spamResult];
     if (tagsModerationResult) resultsToMerge.push(tagsModerationResult);
     if (imageModerationResult) resultsToMerge.push(imageModerationResult);
     const mergedModerationResult = mergeModerationResults(...resultsToMerge);

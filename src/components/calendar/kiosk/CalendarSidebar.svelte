@@ -23,6 +23,16 @@
   import { now } from '../../../lib/calendar/nowTicker';
   import { t, locale } from '../../../lib/kiosk-i18n';
   import type { Event as EventDoc, EventCategory } from '../../../types';
+  import StatusBadge from '../../forum/kiosk/StatusBadge.svelte';
+
+  function inferBadge(ev: EventDoc | undefined) {
+    if (!ev) return null;
+    if (ev.moderationStatus === 'rejected') return 'rejected' as const;
+    if (ev.isUserReported && ev.moderationStatus === 'pending') return 'reported' as const;
+    if (ev.moderationStatus === 'pending') return 'pending' as const;
+    if (ev.hasWarningLabel) return 'warning' as const;
+    return null;
+  }
 
   let {
     visibleMonth = new Date(),
@@ -100,8 +110,13 @@
       <div
         class="bg-paper border-2 border-ochre rounded-md px-3.5 py-3 shadow-[2px_2px_0_var(--k-ochre,#e8a53a)]"
       >
-        <div class={`font-dmmono text-[10px] tracking-[0.1em] ${liveStyle.textClass} mb-1`}>
-          {liveStyle.glyph} {$t[`cal.cat.${liveCat}.label` as const]?.toUpperCase()}
+        <div class="flex items-center flex-wrap gap-1.5 mb-1">
+          <span class={`font-dmmono text-[10px] tracking-[0.1em] ${liveStyle.textClass}`}>
+            {liveStyle.glyph} {$t[`cal.cat.${liveCat}.label` as const]?.toUpperCase()}
+          </span>
+          {#if inferBadge(liveEvent)}
+            <StatusBadge state={inferBadge(liveEvent)!} size="sm" />
+          {/if}
         </div>
         <div class="font-bricolage font-bold text-[14px] leading-[1.2] mb-1">
           {liveEvent.title}

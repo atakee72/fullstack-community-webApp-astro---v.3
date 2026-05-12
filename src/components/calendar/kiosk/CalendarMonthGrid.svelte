@@ -51,7 +51,8 @@
     onNextMonth,
     prevMonthLabel = '',
     nextMonthLabel = '',
-    liveCount = 0
+    liveCount = 0,
+    currentUserId = null
   } = $props<{
     visibleMonth?: Date;
     events?: EventDoc[];
@@ -62,6 +63,7 @@
     prevMonthLabel?: string;
     nextMonthLabel?: string;
     liveCount?: number;
+    currentUserId?: string | null;
   }>();
 
   function liveLine(n: number): string {
@@ -326,6 +328,7 @@
               spanMid={sMid}
               spanEnd={sEnd}
               isLive={isLiveNow(ev, $now)}
+              {currentUserId}
               onclick={() => onPickEvent?.(ev)}
             />
           {/each}

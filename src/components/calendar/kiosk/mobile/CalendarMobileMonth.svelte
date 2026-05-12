@@ -37,6 +37,36 @@
   import { showError } from '../../../../utils/toast';
   import type { EventCategory, Event as EventDoc } from '../../../../types';
   import DragSelectPin from '../DragSelectPin.svelte';
+  import StatusBadge from '../../../forum/kiosk/StatusBadge.svelte';
+
+  // Moderation badge precedence — same as forum cards.
+  function inferBadge(ev: EventDoc) {
+    if (ev.moderationStatus === 'rejected') return 'rejected' as const;
+    if (ev.isUserReported && ev.moderationStatus === 'pending') return 'reported' as const;
+    if (ev.moderationStatus === 'pending') return 'pending' as const;
+    if (ev.hasWarningLabel) return 'warning' as const;
+    return null;
+  }
+
+  // Author-only ghosting state — pending / reported / rejected only.
+  // Returns the dashed outline class string + body opacity flag.
+  function authorIdOf(ev: EventDoc): string | null {
+    const a = ev.author as any;
+    if (!a) return null;
+    if (typeof a === 'string') return a;
+    if (a._id) return typeof a._id === 'string' ? a._id : a._id.toString?.() ?? null;
+    return null;
+  }
+  function ghostOutlineClass(ev: EventDoc, viewerId: string | null): string {
+    if (!viewerId || viewerId !== authorIdOf(ev)) return '';
+    if (ev.moderationStatus === 'rejected')
+      return 'outline outline-2 outline-dashed outline-danger outline-offset-[-2px] rounded-md';
+    if (ev.isUserReported && ev.moderationStatus === 'pending')
+      return 'outline outline-2 outline-dashed outline-plum outline-offset-[-2px] rounded-md';
+    if (ev.moderationStatus === 'pending')
+      return 'outline outline-2 outline-dashed outline-warn outline-offset-[-2px] rounded-md';
+    return '';
+  }
 
   type View = 'month' | 'agenda' | 'day';
 
@@ -587,7 +617,9 @@
           {@const live = isLiveNow(ev, $now)}
           {@const start = ev.startDate instanceof Date ? ev.startDate : new Date(ev.startDate)}
           {@const going = isGoing(ev)}
-          <li class="flex items-center gap-2 border-b border-dashed border-rule">
+          {@const badge = inferBadge(ev)}
+          {@const ghost = ghostOutlineClass(ev, currentUserId)}
+          <li class={`flex items-center gap-2 border-b border-dashed border-rule ${ghost} ${ghost ? 'px-1.5 my-0.5' : ''}`}>
             <button
               type="button"
               onclick={() => onPickEvent?.(ev)}
@@ -603,11 +635,16 @@
                   : format(start, 'HH:mm', { locale: dateLocale })}
               </span>
               <div class="min-w-0">
-                <div class="font-bricolage font-bold text-[13px] leading-[1.2] truncate">
-                  {ev.title}
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-bricolage font-bold text-[13px] leading-[1.2] truncate">
+                    {ev.title}
+                  </span>
+                  {#if badge}
+                    <StatusBadge state={badge} size="sm" />
+                  {/if}
                 </div>
                 {#if ev.location}
-                  <div class="font-instrument italic text-[11px] text-ink-mute truncate">
+                  <div class={`font-instrument italic text-[11px] text-ink-mute truncate ${ghost ? 'opacity-70' : ''}`}>
                     {ev.location}
                   </div>
                 {/if}

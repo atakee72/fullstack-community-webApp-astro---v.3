@@ -2,10 +2,16 @@ import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
-import type { Event, EditHistory } from '../../../../types';
+import type { Event, EditHistory, FlaggedContent } from '../../../../types';
 import { EventUpdateSchema } from '../../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../../schemas/validation.utils';
 import { isOwner } from '../../../../utils/authHelpers';
+import {
+  moderateText,
+  checkSpamWithGPT,
+  createFlaggedContentRecord,
+  mergeModerationResults
+} from '../../../../lib/moderation';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
@@ -56,6 +62,38 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
+    // Block edits while the event is under moderation or warning-labelled.
+    // Mirrors the topics-edit gate at /api/topics/edit/[id].ts. Author can
+    // delete + recreate if they want to amend.
+    if (existingEvent.moderationStatus !== 'approved' || existingEvent.hasWarningLabel) {
+      return new Response(JSON.stringify({ error: 'edit_blocked_by_moderation' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Re-run moderation on the edited content. Build the same composite
+    // string as events/create.ts so the same thresholds apply.
+    const nextTitle = title ?? existingEvent.title;
+    const nextBody = body ?? existingEvent.body ?? '';
+    const nextLocation = location ?? existingEvent.location ?? '';
+    const nextTags = tags ?? existingEvent.tags ?? [];
+    const contentText = `${nextTitle}\n\n${nextBody}\n\n${nextLocation}`;
+
+    const moderationChecks: Promise<any>[] = [
+      moderateText(contentText),
+      checkSpamWithGPT(contentText, 'neighborhood community event')
+    ];
+    if (nextTags.length) {
+      moderationChecks.push(moderateText(nextTags.join(' ')));
+    }
+
+    const [mainModerationResult, spamResult, tagsModerationResult] =
+      await Promise.all(moderationChecks);
+    const resultsToMerge = [mainModerationResult, spamResult];
+    if (tagsModerationResult) resultsToMerge.push(tagsModerationResult);
+    const mergedResult = mergeModerationResults(...resultsToMerge);
+
     const editHistoryEntry: EditHistory = {
       originalTitle: existingEvent.title,
       originalBody: existingEvent.body || '',
@@ -81,6 +119,12 @@ export const PUT: APIRoute = async ({ request, params }) => {
     if (visibility !== undefined) updateFields.visibility = visibility;
     if (tags !== undefined) updateFields.tags = tags;
 
+    // Flip status back to pending if any check flagged; otherwise stay approved.
+    if (mergedResult) {
+      updateFields.moderationStatus = 'pending';
+      updateFields.rejectionReason = null;
+    }
+
     const updateResult = await eventsCollection.findOneAndUpdate(
       { _id: new ObjectId(eventId) },
       {
@@ -99,6 +143,23 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
+    // Write a new flagged content record so the admin queue surfaces the edit.
+    if (mergedResult) {
+      const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
+      const flaggedRecord = createFlaggedContentRecord(
+        'event',
+        { title: nextTitle, body: nextBody, tags: nextTags },
+        {
+          id: userId,
+          name: session.user.name || undefined,
+          email: session.user.email || undefined
+        },
+        mergedResult
+      );
+      flaggedRecord.contentId = eventId;
+      await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
+    }
+
     // Construct author object from session
     const author = {
       _id: userId,
@@ -112,6 +173,20 @@ export const PUT: APIRoute = async ({ request, params }) => {
       ...updateResult,
       author
     };
+
+    if (mergedResult) {
+      return new Response(
+        JSON.stringify({
+          event: updatedEvent,
+          message: mergedResult.userMessage,
+          moderationStatus: 'pending'
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     return new Response(
       JSON.stringify({

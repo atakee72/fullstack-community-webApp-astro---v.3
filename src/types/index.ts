@@ -193,6 +193,8 @@ export interface Event {
   lastEditedAt?: Date;
   // Moderation fields
   moderationStatus?: 'approved' | 'pending' | 'rejected';
+  isUserReported?: boolean;
+  rejectionReason?: string;
   hasWarningLabel?: boolean;
   warningText?: string;
   // Timestamps

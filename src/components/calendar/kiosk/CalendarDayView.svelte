@@ -17,11 +17,13 @@
   let {
     events = [],
     onPickEvent,
-    onRsvp
+    onRsvp,
+    currentUserId = null
   } = $props<{
     events?: EventDoc[];
     onPickEvent?: (ev: EventDoc) => void;
     onRsvp?: (ev: EventDoc) => void;
+    currentUserId?: string | null;
   }>();
 
   let selectedDay = $state(new Date());
@@ -66,7 +68,7 @@
     {:else}
       <div>
         {#each dayEvents as ev (String(ev._id))}
-          <AgendaRow {ev} onPick={onPickEvent} {onRsvp} />
+          <AgendaRow {ev} onPick={onPickEvent} {onRsvp} {currentUserId} />
         {/each}
       </div>
     {/if}

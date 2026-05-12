@@ -28,6 +28,7 @@
   } from '../../../../lib/calendarMutations';
   import { eventDraft, type EventDraftValues } from '../../../../lib/eventDraftStore';
   import { t } from '../../../../lib/kiosk-i18n';
+  import { showToast, showSuccess } from '../../../../utils/toast';
   import type { EventCategory } from '../../../../types';
 
   let { currentUser } = $props<{
@@ -173,7 +174,7 @@
         ? new Date(`${values.endDate}T23:59:59.000Z`).toISOString()
         : composeIso(values.endDate, values.endTime, false);
 
-      await create.mutateAsync({
+      const result = await create.mutateAsync({
         title: values.title.trim(),
         body: values.body.trim(),
         startDate: startISO,
@@ -188,6 +189,19 @@
 
       eventDraft.clearDraft();
       modalOpen = false;
+
+      // Toast survives the full-page redirect because <ToastProvider>
+      // is mounted in the global layout and listens to `app:toast`
+      // events for the lifetime of the next page too.
+      if (result?.moderationStatus === 'pending') {
+        showToast(result.message || ($t['compose.toast.pending'] as string), {
+          type: 'info',
+          duration: 6000
+        });
+      } else {
+        showSuccess($t['compose.toast.approved'] as string);
+      }
+
       if (typeof window !== 'undefined') {
         window.location.href = '/calendar?just_posted=1';
       }
