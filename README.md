@@ -8,7 +8,7 @@ A modern, performant community web application built with Astro, TypeScript, and
 
 - **Framework**: Astro 5.x with Hybrid SSR/SSG
 - **UI**: React 18.2 + Svelte 5 for interactive islands
-- **Styling**: Tailwind CSS 3.4 with custom design system (dark glass redesign)
+- **Styling**: Tailwind CSS 3.4 with kiosk design system (paper-warm + ink borders, mid-migration from legacy dark-glass)
 - **Animation**: Motion 12.x (`motion/react`) + Web Animations API for `is:inline` scripts
 - **State Management**: TanStack Query for server state, local `useState` for UI (no Zustand/Redux)
 - **Data Fetching**: TanStack Query 5.17 with localStorage persistence (24h)
@@ -56,24 +56,46 @@ src/
 
 ## 🎨 Design System
 
-The app uses a dark glass aesthetic on a deep indigo base (`#0e1033`) with a purple radial gradient (`#542CC8`). Each main page has its own carved-title accent color:
+The app is mid-migration from a **dark-glass** aesthetic (deep indigo `#0e1033` + purple radial gradient + glass surfaces) to a **kiosk** aesthetic (paper-warm surfaces, ink borders, print shadows, carved-italic title accents, DM Mono kickers, Instrument italic copy).
+
+### Migration status
+
+| Surface | State |
+|---|---|
+| Forum (`/`, `/topics/[id]`, `/announcements/[id]`, `/recommendations/[id]`) | ✅ Kiosk (Svelte) |
+| Calendar (`/calendar`, `/events/edit/[id]`) | ✅ Kiosk (Svelte) |
+| Newsboard | 🚧 Legacy dark-glass |
+| Marketplace | 🚧 Legacy dark-glass (kiosk scoping in progress — see `design/handoffs/design_handoff_marketplace/`) |
+| Profile | 🚧 Legacy dark-glass |
+| Blog | 🚧 Legacy dark-glass |
+| Admin (announcements panel + moderation queue) | 🚧 Legacy / mixed |
+
+### Page-accent rule (kiosk)
+Each migrated page has its own accent color used for kickers (mono-uppercase eyebrows) and carved-italic title accents:
 
 | Page | Accent |
-|------|--------|
-| Forum (`/`) | Plum `#6F2F59` |
-| Blog (`/blog`) | White on dark |
-| Newsboard | Wine `#814256` |
-| Calendar | Teal `#4b9aaa` |
-| Marketplace | Teal `#4b9aaa` |
-| Schillerkiez | Green `#6aab8e` |
+|---|---|
+| Forum | Wine `#b23a5b` |
+| Calendar | Teal `#3f8f9f` |
+| Newsboard / Marketplace / Profile / Blog | TBD |
 
-Original palette (still used for accents, ribbons, tags):
+Semantic accents stay constant across all kiosk surfaces (never swapped per page): live-now indicator (ochre dot), today indicator, weekend-day labels, required-field asterisks, compose step numbers (`01`, `02`, …), CTA wine-shadows, modal wine-shadows, the mobile wine FAB.
+
+### Shared kiosk components
+- `KioskLayout` / `KioskFooter` — page chrome with built-in clearance for sticky bottom bars
+- `KioskReportModal` — paper-warm community-report modal (forum + calendar, reusable for upcoming kiosk surfaces)
+- `OwnStatusBanner` — author-facing moderation banner (pending / reported / rejected, with optional rejection-reason blockquote)
+- Sonner toasts re-skinned via `unstyled: true` + `.kiosk-toast*` classes (paper-warm bg, ink-2 border, Bricolage font, Instrument italic descriptions, print-shadow per type)
+- `GlassFilters.astro` — shared SVG `feTurbulence` filters for liquid-glass refraction (used by legacy `.glass-luxe*` utilities on unmigrated pages)
+
+### Legacy dark-glass utilities (still in use on unmigrated pages)
+Utilities in `global.css`: `.dark-glass-bg`, `.dark-glass-gradient` (fixed background divs), `.carved-title` (beveled text with `--carved-accent` CSS var), `.glass-luxe`, `.glass-luxe-edge`, `.glass-smooth`, `.glass-smooth-edge`, `.glass-inner-glow`. Legacy per-page carved-title accents: Newsboard=Wine, Schillerkiez=Green `#6aab8e`, Blog=White-on-dark, Marketplace=Teal.
+
+### Original palette (used across both systems)
 - Teal: `#4b9aaa`
 - Wine/Burgundy: `#814256`
 - Gold: `#eccc6e`
 - Beige: `#aca89f`
-
-Utilities in `global.css`: `.dark-glass-bg`, `.dark-glass-gradient` (fixed background divs), `.carved-title` (beveled text with `--carved-accent` CSS var).
 
 ## 🛠️ Setup
 
@@ -143,10 +165,13 @@ Vercel will automatically:
 - **Marketplace**: Buy/sell/exchange (Tausch) listings with image gallery, AI moderation (text + vision), user reports, and draft save/publish workflow
 - **Custom UI Dialogs**: Native `<dialog>`-based confirm modals and sonner toasts replace all browser-native dialogs
 - **Kiez Data Dashboard**: Interactive Schillerkiez neighborhood statistics with hand-drawn SVG charts, historical trends (demographics + social indicators 2013–2023), and live air quality data
-- **Forum cards**: Fixed-height forum post cards with client-side pagination (12/24/48 per page), news-style mobile overlay for image posts, and 50/50 split on desktop
-- **Forum post images**: Up to 5 images per post (topics, announcements, recommendations) with Cloudinary upload, GPT-4o vision moderation, news-style hero card on mobile, 50/50 split on desktop, and scroll-snap carousel with arrow nav in the detail modal
-- **Forum bookmarks**: Save/bookmark posts with server-side persistence, optimistic UI updates, and bookmark icon in card toolbar + modal footer
-- **Forum search**: Client-side search by title, body, author name, and tags. Clickable tags for instant filtering. Result count display. Search persists across forum tabs
+- **Forum (kiosk)**: Multi-collection merged feed (discussions + announcements + recommendations) on `/` with per-kind detail routes, per-kind card straps + chips, card height convergence (`line-clamp-3` body + `min-h-[340px]`), and resilient `Promise.allSettled` fetch (single-collection outage degrades to empty array for that kind only).
+- **Official admin announcements**: 7-day pinned slot at the top of the forum feed, server-enforced single-pin invariant via atomic displacement, admin dashboard at `/admin/announcements` for create/edit/pin/unpin/delete. Admin role bypasses AI moderation.
+- **Moderation visibility (forum + calendar)**: Author-only banners (`OwnStatusBanner` for pending / reported / rejected, with rejection-reason blockquote), author-only ghosting (dashed `border-warn`/`border-plum`/`border-danger` + body opacity), non-author "⚑ GEMELDET" chip for community-reported pending (no banner, no ghost — anti-stigma). Rejected items sort to the top of the author's view. Edit lockout (`403 'edit_blocked_by_moderation'`) on any non-approved status — UI mirrors with visibly disabled edit buttons.
+- **Calendar (kiosk)**: Live `now` ticker store (60s aligned to wall-clock minute) drives "is this event live right now?" reactivity across detail modal, agenda, sidebar, month grid, and mobile day view. Saved events with optimistic mutations. Public attendee-profile lookup endpoint for the going-list stack. Dedicated edit page at `/events/edit/[id]` with flash-redirect cache-bust.
+- **Forum post images**: Up to 5 images per post (topics, announcements, recommendations) with Cloudinary upload, GPT-4o vision moderation, and scroll-snap carousel with arrow nav in the detail modal.
+- **Forum bookmarks**: Save/bookmark posts with server-side persistence (`savedPosts` collection) and optimistic UI updates. Same pattern for saved events (`savedEvents`).
+- **Forum search & tag filtering**: Client-side filtering by title, body, author name, and tags. Clickable tag pills set the search value.
 - **Splash screen**: One-per-session logo video intro (compressed to ~56 KB H.264). Skips on sub-pages, reduced-motion users, and subsequent visits. Dual-gate dismiss (video end + `window.load`) with 4s safety timeout and autoplay-blocked fallback for mobile Firefox.
 - **Performance**: Cloudinary `f_auto,q_auto` URL rewriter (`src/utils/cloudinary.ts`) applied to all user-uploaded images, SSR prefetch for forum default tab, batched `$in` author lookups, and localStorage-persisted React Query cache for instant page switches.
 
