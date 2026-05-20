@@ -523,6 +523,314 @@ const de = {
   'cal.state.error.title': 'Wir konnten die Termine nicht laden.',
   'cal.state.error.retry': 'nochmal',
 
+  // ─── Marketplace ─ Browse ──────────────────────────────────────────────
+
+  // Title block — three-part carved title (same pattern as forum/calendar).
+  'market.title.q1': 'Was',
+  'market.title.q1.italic': 'wechselt',
+  'market.title.q1.suffix': 'heute den Besitzer?',
+
+  // Title-block meta counters.
+  'market.titlemeta.listings': 'Anzeigen',
+  'market.titlemeta.new': 'neu seit gestern',
+  'market.titlemeta.fresh': 'frisch im Kiez',
+
+  // CTA button.
+  'market.cta.newListing': '+ neue anzeige',
+
+  // Filter rail — kind toggle labels.
+  'market.filter.kind.all': 'Alle',
+  'market.filter.kind.verkaufen': 'Verkaufen',
+  'market.filter.kind.tausch': 'Tausch',
+  'market.filter.kind.verschenken': 'Verschenken',
+
+  // Filter rail — secondary filters.
+  'market.filter.saved': 'Gespeichert',
+  'market.filter.mine': 'Meine Anzeigen',
+  'market.filter.search': 'im Markt suchen…',
+  'market.filter.kind.label': 'ART',
+  'market.filter.category.label': 'KATEGORIE',
+  'market.filter.search.label': 'SUCHE',
+
+  // Category labels (chip + filter rail).
+  'market.cat.moebel': 'Möbel & Wohnen',
+  'market.cat.kleidung': 'Kleidung & Mode',
+  'market.cat.medien': 'Bücher, Medien & Spiele',
+  'market.cat.werkzeug': 'Werkzeug & Garten',
+  'market.cat.pflanze': 'Pflanzen & Tiere',
+  'market.cat.elektronik': 'Elektronik',
+  'market.cat.fahrrad': 'Fahrräder & Mobilität',
+  'market.cat.kind': 'Kinder',
+  'market.cat.sonstiges': 'Sonstiges',
+
+  // Strap labels (10 locked straps).
+  'market.strap.gratis': 'GRATIS',
+  'market.strap.tausch': 'TAUSCH',
+  'market.strap.bump': 'FRISCH HOCHGEHOLT',
+  'market.strap.altpapier': 'ALTPAPIER',
+  'market.strap.altbestand': 'ALTBESTAND',
+  'market.strap.pruefung': 'IN PRÜFUNG',
+  'market.strap.bildAbgelehnt': 'BILD ABGELEHNT',
+  'market.strap.reserviert': 'RESERVIERT',
+  'market.strap.verkauft': 'VERKAUFT',
+  'market.strap.entwurf': 'ENTWURF',
+
+  // Delivery enum labels.
+  'market.delivery.abholung': 'Nur Abholung',
+  'market.delivery.versand': 'Versand möglich',
+  'market.delivery.abholungVersand': 'Abholung & Versand',
+
+  // Price labels.
+  'market.price.tausch.label': 'Tauschvorschlag',
+  'market.price.vb.suffix': 'VB',
+  'market.price.vb.long': 'VB = Verhandlungsbasis',
+
+  // Section divider labels.
+  'market.divider.sortedBy': 'SORTIERT NACH FRISCHE',
+  'market.divider.allListings': 'ALLE 342 ANZEIGEN',
+
+  // Editorial lead banner.
+  'market.lead.banner': 'HEUTE FRISCH IM KIEZ',
+  'market.lead.posted': 'vor 2 Std. eingestellt',
+
+  // ─── Marketplace ─ Detail page ─────────────────────────────────────────
+
+  // Gallery legend / lightbox hint.
+  'market.detail.gallery.hint': 'Klick = Lightbox · Pfeile = navigieren · Esc = schließen',
+  'market.detail.gallery.viewAll': 'alle\nansehen',
+
+  // Back breadcrumb.
+  'market.detail.back': '← zurück zum Markt',
+
+  // Spec-strip field labels.
+  'market.detail.spec.masse': 'Maße',
+  'market.detail.spec.zustand': 'Zustand',
+  'market.detail.spec.material': 'Material',
+  'market.detail.spec.baujahr': 'Baujahr',
+  'market.detail.spec.farbe': 'Farbe',
+  'market.detail.spec.gewicht': 'Gewicht',
+
+  // Action row.
+  'market.detail.action.save': 'merken',
+  'market.detail.action.share': 'teilen',
+  'market.detail.action.report': 'melden',
+
+  // Similar listings sidebar header.
+  'market.detail.similar.header': 'ÄHNLICHES IM KIEZ',
+
+  // ─── Marketplace ─ Contact form ────────────────────────────────────────
+
+  // Form headers (vary by listing kind).
+  'market.contact.header': 'INTERESSE? NACHRICHT SENDEN',
+  'market.contact.tausch.headline': 'TAUSCH-VORSCHLAG SENDEN',
+  'market.contact.tausch.helper': 'Sag konkret, was du im Tausch anbietest. Foto-Link oder kurze Beschreibung hilft.',
+  'market.contact.tausch.placeholder': 'Ich hätte eine Lederjacke in S/M zum Tausch — Foto kann ich gern schicken. Würde das passen?',
+
+  // Form fields.
+  'market.contact.name.label': 'Dein Name',
+  'market.contact.email.label': 'Deine E-Mail (für die Antwort)',
+  'market.contact.message.label': 'Nachricht',
+  'market.contact.helper.text': 'Direkt + freundlich. Nachrichten werden automatisch geprüft.',
+
+  // Send button + confirmation.
+  'market.contact.send': '→ senden',
+  'market.contact.sent.header': 'NACHRICHT GESENDET',
+  'market.contact.sent.confirmation': 'Deine Nachricht ist angekommen. Antworten landen direkt in deinem E-Mail-Postfach.',
+  'market.contact.sent.helper': 'Mahalle leitet weiter — keine der E-Mail-Adressen wird offen geteilt.',
+
+  // Privacy footer (shown in both idle + sent states).
+  'market.contact.privacy.footer': 'Keine E-Mail-Adresse wird preisgegeben. Mahalle leitet weiter — Antworten kommen in dein Postfach.',
+
+  // Soft-note for reserved listings (A7).
+  'market.contact.reserved.softnote': 'Reserviert — du kannst trotzdem anfragen, falls der Deal nicht zustande kommt.',
+
+  // ─── Marketplace ─ Owner actions ───────────────────────────────────────
+
+  'market.owner.header': 'DEINE ANZEIGE',
+  'market.owner.edit': 'bearbeiten',
+  'market.owner.bump': 'frisch hochholen',
+  'market.owner.markReserved': 'als reserviert',
+  'market.owner.markSold': 'als verkauft',
+  'market.owner.lastBump': 'letzter Bump: vor {n} Tagen',
+  'market.owner.delete': '✕ anzeige löschen',
+  'market.owner.pendingBanner': 'In Prüfung — Bearbeiten ist während der KI-Prüfung deaktiviert. Dauert nur ein paar Sekunden.',
+
+  // ─── Marketplace ─ Seller card ─────────────────────────────────────────
+
+  'market.seller.header': 'VERKÄUFER:IN',
+  'market.seller.since': 'seit {year}',
+  'market.seller.nListings': '{n} Anzeigen',
+  'market.seller.verified': 'VERIFIZIERT IM KIEZ',
+  'market.seller.moreListings': '→ weitere Anzeigen',
+  'market.seller.report': 'melden',
+
+  // ─── Marketplace ─ Compose flow ────────────────────────────────────────
+
+  // Page title — same carved-italic pattern.
+  'market.compose.title.q1': 'Was möchtest du',
+  'market.compose.title.q1.italic': 'loswerden',
+  'market.compose.title.q1.suffix': '?',
+  'market.compose.crumb': 'NEUE ANZEIGE',
+
+  // Section headings (§01–§06).
+  'market.compose.section.kind': 'Art',
+  'market.compose.section.category': 'Kategorie',
+  'market.compose.section.titleDesc': 'Titel & Beschreibung',
+  'market.compose.section.photos': 'Fotos',
+  'market.compose.section.priceDelivery': 'Preis & Lieferung',
+  'market.compose.section.optional': 'Optionale Details · helfen beim Verkauf',
+  'market.compose.section.done': 'AUSGEFÜLLT',
+
+  // Kind-picker card labels + descriptions.
+  'market.compose.kind.verkaufen': 'Verkaufen',
+  'market.compose.kind.verkaufen.note': 'Preis in €',
+  'market.compose.kind.tausch': 'Tausch',
+  'market.compose.kind.tausch.note': 'gegen etwas anderes',
+  'market.compose.kind.verschenken': 'Verschenken',
+  'market.compose.kind.verschenken.note': 'ohne Gegenleistung',
+
+  // Category hint (disabled until kind chosen).
+  'market.compose.category.hint': '→ Erst die Art wählen, dann passende Kategorien.',
+
+  // Image slot labels.
+  'market.compose.imageSlots.main': 'HAUPT',
+  'market.compose.imageSlots.placeholder': '{filled}/5 Fotos · Hauptbild wird zuerst gezeigt',
+  'market.compose.imageSlots.reorder': 'Drag & drop zum sortieren',
+  'market.compose.imageSlots.modNote': '🔒 Bilder UND Text werden vom KI-Modell auf Anstößiges geprüft. Du bekommst Bescheid, wenn etwas abgelehnt wird — du kannst es ersetzen.',
+
+  // Price labels.
+  'market.compose.price.label': 'Preis',
+  'market.compose.delivery.label': 'Lieferung',
+  'market.compose.delivery.abholung': 'Nur Abholung',
+  'market.compose.delivery.abholungVersand': 'Abholung & Versand',
+  'market.compose.delivery.versand': 'Nur Versand',
+
+  // Optional details section intro.
+  'market.compose.optional.intro': 'Alles freiwillig. Was du füllst, erscheint als Spec-Streifen auf der Anzeige.',
+  'market.compose.optional.masse': 'Maße',
+  'market.compose.optional.material': 'Material',
+  'market.compose.optional.baujahr': 'Baujahr',
+  'market.compose.optional.farbe': 'Farbe',
+  'market.compose.optional.gewicht': 'Gewicht',
+  'market.compose.optional.modNote': '🔍 Auch der eingegebene Text wird automatisch geprüft (Schimpfwörter, Hass, Spam). Bei Auffälligkeit wirst du benachrichtigt.',
+
+  // CTA buttons.
+  'market.compose.cta.cancel': 'abbrechen',
+  'market.compose.cta.draft': 'als Entwurf sichern',
+  'market.compose.cta.publish': 'veröffentlichen →',
+  'market.compose.cta.publishing': '◐ veröffentlicht…',
+
+  // Live preview pane.
+  'market.compose.preview.waiting': '★ VORSCHAU WARTET',
+  'market.compose.preview.live': '★ LIVE-VORSCHAU',
+  'market.compose.preview.publishing': '★ WIRD VERÖFFENTLICHT…',
+  'market.compose.preview.waitingBody': 'Wähle Art + Kategorie, dann erwacht hier deine Anzeige.',
+  'market.compose.preview.liveBody': 'So sieht deine Anzeige im Markt aus.',
+  'market.compose.preview.liveFooter': '↻ Live-Vorschau aktualisiert sich bei jedem Tastendruck.',
+
+  // Checklist labels (before publishing).
+  'market.compose.checklist.header': 'VOR DEM VERÖFFENTLICHEN',
+  'market.compose.checklist.kind': 'Art ausgewählt',
+  'market.compose.checklist.category': 'Kategorie',
+  'market.compose.checklist.titleDesc': 'Titel + Beschreibung',
+  'market.compose.checklist.photo': 'Mind. 1 Foto',
+  'market.compose.checklist.price': 'Preis / Tauschangabe',
+  'market.compose.checklist.delivery': 'Lieferung',
+
+  // Publishing overlay (inside preview pane).
+  'market.compose.publishing.header': 'BILDER WERDEN GEPRÜFT (KI)',
+  'market.compose.publishing.body': 'Anzeige ist sichtbar. Bei Problemen wirst du benachrichtigt.',
+
+  // Moderation notice (images + text screening note).
+  'market.compose.moderation.notice': '🔒 Bilder UND Text werden vom KI-Modell auf Anstößiges geprüft. Du bekommst Bescheid, wenn etwas abgelehnt wird — du kannst es ersetzen.',
+
+  // ─── Marketplace ─ Condition enum (render-layer translation) ───────────
+
+  'market.condition.like-new': 'Wie neu',
+  'market.condition.excellent': 'Sehr gut',
+  'market.condition.very-good': 'Gut',
+  'market.condition.good': 'Akzeptabel',
+  'market.condition.fair': 'Gebraucht',
+
+  // ─── Marketplace ─ State matrix ────────────────────────────────────────
+
+  // §01 Loading.
+  'market.state.loading.label': 'Lädt · Skeleton',
+
+  // §02 Empty (true zero — no listings in DB at all).
+  'market.state.empty.truly.label': 'Leer · noch nix',
+  'market.state.empty.truly.body': 'Heute steht hier noch nichts. Magst du anfangen?',
+  'market.state.empty.truly.cta': '+ erste anzeige',
+
+  // §03 Empty (filtered — active filter returned 0 results, A8).
+  'market.state.empty.filtered.label': 'Filter · 0 Treffer',
+  'market.state.empty.filtered.activeFilters': 'AKTIVE FILTER',
+  'market.state.empty.filtered.body': 'Nichts dabei.',
+  'market.state.empty.filtered.clear': '← Filter zurücksetzen',
+
+  // §04 Error.
+  'market.state.error.label': 'Fehler · Netzwerk',
+  'market.state.error.banner': 'Verbindung weg. Zeige zwischengespeichert.',
+  'market.state.error.retry': 'neu laden',
+
+  // §05 Reserved.
+  'market.state.reserved.label': 'Reserviert · Soft-Lock',
+
+  // §06 Sold.
+  'market.state.sold.label': 'Verkauft · archiviert',
+
+  // §07 Altpapier (freshness decay).
+  'market.state.altpapier.label': 'Altpapier · veraltet',
+  'market.state.altpapier.cta': '↻ auffrischen',
+
+  // §08 Owner view.
+  'market.state.owner.label': 'Eigene Anzeige',
+  'market.state.owner.actions.edit': 'BEARBEITEN',
+  'market.state.owner.actions.bump': 'BUMP',
+  'market.state.owner.actions.sold': 'ALS VERKAUFT',
+
+  // §09 Moderation pending.
+  'market.state.pending.label': 'In Prüfung · nicht editierbar',
+  'market.state.pending.progress': 'KI-CHECK LÄUFT',
+  'market.state.pending.detail': 'Bilder · Text · Spam · Hass: ~12s. Bearbeiten gesperrt.',
+
+  // §10 Listing rejected (image/text flag — owner-only, A11 strap included).
+  // Note: the full state-tile copy for §10 (per-image mod) is GATED and not rendered in v1.
+  // The strap label (market.strap.bildAbgelehnt) is already included above.
+  'market.state.bildRejected.label': 'Bild oder Text abgelehnt · ersetzbar',
+
+  // §11 Listing fully rejected.
+  'market.state.listingRejected.label': 'Anzeige vollständig abgelehnt · nur Owner sichtbar',
+  'market.state.listingRejected.badge': 'VERWORFEN',
+  'market.state.listingRejected.reason': 'Grund: Verbotene Ware · § 86a StGB',
+  'market.state.listingRejected.body': 'Unsere KI hat Symbole erkannt, die in Deutschland nicht zum Verkauf angeboten werden dürfen. Falls das ein Irrtum ist, melde dich — ein Mensch schaut nochmal.',
+  'market.state.listingRejected.appeal': 'Einspruch · menschlicher Check',
+  'market.state.listingRejected.delete': 'verstanden, löschen',
+
+  // ─── Marketplace ─ Novel features ──────────────────────────────────────
+
+  // §01 Bump.
+  'market.novel.bump.title': 'Hochholen · Bump',
+  'market.novel.bump.subtitle': 'einmal pro Woche, kostenlos',
+  'market.novel.bump.before': 'VORHER',
+  'market.novel.bump.after': 'NACHHER',
+  'market.novel.bump.afterLabel': 'ganz oben im Markt',
+  'market.novel.bump.cta': '↻ frisch hochholen',
+  'market.novel.bump.nextAvailable': 'Nächster Bump: in 7 Tagen verfügbar.',
+  'market.novel.bump.trigger': 'TRIGGER: Owner klickt Bump · POST-Endpoint setzt updatedAt = now · Strap „FRISCH HOCHGEHOLT" verfällt nach 24h · Rate-Limit: 1×/Woche pro Anzeige.',
+
+  // §02 Freshness decay (Altpapier-Verfall).
+  'market.novel.decay.title': 'Altpapier-Verfall',
+  'market.novel.decay.subtitle': 'ehrlich, statt ewig',
+  'market.novel.decay.timeline': 'ZEITLEISTE · OPACITY + SATURATION',
+  'market.novel.decay.fresh': 'frisch',
+  'market.novel.decay.stale': 'altpapier',
+  'market.novel.decay.trigger': 'TRIGGER: bei Render-Zeit, age = now − updatedAt · ≥21d: Strap „altpapier" + opacity 0.6 + saturate 0.45 · auffrischen-CTA für Owner · komplett ausblenden nach 60d ohne Bump.',
+
+  // ─── Marketplace ─ Backfill ─────────────────────────────────────────────
+
+  'market.backfill.banner': 'Diese Anzeige stammt aus der alten Marktplatz-Version und wurde noch nicht aktualisiert.',
+
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox für die atomaren Komponenten. Visuelle Treue prüfen, bevor sie ins Forum übernommen werden.'
 } as const;
@@ -961,6 +1269,266 @@ const en: Dict = {
   'cal.state.error.kicker': 'CONNECTION LOST',
   'cal.state.error.title': "We couldn't load the events.",
   'cal.state.error.retry': 'retry',
+
+  // ─── Marketplace ─ Browse ──────────────────────────────────────────────
+
+  'market.title.q1': "What's",
+  'market.title.q1.italic': 'changing',
+  'market.title.q1.suffix': 'hands today?',
+
+  'market.titlemeta.listings': 'listings',
+  'market.titlemeta.new': 'new since yesterday',
+  'market.titlemeta.fresh': 'fresh in the kiez',
+
+  'market.cta.newListing': '+ new listing',
+
+  'market.filter.kind.all': 'All',
+  'market.filter.kind.verkaufen': 'For sale',
+  'market.filter.kind.tausch': 'Swap',
+  'market.filter.kind.verschenken': 'Free',
+
+  'market.filter.saved': 'Saved',
+  'market.filter.mine': 'My listings',
+  'market.filter.search': 'search market…',
+  'market.filter.kind.label': 'KIND',
+  'market.filter.category.label': 'CATEGORY',
+  'market.filter.search.label': 'SEARCH',
+
+  'market.cat.moebel': 'Furniture & Home',
+  'market.cat.kleidung': 'Clothing & Fashion',
+  'market.cat.medien': 'Books, Media & Games',
+  'market.cat.werkzeug': 'Tools & Garden',
+  'market.cat.pflanze': 'Plants & Pets',
+  'market.cat.elektronik': 'Electronics',
+  'market.cat.fahrrad': 'Bikes & Mobility',
+  'market.cat.kind': 'Kids',
+  'market.cat.sonstiges': 'Other',
+
+  'market.strap.gratis': 'FREE',
+  'market.strap.tausch': 'SWAP',
+  'market.strap.bump': 'FRESHLY BUMPED',
+  'market.strap.altpapier': 'STALE',
+  'market.strap.altbestand': 'LEGACY',
+  'market.strap.pruefung': 'UNDER REVIEW',
+  'market.strap.bildAbgelehnt': 'IMAGE REJECTED',
+  'market.strap.reserviert': 'RESERVED',
+  'market.strap.verkauft': 'SOLD',
+  'market.strap.entwurf': 'DRAFT',
+
+  'market.delivery.abholung': 'Pickup only',
+  'market.delivery.versand': 'Shipping possible',
+  'market.delivery.abholungVersand': 'Pickup & shipping',
+
+  'market.price.tausch.label': 'Swap proposal',
+  'market.price.vb.suffix': 'VB',
+  'market.price.vb.long': 'VB = negotiable',
+
+  'market.divider.sortedBy': 'SORTED BY FRESHNESS',
+  'market.divider.allListings': 'ALL 342 LISTINGS',
+
+  'market.lead.banner': 'FRESH IN THE KIEZ TODAY',
+  'market.lead.posted': 'posted 2h ago',
+
+  // ─── Marketplace ─ Detail page ─────────────────────────────────────────
+
+  'market.detail.gallery.hint': 'Click = lightbox · arrows = navigate · Esc = close',
+  'market.detail.gallery.viewAll': 'view\nall',
+
+  'market.detail.back': '← back to market',
+
+  'market.detail.spec.masse': 'Size',
+  'market.detail.spec.zustand': 'Condition',
+  'market.detail.spec.material': 'Material',
+  'market.detail.spec.baujahr': 'Year',
+  'market.detail.spec.farbe': 'Color',
+  'market.detail.spec.gewicht': 'Weight',
+
+  'market.detail.action.save': 'save',
+  'market.detail.action.share': 'share',
+  'market.detail.action.report': 'report',
+
+  'market.detail.similar.header': 'SIMILAR IN KIEZ',
+
+  // ─── Marketplace ─ Contact form ────────────────────────────────────────
+
+  'market.contact.header': 'INTERESTED? SEND MESSAGE',
+  'market.contact.tausch.headline': 'SEND SWAP PROPOSAL',
+  'market.contact.tausch.helper': 'Be specific about what you offer in return. A photo link or short description helps.',
+  'market.contact.tausch.placeholder': "I'd swap a leather jacket in S/M — happy to send a photo. Would that work?",
+
+  'market.contact.name.label': 'Your name',
+  'market.contact.email.label': 'Your email (for the reply)',
+  'market.contact.message.label': 'Message',
+  'market.contact.helper.text': 'Direct + kind. Messages are auto-screened.',
+
+  'market.contact.send': '→ send',
+  'market.contact.sent.header': 'MESSAGE SENT',
+  'market.contact.sent.confirmation': 'Your message arrived. Replies arrive directly in your inbox.',
+  'market.contact.sent.helper': 'Mahalle relays — no email addresses are revealed.',
+
+  'market.contact.privacy.footer': 'No email addresses are revealed. Mahalle relays — replies arrive in your inbox.',
+
+  'market.contact.reserved.softnote': "Reserved — you can still enquire in case the deal falls through.",
+
+  // ─── Marketplace ─ Owner actions ───────────────────────────────────────
+
+  'market.owner.header': 'YOUR LISTING',
+  'market.owner.edit': 'edit',
+  'market.owner.bump': 'bump',
+  'market.owner.markReserved': 'mark reserved',
+  'market.owner.markSold': 'mark sold',
+  'market.owner.lastBump': 'last bump: {n}d ago',
+  'market.owner.delete': '✕ delete listing',
+  'market.owner.pendingBanner': 'Under review — editing is disabled while AI checks. Takes only a few seconds.',
+
+  // ─── Marketplace ─ Seller card ─────────────────────────────────────────
+
+  'market.seller.header': 'SELLER',
+  'market.seller.since': 'since {year}',
+  'market.seller.nListings': '{n} listings',
+  'market.seller.verified': 'VERIFIED IN KIEZ',
+  'market.seller.moreListings': '→ more listings',
+  'market.seller.report': 'report',
+
+  // ─── Marketplace ─ Compose flow ────────────────────────────────────────
+
+  'market.compose.title.q1': 'What do you want to',
+  'market.compose.title.q1.italic': 'part with',
+  'market.compose.title.q1.suffix': '?',
+  'market.compose.crumb': 'NEW LISTING',
+
+  'market.compose.section.kind': 'Kind',
+  'market.compose.section.category': 'Category',
+  'market.compose.section.titleDesc': 'Title & description',
+  'market.compose.section.photos': 'Photos',
+  'market.compose.section.priceDelivery': 'Price & delivery',
+  'market.compose.section.optional': 'Optional details · help buyers decide',
+  'market.compose.section.done': 'DONE',
+
+  'market.compose.kind.verkaufen': 'For sale',
+  'market.compose.kind.verkaufen.note': 'Price in €',
+  'market.compose.kind.tausch': 'Swap',
+  'market.compose.kind.tausch.note': 'for something else',
+  'market.compose.kind.verschenken': 'Free',
+  'market.compose.kind.verschenken.note': 'no return expected',
+
+  'market.compose.category.hint': '→ Pick a kind first, then categories.',
+
+  'market.compose.imageSlots.main': 'MAIN',
+  'market.compose.imageSlots.placeholder': '{filled}/5 photos · main shown first',
+  'market.compose.imageSlots.reorder': 'Drag & drop to reorder',
+  'market.compose.imageSlots.modNote': '🔒 Both images AND text are AI-screened. You\'ll be told if something is rejected — you can replace it.',
+
+  'market.compose.price.label': 'Price',
+  'market.compose.delivery.label': 'Delivery',
+  'market.compose.delivery.abholung': 'Pickup only',
+  'market.compose.delivery.abholungVersand': 'Pickup & shipping',
+  'market.compose.delivery.versand': 'Shipping only',
+
+  'market.compose.optional.intro': 'All optional. What you fill in shows as a spec strip on the listing.',
+  'market.compose.optional.masse': 'Size',
+  'market.compose.optional.material': 'Material',
+  'market.compose.optional.baujahr': 'Year',
+  'market.compose.optional.farbe': 'Color',
+  'market.compose.optional.gewicht': 'Weight',
+  'market.compose.optional.modNote': "🔍 Text is also auto-screened (profanity, hate, spam). You'll be notified if anything flags.",
+
+  'market.compose.cta.cancel': 'cancel',
+  'market.compose.cta.draft': 'save as draft',
+  'market.compose.cta.publish': 'publish →',
+  'market.compose.cta.publishing': '◐ publishing…',
+
+  'market.compose.preview.waiting': '★ PREVIEW WAITING',
+  'market.compose.preview.live': '★ LIVE PREVIEW',
+  'market.compose.preview.publishing': '★ PUBLISHING…',
+  'market.compose.preview.waitingBody': 'Pick kind + category, then your listing comes to life here.',
+  'market.compose.preview.liveBody': 'How your listing appears in the market.',
+  'market.compose.preview.liveFooter': '↻ Live preview updates with every keystroke.',
+
+  'market.compose.checklist.header': 'BEFORE PUBLISHING',
+  'market.compose.checklist.kind': 'Kind chosen',
+  'market.compose.checklist.category': 'Category',
+  'market.compose.checklist.titleDesc': 'Title + description',
+  'market.compose.checklist.photo': 'At least 1 photo',
+  'market.compose.checklist.price': 'Price / swap info',
+  'market.compose.checklist.delivery': 'Delivery',
+
+  'market.compose.publishing.header': 'IMAGES UNDER AI REVIEW',
+  'market.compose.publishing.body': "Listing is live. We'll notify if anything flags.",
+
+  'market.compose.moderation.notice': "🔒 Both images AND text are AI-screened. You'll be told if something is rejected — you can replace it.",
+
+  // ─── Marketplace ─ Condition enum (render-layer translation) ───────────
+
+  'market.condition.like-new': 'Like new',
+  'market.condition.excellent': 'Excellent',
+  'market.condition.very-good': 'Very good',
+  'market.condition.good': 'Good',
+  'market.condition.fair': 'Fair',
+
+  // ─── Marketplace ─ State matrix ────────────────────────────────────────
+
+  'market.state.loading.label': 'Loading · Skeleton',
+
+  'market.state.empty.truly.label': 'Empty · no listings',
+  'market.state.empty.truly.body': 'Nothing here yet. Want to start?',
+  'market.state.empty.truly.cta': '+ first listing',
+
+  'market.state.empty.filtered.label': 'Filter · 0 hits',
+  'market.state.empty.filtered.activeFilters': 'ACTIVE FILTERS',
+  'market.state.empty.filtered.body': 'Nothing matches.',
+  'market.state.empty.filtered.clear': '← Clear filters',
+
+  'market.state.error.label': 'Error · network',
+  'market.state.error.banner': 'Lost connection. Showing cached.',
+  'market.state.error.retry': 'retry',
+
+  'market.state.reserved.label': 'Reserved · soft-lock',
+
+  'market.state.sold.label': 'Sold · archived',
+
+  'market.state.altpapier.label': 'Stale · aged out',
+  'market.state.altpapier.cta': '↻ refresh',
+
+  'market.state.owner.label': 'Owner view',
+  'market.state.owner.actions.edit': 'EDIT',
+  'market.state.owner.actions.bump': 'BUMP',
+  'market.state.owner.actions.sold': 'SOLD',
+
+  'market.state.pending.label': 'Pending review · read-only',
+  'market.state.pending.progress': 'AI CHECK RUNNING',
+  'market.state.pending.detail': 'Images · text · spam · hate: ~12s. Editing locked.',
+
+  'market.state.bildRejected.label': 'Image or text rejected · replaceable',
+
+  'market.state.listingRejected.label': 'Listing fully rejected · owner-only',
+  'market.state.listingRejected.badge': 'REJECTED',
+  'market.state.listingRejected.reason': 'Reason: Prohibited item · § 86a StGB',
+  'market.state.listingRejected.body': "Our AI flagged symbols that can't legally be sold in Germany. If you think this is a mistake, write us — a human will look again.",
+  'market.state.listingRejected.appeal': 'Appeal · human review',
+  'market.state.listingRejected.delete': 'got it, delete',
+
+  // ─── Marketplace ─ Novel features ──────────────────────────────────────
+
+  'market.novel.bump.title': 'Bump',
+  'market.novel.bump.subtitle': 'once a week, free',
+  'market.novel.bump.before': 'BEFORE',
+  'market.novel.bump.after': 'AFTER',
+  'market.novel.bump.afterLabel': 'back to the top',
+  'market.novel.bump.cta': '↻ bump',
+  'market.novel.bump.nextAvailable': 'Next bump: available in 7 days.',
+  'market.novel.bump.trigger': 'TRIGGER: Owner clicks Bump · POST sets updatedAt = now · „FRESHLY BUMPED" strap expires after 24h · Rate-limit: 1×/week per listing.',
+
+  'market.novel.decay.title': 'Stale decay',
+  'market.novel.decay.subtitle': 'honest, not eternal',
+  'market.novel.decay.timeline': 'TIMELINE · OPACITY + SATURATION',
+  'market.novel.decay.fresh': 'fresh',
+  'market.novel.decay.stale': 'stale',
+  'market.novel.decay.trigger': 'TRIGGER: at render time, age = now − updatedAt · ≥21d: „altpapier" strap + opacity 0.6 + saturate 0.45 · refresh CTA for owner · hidden after 60d without a bump.',
+
+  // ─── Marketplace ─ Backfill ─────────────────────────────────────────────
+
+  'market.backfill.banner': 'This listing is from the old marketplace version and has not been updated yet.',
 
   'sandbox.title': 'Editorial Kiosk',
   'sandbox.subtitle': 'Sandbox for the atomic components. Verify visual fidelity here before wiring them into the Forum.'
