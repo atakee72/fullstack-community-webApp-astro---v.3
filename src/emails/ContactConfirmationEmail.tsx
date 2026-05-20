@@ -39,6 +39,16 @@ export default function ContactConfirmationEmail({
           <Section style={quoteStyle}>
             <Text style={messageStyle}>{message}</Text>
           </Section>
+          <Hr style={hrStyle} />
+          <Text style={notSentByYouStyle}>
+            Hast du diese Nachricht nicht gesendet? Dann kannst du diese E-Mail
+            ignorieren — jemand hat deine Adresse beim Mahalle-Markt eingegeben.
+            Missbrauch kannst du an{' '}
+            <a href="mailto:hello@mahalle.berlin" style={linkStyle}>
+              hello@mahalle.berlin
+            </a>{' '}
+            melden.
+          </Text>
         </Container>
       </Body>
     </Html>
@@ -91,4 +101,14 @@ const messageStyle = {
   fontStyle: 'italic' as const,
   lineHeight: '1.5',
   whiteSpace: 'pre-wrap' as const,
+};
+const notSentByYouStyle = {
+  color: '#7a7264',
+  fontSize: '12px',
+  lineHeight: '1.5',
+  marginTop: '12px',
+};
+const linkStyle = {
+  color: '#b23a5b',
+  textDecoration: 'underline',
 };

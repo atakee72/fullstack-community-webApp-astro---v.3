@@ -20,6 +20,9 @@ if (!IP_SALT && import.meta.env.PROD) {
 }
 
 const RESEND_API_KEY = import.meta.env.RESEND_API_KEY || '';
+if (!RESEND_API_KEY && import.meta.env.PROD) {
+  console.error('[contact] RESEND_API_KEY is required in production');
+}
 const SENDING_FROM = import.meta.env.SENDING_FROM_EMAIL || 'Mahalle <noreply@mahalle.berlin>';
 const ALLOWED_ORIGINS_RAW = import.meta.env.ALLOWED_ORIGINS || '';
 
@@ -174,7 +177,7 @@ export const POST: APIRoute = async ({ request, params, clientAddress }) => {
     );
 
     if (!seller?.email) {
-      return jsonErr('seller_unreachable', 503);
+      return jsonErr('seller_unreachable', 410);
     }
 
     // 14. Render email templates
@@ -195,26 +198,24 @@ export const POST: APIRoute = async ({ request, params, clientAddress }) => {
       })
     );
 
-    // 15. Send emails via Resend
+    // 15. Send emails via Resend — sequential, owner-first
+    // Strip CRLF from titles before embedding in subject lines (defense
+    // in depth against header injection; Resend sanitizes too).
+    const safeTitle = listing.title.replace(/[\r\n]+/g, ' ').slice(0, 120);
     const resend = new Resend(RESEND_API_KEY);
 
-    await Promise.all([
-      resend.emails.send({
-        from: SENDING_FROM,
-        to: seller.email,
-        replyTo: email,
-        subject: `Nachricht zu deiner Anzeige „${listing.title}"`,
-        html: ownerHtml,
-      }),
-      resend.emails.send({
-        from: SENDING_FROM,
-        to: email,
-        subject: 'Deine Nachricht wurde gesendet — Mahalle Markt',
-        html: confirmHtml,
-      }),
-    ]);
+    // (a) Owner email MUST succeed — if it throws the catch returns 500.
+    await resend.emails.send({
+      from: SENDING_FROM,
+      to: seller.email,
+      replyTo: email,
+      subject: `Nachricht zu deiner Anzeige „${safeTitle}"`,
+      html: ownerHtml,
+    });
 
-    // 16. Insert metadata-only record (no message body — GDPR A6)
+    // (b) Metadata-only record (no message body — GDPR A6). Insert BEFORE the
+    // confirmation send so a flaky confirmation can't be retried to bypass
+    // rate limits (the owner email already went; we must count this attempt).
     await contactsCol.insertOne({
       listingId: id,
       sellerId: listing.sellerId.toString(),
@@ -223,6 +224,20 @@ export const POST: APIRoute = async ({ request, params, clientAddress }) => {
       senderIpHash,
       sentAt: now,
     });
+
+    // (c) Confirmation email is best-effort. The owner already received the
+    // message; if Resend hiccups on the second send we don't want to fail
+    // the request (user would retry → duplicate owner emails).
+    try {
+      await resend.emails.send({
+        from: SENDING_FROM,
+        to: email,
+        subject: `Bestätigung: Nachricht zu „${safeTitle}" gesendet`,
+        html: confirmHtml,
+      });
+    } catch (e) {
+      console.warn('[contact] confirmation send failed (owner email succeeded):', e);
+    }
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
