@@ -22,7 +22,7 @@
   );
 
   // Split title on " · " for carved-italic accent on first segment.
-  const titleParts = $derived(() => {
+  const titleParts = $derived.by(() => {
     if (!listing) return { first: '', rest: '' };
     const idx = listing.title.indexOf(' · ');
     if (idx === -1) return { first: listing.title, rest: '' };
@@ -30,7 +30,7 @@
   });
 
   // Truncate body to 180 chars.
-  const bodyLead = $derived(() => {
+  const bodyLead = $derived.by(() => {
     if (!listing) return '';
     const src = listing.descriptionPlainText ?? '';
     return src.length > 180 ? src.slice(0, 180) + '…' : src;
@@ -48,8 +48,10 @@
     $locale === 'de' ? `★ ${$t['market.lead.banner']}` : '★ FRESH IN THE KIEZ TODAY'
   );
 
+  // formatRelativeTime already includes the locale-correct suffix
+  // (DE: "vor 2 Std.", EN: "2h ago"). DE appends "eingestellt"; EN passes through.
   const strapTime = $derived(
-    $locale === 'de' ? relTime + ' eingestellt' : relTime + ' ago'
+    $locale === 'de' ? relTime + ' eingestellt' : relTime
   );
 
   const photoWord = $derived($locale === 'de' ? 'Fotos' : 'photos');
@@ -146,9 +148,9 @@
             font-family: var(--k-font-serif); font-style: italic;
             font-weight: 400; color: {catColorVar};
           "
-        >{titleParts().first}</span>
-        {#if titleParts().rest}
-          <span style="color: var(--k-ink-soft); font-weight: 600;">{titleParts().rest}</span>
+        >{titleParts.first}</span>
+        {#if titleParts.rest}
+          <span style="color: var(--k-ink-soft); font-weight: 600;">{titleParts.rest}</span>
         {/if}
       </h2>
 
@@ -159,7 +161,7 @@
           font-size: 15px; line-height: 1.45; color: var(--k-ink-soft); margin: 0;
         "
       >
-        {bodyLead()}
+        {bodyLead}
       </p>
 
       <!-- Divider + price + delivery -->
