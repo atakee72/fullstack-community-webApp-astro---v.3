@@ -152,13 +152,11 @@
             disabled={busy}
           >{$t['market.owner.markReserved']}</button>
         {:else if listing.status === 'reserved'}
-          <!-- Reservierung aufheben — key not yet in i18n (market.owner.clearReserved),
-               hardcoded DE/EN until i18n dict is updated -->
           <button
             class="owner-btn owner-btn--outline"
             onclick={() => handleStatusChange('available')}
             disabled={busy}
-          >{$locale === 'en' ? 'clear reservation' : 'Reservierung aufheben'}</button>
+          >{$t['market.owner.clearReserved']}</button>
         {/if}
       {/if}
 

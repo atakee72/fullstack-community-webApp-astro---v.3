@@ -4,6 +4,7 @@ import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import type { Listing } from '../../../../types/listing';
 import { isValidObjectId } from '../../../../schemas/validation.utils';
+import { canMutateListing } from '../../../../lib/listingActions';
 
 export const DELETE: APIRoute = async ({ request, params }) => {
   try {
@@ -30,7 +31,7 @@ export const DELETE: APIRoute = async ({ request, params }) => {
     const db = await connectDB();
     const listingsCollection = db.collection<Listing>('listings');
 
-    // Check if listing exists and belongs to user
+    // Check if listing exists
     const existingListing = await listingsCollection.findOne({ _id: new ObjectId(id) });
 
     if (!existingListing) {
@@ -40,20 +41,17 @@ export const DELETE: APIRoute = async ({ request, params }) => {
       });
     }
 
-    if (existingListing.sellerId.toString() !== userId) {
-      return new Response(JSON.stringify({ error: 'Not authorized to delete this listing' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Prevent deletion of published listings under moderation review (preserve evidence)
-    // Drafts can always be deleted since they never went through moderation
-    if (existingListing.status !== 'draft' && (existingListing.moderationStatus === 'pending' || existingListing.moderationStatus === 'rejected')) {
-      return new Response(JSON.stringify({ error: 'Cannot delete a listing that is under moderation review' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    // Per plan Task 1.3.5: owners must be able to delete rejected listings
+    // (they need to clean up after moderation rejects them). Drafts are also
+    // freely deletable. canMutateListing still blocks pending (preserve evidence
+    // while AI is mid-scan) and reserved/sold (use status endpoint to back out).
+    const guard = canMutateListing(existingListing as any, userId, { allowOnRejected: true });
+    if (!guard.ok) {
+      const httpStatus = guard.reason === 'not_owner' ? 403 : 409;
+      return new Response(
+        JSON.stringify({ error: `delete_blocked_${guard.reason}` }),
+        { status: httpStatus, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     await listingsCollection.deleteOne({ _id: new ObjectId(id) });
