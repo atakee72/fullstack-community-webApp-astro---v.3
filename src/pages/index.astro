@@ -40,7 +40,7 @@ const initialItems = [
 ].sort((a, b) => +new Date(b.date ?? 0) - +new Date(a.date ?? 0));
 ---
 
-<KioskLayout title="Mahalle · Forum" description="Diskussionen aus deinem Kiez.">
+<KioskLayout title="Mahalle · Forum" description="Diskussionen aus deinem Kiez." page="forum">
   <ForumIndex
     client:only="svelte"
     initialItems={initialItems}

@@ -56,7 +56,7 @@ const pageTitle = event.title
   : 'Termin bearbeiten · Mahalle';
 ---
 
-<KioskLayout title={pageTitle} description="Bearbeite deinen Termin im Mahalle-Kalender.">
+<KioskLayout title={pageTitle} description="Bearbeite deinen Termin im Mahalle-Kalender." page="calendar">
   <EventComposePage
     client:only="svelte"
     currentUser={currentUser}

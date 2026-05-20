@@ -1,0 +1,110 @@
+/* ════════════════════════════════════════════════════════════════
+   MAHALLE · MARKETPLACE — MOTION
+   Keyframes + timing tokens for marketplace-specific animations.
+   Reuses Kiosk easings (--k-ease-spring / --k-ease-in-out / --k-ease-out).
+   ════════════════════════════════════════════════════════════════ */
+
+/* ─── Bump pop-in ──────────────────────────────────────────────
+   When an owner bumps a listing: the "FRISCH HOCHGEHOLT" strap
+   pops in, the card briefly lifts and lands.                     */
+@keyframes market-bump-pop {
+  0%   { transform: translateY(8px) scale(0.96); opacity: 0; }
+  60%  { transform: translateY(-3px) scale(1.02); opacity: 1; }
+  100% { transform: translateY(0)    scale(1);    opacity: 1; }
+}
+.market-bump {
+  animation: market-bump-pop 380ms var(--k-ease-spring, cubic-bezier(.2,.8,.2,1.2)) both;
+}
+
+/* ─── Freshness decay ─────────────────────────────────────────
+   Older-than-21-days listings fade saturation. This isn't a one-
+   shot animation — it's the resting state. The transition runs
+   only when a listing transitions INTO altpapier (or out of it
+   after a bump).                                                 */
+.market-fresh    { opacity: 1;   filter: saturate(1);    transition: opacity 380ms var(--k-ease-out), filter 380ms var(--k-ease-out); }
+.market-stale    { opacity: 0.6; filter: saturate(0.45); transition: opacity 380ms var(--k-ease-out), filter 380ms var(--k-ease-out); }
+
+/* ─── Reserved soft-lock pulse ────────────────────────────────
+   When a listing transitions to "Reserviert", the plum strap
+   pulses once to signal the soft-lock.                           */
+@keyframes market-reserved-pulse {
+  0%   { box-shadow: 2px 2px 0 var(--k-ink); }
+  50%  { box-shadow: 2px 2px 0 var(--k-ink), 0 0 0 4px rgba(111,47,89,0.25); }
+  100% { box-shadow: 2px 2px 0 var(--k-ink); }
+}
+.market-reserved-justlocked {
+  animation: market-reserved-pulse 600ms var(--k-ease-in-out, cubic-bezier(.2,.7,.3,1));
+}
+
+/* ─── Pending shimmer (KI-Check läuft) ────────────────────────
+   While moderation runs (~12s), a subtle shimmer crosses the
+   pending strap to signal "still working". Loops.                */
+@keyframes market-pending-shimmer {
+  0%   { background-position: -120% 0; }
+  100% { background-position:  220% 0; }
+}
+.market-pending-strap {
+  position: relative;
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.35) 50%,
+    transparent 100%
+  );
+  background-size: 60% 100%;
+  background-repeat: no-repeat;
+  animation: market-pending-shimmer 1.4s linear infinite;
+}
+
+/* ─── Contact form submit → sent transition ───────────────────
+   When the user clicks "→ senden", the form card swaps to the
+   "Nachricht gesendet" confirmation card. Crossfade + slight
+   inset lift, no slide.                                          */
+@keyframes market-contact-sent-in {
+  0%   { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.market-contact-sent {
+  animation: market-contact-sent-in 320ms var(--k-ease-spring, cubic-bezier(.2,.8,.2,1.2)) both;
+}
+
+/* ─── Listing card hover (gentle) ─────────────────────────────
+   Tiny lift on hover; preserves the editorial-static feel.       */
+.market-card {
+  transition: transform 180ms var(--k-ease-in-out, cubic-bezier(.2,.7,.3,1)), box-shadow 180ms var(--k-ease-in-out, cubic-bezier(.2,.7,.3,1));
+}
+.market-card:hover {
+  transform: translateY(-2px);
+  /* shadow uses the per-card riso color — set inline */
+}
+
+/* ─── Skeleton shimmer (loading state) ────────────────────────
+   Used in the §01 loading tile of the state matrix.              */
+@keyframes market-skeleton-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.market-skeleton::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(243,234,216,0.4), transparent);
+  animation: market-skeleton-shimmer 1.6s linear infinite;
+}
+
+/* ─── Editorial lead — first paint settle ─────────────────────
+   The page-1 editorial lead does a gentle settle on first paint
+   so it reads as a different rhythm from the grid below.         */
+@keyframes market-lead-settle {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.market-lead {
+  animation: market-lead-settle 420ms var(--k-ease-out, cubic-bezier(.4,0,.2,1)) both;
+}
+
+/* ─── Duration tokens (use these, don't hard-code) ────────────── */
+:root {
+  --motion-market-fast:   180ms;
+  --motion-market-base:   320ms;
+  --motion-market-slow:   600ms;
+}

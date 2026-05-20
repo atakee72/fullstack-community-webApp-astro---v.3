@@ -777,3 +777,13 @@ option:disabled {
   line-height: 1;
   cursor: pointer;
 }
+
+@import './motion-marketplace.css';
+
+/* Italic-verb emphasis pattern — marketplace only.
+   Markup writes <em>wechselt</em> or <span class="accent-italic">…</span>. */
+.kiosk-headline em,
+.kiosk-headline .accent-italic {
+  color: var(--k-accent-italic);
+  font-style: italic;
+}

@@ -22,12 +22,14 @@ export interface Props {
   title: string;
   description?: string;
   image?: string;
+  page?: 'forum' | 'calendar' | 'marketplace' | 'newsboard' | 'profile' | 'blog' | 'admin' | 'schillerkiez';
 }
 
 const {
   title,
   description = 'Mahalle — a community web app for local neighborhoods.',
-  image = '/og-image.png'
+  image = '/og-image.png',
+  page,
 } = Astro.props;
 ---
 
@@ -57,7 +59,10 @@ const {
     <ViewTransitions />
   </head>
 
-  <body class="min-h-screen k-paper-bg text-ink font-bricolage antialiased flex flex-col">
+  <body
+    class="min-h-screen k-paper-bg text-ink font-bricolage antialiased flex flex-col"
+    data-page={page}
+  >
     <KioskNav client:load currentPath={currentPath} user={session?.user ?? null} />
     <ToastProvider client:load />
 

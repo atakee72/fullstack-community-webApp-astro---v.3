@@ -102,8 +102,17 @@
 [data-page="forum"]        { --k-accent: var(--k-wine); }
 [data-page="newsboard"]    { --k-accent: var(--k-ochre); }
 [data-page="calendar"]     { --k-accent: var(--k-teal); }
-[data-page="marketplace"]  { --k-accent: var(--k-teal); }
 [data-page="schillerkiez"] { --k-accent: var(--k-moss); }
+
+/* --k-accent-italic is scoped to italicized verb emphasis in marketplace
+   headlines. Do NOT use for buttons, borders, fills, or any other accent
+   need. Forum and Calendar do NOT receive this token — only marketplace
+   has the editorial-verb headline vocabulary that earns the second accent.
+   See docs/plans/2026-05-19-marketplace-kiosk-redesign.md §0 rule 5. */
+[data-page="marketplace"] {
+  --k-accent: var(--k-wine);
+  --k-accent-italic: var(--k-ochre);
+}
 
 /* ── Reduced motion ──────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
@@ -118,4 +127,129 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MARKETPLACE EXTENSION — 8 cats + 10 straps + 3 delivery icons
+   ════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─── 8 marketplace categories ─────────────────────────────── */
+  /* 6 map onto existing Kiosk palette; 2 are new aux tokens.    */
+  --cat-moebel:     #7a4256;  /* maps to --kiosk-wine    · Möbel & Wohnen      */
+  --cat-kleidung:   #6f2f59;  /* maps to --kiosk-plum    · Kleidung & Mode     */
+  --cat-medien:     #1b1a17;  /* maps to --kiosk-ink     · Bücher, Medien & Spiele */
+  --cat-werkzeug:   #6b8a4a;  /* maps to --kiosk-moss    · Werkzeug & Garten   */
+  --cat-pflanze:    #8aa67a;  /* NEW AUX TOKEN (sage)    · Pflanzen & Tiere    */
+  --cat-elektronik: #3f8f9f;  /* maps to --kiosk-teal    · Elektronik          */
+  --cat-fahrrad:    #e8a53a;  /* maps to --kiosk-ochre   · Fahrräder & Mobilität*/
+  --cat-kind:       #d77a6a;  /* NEW AUX TOKEN (salmon)  · Kinder              */
+  --cat-sonstiges:  #7a7264;  /* maps to --kiosk-inkMute · Sonstiges (fallback)*/
+
+  /* Text-on-color foreground tokens */
+  --cat-moebel-fg:     var(--k-paper);
+  --cat-kleidung-fg:   var(--k-paper);
+  --cat-medien-fg:     var(--k-paper);
+  --cat-werkzeug-fg:   var(--k-paper);
+  --cat-pflanze-fg:    var(--k-ink);     /* light bg → dark fg */
+  --cat-elektronik-fg: var(--k-paper);
+  --cat-fahrrad-fg:    var(--k-ink);     /* warm ochre → dark fg */
+  --cat-kind-fg:       var(--k-paper);
+  --cat-sonstiges-fg:  var(--k-paper);
+
+  /* ─── 10 straps ──────────────────────────────────────────── */
+  --strap-gratis-bg:        #6b8a4a; /* moss   — Verschenken kind */
+  --strap-tausch-bg:        #3f8f9f; /* teal   — Tausch kind */
+  --strap-bump-bg:          #e8a53a; /* ochre  — frisch hochgeholt */
+  --strap-altpapier-bg:     #7a7264; /* inkMute (faded) — stale decay */
+  --strap-altbestand-bg:    #7a7264; /* inkMute — legacy listings */
+  --strap-pruefung-bg:      #e8a53a; /* ochre  — in Prüfung */
+  --strap-bildAbgelehnt-bg: #b23a5b; /* wine   — Bild oder Text abgelehnt */
+  --strap-reserviert-bg:    #6f2f59; /* plum   — soft-lock */
+  --strap-verkauft-bg:      #7a7264; /* inkMute (struck) — sold */
+  --strap-entwurf-bg:       transparent; /* outline-only — drafts */
+
+  /* ─── Delivery icon tokens ──────────────────────────────── */
+  --delivery-abholung-icon:        "↗";     /* Nur Abholung / Pickup only */
+  --delivery-versand-icon:         "✈";     /* Nur Versand / Shipping only */
+  --delivery-abholungVersand-icon: "↗✈";    /* Abholung & Versand / Both */
+}
+
+/* ─── Strap component — locked geometry ──────────────────────── */
+.kiosk-strap {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--k-font-mono);
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  padding: 3px 9px;
+  border: 1px solid var(--k-ink);
+  border-radius: var(--k-radius-sm);
+  box-shadow: 2px 2px 0 var(--k-ink);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.kiosk-strap--small { font-size: 9px; padding: 2px 7px; }
+.kiosk-strap--struck { text-decoration: line-through; }
+.kiosk-strap--faded  { opacity: 0.55; }
+.kiosk-strap--outline {
+  background: transparent !important;
+  border-style: dashed;
+  border-width: 1.2px;
+  box-shadow: none;
+}
+
+/* ─── Strap variants ─────────────────────────────────────────── */
+.kiosk-strap--gratis        { background: var(--strap-gratis-bg);        color: var(--k-paper); }
+.kiosk-strap--tausch        { background: var(--strap-tausch-bg);        color: var(--k-paper); }
+.kiosk-strap--bump          { background: var(--strap-bump-bg);          color: var(--k-ink);   }
+.kiosk-strap--altpapier     { background: var(--strap-altpapier-bg);     color: var(--k-paper); }
+.kiosk-strap--altbestand    { background: var(--strap-altbestand-bg);    color: var(--k-paper); }
+.kiosk-strap--pruefung      { background: var(--strap-pruefung-bg);      color: var(--k-ink);   }
+.kiosk-strap--bildAbgelehnt { background: var(--strap-bildAbgelehnt-bg); color: var(--k-paper); }
+.kiosk-strap--reserviert    { background: var(--strap-reserviert-bg);    color: var(--k-paper); }
+.kiosk-strap--verkauft      { background: var(--strap-verkauft-bg);      color: var(--k-paper); }
+.kiosk-strap--entwurf       { color: var(--k-ink); }
+
+/* ─── Category chip — outline style, fills when active ───────── */
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: var(--k-font-display);
+  border-radius: var(--k-radius-pill);
+  border: 1.5px solid var(--cat-color, var(--k-ink));
+  background: transparent;
+  color: var(--k-ink);
+}
+.cat-chip--mini { padding: 2px 8px; font-size: 11px; }
+.cat-chip--active {
+  background: var(--cat-color);
+  color: var(--cat-fg, var(--k-paper));
+  border-color: var(--k-ink);
+}
+.cat-chip::before {
+  content: "";
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--cat-color);
+}
+
+/* ─── Delivery pill ──────────────────────────────────────────── */
+.delivery-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--k-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  background: var(--k-paper-soft);
+  color: var(--k-ink-soft);
+  border: 1px solid var(--k-rule);
+  border-radius: var(--k-radius-sm);
 }

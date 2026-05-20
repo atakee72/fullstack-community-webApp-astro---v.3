@@ -65,7 +65,7 @@ const initialComments = JSON.parse(JSON.stringify(comments));
 const pageTitle = doc.title ? `${doc.title} · Mahalle Forum` : 'Mahalle Forum';
 ---
 
-<KioskLayout title={pageTitle} description={doc.body?.slice(0, 160) ?? ''}>
+<KioskLayout title={pageTitle} description={doc.body?.slice(0, 160) ?? ''} page="forum">
   <ForumPostDetail
     client:only="svelte"
     initialTopic={initialTopic}
