@@ -6,6 +6,7 @@
  * Pure constants live in marketplaceQueryOptions.ts for cross-boundary import.
  */
 import type { Filter } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import { connectDB } from './mongodb';
 import { LISTINGS_QUERY_OPTIONS } from './marketplaceQueryOptions';
 import type { Listing } from '../types/listing';
@@ -184,4 +185,67 @@ export async function fetchListingsForSSR(
   }) as Listing[];
 
   return { items, total };
+}
+
+/**
+ * Single-document fetcher for SSR detail pages (/marketplace/[id]).
+ *
+ * Uses ownerScope: 'mine' so the owner can view their own draft/sold/exchanged
+ * listings via direct URL. Public visitors will still get null for those status
+ * values (the moderation filter handles it).
+ *
+ * Returns null when:
+ *   - id is not a valid ObjectId
+ *   - document doesn't exist in the collection
+ *   - viewer doesn't satisfy visibility rules (non-owner + rejected/draft/etc.)
+ */
+export async function fetchListingForSSR(
+  id: string,
+  userId: string | null,
+): Promise<Listing | null> {
+  if (!ObjectId.isValid(id)) return null;
+  const db = await connectDB();
+  const col = db.collection<Listing>('listings');
+
+  // ownerScope: 'mine' widens status arm so owner can access draft/sold
+  // via direct URL; public visitors still filtered by standard visibility.
+  const baseFilter = buildListingsFilter(userId, { ownerScope: 'mine' });
+  const item = await col.findOne({
+    $and: [{ _id: new ObjectId(id) }, baseFilter],
+  } as any);
+  if (!item) return null;
+
+  const it = item as any;
+  const sellerIdStr =
+    typeof it.sellerId === 'object' ? it.sellerId.toString() : it.sellerId;
+  const isOwner = !!(userId && sellerIdStr === userId);
+
+  return {
+    ...it,
+    _id: it._id?.toString(),
+    sellerId: sellerIdStr,
+    bundleId: it.bundleId
+      ? typeof it.bundleId === 'object'
+        ? it.bundleId.toString()
+        : it.bundleId
+      : null,
+    createdAt:
+      it.createdAt instanceof Date ? it.createdAt.toISOString() : it.createdAt,
+    updatedAt:
+      it.updatedAt instanceof Date ? it.updatedAt.toISOString() : it.updatedAt,
+    reservedAt:
+      it.reservedAt instanceof Date
+        ? it.reservedAt.toISOString()
+        : it.reservedAt,
+    // A5: strip lastBumpedAt for non-owners; expose as isBumped boolean instead
+    lastBumpedAt: isOwner
+      ? it.lastBumpedAt instanceof Date
+        ? it.lastBumpedAt.toISOString()
+        : it.lastBumpedAt
+      : undefined,
+    isBumped:
+      it.lastBumpedAt instanceof Date
+        ? Date.now() - it.lastBumpedAt.getTime() < 24 * 60 * 60 * 1000
+        : false,
+  } as Listing;
 }
