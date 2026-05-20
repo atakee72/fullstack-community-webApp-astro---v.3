@@ -156,7 +156,7 @@ function MarketplaceStatesDesktop({ lang = "DE" }) {
 
         {/* 03 SEARCH-EMPTY */}
         <StateTile n="03" label={lang === "DE" ? "Filter · 0 Treffer" : "Filter · 0 hits"} color={kiosk.color.ochre} lang={lang}
-          hint={lang === "DE" ? "Aktive Filter sichtbar, einzeln entfernbar. „Alarm setzen“ als alternativer Pfad statt Sackgasse." : "Active filters shown, dismissible. „Set alert“ offered as alternative path, not dead end."}>
+          hint={lang === "DE" ? "Aktive Filter sichtbar, einzeln entfernbar. „Filter zurücksetzen“-Link als Ausweg statt Sackgasse." : "Active filters shown, dismissible. „Clear filters“ link offered as exit, not dead end."}>
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ fontFamily: kiosk.font.mono, fontSize: 9, color: kiosk.color.inkMute, letterSpacing: "0.1em" }}>
               {lang === "DE" ? "AKTIVE FILTER" : "ACTIVE FILTERS"}
