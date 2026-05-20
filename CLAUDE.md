@@ -132,7 +132,8 @@ See `src/components/kiez/CLAUDE.md` — full notes (data pipeline, LOR codes, MS
 - `announcements` - Community + official announcements (includes `moderationStatus`, `isUserReported`, `rejectionReason`, `images`, plus **`isOfficial?: boolean`** + **`pinnedUntil?: Date | null`** for admin-posted official announcements with the 7-day pin lifecycle — server-controlled, never settable from client input; see admin dashboard at `/admin/announcements`)
 - `recommendations` - User recommendations (includes `moderationStatus`, `isUserReported`, `rejectionReason`, `images` fields)
 - `comments` - Comments on posts (includes `moderationStatus` field)
-- `listings` - Marketplace listings (includes `moderationStatus`, `listingType`, `status` fields)
+- `listings` - Marketplace listings (includes `moderationStatus`, `listingType`, `status`, `listingKind` (`sell`/`exchange`/`gift`), `category`, `delivery`, `specs`, `reservedAt`, `lastBumpedAt`, `bundleId` fields)
+- `listingContacts` - Contact-relay metadata for buyer→seller emails (metadata-only per GDPR A6: `{ listingId, senderEmailHash, timestamp }` — no message bodies stored)
 - `news` - Newsboard articles (AI-fetched and user-submitted, includes `moderationStatus`, `aiRelevanceScore`, `fetchDate`, `sourceName`, `sourceUrl` fields)
 - `savedNews` - User bookmarks for news (userId + newsId pairs, server-side persistence)
 - `savedPosts` - User bookmarks for forum posts (userId + postId pairs, server-side persistence)
@@ -153,6 +154,10 @@ CLOUDINARY_API_SECRET=
 OPENAI_API_KEY=         # Content moderation API + news relevance scoring
 CRON_SECRET=            # Vercel cron job authentication
 NEWSDATA_API_KEY=       # NewsData.io API (optional, for additional news sources)
+RESEND_API_KEY=         # Resend.com API key (marketplace contact relay)
+SENDING_FROM_EMAIL=     # e.g. "Mahalle <noreply@mahalle.berlin>" (contact relay sender)
+CONTACT_IP_SALT=        # 32+ chars, fixed across deploys (hashes IPs in contact rate-limit keys)
+ALLOWED_ORIGINS=        # CSV of allowed origins for contact relay CSRF guard (default: https://mahalle.berlin)
 STATS_XLSX_URL=         # AfS demographics XLSX URL (sync script + GitHub Actions)
 STATS_PERIOD=           # AfS period, e.g. "2025h2" (sync script + GitHub Actions)
 MSS_XLSX_URL=           # MSS social index XLSX URL (optional, sync script)
@@ -181,6 +186,9 @@ See `src/components/forum/kiosk/CLAUDE.md` — full notes load when working in t
 
 ### Calendar (kiosk) patterns (live ticker, saved events, attendee profiles, moderation parity, ghosting, edit-path moderation, compose toast, report flow)
 See `src/components/calendar/kiosk/CLAUDE.md` — full notes load when working in that subtree. Spans `src/lib/calendar/*`, `src/lib/savedEventsQueries.ts`, `src/lib/userProfilesQueries.ts`, `src/pages/api/events/*`; read the area file directly when working on those.
+
+### Marketplace patterns (kiosk: listings, contact relay, ownership lifecycle, freshness decay)
+See `src/components/marketplace/kiosk/CLAUDE.md` — full notes load when working in that subtree. Spans `src/lib/listingActions.ts`, `src/lib/listingsQuery.ts`, `src/pages/api/listings/*`; read the area file directly when working on those server-side pieces.
 
 ### TanStack Query — optimistic updates (gotchas)
 - **Use real userId, not placeholders**: optimistic `setQueryData` that mutates `likedBy: [...ids, 'optimistic-user-id']` will not match the real user id in subsequent `.includes(user.id)` checks, so UI state (heart filled/unfilled) won't flip until server refetch. Pass the actual `user?.id` into the mutation hook. See `useLikeMutation.ts`.

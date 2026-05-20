@@ -65,7 +65,7 @@ The app is mid-migration from a **dark-glass** aesthetic (deep indigo `#0e1033` 
 | Forum (`/`, `/topics/[id]`, `/announcements/[id]`, `/recommendations/[id]`) | ✅ Kiosk (Svelte) |
 | Calendar (`/calendar`, `/events/edit/[id]`) | ✅ Kiosk (Svelte) |
 | Newsboard | 🚧 Legacy dark-glass |
-| Marketplace | 🚧 Legacy dark-glass (kiosk scoping in progress — see `design/handoffs/design_handoff_marketplace/`) |
+| Marketplace (`/marketplace`, `/marketplace/[id]`, `/marketplace/create`, `/marketplace/edit/[id]`) | ✅ Kiosk (Svelte) |
 | Profile | 🚧 Legacy dark-glass |
 | Blog | 🚧 Legacy dark-glass |
 | Admin (announcements panel + moderation queue) | 🚧 Legacy / mixed |
@@ -77,7 +77,8 @@ Each migrated page has its own accent color used for kickers (mono-uppercase eye
 |---|---|
 | Forum | Wine `#b23a5b` |
 | Calendar | Teal `#3f8f9f` |
-| Newsboard / Marketplace / Profile / Blog | TBD |
+| Newsboard / Profile / Blog | TBD |
+| Marketplace | Wine `#b23a5b` (kickers) + Ochre `#eccc6e` (italic headline accents only) |
 
 Semantic accents stay constant across all kiosk surfaces (never swapped per page): live-now indicator (ochre dot), today indicator, weekend-day labels, required-field asterisks, compose step numbers (`01`, `02`, …), CTA wine-shadows, modal wine-shadows, the mobile wine FAB.
 
@@ -121,6 +122,10 @@ Utilities in `global.css`: `.dark-glass-bg`, `.dark-glass-gradient` (fixed backg
    CLOUDINARY_API_KEY=your-api-key
    CLOUDINARY_API_SECRET=your-api-secret
    OPENAI_API_KEY=your-openai-key
+   RESEND_API_KEY=your-resend-key
+   SENDING_FROM_EMAIL=Mahalle <noreply@mahalle.berlin>
+   CONTACT_IP_SALT=your-32-char-random-secret
+   ALLOWED_ORIGINS=https://mahalle.berlin
    ```
 
 4. **Run development server:**
@@ -162,7 +167,7 @@ Vercel will automatically:
 - **Content Moderation**: Multi-layer AI moderation (safety scan + GPT content check for spam/hate speech/harassment) + trilingual profanity filters (TR/EN/DE) with leetspeak detection + username validation at registration + community reporting
 - **Daily Posting Limits**: 5 per rolling 24h for topics, events, announcements, recommendations, and listings
 - **Newsboard**: AI-curated local news from 9 RSS feeds + NewsData.io, with GPT-4o relevance scoring
-- **Marketplace**: Buy/sell/exchange (Tausch) listings with image gallery, AI moderation (text + vision), user reports, and draft save/publish workflow
+- **Marketplace (kiosk)**: 3 listing kinds (verkaufen / tausch / verschenken), 9 kiosk taxonomy categories with soft-migration for legacy values, delivery enum (Abholung / Versand / Abholung & Versand), optional detail fields (5 German free-text fields + condition enum), editorial lead-of-the-day on page 1, contact-form relay via Resend (privacy-preserving — no email addresses exposed), bump CTA (7-day rate limit) + freshness decay (21d altpapier strap, 60d server-side hide from public feed), owner lifecycle (edit / bump / reserve / sold / delete with state-aware gating via `canMutateListing`), mobile FAB for new listings, SEO-friendly hybrid SSR-static + island-hydrate detail pages
 - **Custom UI Dialogs**: Native `<dialog>`-based confirm modals and sonner toasts replace all browser-native dialogs
 - **Kiez Data Dashboard**: Interactive Schillerkiez neighborhood statistics with hand-drawn SVG charts, historical trends (demographics + social indicators 2013–2023), and live air quality data
 - **Forum (kiosk)**: Multi-collection merged feed (discussions + announcements + recommendations) on `/` with per-kind detail routes, per-kind card straps + chips, card height convergence (`line-clamp-3` body + `min-h-[340px]`), and resilient `Promise.allSettled` fetch (single-collection outage degrades to empty array for that kind only).
@@ -327,6 +332,9 @@ The `/schillerkiez` page shows neighborhood-level statistics for the Schillerkie
 - `GET /api/listings/daily-count` - Get user's daily listing count
 - `POST /api/listings/draft` - Save/update draft listing (relaxed validation, no moderation)
 - `POST /api/listings/draft/[id]/publish` - Publish draft (full moderation + daily limit check)
+- `POST /api/listings/[id]/bump` - Bump listing to top of feed (7-day rate limit per listing)
+- `POST /api/listings/[id]/status` - Update listing status (available / reserved / sold / exchanged)
+- `POST /api/listings/[id]/contact` - Send buyer→seller contact message (Resend relay, no email exposure)
 
 ### Moderation
 - `POST /api/reports/submit` - Submit user report
@@ -358,6 +366,10 @@ Required environment variables:
 - `OPENAI_API_KEY` - OpenAI API key (content moderation + news relevance scoring)
 - `CRON_SECRET` - Vercel cron job authentication secret
 - `NEWSDATA_API_KEY` - NewsData.io API key (optional, for additional news sources)
+- `RESEND_API_KEY` - Resend.com API key (marketplace buyer→seller contact relay)
+- `SENDING_FROM_EMAIL` - Sender address for contact relay emails, e.g. `Mahalle <noreply@mahalle.berlin>`
+- `CONTACT_IP_SALT` - 32+ char secret, fixed across deploys, used to hash IPs in rate-limit keys
+- `ALLOWED_ORIGINS` - CSV of allowed origins for contact relay CSRF guard (default: `https://mahalle.berlin`)
 - `STATS_XLSX_URL` - AfS demographics XLSX URL (optional, sync script)
 - `STATS_PERIOD` - AfS period, e.g. "2025h2" (optional, sync script)
 - `MSS_XLSX_URL` - MSS social index XLSX URL (optional, sync script)
