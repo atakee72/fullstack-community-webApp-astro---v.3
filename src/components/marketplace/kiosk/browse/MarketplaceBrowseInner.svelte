@@ -18,6 +18,7 @@
   import { t } from '../../../../lib/kiosk-i18n';
   import { fetchListingsClient, type ListingsQueryFilters } from '../../../../hooks/api/useListingsQuery';
   import type { Listing } from '../../../../types/listing';
+  import { showToast, showSuccess, showError } from '../../../../utils/toast';
 
   import MarketTitleBlock from './MarketTitleBlock.svelte';
   import MarketFilterRail from './MarketFilterRail.svelte';
@@ -171,8 +172,34 @@
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // ── Mount: hydrate from URL if not default ───────────────────────────
+  // ── Mount: hydrate from URL if not default + consume flash params ───
   onMount(() => {
+    // ── Flash toasts from compose / edit redirects ─────────────────────
+    const url = new URL(window.location.href);
+    const params = url.searchParams;
+    const flashes: Array<[string, string, () => void]> = [
+      ['just_posted', '1',       () => showSuccess('Anzeige veröffentlicht!')],
+      ['just_posted', 'pending', () => showToast('Deine Anzeige wird gerade geprüft. Sie erscheint, sobald sie freigegeben ist.', { type: 'info', duration: 6000 })],
+      ['just_edited', '1',       () => showSuccess('Anzeige aktualisiert')],
+      ['just_edited', 'pending', () => showToast('Änderungen werden geprüft.', { type: 'info', duration: 6000 })],
+      ['edit_blocked', '1',      () => showToast('Bearbeiten gesperrt — die Anzeige wird gerade geprüft.', { type: 'warning', duration: 6000 })],
+      ['not_owner', '1',         () => showError('Du kannst nur eigene Anzeigen bearbeiten.')],
+      ['not_found', '1',         () => showError('Anzeige nicht gefunden.')],
+    ];
+    let consumed = false;
+    for (const [key, val, fire] of flashes) {
+      if (params.get(key) === val) {
+        fire();
+        params.delete(key);
+        consumed = true;
+      }
+    }
+    if (consumed) {
+      window.history.replaceState({}, '', url.toString());
+      void refetch(); // cache-bust so the new/updated listing appears
+    }
+
+    // ── Filter hydration from URL ──────────────────────────────────────
     const urlFilters = readFiltersFromUrl();
     const isDefault =
       urlFilters.kind === 'all' &&

@@ -1,0 +1,35 @@
+---
+import KioskLayout from '../../../layouts/KioskLayout.astro';
+import { getSession } from 'auth-astro/server';
+import { fetchListingForSSR } from '../../../lib/listingsQuery';
+import MarketComposeInner from '../../../components/marketplace/kiosk/compose/MarketComposeInner.svelte';
+
+const session = await getSession(Astro.request);
+if (!session?.user) {
+  return Astro.redirect(`/login?redirect=/marketplace/edit/${Astro.params.id}`);
+}
+const userId = (session.user as any).id;
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect('/marketplace?not_found=1');
+
+const listing = await fetchListingForSSR(id, userId);
+if (!listing) return Astro.redirect('/marketplace?not_found=1');
+
+// Owner gate
+if (String(listing.sellerId) !== userId) return Astro.redirect('/marketplace?not_owner=1');
+
+// Moderation gate — mirror calendar pattern
+if (listing.moderationStatus !== 'approved' || listing.hasWarningLabel) {
+  return Astro.redirect('/marketplace?edit_blocked=1');
+}
+---
+
+<KioskLayout page="marketplace" title="Anzeige bearbeiten · Mahalle Markt">
+  <MarketComposeInner
+    client:only="svelte"
+    mode="edit"
+    initialListing={listing}
+    currentUserId={userId}
+  />
+</KioskLayout>
