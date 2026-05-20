@@ -105,8 +105,15 @@ export interface Listing {
   // A7: reservation timestamp
   reservedAt?: Date | string | null;
 
-  // A5: last bumped timestamp — never exposed to non-owners
+  // A5: last bumped timestamp — owner-only. Stripped from non-owner SSR
+  // payloads in listingsQuery.ts; do NOT reference directly from public-card
+  // render paths. The bump strap derives from `isBumped` below instead.
   lastBumpedAt?: Date | string | null;
+
+  // Server-computed virtual: true when lastBumpedAt is within the last 24h.
+  // Exposed to all viewers (including non-owners) so the "frisch hochgeholt"
+  // strap renders without leaking the exact bump timestamp.
+  isBumped?: boolean;
 
   // A9: bundle FK — reserved for v2, always null in v1
   bundleId?: string | null;

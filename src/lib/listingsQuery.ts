@@ -20,10 +20,19 @@ import type { Listing } from '../types/listing';
  *   - own pending/rejected → visible only to seller
  *
  * Marketplace status visibility (per A7 + Issue 7):
- *   - available / reserved → visible to everyone
- *   - sold / exchanged / draft → owner-only (surfaces in their 'mine' view)
+ *   - available / reserved → visible to everyone (incl. logged-out)
+ *   - sold / exchanged / draft → owner-only AND only when explicitly browsing
+ *     `view=mine`. Owners don't see their own drafts/sold leaking into the
+ *     public feed; they have to ask for the "Meine Anzeigen" view.
+ *
+ * The `ownerScope: 'mine'` flag widens the status arm to include all of the
+ * seller's listings (Task 5.x edit/bump/status flows pass it; the default
+ * public browse leaves it off).
  */
-export function buildListingsFilter(userId: string | null): Filter<any> {
+export function buildListingsFilter(
+  userId: string | null,
+  opts: { ownerScope?: 'mine' } = {},
+): Filter<any> {
   const modOr = [
     { moderationStatus: 'approved' },
     { moderationStatus: { $exists: false } },
@@ -36,14 +45,15 @@ export function buildListingsFilter(userId: string | null): Filter<any> {
       : []),
   ];
 
-  const statusFilter: Filter<any> = userId
-    ? {
-        $or: [
-          { status: { $in: ['available', 'reserved'] } },
-          { sellerId: userId }, // owner sees their own at any status
-        ],
-      }
-    : { status: { $in: ['available', 'reserved'] } };
+  const statusFilter: Filter<any> =
+    userId && opts.ownerScope === 'mine'
+      ? {
+          $or: [
+            { status: { $in: ['available', 'reserved'] } },
+            { sellerId: userId }, // owner-only 'mine' view: any status
+          ],
+        }
+      : { status: { $in: ['available', 'reserved'] } };
 
   return {
     $and: [{ $or: modOr }, statusFilter],
@@ -75,7 +85,8 @@ export async function fetchListingsForSSR(
   const db = await connectDB();
   const col = db.collection<Listing>('listings');
 
-  const baseFilter = buildListingsFilter(userId);
+  const ownerScope = input.view === 'mine' && userId ? 'mine' : undefined;
+  const baseFilter = buildListingsFilter(userId, { ownerScope });
   const extra: Filter<any>[] = [];
 
   if (input.kind && input.kind !== 'all') {
@@ -130,29 +141,47 @@ export async function fetchListingsForSSR(
   ]);
 
   // Serialize ObjectIds + Dates to plain strings for SSR transport (forum pattern).
-  const items = rawItems.map((it: any) => ({
-    ...it,
-    _id: it._id?.toString(),
-    sellerId:
-      typeof it.sellerId === 'object' ? it.sellerId.toString() : it.sellerId,
-    bundleId: it.bundleId
-      ? typeof it.bundleId === 'object'
-        ? it.bundleId.toString()
-        : it.bundleId
-      : null,
-    createdAt:
-      it.createdAt instanceof Date ? it.createdAt.toISOString() : it.createdAt,
-    updatedAt:
-      it.updatedAt instanceof Date ? it.updatedAt.toISOString() : it.updatedAt,
-    reservedAt:
-      it.reservedAt instanceof Date
-        ? it.reservedAt.toISOString()
-        : it.reservedAt,
-    lastBumpedAt:
-      it.lastBumpedAt instanceof Date
-        ? it.lastBumpedAt.toISOString()
-        : it.lastBumpedAt,
-  })) as Listing[];
+  // A5 — lastBumpedAt is owner-only. The "freshly bumped" strap is the only
+  // public signal; the exact timestamp would leak bump cadence to non-owners.
+  const items = rawItems.map((it: any) => {
+    const sellerIdStr =
+      typeof it.sellerId === 'object' ? it.sellerId.toString() : it.sellerId;
+    const isOwner = userId && sellerIdStr === userId;
+
+    return {
+      ...it,
+      _id: it._id?.toString(),
+      sellerId: sellerIdStr,
+      bundleId: it.bundleId
+        ? typeof it.bundleId === 'object'
+          ? it.bundleId.toString()
+          : it.bundleId
+        : null,
+      createdAt:
+        it.createdAt instanceof Date ? it.createdAt.toISOString() : it.createdAt,
+      updatedAt:
+        it.updatedAt instanceof Date ? it.updatedAt.toISOString() : it.updatedAt,
+      reservedAt:
+        it.reservedAt instanceof Date
+          ? it.reservedAt.toISOString()
+          : it.reservedAt,
+      // Strip lastBumpedAt unless the viewer is the seller. The bump strap
+      // is derived from this field server-side in Task 2.3/5.x; non-owner
+      // callers should receive a boolean (`isBumped`) instead. For v1 the
+      // card derives its strap client-side from the truncated value below
+      // (24h-rounded) — preserves the "is bumped" signal without leaking
+      // exact cadence.
+      lastBumpedAt: isOwner
+        ? it.lastBumpedAt instanceof Date
+          ? it.lastBumpedAt.toISOString()
+          : it.lastBumpedAt
+        : undefined,
+      isBumped:
+        it.lastBumpedAt instanceof Date
+          ? Date.now() - it.lastBumpedAt.getTime() < 24 * 60 * 60 * 1000
+          : false,
+    };
+  }) as Listing[];
 
   return { items, total };
 }

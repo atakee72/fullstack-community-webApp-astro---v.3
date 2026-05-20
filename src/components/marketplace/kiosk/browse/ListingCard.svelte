@@ -15,12 +15,14 @@
 
   // ── Derived strap state ──────────────────────────────────────────
   const now = new Date();
-  const lastBumped = $derived(
-    listing.lastBumpedAt ? new Date(listing.lastBumpedAt) : null
-  );
+  // Prefer the server-computed `isBumped` virtual (safe for non-owners per A5).
+  // Owners also receive `lastBumpedAt` so they could re-derive locally; the
+  // virtual is the canonical signal regardless.
   const bumped = $derived(
-    lastBumped !== null &&
-    (now.getTime() - lastBumped.getTime()) < 24 * 60 * 60 * 1000
+    listing.isBumped ??
+    (listing.lastBumpedAt
+      ? now.getTime() - new Date(listing.lastBumpedAt).getTime() < 24 * 60 * 60 * 1000
+      : false)
   );
   const ageMs = $derived(now.getTime() - new Date(listing.createdAt).getTime());
   const stale = $derived(ageMs >= 21 * 24 * 60 * 60 * 1000); // 21 days
