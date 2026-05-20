@@ -46,15 +46,34 @@ export function buildListingsFilter(
       : []),
   ];
 
+  // Per A5 + Task 7.2: hide listings older than 60 days from non-owner views.
+  // Owners always see their own at any age (via sellerId arm) so they can
+  // bump-refresh. The widening branch (ownerScope: 'mine') already gates on
+  // sellerId === userId for the any-status arm, so it naturally excludes
+  // non-owner viewers.
+  const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
+  const sixtyDaysAgo = new Date(Date.now() - SIXTY_DAYS_MS);
+
   const statusFilter: Filter<any> =
     userId && opts.ownerScope === 'mine'
       ? {
           $or: [
             { status: { $in: ['available', 'reserved'] } },
-            { sellerId: userId }, // owner-only 'mine' view: any status
+            { sellerId: userId }, // owner-only 'mine' view: any status, any age
           ],
         }
-      : { status: { $in: ['available', 'reserved'] } };
+      : {
+          // Public branch: status in [available, reserved] AND createdAt within
+          // 60 days. Owners still see their own listings at any age via the
+          // sellerId arm.
+          $or: [
+            {
+              status: { $in: ['available', 'reserved'] },
+              createdAt: { $gte: sixtyDaysAgo },
+            },
+            ...(userId ? [{ sellerId: userId }] : []),
+          ],
+        };
 
   return {
     $and: [{ $or: modOr }, statusFilter],

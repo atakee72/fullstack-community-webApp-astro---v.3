@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { locale, t } from '../../../../lib/kiosk-i18n';
   import { resolveCategory } from '../../../../lib/marketplaceResolvers';
   import { formatRelativeTime } from '../../../../lib/marketplaceFormat';
@@ -31,6 +32,25 @@
       ? now.getTime() - new Date(listing.lastBumpedAt).getTime() < 24 * 60 * 60 * 1000
       : false)
   );
+
+  // ── Bump pop animation ──────────────────────────────────────────
+  // Fires only on the transition from not-bumped → bumped (not on initial
+  // render of already-bumped cards). prevBumped is sync'd to the initial
+  // bumped state in onMount so the effect doesn't false-trigger on mount.
+  let prevBumped = $state(false);
+  let popClass = $state('');
+
+  onMount(() => {
+    prevBumped = bumped;
+  });
+
+  $effect(() => {
+    if (bumped && !prevBumped) {
+      popClass = 'market-bump';
+      setTimeout(() => { popClass = ''; }, 400);
+    }
+    prevBumped = bumped;
+  });
   const ageMs = $derived(now.getTime() - new Date(listing.createdAt).getTime());
   const stale = $derived(ageMs >= 21 * 24 * 60 * 60 * 1000); // 21 days
   const reserved = $derived(listing.status === 'reserved');
@@ -75,7 +95,7 @@
 </script>
 
 <article
-  class="market-card {stale ? 'market-stale' : 'market-fresh'} {ghostClass}"
+  class="market-card {popClass} {stale ? 'market-stale' : 'market-fresh'} {ghostClass}"
   style="
     background: var(--k-paper-warm);
     border: var(--k-border-ink);

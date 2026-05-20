@@ -24,6 +24,14 @@
   );
 
   const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+  const TWENTY_ONE_DAYS = 21 * 24 * 60 * 60 * 1000;
+
+  // Stale: listing is 21+ days old by createdAt (per A5 — stale keys off
+  // createdAt, not updatedAt). Bumping does NOT clear the altpapier strap;
+  // the refreshed listing wears altpapier + FRISCH HOCHGEHOLT simultaneously
+  // for 24h. Stale affects only the bump button label/tooltip.
+  const listingAgeMs = $derived(Date.now() - new Date(listing.createdAt).getTime());
+  const isStale = $derived(listingAgeMs >= TWENTY_ONE_DAYS);
 
   const canBump = $derived(
     listing.status === 'available' &&
@@ -120,27 +128,31 @@
         class="owner-btn owner-btn--primary"
       >{$t['market.owner.edit']}</a>
 
-      <!-- Frisch hochholen — always visible; disabled + tooltip when rate-limited -->
+      <!-- Frisch hochholen / auffrischen — always visible; disabled + tooltip
+           when rate-limited. Label swaps to "auffrischen" when listing is
+           stale (createdAt ≥ 21d). Per A5: bumping does NOT clear altpapier;
+           the strap combo (altpapier + FRISCH HOCHGEHOLT) is intentional. -->
       {#if bumpRateLimited}
         <button
           class="owner-btn owner-btn--outline"
           disabled
           title="Noch {bumpRetryDays} Tag{bumpRetryDays === 1 ? '' : 'e'} bis zum nächsten Hochholen"
           aria-disabled="true"
-        >{$t['market.owner.bump']}</button>
+        >{isStale ? `↻ ${$t['market.owner.refresh.cta']}` : $t['market.owner.bump']}</button>
       {:else if listing.status === 'available' && listing.moderationStatus === 'approved' && !listing.hasWarningLabel}
         <button
           class="owner-btn owner-btn--outline"
           onclick={handleBump}
           disabled={busy}
-        >{$t['market.owner.bump']}</button>
+          title={isStale ? $t['market.owner.refresh.tooltip'] : undefined}
+        >{isStale ? `↻ ${$t['market.owner.refresh.cta']}` : $t['market.owner.bump']}</button>
       {:else}
         <!-- Not eligible: wrong status or not approved yet — show disabled -->
         <button
           class="owner-btn owner-btn--outline"
           disabled
           aria-disabled="true"
-        >{$t['market.owner.bump']}</button>
+        >{isStale ? `↻ ${$t['market.owner.refresh.cta']}` : $t['market.owner.bump']}</button>
       {/if}
 
       <!-- Reserve toggle / sold toggle -->
