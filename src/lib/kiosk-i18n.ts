@@ -645,6 +645,15 @@ const de = {
   // Soft-note for reserved listings (A7).
   'market.contact.reserved.softnote': 'Reserviert — du kannst trotzdem anfragen, falls der Deal nicht zustande kommt.',
 
+  // Contact form error codes (returned from /api/listings/[id]/contact).
+  'market.contact.error.listing_pending_review': 'Diese Anzeige wird gerade geprüft.',
+  'market.contact.error.rate_limited_hourly': 'Du hast in der letzten Stunde zu viele Nachrichten gesendet.',
+  'market.contact.error.rate_limited_daily_to_owner': 'Du hast diesen Verkäufer heute schon mehrfach kontaktiert.',
+  'market.contact.error.rate_limited_ip': 'Zu viele Anfragen aus deinem Netzwerk.',
+  'market.contact.error.listing_flooded': 'Diese Anzeige bekommt gerade viele Nachrichten. Versuch es später.',
+  'market.contact.error.message_flagged': 'Deine Nachricht wurde vom System markiert.',
+  'market.contact.error.seller_unreachable': 'Der Verkäufer ist gerade nicht erreichbar.',
+
   // ─── Marketplace ─ Owner actions ───────────────────────────────────────
 
   'market.owner.header': 'DEINE ANZEIGE',
@@ -1371,6 +1380,15 @@ const en: Dict = {
   'market.contact.privacy.footer': 'No email addresses are revealed. Mahalle relays — replies arrive in your inbox.',
 
   'market.contact.reserved.softnote': "Reserved — you can still enquire in case the deal falls through.",
+
+  // Contact form error codes (returned from /api/listings/[id]/contact).
+  'market.contact.error.listing_pending_review': 'This listing is under review.',
+  'market.contact.error.rate_limited_hourly': "You've sent too many messages in the last hour.",
+  'market.contact.error.rate_limited_daily_to_owner': "You've already contacted this seller several times today.",
+  'market.contact.error.rate_limited_ip': 'Too many requests from your network.',
+  'market.contact.error.listing_flooded': 'This listing is getting a lot of messages right now. Try again later.',
+  'market.contact.error.message_flagged': 'Your message was flagged by our system.',
+  'market.contact.error.seller_unreachable': 'The seller is currently unreachable.',
 
   // ─── Marketplace ─ Owner actions ───────────────────────────────────────
 
