@@ -1,20 +1,41 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import PageHeader from '../../components/ui/PageHeader.astro';
+import KioskLayout from '../../layouts/KioskLayout.astro';
 import { getSession } from 'auth-astro/server';
-import MarketplaceBrowse from '../../components/marketplace/MarketplaceBrowse.svelte';
+import { fetchListingsForSSR, type ListingsFetchInput } from '../../lib/listingsQuery';
+import MarketplaceBrowseInner from '../../components/marketplace/kiosk/browse/MarketplaceBrowseInner.svelte';
+
+// Cache-control: per-user moderation visibility makes caching unsafe.
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
 
 const session = await getSession(Astro.request);
+const userId = (session?.user as any)?.id ?? null;
+
+// URL param → kind key mapping (rail DE keys → API keys)
+const RAIL_TO_API: Record<string, string> = {
+  verkaufen: 'sell',
+  tausch: 'exchange',
+  verschenken: 'gift',
+};
+
+// Parse SSR filter input from URL params for first-paint hydration.
+const url = Astro.url;
+const railKind = url.searchParams.get('kind') ?? 'all';
+const ssrInput: ListingsFetchInput = {
+  kind: (RAIL_TO_API[railKind] ?? railKind) as any,
+  category: url.searchParams.get('cat') ?? 'all',
+  search: url.searchParams.get('q') ?? undefined,
+  view: (url.searchParams.get('view') as any) ?? null,
+  limit: 24,
+  offset: Number(url.searchParams.get('page') ?? 0) * 24,
+};
+
+const initialData = await fetchListingsForSSR(ssrInput, userId);
 ---
 
-<BaseLayout title="Mahalle Marketplace">
-  <div class="dark-glass-bg" aria-hidden="true"></div>
-  <div class="dark-glass-gradient" aria-hidden="true"></div>
-
-  <main class="relative z-10 min-h-[calc(100vh-60px)] py-4 md:py-6 font-inter carved-title" style="--carved-accent: #E79750">
-    <div class="max-w-7xl mx-auto px-4 md:px-8">
-      <PageHeader title="Mahalle Marketplace" subtitle="Buy and sell within your neighbourhood community" color="#E79750" subtitleClass="text-white/70" />
-      <MarketplaceBrowse client:load session={session} />
-    </div>
-  </main>
-</BaseLayout>
+<KioskLayout title="Markt — Mahalle" description="Stöbern im Kiez-Markt." page="marketplace">
+  <MarketplaceBrowseInner
+    client:only="svelte"
+    initialData={initialData}
+    currentUserId={userId}
+  />
+</KioskLayout>
