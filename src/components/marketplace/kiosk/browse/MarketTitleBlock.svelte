@@ -43,7 +43,8 @@
 </script>
 
 <section
-  style="padding: 22px 36px 14px; border-bottom: 1px dashed var(--k-rule);"
+  class="px-5 py-5 lg:px-9 lg:py-[22px] lg:pb-[14px]"
+  style="border-bottom: 1px dashed var(--k-rule);"
 >
   <div
     style="display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: end;"
@@ -58,11 +59,10 @@
         {kicker}
       </div>
 
-      <!-- Display headline — 56px, Bricolage, carved-italic verb in ochre
-           via .kiosk-headline em CSS rule -->
+      <!-- Display headline — 32px mobile / 56px desktop. Carved-italic verb
+           in ochre via .kiosk-headline em CSS rule. -->
       <h1
-        class="kiosk-headline font-bricolage font-extrabold text-ink leading-[0.95] tracking-tight mt-1.5"
-        style="font-size: var(--k-text-3xl, 56px);"
+        class="kiosk-headline font-bricolage font-extrabold text-ink leading-[0.95] tracking-tight mt-1.5 text-[32px] lg:text-[56px]"
       >
         {$t['market.title.q1']}
         <em class="font-instrument font-normal">{$t['market.title.q1.italic']}</em>
