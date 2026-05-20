@@ -31,6 +31,7 @@
     activeCat = null,
     searchQuery = '',
     activeView = null,
+    isAuthenticated = false,
     onKindChange = (_k: string) => {},
     onCatChange = (_c: string | null) => {},
     onSearchChange = (_q: string) => {},
@@ -40,6 +41,11 @@
     activeCat?: string | null;
     searchQuery?: string;
     activeView?: string | null;
+    /** Gates the "Gespeichert" / "Meine" toggles. When false they render
+        disabled with a tooltip prompting login (the view filter requires a
+        session — without it the API returns the full feed, which would
+        silently mislead the visitor). */
+    isAuthenticated?: boolean;
     onKindChange?: (k: string) => void;
     onCatChange?: (c: string | null) => void;
     onSearchChange?: (q: string) => void;
@@ -120,12 +126,16 @@
       style="width: 1px; height: 18px; background: var(--k-rule); margin: 0 4px; flex-shrink: 0;"
     ></div>
 
-    <!-- Saved + Mine toggles -->
+    <!-- Saved + Mine toggles — both require a session; disabled for logged-out
+         visitors so the API call doesn't silently return the unfiltered feed
+         under a misleading "Meine Anzeigen" heading. -->
     <div class="flex items-center gap-2">
       <button
         type="button"
         onclick={() => toggleView('saved')}
-        class="shrink-0 font-bricolage font-semibold transition-colors duration-[150ms]"
+        disabled={!isAuthenticated}
+        title={!isAuthenticated ? 'Anmelden, um gespeicherte Anzeigen zu sehen.' : undefined}
+        class="shrink-0 font-bricolage font-semibold transition-colors duration-[150ms] disabled:opacity-50 disabled:cursor-not-allowed"
         style="
           padding: 5px 13px;
           font-size: 12.5px;
@@ -144,7 +154,9 @@
       <button
         type="button"
         onclick={() => toggleView('mine')}
-        class="shrink-0 font-bricolage font-semibold transition-colors duration-[150ms]"
+        disabled={!isAuthenticated}
+        title={!isAuthenticated ? 'Anmelden, um eigene Anzeigen zu sehen.' : undefined}
+        class="shrink-0 font-bricolage font-semibold transition-colors duration-[150ms] disabled:opacity-50 disabled:cursor-not-allowed"
         style="
           padding: 5px 13px;
           font-size: 12.5px;

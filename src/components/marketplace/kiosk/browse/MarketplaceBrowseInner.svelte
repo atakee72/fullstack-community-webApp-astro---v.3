@@ -136,15 +136,24 @@
   }
 
   // ── Fetch ────────────────────────────────────────────────────────────
+  // Monotonic sequencing guard: rapid filter changes (e.g. fast typing in
+  // the search input) can produce out-of-order responses. We only accept a
+  // settled response if its sequence number matches the latest issued one.
+  let fetchSeq = 0;
+
   async function refetch() {
+    const seq = ++fetchSeq;
     loading = true;
     error = null;
     try {
-      data = await fetchListingsClient(filters);
+      const result = await fetchListingsClient(filters);
+      if (seq !== fetchSeq) return; // stale response — newer fetch in flight
+      data = result;
     } catch (e: any) {
+      if (seq !== fetchSeq) return;
       error = e instanceof Error ? e : new Error(String(e));
     } finally {
-      loading = false;
+      if (seq === fetchSeq) loading = false;
     }
   }
 
@@ -207,6 +216,7 @@
   activeCat={filters.category ?? null}
   searchQuery={filters.search ?? ''}
   activeView={filters.view ?? null}
+  isAuthenticated={currentUserId !== null}
   onKindChange={(k) => updateFilters({ kind: RAIL_TO_API[k as RailKind] ?? 'all' })}
   onCatChange={(c) => updateFilters({ category: c ?? undefined })}
   onSearchChange={(q) => updateFilters({ search: q })}
@@ -391,14 +401,18 @@
       <p class="font-bricolage font-bold text-ink" style="font-size: 20px; margin: 0 0 12px;">
         Nichts dabei.
       </p>
-      <button
-        type="button"
-        onclick={clearFilters}
+      <!-- A8: navigational state-action, anchor not button. Bare /marketplace
+           is the no-filters state; client-side clearFilters keeps interaction
+           snappy without a full reload, but middle-click / right-click still
+           work as expected because this is a real link. -->
+      <a
+        href="/marketplace"
+        onclick={(e) => { e.preventDefault(); clearFilters(); }}
         class="font-dmmono text-[12px] uppercase tracking-wide text-ink-soft"
-        style="background: none; border: none; cursor: pointer; padding: 0; text-decoration: underline;"
+        style="text-decoration: underline; text-decoration-style: dashed;"
       >
         ← Filter zurücksetzen
-      </button>
+      </a>
     </div>
 
   {:else if !loading}

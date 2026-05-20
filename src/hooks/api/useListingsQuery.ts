@@ -4,7 +4,7 @@
  * The marketplace browse orchestrator is a Svelte 5 component (not React),
  * so this file exports a plain async function rather than a React hook.
  * The Svelte orchestrator (Task 2.5) calls fetchListingsClient() inside a
- * $effect, mirroring the pattern used by MarketplaceBrowse.svelte.
+ * $effect, mirroring the pattern used by MarketplaceBrowseInner.svelte.
  *
  * If a React surface ever needs listings, wire up a useQuery wrapper here
  * importing from '@tanstack/react-query'.
