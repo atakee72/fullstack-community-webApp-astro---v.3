@@ -187,7 +187,6 @@
     <input
       type="text"
       name="website"
-      value=""
       bind:value={honeypot}
       tabindex="-1"
       autocomplete="off"
