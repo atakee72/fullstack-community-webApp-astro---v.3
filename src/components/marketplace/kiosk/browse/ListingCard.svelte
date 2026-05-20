@@ -109,7 +109,11 @@
 >
   <!-- Image area with strap stack + photo-count badge -->
   <div style="padding: 8px; position: relative;">
-    <ListingImagePlaceholder category={listing.category} />
+    <ListingImagePlaceholder
+      category={listing.category}
+      src={listing.images?.[0] ?? null}
+      alt={listing.title}
+    />
 
     <!-- Top-left strap stack: entwurf → bump → reserviert → altpapier → altbestand -->
     <div

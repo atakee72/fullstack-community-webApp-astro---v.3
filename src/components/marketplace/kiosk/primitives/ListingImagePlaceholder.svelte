@@ -1,16 +1,23 @@
 <script lang="ts">
   import { resolveCategory } from '../../../../lib/marketplaceResolvers';
+  import { optimizeCloudinary } from '../../../../utils/cloudinary';
 
   let {
     category,
     ratio = '4/3',
     label = '',
     lead = false,
+    src = null,
+    alt = '',
   }: {
     category?: string | null;
     ratio?: string;
     label?: string;
     lead?: boolean;
+    /** When provided, renders the image on top of the riso-stripe placeholder.
+        The stripes show through during load + on transparent edges of the image. */
+    src?: string | null;
+    alt?: string;
   } = $props();
 
   const resolved = $derived(resolveCategory(category));
@@ -22,6 +29,8 @@
   const stripeGap = $derived(lead ? 28 : 20);
   const padding = $derived(lead ? '18px' : '10px');
   const fontSize = $derived(lead ? '11px' : '9.5px');
+
+  const imgUrl = $derived(src ? optimizeCloudinary(src) : null);
 </script>
 
 <div
@@ -41,9 +50,23 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
     position: relative;
+    overflow: hidden;
   "
 >
-  {#if label}
+  {#if imgUrl}
+    <img
+      src={imgUrl}
+      alt={alt}
+      loading="lazy"
+      style="
+        position: absolute; inset: 0;
+        width: 100%; height: 100%;
+        object-fit: cover;
+        border-radius: calc(var(--k-radius-md) - 1px);
+      "
+    />
+  {/if}
+  {#if label && !imgUrl}
     <span style="background: var(--k-paper); padding: 2px 6px; border: 1px solid var(--k-rule); border-radius: 4px;">{label}</span>
   {/if}
 </div>

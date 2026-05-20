@@ -2,6 +2,7 @@
   import { locale, t } from '../../../../lib/kiosk-i18n';
   import { resolveCategory } from '../../../../lib/marketplaceResolvers';
   import { formatRelativeTime } from '../../../../lib/marketplaceFormat';
+  import { optimizeCloudinary } from '../../../../utils/cloudinary';
   import type { Listing } from '../../../../types/listing';
 
   import CategoryChip from '../primitives/CategoryChip.svelte';
@@ -98,18 +99,24 @@
         margin-right: -14px;
       "
     >
-      <ListingImagePlaceholder lead={true} category={listing.category} />
+      <ListingImagePlaceholder
+        lead={true}
+        category={listing.category}
+        src={listing.images?.[0] ?? null}
+        alt={listing.title}
+      />
 
       <!-- 5-thumb strip + photo count -->
       <div style="display: flex; gap: 4px; margin-top: 8px; align-items: center;">
         {#each { length: Math.min(photoCount, 5) } as _, i}
+          {@const thumbUrl = listing.images?.[i]}
           <div
             style="
               width: 38px; height: 30px;
-              border: var(--k-border-ink);
+              border: {i === 0 ? '2px solid var(--k-ink)' : '1px solid var(--k-rule)'};
               border-radius: 4px;
-              background: {i === 0 ? catColorVar : 'var(--k-paper-soft)'};
-              opacity: {i === 0 ? 0.55 : 0.5};
+              background: {thumbUrl ? `center/cover url('${optimizeCloudinary(thumbUrl)}'), ${catColorVar}` : (i === 0 ? catColorVar : 'var(--k-paper-soft)')};
+              opacity: {thumbUrl ? 1 : (i === 0 ? 0.55 : 0.5)};
               flex-shrink: 0;
             "
           ></div>
