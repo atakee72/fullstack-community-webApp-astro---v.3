@@ -93,7 +93,9 @@ export const ListingCreateSchema = z.object({
   listingType: ListingTypeSchema.optional().default('sell'),
   exchangeFor: z.string().max(150, 'Exchange request must be less than 150 characters').optional(),
   category: KioskCategorySchema,
-  condition: ListingConditionSchema,
+  // A4 + Task 4.1 OptionalDetails — condition lives in the "Details (optional)"
+  // section of compose. Keep it top-level (not nested under specs) but optional.
+  condition: ListingConditionSchema.optional(),
   price: z
     .number()
     .min(0)
