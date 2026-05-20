@@ -1,0 +1,199 @@
+<script lang="ts">
+  import { locale, t } from '../../../../lib/kiosk-i18n';
+  import { resolveCategory } from '../../../../lib/marketplaceResolvers';
+  import { formatRelativeTime } from '../../../../lib/marketplaceFormat';
+  import type { Listing } from '../../../../types/listing';
+
+  import CategoryChip from '../primitives/CategoryChip.svelte';
+  import DeliveryPill from '../primitives/DeliveryPill.svelte';
+  import PriceTag from '../primitives/PriceTag.svelte';
+  import ListingImagePlaceholder from '../primitives/ListingImagePlaceholder.svelte';
+  import KioskAvatar from '../../../forum/kiosk/KioskAvatar.svelte';
+
+  let { listing }: { listing: Listing | null } = $props();
+
+  // Bail out early if no listing — template will return nothing.
+
+  const resolvedCat = $derived(listing ? resolveCategory(listing.category) : null);
+
+  // Category color for carved title accent and thumb tint.
+  const catColorVar = $derived(
+    resolvedCat?.token ? `var(${resolvedCat.token})` : 'var(--k-ink-mute)'
+  );
+
+  // Split title on " · " for carved-italic accent on first segment.
+  const titleParts = $derived(() => {
+    if (!listing) return { first: '', rest: '' };
+    const idx = listing.title.indexOf(' · ');
+    if (idx === -1) return { first: listing.title, rest: '' };
+    return { first: listing.title.slice(0, idx), rest: listing.title.slice(idx) };
+  });
+
+  // Truncate body to 180 chars.
+  const bodyLead = $derived(() => {
+    if (!listing) return '';
+    const src = listing.descriptionPlainText ?? '';
+    return src.length > 180 ? src.slice(0, 180) + '…' : src;
+  });
+
+  // Photo count (images is string[] on the Listing type).
+  const photoCount = $derived(listing?.images?.length ?? 0);
+
+  // Relative time for the strap.
+  const relTime = $derived(
+    listing ? formatRelativeTime(listing.createdAt, $locale) : ''
+  );
+
+  const strapLabel = $derived(
+    $locale === 'de' ? `★ ${$t['market.lead.banner']}` : '★ FRESH IN THE KIEZ TODAY'
+  );
+
+  const strapTime = $derived(
+    $locale === 'de' ? relTime + ' eingestellt' : relTime + ' ago'
+  );
+
+  const photoWord = $derived($locale === 'de' ? 'Fotos' : 'photos');
+</script>
+
+{#if listing}
+  <article
+    class="market-lead"
+    style="
+      margin: 18px 36px;
+      background: var(--k-paper-warm);
+      border: var(--k-border-ink);
+      border-radius: var(--k-radius-lg);
+      box-shadow: 4px 4px 0 {catColorVar};
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      column-gap: 28px;
+      overflow: hidden;
+      position: relative;
+    "
+  >
+    <!-- Top-edge strap: full width, absolute -->
+    <div
+      style="
+        position: absolute; top: 0; left: 0; right: 0;
+        background: var(--k-ink); color: var(--k-paper);
+        padding: 6px 18px;
+        font-family: var(--k-font-mono); font-size: 10px; font-weight: 600;
+        letter-spacing: 0.18em; text-transform: uppercase;
+        display: flex; justify-content: space-between; align-items: center;
+        z-index: 2;
+      "
+    >
+      <span>{strapLabel}</span>
+      <span style="color: var(--k-ochre);">● {strapTime}</span>
+    </div>
+
+    <!-- Image side -->
+    <div
+      style="
+        padding: 44px 0 18px 22px;
+        border-right: 1px dashed var(--k-rule);
+        padding-right: 14px;
+        margin-right: -14px;
+      "
+    >
+      <ListingImagePlaceholder lead={true} category={listing.category} />
+
+      <!-- 5-thumb strip + photo count -->
+      <div style="display: flex; gap: 4px; margin-top: 8px; align-items: center;">
+        {#each { length: Math.min(photoCount, 5) } as _, i}
+          <div
+            style="
+              width: 38px; height: 30px;
+              border: var(--k-border-ink);
+              border-radius: 4px;
+              background: {i === 0 ? catColorVar : 'var(--k-paper-soft)'};
+              opacity: {i === 0 ? 0.55 : 0.5};
+              flex-shrink: 0;
+            "
+          ></div>
+        {/each}
+        {#if photoCount > 0}
+          <span
+            style="
+              font-family: var(--k-font-mono); font-size: 10px;
+              color: var(--k-ink-mute); margin-left: 6px; align-self: center;
+            "
+          >
+            {photoCount} {photoWord}
+          </span>
+        {/if}
+      </div>
+    </div>
+
+    <!-- Content side -->
+    <div
+      style="
+        padding: 44px 22px 18px 4px;
+        display: flex; flex-direction: column; gap: 10px;
+      "
+    >
+      <CategoryChip id={listing.category} active={true} />
+
+      <!-- Headline with carved-italic first segment -->
+      <h2
+        style="
+          font-size: 26px; font-weight: 800; letter-spacing: -0.022em;
+          line-height: 1.1; margin: 0; color: var(--k-ink);
+        "
+      >
+        <span
+          style="
+            font-family: var(--k-font-serif); font-style: italic;
+            font-weight: 400; color: {catColorVar};
+          "
+        >{titleParts().first}</span>
+        {#if titleParts().rest}
+          <span style="color: var(--k-ink-soft); font-weight: 600;">{titleParts().rest}</span>
+        {/if}
+      </h2>
+
+      <!-- Italic body lead-in, truncated to 180 chars -->
+      <p
+        style="
+          font-family: var(--k-font-serif); font-style: italic;
+          font-size: 15px; line-height: 1.45; color: var(--k-ink-soft); margin: 0;
+        "
+      >
+        {bodyLead()}
+      </p>
+
+      <!-- Divider + price + delivery -->
+      <div
+        style="
+          display: flex; align-items: center; justify-content: space-between;
+          margin-top: auto; padding-top: 12px;
+          border-top: 1px dashed var(--k-rule);
+        "
+      >
+        <PriceTag {listing} size="lg" />
+        <DeliveryPill kind={listing.delivery} />
+      </div>
+
+      <!-- Seller mini-strip -->
+      <div
+        style="
+          display: flex; align-items: center; gap: 8px;
+          font-family: var(--k-font-mono); font-size: 10.5px;
+          color: var(--k-ink-mute);
+        "
+      >
+        <KioskAvatar
+          name={listing.sellerName ?? '?'}
+          image={listing.sellerImage ?? null}
+          size="sm"
+        />
+        <span>
+          <b style="color: var(--k-ink);">{listing.sellerName ?? '—'}</b>
+        </span>
+        <span style="margin-left: auto;">
+          ★ {listing.savedBy?.length ?? 0} · 👁 {listing.views ?? 0}
+        </span>
+      </div>
+    </div>
+  </article>
+{/if}
