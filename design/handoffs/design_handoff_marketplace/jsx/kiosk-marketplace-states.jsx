@@ -170,9 +170,13 @@ function MarketplaceStatesDesktop({ lang = "DE" }) {
             </div>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 8 }}>
               <div style={{ fontFamily: kiosk.font.serif, fontStyle: "italic", fontSize: 15, color: kiosk.color.ink, lineHeight: 1.3, maxWidth: 200 }}>
-                {lang === "DE" ? "Nichts dabei. Soll Mahalle benachrichtigen, sobald etwas auftaucht?" : "Nothing matches. Want a ping if something shows up?"}
+                {lang === "DE" ? "Nichts dabei." : "Nothing matches."}
               </div>
-              <KioskBtn small variant="outline">🔔 {lang === "DE" ? "alarm setzen" : "set alert"}</KioskBtn>
+              <a href="#" style={{
+                fontFamily: kiosk.font.mono, fontSize: 11, color: kiosk.color.inkSoft,
+                textDecoration: "underline", textDecorationStyle: "dashed",
+                letterSpacing: "0.03em",
+              }}>← {lang === "DE" ? "Filter zurücksetzen" : "Clear filters"}</a>
             </div>
           </div>
         </StateTile>
@@ -368,7 +372,11 @@ function MarketplaceStatesMobile({ lang = "DE" }) {
           </div>
           <div style={{ flex: 1, textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center", gap: 6 }}>
             <div style={{ fontFamily: kiosk.font.serif, fontStyle: "italic", fontSize: 14 }}>{lang === "DE" ? "Nichts dabei." : "Nothing matches."}</div>
-            <KioskBtn small variant="outline">🔔 {lang === "DE" ? "alarm setzen" : "set alert"}</KioskBtn>
+            <a href="#" style={{
+              fontFamily: kiosk.font.mono, fontSize: 11, color: kiosk.color.inkSoft,
+              textDecoration: "underline", textDecorationStyle: "dashed",
+              letterSpacing: "0.03em",
+            }}>← {lang === "DE" ? "Filter zurücksetzen" : "Clear filters"}</a>
           </div>
         </StateTile>
 

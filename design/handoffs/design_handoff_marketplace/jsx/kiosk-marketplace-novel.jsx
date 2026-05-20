@@ -163,54 +163,63 @@ function MarketplaceNovelDesktop({ lang = "DE" }) {
           </FeatureNote>
         </Feature>
 
-        {/* ═══ 03 BUNDLES — full-width bottom row ═══ */}
-        <div style={{ gridColumn: "span 2" }}>
-        <Feature n="03" title={lang === "DE" ? "Bündel-Anzeige" : "Bundle listing"} subtitle={lang === "DE" ? "z.B. ganze Wohnungsauflösung" : "e.g. whole-flat clear-out"} color={kiosk.color.wine} lang={lang} height={420}>
-          <div style={{
-            background: kiosk.color.paper, border: `2px solid ${kiosk.color.ink}`, borderRadius: kiosk.r.md,
-            boxShadow: kiosk.shadow.print(kiosk.color.wine),
-            overflow: "hidden", position: "relative",
-          }}>
-            <div style={{
-              background: kiosk.color.ink, color: kiosk.color.paper,
-              padding: "4px 12px", fontFamily: kiosk.font.mono, fontSize: 10, fontWeight: 700,
-              letterSpacing: "0.18em", display: "flex", justifyContent: "space-between",
-            }}>
-              <span>★ {lang === "DE" ? "BÜNDEL · 6 ARTIKEL" : "BUNDLE · 6 ITEMS"}</span>
-              <span style={{ color: kiosk.color.ochre }}>{lang === "DE" ? "alles oder einzeln" : "all or individually"}</span>
-            </div>
-            <div style={{ padding: 14 }}>
-              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
-                <h3 style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", margin: 0 }}>
-                  <span style={{ fontFamily: kiosk.font.serif, fontStyle: "italic", fontWeight: 400, color: kiosk.color.wine }}>Wohnungsauflösung</span>
-                  <span style={{ color: kiosk.color.ink }}> · Schillerpromenade</span>
-                </h3>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontFamily: kiosk.font.serif, fontStyle: "italic", fontSize: 26, lineHeight: 1 }}>320 €</div>
-                  <div style={{ fontFamily: kiosk.font.mono, fontSize: 9, color: kiosk.color.inkMute }}>{lang === "DE" ? "alles zusammen · -15%" : "all together · -15%"}</div>
+        {/*
+          DEFERRED to follow-up PR — see CLAUDE.md "Bundles" marker.
+          Schema reserves bundleId?: ObjectId nullable FK + partial index.
+          Un-defer trigger conditions documented in CLAUDE.md (un-defer when
+          2-3 of: cross-link patterns in descriptions, 5+ active-listing
+          sellers, forum requests for multi-item grouping).
+
+          ORIGINAL SPEC — retained as reference, NOT for implementation in this PR:
+
+          <div style={{ gridColumn: "span 2" }}>
+            <Feature n="03" title={lang === "DE" ? "Bündel-Anzeige" : "Bundle listing"} subtitle={lang === "DE" ? "z.B. ganze Wohnungsauflösung" : "e.g. whole-flat clear-out"} color={kiosk.color.wine} lang={lang} height={420}>
+              <div style={{
+                background: kiosk.color.paper, border: `2px solid ${kiosk.color.ink}`, borderRadius: kiosk.r.md,
+                boxShadow: kiosk.shadow.print(kiosk.color.wine),
+                overflow: "hidden", position: "relative",
+              }}>
+                <div style={{
+                  background: kiosk.color.ink, color: kiosk.color.paper,
+                  padding: "4px 12px", fontFamily: kiosk.font.mono, fontSize: 10, fontWeight: 700,
+                  letterSpacing: "0.18em", display: "flex", justifyContent: "space-between",
+                }}>
+                  <span>★ {lang === "DE" ? "BÜNDEL · 6 ARTIKEL" : "BUNDLE · 6 ITEMS"}</span>
+                  <span style={{ color: kiosk.color.ochre }}>{lang === "DE" ? "alles oder einzeln" : "all or individually"}</span>
+                </div>
+                <div style={{ padding: 14 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
+                    <h3 style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", margin: 0 }}>
+                      <span style={{ fontFamily: kiosk.font.serif, fontStyle: "italic", fontWeight: 400, color: kiosk.color.wine }}>Wohnungsauflösung</span>
+                      <span style={{ color: kiosk.color.ink }}> · Schillerpromenade</span>
+                    </h3>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontFamily: kiosk.font.serif, fontStyle: "italic", fontSize: 26, lineHeight: 1 }}>320 €</div>
+                      <div style={{ fontFamily: kiosk.font.mono, fontSize: 9, color: kiosk.color.inkMute }}>{lang === "DE" ? "alles zusammen · -15%" : "all together · -15%"}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
+                    {[0, 5, 1, 8, 11, 3].map((idx) => (
+                      <MiniListing key={idx} listing={SEED_LISTINGS[idx]} lang={lang} />
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 12 }}>
+                    <KioskBtn small>{lang === "DE" ? "alles auf einmal" : "buy whole bundle"}</KioskBtn>
+                    <KioskBtn small variant="outline">{lang === "DE" ? "einzeln kaufen →" : "buy individually →"}</KioskBtn>
+                  </div>
                 </div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
-                {[0, 5, 1, 8, 11, 3].map((idx) => (
-                  <MiniListing key={idx} listing={SEED_LISTINGS[idx]} lang={lang} />
-                ))}
-              </div>
-              <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 12 }}>
-                <KioskBtn small>{lang === "DE" ? "alles auf einmal" : "buy whole bundle"}</KioskBtn>
-                <KioskBtn small variant="outline">{lang === "DE" ? "einzeln kaufen →" : "buy individually →"}</KioskBtn>
-              </div>
-            </div>
-          </div>
 
-          <FeatureNote color={kiosk.color.wine}>
-            <span style={{ color: kiosk.color.paper }}>
-              ⚙ {lang === "DE"
-                ? "Owner gruppiert 2-12 Anzeigen · Bündel-Rabatt 5-20% · Käufer:in kann auch einzelne Artikel anfragen (über das Kontaktformular) · Bündel zerfällt automatisch, wenn ≥50% verkauft."
-                : "Owner groups 2-12 listings · bundle discount 5-20% · buyer can also request individual items (via contact form) · bundle auto-dissolves when ≥50% sold."}
-            </span>
-          </FeatureNote>
-        </Feature>
-        </div>
+              <FeatureNote color={kiosk.color.wine}>
+                <span style={{ color: kiosk.color.paper }}>
+                  ⚙ {lang === "DE"
+                    ? "Owner gruppiert 2-12 Anzeigen · Bündel-Rabatt 5-20% · Käufer:in kann auch einzelne Artikel anfragen (über das Kontaktformular) · Bündel zerfällt automatisch, wenn ≥50% verkauft."
+                    : "Owner groups 2-12 listings · bundle discount 5-20% · buyer can also request individual items (via contact form) · bundle auto-dissolves when ≥50% sold."}
+                </span>
+              </FeatureNote>
+            </Feature>
+          </div>
+        */}
 
       </div>
 
