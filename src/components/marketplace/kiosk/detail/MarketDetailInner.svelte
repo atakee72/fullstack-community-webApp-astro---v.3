@@ -1,6 +1,9 @@
 <script lang="ts">
   import type { Listing } from '../../../../types/listing';
-  import { showSuccess, showToast } from '../../../../utils/toast';
+  import { showSuccess, showToast, showError, confirmAction } from '../../../../utils/toast';
+  import { resolveCategory } from '../../../../lib/marketplaceResolvers';
+  import { bumpListing } from '../../../../hooks/api/useBumpListingMutation';
+  import { setListingStatus } from '../../../../hooks/api/useListingStatusMutation';
 
   import DetailGallery from './DetailGallery.svelte';
   import SpecStrip from './SpecStrip.svelte';
@@ -10,6 +13,8 @@
   import PriceTag from '../primitives/PriceTag.svelte';
   import DeliveryPill from '../primitives/DeliveryPill.svelte';
   import OwnStatusBanner from '../../../forum/kiosk/states/OwnStatusBanner.svelte';
+  import OwnerActions from './OwnerActions.svelte';
+  import BackfillBanner from '../states/BackfillBanner.svelte';
 
   // ─── Props ─────────────────────────────────────────────────────────────────
 
@@ -107,6 +112,74 @@
   // ─── Price+delivery row visibility ────────────────────────────────────────
 
   const showDelivery = $derived(listing.delivery != null);
+
+  // ─── Owner backfill detection ─────────────────────────────────────────────
+
+  const categoryResolution = $derived(resolveCategory(listing.category));
+  const needsBackfill = $derived(
+    isOwner && (
+      categoryResolution.legacy ||
+      listing.delivery == null
+    ),
+  );
+
+  // ─── Owner action handlers ────────────────────────────────────────────────
+
+  async function handleBump() {
+    const result = await bumpListing(String(listing._id));
+    if (!result.ok) {
+      if (result.error === 'bump_rate_limited' && result.retryAt) {
+        const dt = new Date(result.retryAt);
+        showToast(
+          `Du kannst diese Anzeige erst ab ${dt.toLocaleDateString('de')} wieder hochholen.`,
+          { type: 'warning', duration: 6000 },
+        );
+      } else if (result.error === 'bump_blocked_by_status') {
+        showError('Reservierte oder verkaufte Anzeigen können nicht hochgeholt werden.');
+      } else {
+        showError(`Hochholen fehlgeschlagen: ${result.error}`);
+      }
+      return;
+    }
+    showSuccess('Anzeige hochgeholt!');
+    listing = { ...listing, lastBumpedAt: result.lastBumpedAt!, isBumped: true };
+  }
+
+  async function handleStatusChange(status: 'available' | 'reserved' | 'sold') {
+    const result = await setListingStatus(String(listing._id), status);
+    if (!result.ok) {
+      showError(`Status-Wechsel fehlgeschlagen: ${result.error}`);
+      return;
+    }
+    const successMsg =
+      status === 'reserved' ? 'Als reserviert markiert.' :
+      status === 'sold'     ? 'Als verkauft markiert.'   :
+                              'Reservierung aufgehoben.';
+    showSuccess(successMsg);
+    listing = {
+      ...listing,
+      status,
+      reservedAt: status === 'reserved' ? new Date().toISOString() : null,
+    };
+  }
+
+  async function handleDelete() {
+    const ok = await confirmAction('Diese Anzeige wirklich löschen?', {
+      title: 'Löschen',
+      confirmLabel: 'Löschen',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    const res = await fetch(`/api/listings/delete/${listing._id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      showError('Löschen fehlgeschlagen.');
+      return;
+    }
+    window.location.href = '/marketplace?just_deleted=1';
+  }
 </script>
 
 <!-- ─── Wrapper article (ghosting applied here) ───────────────────────────── -->
@@ -134,6 +207,11 @@
           state={bannerState}
           reason={listing.rejectionReason}
         />
+      {/if}
+
+      <!-- BackfillBanner (owner-only, legacy listings) -->
+      {#if needsBackfill}
+        <BackfillBanner {listing} />
       {/if}
 
       <!-- Title block -->
@@ -262,17 +340,13 @@
     <aside style="display: flex; flex-direction: column; gap: 16px;">
 
       {#if isOwner}
-        <!-- Owner Actions placeholder — Task 5.1 replaces this -->
-        <div
-          style="
-            background: var(--k-paper-soft, #ede8db);
-            border: 1.5px dashed var(--k-rule);
-            border-radius: var(--k-radius-md);
-            padding: 16px 18px;
-            font-family: var(--k-font-mono); font-size: 11px;
-            color: var(--k-ink-mute); letter-spacing: 0.04em;
-          "
-        >◆ Owner Actions — Phase 5</div>
+        <OwnerActions
+          {listing}
+          currentUserId={currentUserId!}
+          onBump={handleBump}
+          onStatusChange={handleStatusChange}
+          onDelete={handleDelete}
+        />
       {:else}
         <!-- Contact form (anchor target for mobile CTA scroll) -->
         <div id="market-contact-form">
