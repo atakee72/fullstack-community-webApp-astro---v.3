@@ -56,14 +56,16 @@ export const POST: APIRoute = async ({ request, params }) => {
     }
 
     // Validate draft has all required fields for publishing
-    if (!draft.title || !draft.descriptionPlainText || !draft.category || !draft.condition || !draft.images?.length) {
+    const needsPrice = draft.listingType !== 'exchange' && draft.listingType !== 'gift';
+    const priceInvalid = needsPrice && (!draft.price || draft.price <= 0);
+    if (!draft.title || !draft.descriptionPlainText || !draft.category || !draft.images?.length || !draft.delivery || priceInvalid) {
       const missing = [];
       if (!draft.title) missing.push('title');
       if (!draft.descriptionPlainText) missing.push('description');
       if (!draft.category) missing.push('category');
-      if (!draft.condition) missing.push('condition');
       if (!draft.images?.length) missing.push('at least one image');
-      if (draft.listingType !== 'exchange' && (!draft.price || draft.price <= 0)) missing.push('price');
+      if (!draft.delivery) missing.push('delivery method');
+      if (priceInvalid) missing.push('price');
 
       return new Response(JSON.stringify({
         error: 'Draft is incomplete',

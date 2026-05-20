@@ -7,6 +7,7 @@ import type { FlaggedContent } from '../../../../types';
 import { ListingUpdateSchema } from '../../../../schemas/listing.schema';
 import { parseRequestBody, isValidObjectId } from '../../../../schemas/validation.utils';
 import { moderatePost, checkSpamWithGPT, checkImagesWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../../lib/moderation';
+import { canMutateListing } from '../../../../lib/listingActions';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
@@ -43,9 +44,12 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
-    if (existingListing.sellerId.toString() !== userId) {
-      return new Response(JSON.stringify({ error: 'Not authorized to edit this listing' }), {
-        status: 403,
+    const guard = canMutateListing(existingListing, userId);
+    if (!guard.ok) {
+      const status = guard.reason === 'not_owner' ? 403 : 409;
+      const errorCode = guard.reason === 'not_owner' ? 'forbidden' : `edit_blocked_${guard.reason}`;
+      return new Response(JSON.stringify({ error: errorCode }), {
+        status,
         headers: { 'Content-Type': 'application/json' }
       });
     }
@@ -62,8 +66,8 @@ export const PUT: APIRoute = async ({ request, params }) => {
       updatedAt: new Date()
     };
 
-    // If changing to exchange, force price=0 and keep exchangeFor
-    if (updateData.listingType === 'exchange') {
+    // If changing to exchange or gift, force price=0
+    if (updateData.listingType === 'exchange' || updateData.listingType === 'gift') {
       updateData.price = 0;
       updateData.originalPrice = undefined;
     } else if (updateData.listingType === 'sell') {

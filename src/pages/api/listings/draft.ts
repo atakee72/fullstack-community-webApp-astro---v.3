@@ -26,7 +26,7 @@ export const POST: APIRoute = async ({ request }) => {
       return validation.response;
     }
 
-    const { draftId, title, description, descriptionPlainText, listingType, exchangeFor, category, condition, price, originalPrice, images } = validation.data;
+    const { draftId, title, description, descriptionPlainText, listingType, exchangeFor, category, condition, price, originalPrice, images, delivery, specs } = validation.data;
 
     const db = await connectDB();
     const listingsCollection = db.collection<Listing>('listings');
@@ -70,6 +70,8 @@ export const POST: APIRoute = async ({ request }) => {
             ...(price !== undefined && { price }),
             ...(originalPrice !== undefined && { originalPrice }),
             images: images || [],
+            ...(delivery !== undefined && { delivery }),
+            ...(specs !== undefined && { specs }),
             updatedAt: new Date()
           }
         }
@@ -93,6 +95,8 @@ export const POST: APIRoute = async ({ request }) => {
       price: price || 0,
       originalPrice: originalPrice || undefined,
       images: images || [],
+      delivery: delivery ?? undefined,
+      specs: specs ?? undefined,
       sellerId: userId,
       status: 'draft',
       views: 0,

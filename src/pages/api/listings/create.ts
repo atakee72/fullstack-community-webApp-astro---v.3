@@ -50,11 +50,11 @@ export const POST: APIRoute = async ({ request }) => {
       return validation.response;
     }
 
-    const { title, description, descriptionPlainText, listingType, exchangeFor, category, condition, price, originalPrice, images } = validation.data;
+    const { title, description, descriptionPlainText, listingType, exchangeFor, category, condition, price, originalPrice, images, delivery, specs } = validation.data;
 
-    // Force price=0 for exchange listings
-    const finalPrice = listingType === 'exchange' ? 0 : price;
-    const finalOriginalPrice = listingType === 'exchange' ? undefined : (originalPrice || undefined);
+    // Force price=0 for exchange and gift listings
+    const finalPrice = (listingType === 'exchange' || listingType === 'gift') ? 0 : price;
+    const finalOriginalPrice = (listingType === 'exchange' || listingType === 'gift') ? undefined : (originalPrice || undefined);
 
     // Run all moderation checks in parallel: text safety, spam check, and image safety (GPT-4o vision)
     const contentText = `${title}\n\n${descriptionPlainText}`;
@@ -79,6 +79,8 @@ export const POST: APIRoute = async ({ request }) => {
       price: finalPrice,
       originalPrice: finalOriginalPrice,
       images,
+      delivery,
+      specs: specs ?? undefined,
       sellerId: userId,
       status: 'available',
       moderationStatus,
