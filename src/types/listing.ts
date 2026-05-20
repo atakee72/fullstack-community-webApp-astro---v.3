@@ -24,9 +24,15 @@ export function deltaToPlainText(delta: Delta): string {
     .trim();
 }
 
-export type ListingType = 'sell' | 'exchange';
+// A1: 'gift' added
+export type ListingType = 'sell' | 'exchange' | 'gift';
 
-export type ListingCategory =
+/**
+ * @deprecated Legacy category union — kept for archival reference only.
+ * New code should use `ListingCategory = string` (read-permissive).
+ * Write-path uses KioskCategorySchema from listing.schema.ts.
+ */
+export type LegacyListingCategory =
   | 'furniture'
   | 'electronics'
   | 'clothing'
@@ -38,6 +44,9 @@ export type ListingCategory =
   | 'sports'
   | 'other';
 
+// A2: Permissive read-path type — legacy values pass through, new kiosk keys accepted
+export type ListingCategory = string;
+
 export type ListingCondition =
   | 'like-new'
   | 'excellent'
@@ -45,19 +54,32 @@ export type ListingCondition =
   | 'good'
   | 'fair';
 
+// A7: 'reserved' was already present
 export type ListingStatus = 'draft' | 'available' | 'reserved' | 'sold' | 'exchanged';
+
+// A3: delivery options
+export type ListingDelivery = 'abholung' | 'versand' | 'abholungVersand';
+
+// A4: specs — 5 German free-text fields
+export interface ListingSpecs {
+  masse?: string;
+  material?: string;
+  baujahr?: string;
+  farbe?: string;
+  gewicht?: string;
+}
 
 export interface Listing {
   _id?: ObjectId | string;
   title: string;
   description: string | Delta; // Plain text (legacy) or Delta (rich text)
   descriptionPlainText?: string; // Plain text version for search (new listings only)
-  listingType?: ListingType; // 'sell' (default) or 'exchange'
+  listingType: ListingType; // 'sell' | 'exchange' | 'gift'
   exchangeFor?: string; // What the seller wants in return (exchange only)
-  category: ListingCategory;
-  condition: ListingCondition;
+  category: ListingCategory; // Permissive: legacy values pass through
+  condition?: ListingCondition | null;
   price: number;
-  originalPrice?: number;
+  originalPrice?: number | null;
   images: string[];
   sellerId: ObjectId | string;
   sellerName?: string;
@@ -73,6 +95,21 @@ export interface Listing {
   savedBy: (ObjectId | string)[];
   createdAt: Date;
   updatedAt: Date;
+
+  // A3: delivery
+  delivery?: ListingDelivery | null;
+
+  // A4: specs
+  specs?: ListingSpecs | null;
+
+  // A7: reservation timestamp
+  reservedAt?: Date | string | null;
+
+  // A5: last bumped timestamp — never exposed to non-owners
+  lastBumpedAt?: Date | string | null;
+
+  // A9: bundle FK — reserved for v2, always null in v1
+  bundleId?: string | null;
 }
 
 export interface ListingFilters {
@@ -95,7 +132,8 @@ export interface ListingStats {
   totalEarnings: number;
 }
 
-export const LISTING_CATEGORIES: { value: ListingCategory; label: string }[] = [
+// Legacy constants — kept for back-compat; new kiosk surfaces use i18n + design tokens instead
+export const LISTING_CATEGORIES: { value: LegacyListingCategory; label: string }[] = [
   { value: 'furniture', label: 'Furniture' },
   { value: 'electronics', label: 'Electronics' },
   { value: 'clothing', label: 'Clothing' },
