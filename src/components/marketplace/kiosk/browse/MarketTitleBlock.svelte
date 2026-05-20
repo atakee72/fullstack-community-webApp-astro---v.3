@@ -65,9 +65,7 @@
         style="font-size: var(--k-text-3xl, 56px);"
       >
         {$t['market.title.q1']}
-        <em class="font-instrument font-normal not-italic"
-          style="font-style: italic;">{$t['market.title.q1.italic']}</em
-        >
+        <em class="font-instrument font-normal">{$t['market.title.q1.italic']}</em>
         {$t['market.title.q1.suffix']}
       </h1>
 

@@ -550,6 +550,7 @@ const de = {
   'market.filter.search': 'im Markt suchen…',
   'market.filter.kind.label': 'ART',
   'market.filter.category.label': 'KATEGORIE',
+  'market.filter.cat.all': 'Alle Kategorien',
   'market.filter.search.label': 'SUCHE',
 
   // Category labels (chip + filter rail).
@@ -1292,6 +1293,7 @@ const en: Dict = {
   'market.filter.search': 'search market…',
   'market.filter.kind.label': 'KIND',
   'market.filter.category.label': 'CATEGORY',
+  'market.filter.cat.all': 'All categories',
   'market.filter.search.label': 'SEARCH',
 
   'market.cat.moebel': 'Furniture & Home',

@@ -221,7 +221,7 @@
         "
         aria-pressed={activeCat === null}
       >
-        {$t['market.filter.kind.all']}
+        {$t['market.filter.cat.all']}
       </button>
 
       {#each CAT_KEYS as key (key)}
@@ -229,7 +229,7 @@
         <button
           type="button"
           onclick={() => onCatChange(activeCat === key ? null : key)}
-          class="shrink-0 focus:outline-none"
+          class="shrink-0 rounded-full focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
           aria-pressed={activeCat === key}
         >
           <CategoryChip id={key} active={activeCat === key} />
