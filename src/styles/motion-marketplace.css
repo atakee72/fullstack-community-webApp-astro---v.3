@@ -13,7 +13,7 @@
   100% { transform: translateY(0)    scale(1);    opacity: 1; }
 }
 .market-bump {
-  animation: market-bump-pop 380ms var(--k-ease-spring, cubic-bezier(.2,.8,.2,1.2)) both;
+  animation: market-bump-pop 380ms var(--k-ease-spring, cubic-bezier(.34, 1.56, .64, 1)) both;
 }
 
 /* ─── Freshness decay ─────────────────────────────────────────
@@ -65,7 +65,7 @@
   100% { opacity: 1; transform: translateY(0); }
 }
 .market-contact-sent {
-  animation: market-contact-sent-in 320ms var(--k-ease-spring, cubic-bezier(.2,.8,.2,1.2)) both;
+  animation: market-contact-sent-in 320ms var(--k-ease-spring, cubic-bezier(.34, 1.56, .64, 1)) both;
 }
 
 /* ─── Listing card hover (gentle) ─────────────────────────────
