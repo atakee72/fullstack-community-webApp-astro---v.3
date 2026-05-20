@@ -15,6 +15,8 @@
   import OwnStatusBanner from '../../../forum/kiosk/states/OwnStatusBanner.svelte';
   import OwnerActions from './OwnerActions.svelte';
   import BackfillBanner from '../states/BackfillBanner.svelte';
+  import ListingRejectedPanel from '../states/ListingRejectedPanel.svelte';
+  import KioskReportModal from '../../../forum/kiosk/KioskReportModal.svelte';
 
   // ─── Props ─────────────────────────────────────────────────────────────────
 
@@ -29,6 +31,7 @@
   } = $props();
 
   let listing = $state(initialListing);
+  let reportOpen = $state(false);
 
   // ─── Moderation state derivation ───────────────────────────────────────────
 
@@ -260,24 +263,35 @@
         </div>
       </header>
 
-      <!-- Description body -->
-      {#if bodyText}
-        <p
-          style="
-            font-family: var(--k-font-serif, Georgia, serif);
-            font-style: italic;
-            font-size: 16px;
-            line-height: 1.6;
-            color: var(--k-ink-soft, #4a4740);
-            margin: 0;
-          "
-        >{bodyText}</p>
+      <!-- Owner-only: rejected panel replaces description+actions -->
+      {#if isOwner && listing.moderationStatus === 'rejected'}
+        <ListingRejectedPanel
+          {listing}
+          onAppeal={() => { window.location.href = `/marketplace/edit/${listing._id}`; }}
+          onDelete={handleDelete}
+        />
+      {:else}
+        <!-- Description body -->
+        {#if bodyText}
+          <p
+            style="
+              font-family: var(--k-font-serif, Georgia, serif);
+              font-style: italic;
+              font-size: 16px;
+              line-height: 1.6;
+              color: var(--k-ink-soft, #4a4740);
+              margin: 0;
+            "
+          >{bodyText}</p>
+        {/if}
+
+        <!-- SpecStrip (only when any spec is filled) -->
+        <SpecStrip {listing} />
       {/if}
+      <!-- end rejected/normal branch -->
 
-      <!-- SpecStrip (only when any spec is filled) -->
-      <SpecStrip {listing} />
-
-      <!-- Action toolbar: merken / share / melden -->
+      <!-- Action toolbar: merken / share / melden (always shown unless rejected) -->
+      {#if listing.moderationStatus !== 'rejected' || !isOwner}
       <div
         style="
           display: flex; align-items: center; gap: 10px;
@@ -316,22 +330,27 @@
           "
         >↗ TEILEN</button>
 
-        <!-- Report / melden (v1 placeholder — Task 6.4 wires it fully) -->
-        <button
-          title="Anzeige melden"
-          onclick={() => showToast('Melden kommt bald.', { type: 'info' })}
-          style="
-            font-family: var(--k-font-mono); font-size: 11px; font-weight: 600;
-            letter-spacing: 0.06em;
-            color: var(--k-ink-mute);
-            background: none;
-            border: 1.5px solid var(--k-rule);
-            border-radius: var(--k-radius-sm, 4px);
-            padding: 5px 10px;
-            cursor: pointer;
-          "
-        >⚑ MELDEN</button>
+        <!-- Report / melden — non-owner authenticated viewers only -->
+        {#if currentUserId && !isOwner}
+          <button
+            type="button"
+            title="Anzeige melden"
+            onclick={() => (reportOpen = true)}
+            style="
+              font-family: var(--k-font-mono); font-size: 11px; font-weight: 600;
+              letter-spacing: 0.06em;
+              color: var(--k-ink-mute);
+              background: none;
+              border: 1.5px solid var(--k-rule);
+              border-radius: var(--k-radius-sm, 4px);
+              padding: 5px 10px;
+              cursor: pointer;
+            "
+          >⚑ MELDEN</button>
+        {/if}
       </div>
+      {/if}
+      <!-- end action toolbar -->
 
     </div>
     <!-- END left column -->
@@ -441,6 +460,17 @@
   {/if}
 
 </article>
+
+<!-- KioskReportModal — non-owner authenticated viewers only -->
+{#if currentUserId && !isOwner}
+  <KioskReportModal
+    bind:open={reportOpen}
+    contentType="marketplace"
+    contentId={String(listing._id)}
+    contentTitle={listing.title}
+    onClose={() => (reportOpen = false)}
+  />
+{/if}
 
 <style>
   .market-detail-inner {

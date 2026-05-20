@@ -10,8 +10,15 @@
   import ListingImagePlaceholder from '../primitives/ListingImagePlaceholder.svelte';
   import MarketStrap from '../primitives/MarketStrap.svelte';
   import KioskAvatar from '../../../forum/kiosk/KioskAvatar.svelte';
+  import StatusBadge from '../../../forum/kiosk/StatusBadge.svelte';
 
-  let { listing }: { listing: Listing } = $props();
+  let {
+    listing,
+    currentUserId = null,
+  }: {
+    listing: Listing;
+    currentUserId?: string | null;
+  } = $props();
 
   // ── Derived strap state ──────────────────────────────────────────
   const now = new Date();
@@ -40,10 +47,35 @@
 
   // Photo count.
   const photoCount = $derived(listing.images?.length ?? 0);
+
+  // ── Moderation / author visibility ───────────────────────────────────
+  const isAuthor = $derived(
+    !!currentUserId && String(listing.sellerId) === currentUserId
+  );
+
+  const inferredBadge = $derived.by(() => {
+    if (listing.moderationStatus === 'rejected') return 'rejected' as const;
+    if (listing.isUserReported && listing.moderationStatus === 'pending') return 'reported' as const;
+    if (listing.moderationStatus === 'pending') return 'pending' as const;
+    if (listing.hasWarningLabel) return 'warning' as const;
+    return null;
+  });
+
+  const ghostClass = $derived.by(() => {
+    if (!isAuthor || !inferredBadge) return '';
+    return {
+      pending:  'outline outline-2 outline-dashed outline-warn outline-offset-[-2px] rounded-md',
+      reported: 'outline outline-2 outline-dashed outline-plum outline-offset-[-2px] rounded-md',
+      rejected: 'outline outline-2 outline-dashed outline-danger outline-offset-[-2px] rounded-md',
+      warning:  '',
+    }[inferredBadge] ?? '';
+  });
+
+  const ghostOpacity = $derived(isAuthor && inferredBadge ? 'opacity-70' : '');
 </script>
 
 <article
-  class="market-card {stale ? 'market-stale' : 'market-fresh'}"
+  class="market-card {stale ? 'market-stale' : 'market-fresh'} {ghostClass}"
   style="
     background: var(--k-paper-warm);
     border: var(--k-border-ink);
@@ -83,7 +115,28 @@
       {#if legacy}
         <MarketStrap kind="altbestand" small={true} />
       {/if}
+      <!-- Author-only moderation status badge in strap stack -->
+      {#if isAuthor && inferredBadge}
+        <StatusBadge state={inferredBadge} size="sm" />
+      {/if}
     </div>
+
+    <!-- Non-author GEMELDET chip (anti-stigma marker) -->
+    {#if !isAuthor && listing.moderationStatus === 'pending' && listing.isUserReported}
+      <span
+        class="reported-chip font-dmmono"
+        style="
+          position: absolute; top: 14px; right: 14px;
+          font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+          color: var(--k-plum, #7c3d8c);
+          background: var(--k-paper);
+          border: 1.5px solid var(--k-plum, #7c3d8c);
+          border-radius: 4px;
+          padding: 2px 6px;
+          z-index: 1;
+        "
+      >⚑ {$t['status.reported']}</span>
+    {/if}
 
     <!-- Image count badge — bottom-right -->
     {#if photoCount > 0}
@@ -98,8 +151,9 @@
     {/if}
   </div>
 
-  <!-- Body -->
+  <!-- Body (opacity reduced for author-moderated cards) -->
   <div
+    class={ghostOpacity}
     style="
       padding: 4px 12px 12px;
       display: flex; flex-direction: column; gap: 8px; flex: 1;

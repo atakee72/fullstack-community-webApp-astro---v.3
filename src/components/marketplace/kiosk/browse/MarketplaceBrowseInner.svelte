@@ -24,6 +24,10 @@
   import MarketFilterRail from './MarketFilterRail.svelte';
   import ListingLead from './ListingLead.svelte';
   import ListingCard from './ListingCard.svelte';
+  import MarketSkeletonGrid from '../states/MarketSkeletonGrid.svelte';
+  import MarketEmpty from '../states/MarketEmpty.svelte';
+  import MarketSearchEmpty from '../states/MarketSearchEmpty.svelte';
+  import MarketError from '../states/MarketError.svelte';
 
   // ── Props ────────────────────────────────────────────────────────────
   let { initialData, currentUserId }: {
@@ -95,8 +99,18 @@
     (filters.offset ?? 0) === 0 && !hasFilters && data.items.length > 0
   );
 
+  // Owner view: sort rejected listings to top (most urgent "you must act" signal).
+  const sortedItems = $derived.by(() => {
+    if (filters.view !== 'mine') return data.items;
+    return [...data.items].sort((a, b) => {
+      const aRej = a.moderationStatus === 'rejected' ? 0 : 1;
+      const bRej = b.moderationStatus === 'rejected' ? 0 : 1;
+      return aRej - bRej; // rejected first
+    });
+  });
+
   // Grid items: skip the lead item when showLead is true.
-  const gridItems = $derived(showLead ? data.items.slice(1) : data.items);
+  const gridItems = $derived(showLead ? sortedItems.slice(1) : sortedItems);
 
   // ── URL sync helpers ─────────────────────────────────────────────────
   function readFiltersFromUrl(): ListingsQueryFilters {
@@ -228,6 +242,32 @@
     writeFiltersToUrl(filters);
     void refetch();
   }
+
+  // ── Active filter chips for MarketSearchEmpty ─────────────────────────
+  const activeFilterChips = $derived.by(() => {
+    const chips: Array<{ key: string; label: string }> = [];
+    if (filters.kind && filters.kind !== 'all') {
+      chips.push({ key: 'kind', label: $t[`market.filter.kind.${API_TO_RAIL[filters.kind] ?? 'all'}` as const] as string });
+    }
+    if (filters.category && filters.category !== 'all') {
+      chips.push({ key: 'category', label: ($t[`market.cat.${filters.category}` as const] as string) ?? filters.category });
+    }
+    if (filters.search) {
+      chips.push({ key: 'search', label: `"${filters.search}"` });
+    }
+    if (filters.view) {
+      chips.push({ key: 'view', label: ($t[`market.filter.${filters.view}` as const] as string) ?? filters.view });
+    }
+    return chips;
+  });
+
+  function removeFilter(key: string) {
+    if (key === 'kind') updateFilters({ kind: 'all' });
+    else if (key === 'category') updateFilters({ category: undefined });
+    else if (key === 'search') updateFilters({ search: '' });
+    else if (key === 'view') updateFilters({ view: null });
+  }
+
 </script>
 
 <!-- ─── Title block ────────────────────────────────────────────────────── -->
@@ -250,206 +290,36 @@
   onViewChange={(v) => updateFilters({ view: v as 'mine' | 'saved' | null })}
 />
 
-<!-- ─── Loading overlay ───────────────────────────────────────────────── -->
-{#if loading}
-  <div
-    style="padding: 40px 36px; text-align: center;"
-    class="font-dmmono text-[12px] text-ink-mute uppercase tracking-widest"
-    aria-live="polite"
-  >
-    {$t['ui.loading'] ?? 'laden…'}
-  </div>
-{/if}
+<!-- ─── Loading — first paint (no cached items yet) ──────────────────── -->
+{#if loading && data.items.length === 0}
+  <MarketSkeletonGrid />
 
-<!-- ─── Error state ────────────────────────────────────────────────────── -->
-{#if error && !loading}
-  <div
-    style="
-      margin: 24px 36px;
-      padding: 24px;
-      background: var(--k-paper-warm);
-      border: var(--k-border-ink);
-      border-radius: var(--k-radius-md);
-      text-align: center;
-    "
-  >
-    <p class="font-bricolage font-semibold text-ink" style="font-size: 15px; margin: 0 0 12px;">
-      Wir konnten den Markt nicht laden.
-    </p>
-    <button
-      type="button"
-      onclick={() => refetch()}
-      class="font-dmmono text-[12px] uppercase tracking-wide"
-      style="
-        padding: 7px 18px;
-        border: 2px solid var(--k-ink);
-        border-radius: var(--k-radius-pill, 999px);
-        background: transparent;
-        color: var(--k-ink);
-        cursor: pointer;
-      "
-    >
-      ↺ erneut versuchen
-    </button>
-  </div>
-{/if}
+<!-- ─── Error state (no items to fall back on) ────────────────────────── -->
+{:else if error && !data.items.length}
+  <MarketError {error} onRetry={refetch} />
 
-<!-- ─── Main content (no error) ───────────────────────────────────────── -->
-{#if !error}
+<!-- ─── Main content ──────────────────────────────────────────────────── -->
+{:else}
   <!-- Truly-empty: no listings at all, no filters active -->
   {#if data.total === 0 && !hasFilters && !loading}
-    <div
-      style="
-        margin: 32px 36px;
-        padding: 40px 24px;
-        background: var(--k-paper-warm);
-        border: 1px dashed var(--k-rule);
-        border-radius: var(--k-radius-md);
-        text-align: center;
-      "
-    >
-      <p
-        class="font-bricolage font-semibold text-ink"
-        style="font-size: 18px; margin: 0 0 6px;"
-      >
-        Heute steht hier noch nichts.
-      </p>
-      <p class="font-instrument italic text-ink-soft" style="font-size: 15px; margin: 0 0 20px;">
-        Magst du anfangen?
-      </p>
-      <a
-        href="/marketplace/create"
-        class="font-bricolage font-semibold"
-        style="
-          display: inline-block;
-          padding: 9px 22px;
-          background: var(--k-ink);
-          color: var(--k-paper);
-          border-radius: var(--k-radius-pill, 999px);
-          font-size: 14px;
-          text-decoration: none;
-        "
-      >
-        + erste anzeige
-      </a>
-    </div>
+    <MarketEmpty />
 
   <!-- Filtered-empty: filters active, nothing matches -->
   {:else if data.total === 0 && hasFilters && !loading}
-    <div
-      style="
-        margin: 24px 36px;
-        padding: 28px 24px;
-        background: var(--k-paper-warm);
-        border: 1px dashed var(--k-rule);
-        border-radius: var(--k-radius-md);
-      "
-    >
-      <!-- Active filter chips (dismissible) -->
-      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
-        {#if filters.kind && filters.kind !== 'all'}
-          <span
-            style="
-              display: inline-flex; align-items: center; gap: 6px;
-              padding: 4px 10px;
-              background: var(--k-ink); color: var(--k-paper);
-              border-radius: var(--k-radius-pill, 999px);
-              font-family: var(--k-font-mono); font-size: 11px; font-weight: 600;
-            "
-          >
-            {API_TO_RAIL[filters.kind] ?? filters.kind}
-            <button
-              type="button"
-              onclick={() => updateFilters({ kind: 'all' })}
-              aria-label="Filter entfernen"
-              style="background: none; border: none; color: inherit; cursor: pointer; padding: 0; line-height: 1;"
-            >×</button>
-          </span>
-        {/if}
-        {#if filters.category && filters.category !== 'all'}
-          <span
-            style="
-              display: inline-flex; align-items: center; gap: 6px;
-              padding: 4px 10px;
-              background: var(--k-ink); color: var(--k-paper);
-              border-radius: var(--k-radius-pill, 999px);
-              font-family: var(--k-font-mono); font-size: 11px; font-weight: 600;
-            "
-          >
-            {filters.category}
-            <button
-              type="button"
-              onclick={() => updateFilters({ category: undefined })}
-              aria-label="Filter entfernen"
-              style="background: none; border: none; color: inherit; cursor: pointer; padding: 0; line-height: 1;"
-            >×</button>
-          </span>
-        {/if}
-        {#if filters.search}
-          <span
-            style="
-              display: inline-flex; align-items: center; gap: 6px;
-              padding: 4px 10px;
-              background: var(--k-ink); color: var(--k-paper);
-              border-radius: var(--k-radius-pill, 999px);
-              font-family: var(--k-font-mono); font-size: 11px; font-weight: 600;
-            "
-          >
-            „{filters.search}"
-            <button
-              type="button"
-              onclick={() => updateFilters({ search: '' })}
-              aria-label="Suche löschen"
-              style="background: none; border: none; color: inherit; cursor: pointer; padding: 0; line-height: 1;"
-            >×</button>
-          </span>
-        {/if}
-        {#if filters.view}
-          <span
-            style="
-              display: inline-flex; align-items: center; gap: 6px;
-              padding: 4px 10px;
-              background: var(--k-ink); color: var(--k-paper);
-              border-radius: var(--k-radius-pill, 999px);
-              font-family: var(--k-font-mono); font-size: 11px; font-weight: 600;
-            "
-          >
-            {filters.view === 'mine' ? 'Meine' : 'Gespeichert'}
-            <button
-              type="button"
-              onclick={() => updateFilters({ view: null })}
-              aria-label="Filter entfernen"
-              style="background: none; border: none; color: inherit; cursor: pointer; padding: 0; line-height: 1;"
-            >×</button>
-          </span>
-        {/if}
-      </div>
-
-      <p class="font-bricolage font-bold text-ink" style="font-size: 20px; margin: 0 0 12px;">
-        Nichts dabei.
-      </p>
-      <!-- A8: navigational state-action, anchor not button. Bare /marketplace
-           is the no-filters state; client-side clearFilters keeps interaction
-           snappy without a full reload, but middle-click / right-click still
-           work as expected because this is a real link. -->
-      <a
-        href="/marketplace"
-        onclick={(e) => { e.preventDefault(); clearFilters(); }}
-        class="font-dmmono text-[12px] uppercase tracking-wide text-ink-soft"
-        style="text-decoration: underline; text-decoration-style: dashed;"
-      >
-        ← Filter zurücksetzen
-      </a>
-    </div>
+    <MarketSearchEmpty
+      activeFilters={activeFilterChips}
+      onClearAll={clearFilters}
+      onRemoveFilter={removeFilter}
+    />
 
   {:else if !loading}
     <!-- ─── Lead listing (page 1, no filters, has items) ─────────────── -->
     {#if showLead}
       <a
-        href="/marketplace/{data.items[0]?._id}"
+        href="/marketplace/{sortedItems[0]?._id}"
         style="display: block; text-decoration: none; color: inherit;"
       >
-        <ListingLead listing={data.items[0] ?? null} />
+        <ListingLead listing={sortedItems[0] ?? null} />
       </a>
 
       <!-- Section divider between lead and grid -->
@@ -485,7 +355,7 @@
             href="/marketplace/{item._id}"
             style="display: block; text-decoration: none; color: inherit;"
           >
-            <ListingCard listing={item} />
+            <ListingCard listing={item} {currentUserId} />
           </a>
         {/each}
       </div>
