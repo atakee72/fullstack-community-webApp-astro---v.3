@@ -16,7 +16,7 @@
     ? { num: 22, suffix: 9, glyph: 18 }
     : { num: 30, suffix: 11, glyph: 26 });
 
-  const vb = $derived(listing.originalPrice != null && listing.originalPrice > (listing.price ?? 0));
+  const vb = $derived(listing.originalPrice != null && listing.originalPrice > listing.price);
 </script>
 
 {#if listing.listingType === 'gift'}
