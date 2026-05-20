@@ -3,7 +3,7 @@
   // Upload happens on file pick (not on form submit).
   // Slot 0 is the "HAUPT" (main) image — shown first in listing views.
   import { t } from '../../../../lib/kiosk-i18n';
-  import { toast } from '../../../../utils/toast';
+  import { showError } from '../../../../utils/toast';
 
   let {
     images,
@@ -62,7 +62,7 @@
       const { url } = await res.json() as { url: string; publicId: string };
       onChange([...images, url]);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Upload fehlgeschlagen');
+      showError(err instanceof Error ? err.message : 'Upload fehlgeschlagen');
     } finally {
       uploading = new Set([...uploading].filter((i) => i !== slotIdx));
       pendingSlotClick = null;
