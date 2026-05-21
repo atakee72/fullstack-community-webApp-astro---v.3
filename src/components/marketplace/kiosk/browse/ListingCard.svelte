@@ -57,7 +57,6 @@
   const draft = $derived(listing.status === 'draft');
 
   const resolvedCat = $derived(resolveCategory(listing.category));
-  const legacy = $derived(resolvedCat.legacy);
 
   // Category color for riso print shadow and thumb tint.
   const catShadowToken = $derived(resolvedCat.token ?? '--k-ink-mute');
@@ -115,7 +114,10 @@
       alt={listing.title}
     />
 
-    <!-- Top-left strap stack: entwurf → bump → reserviert → altpapier → altbestand -->
+    <!-- Top-left strap stack: entwurf → bump → reserviert → altpapier.
+         altbestand was removed in May 2026 — legacy categories are migrated
+         in place by scripts/migrate-legacy-categories.ts. The strap kind
+         + CSS stay in MarketStrap.svelte for any future direct-DB-edit edge. -->
     <div
       style="
         position: absolute; top: 14px; left: 14px;
@@ -135,9 +137,6 @@
       {/if}
       {#if stale}
         <MarketStrap kind="altpapier" small={true} />
-      {/if}
-      {#if legacy}
-        <MarketStrap kind="altbestand" small={true} />
       {/if}
       <!-- Author-only moderation status badge in strap stack -->
       {#if isAuthor && inferredBadge}

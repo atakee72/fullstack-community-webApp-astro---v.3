@@ -553,15 +553,19 @@ const de = {
   'market.filter.cat.all': 'Alle Kategorien',
   'market.filter.search.label': 'SUCHE',
 
-  // Category labels (chip + filter rail).
+  // Category labels (chip + filter rail). 13 keys per the expanded taxonomy.
   'market.cat.moebel': 'Möbel & Wohnen',
+  'market.cat.garten': 'Garten',
+  'market.cat.werkzeug': 'Werkzeug',
   'market.cat.kleidung': 'Kleidung & Mode',
   'market.cat.medien': 'Bücher, Medien & Spiele',
-  'market.cat.werkzeug': 'Werkzeug & Garten',
-  'market.cat.pflanze': 'Pflanzen & Tiere',
   'market.cat.elektronik': 'Elektronik',
   'market.cat.fahrrad': 'Fahrräder & Mobilität',
-  'market.cat.kind': 'Kinder',
+  'market.cat.pflanze': 'Pflanzen & Tiere',
+  'market.cat.kinder': 'Kinder',
+  'market.cat.spielzeug': 'Spielzeug',
+  'market.cat.handgemacht': 'Handgemacht',
+  'market.cat.sport': 'Sport',
   'market.cat.sonstiges': 'Sonstiges',
 
   // Strap labels (10 locked straps).
@@ -1309,13 +1313,17 @@ const en: Dict = {
   'market.filter.search.label': 'SEARCH',
 
   'market.cat.moebel': 'Furniture & Home',
+  'market.cat.garten': 'Garden',
+  'market.cat.werkzeug': 'Tools',
   'market.cat.kleidung': 'Clothing & Fashion',
   'market.cat.medien': 'Books, Media & Games',
-  'market.cat.werkzeug': 'Tools & Garden',
-  'market.cat.pflanze': 'Plants & Pets',
   'market.cat.elektronik': 'Electronics',
   'market.cat.fahrrad': 'Bikes & Mobility',
-  'market.cat.kind': 'Kids',
+  'market.cat.pflanze': 'Plants & Pets',
+  'market.cat.kinder': 'Children',
+  'market.cat.spielzeug': 'Toys',
+  'market.cat.handgemacht': 'Handmade',
+  'market.cat.sport': 'Sports',
   'market.cat.sonstiges': 'Other',
 
   'market.strap.gratis': 'FREE',

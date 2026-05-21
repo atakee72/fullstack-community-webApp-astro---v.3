@@ -17,13 +17,17 @@
   type KindKey = 'all' | 'verkaufen' | 'tausch' | 'verschenken';
   type CatKey =
     | 'moebel'
+    | 'garten'
+    | 'werkzeug'
     | 'kleidung'
     | 'medien'
-    | 'werkzeug'
-    | 'pflanze'
     | 'elektronik'
     | 'fahrrad'
-    | 'kind'
+    | 'pflanze'
+    | 'kinder'
+    | 'spielzeug'
+    | 'handgemacht'
+    | 'sport'
     | 'sonstiges';
 
   let {
@@ -61,13 +65,17 @@
 
   const CAT_KEYS: CatKey[] = [
     'moebel',
+    'garten',
+    'werkzeug',
     'kleidung',
     'medien',
-    'werkzeug',
-    'pflanze',
     'elektronik',
     'fahrrad',
-    'kind',
+    'pflanze',
+    'kinder',
+    'spielzeug',
+    'handgemacht',
+    'sport',
     'sonstiges',
   ];
 

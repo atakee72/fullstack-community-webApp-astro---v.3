@@ -16,15 +16,17 @@ Order in the top-left strap stack (topmost = highest priority):
 2. `bump` — recently bumped (within 7 days of last bump)
 3. `reserviert` — reserved for a buyer
 4. `altpapier` — stale listing (≥ 21 days old)
-5. `altbestand` — very old listing (60+ days; shown only to owner since public browse hides these)
-6. `StatusBadge` (author-only, moderation state) — last in the stack
+5. `StatusBadge` (author-only, moderation state) — last in the stack
 
-The stack is intentionally additive. A listing that was bumped at day 22 wears `altpapier + bump` simultaneously (A5). A legacy owner-only listing at day 63 can wear `altbestand + altpapier + bump` all at once. This is by design — each strap communicates a different signal.
+The stack is intentionally additive. A listing that was bumped at day 22 wears `altpapier + bump` simultaneously (A5). Each strap communicates a different signal.
 
-### Soft-migration symmetry (A2 + A3)
-- **DB column is permissive**: `category` is a plain string (no enum constraint at the DB level). `delivery` is nullable. This allows legacy listings to survive without migration.
-- **Write path is strict**: `KioskCategorySchema` (Zod) gates all creates + edits to the 9 approved kiosk category keys. `DeliverySchema` gates delivery to `'pickup' | 'shipping' | 'both'`.
-- **Owner-edit forces re-pick on legacy values**: `BackfillBanner` renders on the edit page when the listing has a legacy category or null delivery, blocking publish until the owner picks a valid value. This is the only point where we coerce legacy data — never do it server-side automatically (could misclassify).
+**`altbestand` strap removed from rendering** (May 2026). The strap kind + CSS still exist in `MarketStrap.svelte` + `tokens.css` for any future direct-DB-edit edge case, but `ListingCard` no longer renders it — the one-time backfill (`scripts/migrate-legacy-categories.ts`) maps every pre-redesign legacy category to a kiosk key, so `resolveCategory().legacy === false` for all rows.
+
+### Soft-migration symmetry (A2 + A3) — post-backfill
+- **DB column is permissive**: `category` is a plain string (no enum constraint at the DB level). `delivery` is nullable. This allowed legacy listings to survive the redesign without an upfront migration.
+- **Write path is strict**: `KioskCategorySchema` (Zod) gates all creates + edits to the **13 approved kiosk category keys** (`moebel`, `garten`, `werkzeug`, `kleidung`, `medien`, `elektronik`, `fahrrad`, `pflanze`, `kinder`, `spielzeug`, `handgemacht`, `sport`, `sonstiges`). `DeliverySchema` gates delivery to `'abholung' | 'versand' | 'abholungVersand'`.
+- **One-time backfill ran May 2026** (`scripts/migrate-legacy-categories.ts`): mapped pre-redesign English legacy keys (`furniture`/`electronics`/etc.) to the new German kiosk keys, defaulted null `delivery` to `'abholung'`, and renamed the original short-lived `kind` key → `kinder` (split into `kinder` + `spielzeug` for the children/toys distinction).
+- **Owner-edit still forces re-pick on legacy values**: `BackfillBanner` keeps rendering on the edit page when a listing has a legacy category or null delivery — defense in depth for any direct-DB-edit cases that bypass the schema.
 
 ### Backfill rule
 `BackfillBanner` renders owner-only on the detail page (`/marketplace/[id]`) when either:

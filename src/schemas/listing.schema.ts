@@ -34,15 +34,23 @@ export const ListingCategorySchema = z.enum([
 // A2: New write-path category enum (9 German keys)
 // Legacy keys documented below for archaeology — NOT validated, DB accepts on read (passthrough).
 // Legacy: 'furniture', 'electronics', 'clothing', 'books', 'comics', 'toys', 'handmade', 'home-garden', 'sports', 'other'
+// One-time backfill: scripts/migrate-legacy-categories.ts mapped all legacy rows to the keys below.
+// Taxonomy expanded 9 → 13 keys: added 'garten' (split from werkzeug's "& Garten"), 'spielzeug'
+// (split from kind/Kinder), 'handgemacht' (was sonstiges-bound), 'sport' (was sonstiges-bound).
+// 'kind' renamed → 'kinder'.
 export const KioskCategorySchema = z.enum([
   'moebel',
+  'garten',
+  'werkzeug',
   'kleidung',
   'medien',
-  'werkzeug',
-  'pflanze',
   'elektronik',
   'fahrrad',
-  'kind',
+  'pflanze',
+  'kinder',
+  'spielzeug',
+  'handgemacht',
+  'sport',
   'sonstiges',
 ]);
 

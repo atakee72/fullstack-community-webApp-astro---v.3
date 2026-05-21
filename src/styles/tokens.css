@@ -130,32 +130,41 @@
 }
 
 /* ════════════════════════════════════════════════════════════════
-   MARKETPLACE EXTENSION — 9 cats + 10 straps + 3 delivery icons
+   MARKETPLACE EXTENSION — 13 cats + 10 straps + 3 delivery icons
    ════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ─── 8 marketplace categories ─────────────────────────────── */
-  /* 6 map onto existing Kiosk palette; 2 are new aux tokens.    */
-  --cat-moebel:     #7a4256;  /* maps to --kiosk-wine    · Möbel & Wohnen      */
-  --cat-kleidung:   #6f2f59;  /* maps to --kiosk-plum    · Kleidung & Mode     */
-  --cat-medien:     #1b1a17;  /* maps to --kiosk-ink     · Bücher, Medien & Spiele */
-  --cat-werkzeug:   #6b8a4a;  /* maps to --kiosk-moss    · Werkzeug & Garten   */
-  --cat-pflanze:    #8aa67a;  /* NEW AUX TOKEN (sage)    · Pflanzen & Tiere    */
-  --cat-elektronik: #3f8f9f;  /* maps to --kiosk-teal    · Elektronik          */
-  --cat-fahrrad:    #e8a53a;  /* maps to --kiosk-ochre   · Fahrräder & Mobilität*/
-  --cat-kind:       #d77a6a;  /* NEW AUX TOKEN (salmon)  · Kinder              */
-  --cat-sonstiges:  #7a7264;  /* maps to --kiosk-inkMute · Sonstiges (fallback)*/
+  /* ─── 13 marketplace categories ────────────────────────────── */
+  /* Taxonomy expanded May 2026: added garten + spielzeug + handgemacht + sport; */
+  /* werkzeug narrowed (label drops "& Garten"); kind renamed → kinder.          */
+  --cat-moebel:      #7a4256;  /* maps to --kiosk-wine    · Möbel & Wohnen      */
+  --cat-garten:      #5a7a3a;  /* NEW (deep moss)         · Garten              */
+  --cat-werkzeug:    #6b8a4a;  /* maps to --kiosk-moss    · Werkzeug            */
+  --cat-kleidung:    #6f2f59;  /* maps to --kiosk-plum    · Kleidung & Mode     */
+  --cat-medien:      #1b1a17;  /* maps to --kiosk-ink     · Bücher, Medien & Spiele */
+  --cat-elektronik:  #3f8f9f;  /* maps to --kiosk-teal    · Elektronik          */
+  --cat-fahrrad:     #e8a53a;  /* maps to --kiosk-ochre   · Fahrräder & Mobilität*/
+  --cat-pflanze:     #8aa67a;  /* aux (sage)              · Pflanzen & Tiere    */
+  --cat-kinder:      #b86a5a;  /* aux (earth/terracotta)  · Kinder              */
+  --cat-spielzeug:   #d77a6a;  /* aux (salmon, was kind)  · Spielzeug           */
+  --cat-handgemacht: #c4a37a;  /* NEW (warm craft-paper)  · Handgemacht         */
+  --cat-sport:       #5a8a9a;  /* NEW (cool teal-grey)    · Sport               */
+  --cat-sonstiges:   #7a7264;  /* maps to --kiosk-inkMute · Sonstiges (fallback)*/
 
   /* Text-on-color foreground tokens */
-  --cat-moebel-fg:     var(--k-paper);
-  --cat-kleidung-fg:   var(--k-paper);
-  --cat-medien-fg:     var(--k-paper);
-  --cat-werkzeug-fg:   var(--k-paper);
-  --cat-pflanze-fg:    var(--k-ink);     /* light bg → dark fg */
-  --cat-elektronik-fg: var(--k-paper);
-  --cat-fahrrad-fg:    var(--k-ink);     /* warm ochre → dark fg */
-  --cat-kind-fg:       var(--k-paper);
-  --cat-sonstiges-fg:  var(--k-paper);
+  --cat-moebel-fg:      var(--k-paper);
+  --cat-garten-fg:      var(--k-paper);
+  --cat-werkzeug-fg:    var(--k-paper);
+  --cat-kleidung-fg:    var(--k-paper);
+  --cat-medien-fg:      var(--k-paper);
+  --cat-elektronik-fg:  var(--k-paper);
+  --cat-fahrrad-fg:     var(--k-ink);     /* warm ochre → dark fg */
+  --cat-pflanze-fg:     var(--k-ink);     /* light sage → dark fg */
+  --cat-kinder-fg:      var(--k-paper);
+  --cat-spielzeug-fg:   var(--k-paper);
+  --cat-handgemacht-fg: var(--k-ink);     /* light khaki → dark fg */
+  --cat-sport-fg:       var(--k-paper);
+  --cat-sonstiges-fg:   var(--k-paper);
 
   /* ─── 10 straps ──────────────────────────────────────────── */
   --strap-gratis-bg:        #6b8a4a; /* moss   — Verschenken kind */
