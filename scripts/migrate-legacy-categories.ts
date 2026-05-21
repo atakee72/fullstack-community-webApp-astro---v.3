@@ -1,15 +1,18 @@
 /**
- * One-time backfill: legacy categories → expanded kiosk taxonomy.
+ * One-time backfill: legacy listing field gaps → kiosk-consistent state.
  *
  * The marketplace kiosk redesign expanded the category enum from 9 → 13 keys.
  * Pre-redesign listings carry the legacy 10-key English enum
  * (furniture / electronics / clothing / books / comics / toys / handmade /
  *  home-garden / sports / other). This script maps each legacy row to a kiosk
  * key in place, fills in null `delivery` with the safe default ('abholung'),
- * and defensively renames any 'kind' row to 'kinder' (no-op for fresh DBs).
+ * defensively renames any 'kind' row to 'kinder' (no-op for fresh DBs), and
+ * defaults missing `moderationStatus` → 'approved' (legacy rows predate the
+ * moderation pipeline; without this default, OwnerActions.canBump/canEdit
+ * gate closed because they check === 'approved', not "undefined OR approved").
  *
  * Idempotent: rows that already have a valid kiosk category AND a non-null
- * delivery are skipped.
+ * delivery AND a non-null moderationStatus are skipped.
  *
  * Usage:
  *   pnpm tsx scripts/migrate-legacy-categories.ts            # write
@@ -58,12 +61,13 @@ async function main() {
   const db = client.db(dbName);
   const col = db.collection('listings');
 
-  const cursor = col.find({}, { projection: { _id: 1, title: 1, category: 1, delivery: 1 } });
+  const cursor = col.find({}, { projection: { _id: 1, title: 1, category: 1, delivery: 1, moderationStatus: 1 } });
 
   let scanned = 0;
   let categoryRemapped = 0;
   let deliveryFilled = 0;
   let kindRenamed = 0;
+  let moderationFilled = 0;
   let skipped = 0;
   const previews: string[] = [];
 
@@ -72,6 +76,7 @@ async function main() {
     const update: Record<string, unknown> = {};
     const currentCategory: string | undefined = doc.category;
     const currentDelivery: string | null | undefined = doc.delivery;
+    const currentModeration: string | null | undefined = doc.moderationStatus;
 
     // Category remap
     if (typeof currentCategory === 'string') {
@@ -95,6 +100,15 @@ async function main() {
       deliveryFilled++;
     }
 
+    // ModerationStatus default — legacy rows predate the moderation pipeline.
+    // buildModerationFilter already treats { $exists: false } as approved on
+    // read; this aligns the OwnerActions UI gate (which does strict ===) and
+    // future canMutateListing calls without per-call special-casing.
+    if (currentModeration == null) {
+      update.moderationStatus = 'approved';
+      moderationFilled++;
+    }
+
     if (Object.keys(update).length === 0) {
       skipped++;
       continue;
@@ -102,7 +116,7 @@ async function main() {
 
     const title = (doc.title as string | undefined)?.slice(0, 40) ?? '(no title)';
     previews.push(
-      `  · ${String(doc._id)} "${title}"  ${currentCategory ?? '∅'} → ${update.category ?? currentCategory}  delivery: ${currentDelivery ?? '∅'} → ${update.delivery ?? currentDelivery}`,
+      `  · ${String(doc._id)} "${title}"  cat: ${currentCategory ?? '∅'} → ${update.category ?? currentCategory}  delivery: ${currentDelivery ?? '∅'} → ${update.delivery ?? currentDelivery}  mod: ${currentModeration ?? '∅'} → ${update.moderationStatus ?? currentModeration}`,
     );
 
     if (!dryRun) {
@@ -111,14 +125,15 @@ async function main() {
     }
   }
 
-  const totalUpdates = categoryRemapped + deliveryFilled + kindRenamed;
+  const totalUpdates = categoryRemapped + deliveryFilled + kindRenamed + moderationFilled;
 
   console.log('\n── migrate-legacy-categories ──────────────────────');
-  console.log(`mode:             ${dryRun ? 'DRY-RUN (no writes)' : 'WRITE'}`);
-  console.log(`scanned:          ${scanned}`);
+  console.log(`mode:              ${dryRun ? 'DRY-RUN (no writes)' : 'WRITE'}`);
+  console.log(`scanned:           ${scanned}`);
   console.log(`category remapped: ${categoryRemapped}`);
   console.log(`delivery filled:   ${deliveryFilled}`);
   console.log(`kind→kinder:       ${kindRenamed}`);
+  console.log(`moderation filled: ${moderationFilled}`);
   console.log(`skipped (clean):   ${skipped}`);
   console.log(`total updates:     ${totalUpdates}`);
   if (previews.length > 0) {
