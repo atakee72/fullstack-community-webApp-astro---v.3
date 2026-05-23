@@ -19,8 +19,14 @@ if (!listing) return Astro.redirect('/marketplace?not_found=1');
 // Owner gate
 if (String(listing.sellerId) !== userId) return Astro.redirect('/marketplace?not_owner=1');
 
-// Moderation gate — mirror calendar pattern
-if (listing.moderationStatus !== 'approved' || listing.hasWarningLabel) {
+// Moderation gate — only `pending` is blocked here (mid-moderation, any edit
+// would race the server-side flow). Rejected + warning-labeled listings are
+// allowed through: the edit endpoint re-runs full moderation, writes a
+// pre-edit audit snapshot (listingAuditTrail), and auto-clears the warning
+// or rejection on clean re-mod. Reserved/sold reach the form (existing
+// behavior); the API 409s at submit. See plan
+// /home/atakee/.claude/plans/mighty-pondering-dawn.md.
+if (listing.moderationStatus === 'pending') {
   return Astro.redirect('/marketplace?edit_blocked=1');
 }
 ---

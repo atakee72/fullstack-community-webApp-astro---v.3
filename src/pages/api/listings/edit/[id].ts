@@ -49,7 +49,14 @@ export const PUT: APIRoute = async ({ request, params }) => {
     // If the existing listing has a warning, we write a pre-edit audit snapshot
     // below before the moderation re-run, so the warning state immediately prior
     // to the edit is provable in the listingAuditTrail collection.
-    const guard = canMutateListing(existingListing, userId, { allowOnWarningLabel: true });
+    // Allow editing on warning-labeled AND rejected listings. The re-moderation
+    // pipeline below is the safety net (any dirty content re-flags); a pre-edit
+    // audit snapshot is written to listingAuditTrail before the re-mod, so the
+    // pre-edit warning/rejection state is provable. See marketplace CLAUDE.md.
+    const guard = canMutateListing(existingListing, userId, {
+      allowOnWarningLabel: true,
+      allowOnRejected: true,
+    });
     if (!guard.ok) {
       const status = guard.reason === 'not_owner' ? 403 : 409;
       const errorCode = guard.reason === 'not_owner' ? 'forbidden' : `edit_blocked_${guard.reason}`;
@@ -82,25 +89,36 @@ export const PUT: APIRoute = async ({ request, params }) => {
     // Re-run moderation if content or images changed
     const contentChanged = updateData.title || updateData.description || updateData.descriptionPlainText || updateData.images;
     if (contentChanged) {
-      // Pre-edit audit snapshot. If the existing listing carries a warning, we
-      // freeze its content + warningText into the listingAuditTrail collection
-      // BEFORE running moderation + writing the new content. This guarantees a
-      // provable record of the warning state immediately prior to the edit, even
-      // if we later clear hasWarningLabel + warningText below. Edge: if the
-      // updateOne after the moderation re-run fails (DB hiccup), the audit
-      // snapshot exists for an edit that never persisted — cross-check with the
-      // listing's updatedAt to disambiguate.
-      if (existingListing.hasWarningLabel) {
+      // Pre-edit audit snapshot. If the existing listing has a warning label OR
+      // was rejected, freeze its content + warning/rejection state into the
+      // listingAuditTrail collection BEFORE running moderation + writing the new
+      // content. Provable record of the moderation state immediately prior to
+      // the edit (the (c) block below auto-clears those fields on clean re-mod).
+      // Edge: if the updateOne after the moderation re-run fails (DB hiccup),
+      // the audit snapshot exists for an edit that never persisted — cross-check
+      // with the listing's updatedAt to disambiguate.
+      const wasRejected = existingListing.moderationStatus === 'rejected';
+      const hadWarning = !!existingListing.hasWarningLabel;
+      if (wasRejected || hadWarning) {
+        // Defensive priority: if a listing is somehow both rejected AND warning-
+        // labeled (shouldn't happen in normal flow), the audit event reflects
+        // the rejection — the stronger signal.
+        const event: ListingAuditTrail['event'] = wasRejected
+          ? 'edit_rejection_cleared'
+          : 'edit_warning_cleared';
+
         const audit: Omit<ListingAuditTrail, '_id'> = {
           listingId: id,
-          event: 'edit_warning_cleared',
+          event,
           editedAt: new Date(),
           editedBy: userId,
           preEditTitle: existingListing.title,
           preEditBody: existingListing.descriptionPlainText,
           preEditImages: existingListing.images,
-          hadWarningLabel: true,
-          preEditWarningText: existingListing.warningText,
+          hadWarningLabel: hadWarning,
+          preEditWarningText: hadWarning ? existingListing.warningText : undefined,
+          preEditModerationStatus: wasRejected ? 'rejected' : undefined,
+          preEditRejectionReason: wasRejected ? existingListing.rejectionReason : undefined,
           createdAt: new Date(),
         };
         await db
@@ -130,8 +148,13 @@ export const PUT: APIRoute = async ({ request, params }) => {
       const mergedResult = mergeModerationResults(moderationResult, spamResult, imageResult);
       if (mergedResult) {
         updateData.moderationStatus = 'pending';
-        // Re-flagged: leave hasWarningLabel + warningText alone. The new content
-        // is dirty; admin reviews via the moderation queue.
+        // Re-flagged: leave hasWarningLabel + warningText alone (old warning
+        // persists until admin reviews the new pending record — matches existing
+        // behavior). If the listing WAS rejected, clear its rejectionReason —
+        // the old reason is stale; admin sees the new flag fresh in the queue.
+        if (wasRejected) {
+          updateData.rejectionReason = null;
+        }
 
         const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
         const flaggedRecord = createFlaggedContentRecord('marketplace', contentInfo, authorInfo, mergedResult);
@@ -139,13 +162,16 @@ export const PUT: APIRoute = async ({ request, params }) => {
         await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
       } else {
         updateData.moderationStatus = 'approved';
-        // Clean re-moderation. If the listing had a warning, the warning was
-        // about old content — clear it now. isUserReported is INTENTIONALLY
-        // not cleared: user reports are independent of AI warnings, admin
+        // Clean re-moderation. isUserReported is INTENTIONALLY not cleared in
+        // either branch — user reports are independent of AI moderation; admin
         // clears them via /admin/moderation.
-        if (existingListing.hasWarningLabel) {
+        if (hadWarning) {
           updateData.hasWarningLabel = false;
           updateData.warningText = null;
+        }
+        if (wasRejected) {
+          updateData.rejectionReason = null;
+          // moderationStatus is already being set to 'approved' above.
         }
       }
     }

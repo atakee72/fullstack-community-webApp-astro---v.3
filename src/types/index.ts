@@ -331,17 +331,17 @@ export interface FlaggedContent {
 }
 
 // ============================================================================
-// LISTING AUDIT TRAIL — provable record of warning state at edit time
+// LISTING AUDIT TRAIL — provable record of moderation state at edit time
 // ============================================================================
 
-export type ListingAuditEvent = 'edit_warning_cleared';
+export type ListingAuditEvent = 'edit_warning_cleared' | 'edit_rejection_cleared';
 
 export interface ListingAuditTrail {
   _id?: ObjectId | string;
   /** Listing this snapshot refers to (string form, matches listings._id.toString()). */
   listingId: string;
-  /** Discriminator — currently only one value, but the collection's purpose is general
-   *  enough that future events (e.g. 'admin_warning_overridden') can land here too. */
+  /** Discriminator. `edit_warning_cleared` = author edited a listing that had a
+   *  warning label; `edit_rejection_cleared` = author edited a rejected listing. */
   event: ListingAuditEvent;
   editedAt: Date;
   /** userId of the editing user. Always === listing.sellerId given canMutate ownership
@@ -353,11 +353,18 @@ export interface ListingAuditTrail {
   preEditBody?: string; // descriptionPlainText at the moment of edit
   preEditImages?: string[];
 
-  // ─── Pre-edit warning state ───────────────────────────────────────────────
-  /** Always true for `edit_warning_cleared`; explicit to allow future events that
-   *  fire on no-warning edits (e.g. admin overrides) without losing the discriminator. */
+  // ─── Pre-edit warning state (set when event === 'edit_warning_cleared') ───
+  /** Always true for `edit_warning_cleared`; always false for rejection events
+   *  unless a listing somehow carried BOTH warning AND rejected (defensive). */
   hadWarningLabel: boolean;
   preEditWarningText?: string;
+
+  // ─── Pre-edit rejection state (set when event === 'edit_rejection_cleared') ─
+  /** Currently only `'rejected'` (the only moderation state that can trigger a
+   *  rejection-cleared event). Field exists for self-contained reads — clearer
+   *  than inferring from the event discriminator alone. */
+  preEditModerationStatus?: 'rejected';
+  preEditRejectionReason?: string;
 
   createdAt: Date;
 }
