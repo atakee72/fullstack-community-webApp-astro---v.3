@@ -78,9 +78,12 @@ ALLOWED_ORIGINS=           # CSV of allowed origins, e.g. "https://mahalle.berli
 ### Bump — no rate limit (supersedes A5)
 - Endpoint: `POST /api/listings/[id]/bump`.
 - No cooldown. Bump is the freshness reset; sellers need to be able to use it whenever the listing slips out of the public feed (past the 21d freshness clock). Spamming it would be visible in the audit (`updatedAt` + `lastBumpedAt` timestamps) and gated by the user's own social signals — not a technical concern.
-- `canMutateListing` guards the endpoint: blocks pending / warning / rejected / reserved / sold. Bump uses the default (no `allowOn*` overrides).
+- `canMutateListing` guards the endpoint: blocks pending / rejected / reserved / sold. Bump passes `{ allowOnWarningLabel: true }` (see below).
 - **Bump resets the freshness clock.** A bumped 25-day listing is back in the public feed at the top, with the 24h `FRISCH HOCHGEHOLT` strap. No more `altpapier` strap simultaneously.
 - Owner-facing label: the bump button reads "frisch hochholen" normally; when the listing is past 21d it swaps to "↻ Auffrischen" — same action, clearer intent.
+- **Bump button is disabled while the listing is within its 21-day freshness window** (server-computed freshness clock = `max(createdAt, lastBumpedAt)`). It re-enables the moment the listing goes stale and gets hidden from the public feed — that's the only time bumping does something user-visible. Brand-new listings have their bump button disabled for the first 21 days; this is intentional, not a bug. The disabled tooltip shows the days remaining (`market.owner.bump.disabledFresh` with `{n}` interpolation).
+- **Warning-labeled listings (`hasWarningLabel === true`) are bumpable.** Warning labels mean approved-with-caveat — the content is publicly visible (blurred until the viewer clicks through). Bumping doesn't change the content, just the freshness timestamp. The bump + status endpoints pass `{ allowOnWarningLabel: true }` to `canMutateListing`; **edits stay default-blocked** (mirrors calendar + forum precedent — editing a warning-labeled item could "fix" the flagged content out from under the warning). The edit button in `OwnerActions` mirrors that gate as disabled-with-tooltip (`market.owner.edit.warningTooltip`).
+- **`PendingLockBanner` triggers on `moderationStatus === 'pending'` only** (NOT on `hasWarningLabel`). Warning-labeled listings render the full action grid; edit is gated visually, bump + status mutations work. The lock banner's copy ("Diese Anzeige wird gerade geprüft") is only accurate for the pending state.
 
 ### Freshness decay & public visibility (supersedes A5 + Task 7.2)
 - **Freshness clock = `max(createdAt, lastBumpedAt)`.** Bumping resets it; editing does not.

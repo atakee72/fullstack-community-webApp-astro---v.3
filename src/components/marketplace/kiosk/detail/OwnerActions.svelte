@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Listing } from '../../../../types/listing';
-  import { t, locale } from '../../../../lib/kiosk-i18n';
+  import { t, locale, tStr } from '../../../../lib/kiosk-i18n';
   import PendingLockBanner from './PendingLockBanner.svelte';
 
   let {
@@ -19,9 +19,11 @@
 
   // ─── Derived state ─────────────────────────────────────────────────────────
 
-  const isPendingOrWarn = $derived(
-    listing.moderationStatus === 'pending' || !!listing.hasWarningLabel,
-  );
+  // Only `pending` triggers the PendingLockBanner. Warning-labeled listings
+  // (`hasWarningLabel === true`) are approved-with-caveat — the listing is
+  // publicly visible (blurred). The action grid renders for them; bump +
+  // status mutations work, edit is disabled-with-tooltip below.
+  const isPending = $derived(listing.moderationStatus === 'pending');
 
   const TWENTY_ONE_DAYS = 21 * 24 * 60 * 60 * 1000;
 
@@ -43,16 +45,36 @@
   });
   const isStale = $derived(Date.now() - freshnessMs >= TWENTY_ONE_DAYS);
 
-  // A5 superseded May 2026: no 7-day bump cooldown. Bump is the freshness
-  // reset; owners need to use it whenever the listing has slipped past the
-  // 21d public-visibility clock. The only guards are still:
-  //   - status === 'available' (can't bump reserved/sold/draft)
-  //   - moderationStatus === 'approved' (can't bump while AI mid-scan)
-  //   - !hasWarningLabel
+  // Bump is meaningful only when the listing is currently hidden from the
+  // public feed (past the freshness clock). For fresh listings, bumping is
+  // a no-op (listing is already at the top) — so the button is disabled
+  // with a tooltip explaining when it'll re-enable.
+  //
+  // Warning-labeled listings ARE bumpable (server-side allowOnWarningLabel
+  // is now true). Bump does NOT change content, just the freshness timestamp.
   const canBump = $derived(
     listing.status === 'available' &&
     listing.moderationStatus === 'approved' &&
-    !listing.hasWarningLabel,
+    isStale,
+  );
+
+  // Edit is independently gated: still blocked on warning-label (server
+  // returns 403 — mirrors calendar + forum precedent that editing a
+  // warning-labeled item could "fix" the flagged content out from under
+  // the warning). Mirror that gate in the UI as disabled-with-tooltip.
+  const canEdit = $derived(
+    listing.moderationStatus === 'approved' && !listing.hasWarningLabel,
+  );
+
+  // Tooltip countdown when the bump button is disabled because the listing
+  // is still fresh. Days until the freshness clock crosses 21d.
+  const daysUntilStale = $derived.by((): number => {
+    const remainingMs = TWENTY_ONE_DAYS - (Date.now() - freshnessMs);
+    if (remainingMs <= 0) return 0;
+    return Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
+  });
+  const freshTooltip = $derived(
+    tStr($t['market.owner.bump.disabledFresh'], { n: daysUntilStale }),
   );
 
   const showReserveToggle = $derived(
@@ -113,37 +135,50 @@
     </span>
   </div>
 
-  {#if isPendingOrWarn}
-    <!-- Pending / warning: lock banner replaces the action grid entirely -->
+  {#if isPending}
+    <!-- Pending only: lock banner replaces the action grid entirely. Warning-
+         labeled listings render the action grid below (with edit disabled). -->
     <PendingLockBanner />
   {:else}
     <!-- ─── 2×2 action grid ───────────────────────────────────────────────── -->
     <div class="owner-grid">
 
-      <!-- Bearbeiten -->
-      <a
-        href="/marketplace/edit/{listing._id}"
-        class="owner-btn owner-btn--primary"
-      >{$t['market.owner.edit']}</a>
+      <!-- Bearbeiten — disabled-with-tooltip when warning-labeled (server
+           still 403s edits on warning-labeled listings, matches calendar +
+           forum precedent). -->
+      {#if canEdit}
+        <a
+          href="/marketplace/edit/{listing._id}"
+          class="owner-btn owner-btn--primary"
+        >{$t['market.owner.edit']}</a>
+      {:else}
+        <button
+          class="owner-btn owner-btn--primary"
+          disabled
+          aria-disabled="true"
+          title={$t['market.owner.edit.warningTooltip']}
+        >{$t['market.owner.edit']}</button>
+      {/if}
 
-      <!-- Frisch hochholen / Auffrischen — no rate limit (A5 superseded).
-           Label swaps to "↻ Auffrischen" when listing is stale (past 21d
-           freshness clock). A bump resets the clock and brings the listing
-           back into the public feed. Still gated on status === 'available'
-           + moderation approved + no warning label. -->
+      <!-- Frisch hochholen / Auffrischen — enabled only when listing is
+           past 21d freshness clock. Fresh listings: disabled with countdown
+           tooltip explaining when bump will re-enable. Bumping resets the
+           clock and brings the listing back into public view. -->
       {#if canBump}
         <button
           class="owner-btn owner-btn--outline"
           onclick={handleBump}
           disabled={busy}
-          title={isStale ? $t['market.owner.refresh.tooltip'] : undefined}
-        >{isStale ? `↻ ${$t['market.owner.refresh.cta']}` : $t['market.owner.bump']}</button>
+          title={$t['market.owner.refresh.tooltip']}
+        >↻ {$t['market.owner.refresh.cta']}</button>
       {:else}
-        <!-- Not eligible: wrong status or not approved yet — show disabled -->
+        <!-- Disabled: either still fresh (show countdown), or status/
+             moderation problem (no tooltip — other buttons cover it). -->
         <button
           class="owner-btn owner-btn--outline"
           disabled
           aria-disabled="true"
+          title={isStale ? undefined : freshTooltip}
         >{isStale ? `↻ ${$t['market.owner.refresh.cta']}` : $t['market.owner.bump']}</button>
       {/if}
 

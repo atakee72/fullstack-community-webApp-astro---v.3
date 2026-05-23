@@ -29,9 +29,12 @@ export const POST: APIRoute = async ({ params, request }) => {
     return new Response(JSON.stringify({ error: 'not_found' }), { status: 404 });
   }
 
-  // canMutateListing covers: not_owner / pending_review / has_warning_label /
-  // rejected / sold. reserved is also blocked by default (no allowOnReserved).
-  const guard = canMutateListing(listing as any, userId);
+  // canMutateListing covers: not_owner / pending_review / rejected / reserved /
+  // sold. Warning-labeled listings are bumpable (approved-with-caveat — the
+  // listing is publicly visible already, just blurred; bumping doesn't change
+  // the content). Reserved + sold are still blocked (status endpoint handles
+  // transitions out of those).
+  const guard = canMutateListing(listing as any, userId, { allowOnWarningLabel: true });
   if (!guard.ok) {
     const httpStatus = guard.reason === 'not_owner' ? 403 : 409;
     return new Response(

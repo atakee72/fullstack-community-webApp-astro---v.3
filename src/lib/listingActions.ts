@@ -14,8 +14,9 @@ export interface CanMutateResult {
 }
 
 export interface CanMutateOptions {
-  allowOnReserved?: boolean;  // status endpoint allows reserved→sold transition
-  allowOnRejected?: boolean;  // delete-from-rejected is legit
+  allowOnReserved?: boolean;     // status endpoint allows reserved→sold transition
+  allowOnRejected?: boolean;     // delete-from-rejected is legit
+  allowOnWarningLabel?: boolean; // bump + status: warning-labeled = approved-with-caveat
 }
 
 export function canMutateListing(
@@ -25,7 +26,9 @@ export function canMutateListing(
 ): CanMutateResult {
   if (String(listing.sellerId) !== currentUserId) return { ok: false, reason: 'not_owner' };
   if (listing.moderationStatus === 'pending')     return { ok: false, reason: 'pending_review' };
-  if (listing.hasWarningLabel)                    return { ok: false, reason: 'has_warning_label' };
+  if (listing.hasWarningLabel && !opts.allowOnWarningLabel) {
+    return { ok: false, reason: 'has_warning_label' };
+  }
   if (listing.moderationStatus === 'rejected' && !opts.allowOnRejected) {
     return { ok: false, reason: 'rejected' };
   }
