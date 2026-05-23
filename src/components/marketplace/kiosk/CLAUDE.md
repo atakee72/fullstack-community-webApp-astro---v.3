@@ -121,6 +121,22 @@ ALLOWED_ORIGINS=           # CSV of allowed origins, e.g. "https://mahalle.berli
 
 Owner does **not** see their own drafts/sold listings leaking into the public feed unless they explicitly switch to the "Meine Anzeigen" (`?view=mine`) tab. `buildListingsFilter` enforces this via a `$or` arm that adds `{ sellerId: userId, status: { $in: ['draft', 'sold', 'exchanged'] } }` only when the request includes `?view=mine` + a valid session.
 
+### Editorial lead — algorithmic, no manual override
+
+The full-bleed `<ListingLead>` on page-1-unfiltered views is purely algorithmic: it's `data.items[0]` after the SSR query sorts by `updatedAt: -1` (from `LISTINGS_QUERY_OPTIONS.sortBy`). Freshness — created or bumped — wins the slot. Bump writes `updatedAt = now`, so a freshly-bumped listing immediately pops to the lead.
+
+Lead-visibility guard in `MarketplaceBrowseInner.svelte`:
+```ts
+const showLead = $derived(
+  (filters.offset ?? 0) === 0 && !hasFilters && data.items.length > 0
+);
+```
+Hidden on pagination (`offset > 0`) and on any filtered view (kind/cat/search/view).
+
+**No manual curation lever.** Marketplace listings are equal citizens; there's no `isOfficial` / `pinnedUntil` equivalent on `listings` (those exist only on `announcements` for the forum's pinned-official slot). If a specific listing should be featured deliberately, the only available lever is for the owner to bump it (resetting `updatedAt` → it becomes the lead until something fresher arrives).
+
+**Future option** (no concrete trigger yet): mirror the forum's `isOfficial: boolean` + `pinnedUntil: Date | null` pattern on listings + add an admin endpoint. Don't add the schema fields preemptively — they're cheap to add later when an actual need surfaces (community team wants to highlight a specific listing during an event, etc.).
+
 ### Hybrid SSR-static + island-hydrate pattern (detail page)
 `/marketplace/[id].astro` renders the listing title, body, lead image, and structured data directly in the Astro template (visible to search engines, link previews, and a11y). It then mounts `<MarketDetailInner client:load>` on top for the interactive gallery, sidebar contact form, and action buttons.
 
