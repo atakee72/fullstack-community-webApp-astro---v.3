@@ -101,10 +101,22 @@
   );
 
   // ── Edit-mode non-editable guard ──────────────────────────────────────
+  // Mirrors the page gate at src/pages/marketplace/edit/[id].astro and the
+  // API gate at /api/listings/edit/[id].ts (canMutateListing with
+  // allowOnRejected + allowOnWarningLabel). Rejected + warning-labeled
+  // listings ARE editable — the server re-runs moderation + writes a
+  // pre-edit audit snapshot before clearing the warning/rejection on a
+  // clean re-mod. Only block what the API actually rejects:
+  //   - pending: mid-moderation, server flow in flight
+  //   - reserved/sold: trade state, use the status endpoint to leave first
   const isEditBlocked = $derived(
     mode === 'edit' &&
     initialListing != null &&
-    (initialListing.moderationStatus !== 'approved' || initialListing.hasWarningLabel === true)
+    (
+      initialListing.moderationStatus === 'pending' ||
+      initialListing.status === 'reserved' ||
+      initialListing.status === 'sold'
+    )
   );
 
   // ── Virtual listing for ComposePreview ───────────────────────────────
@@ -283,8 +295,9 @@
   >
     <div style="font-weight: 700; margin-bottom: 6px;">Bearbeiten gesperrt</div>
     <div style="color: var(--k-ink-soft);">
-      Diese Anzeige wird gerade geprüft oder wurde mit einem Warnhinweis versehen.
-      Bearbeiten ist erst wieder möglich, wenn die Anzeige freigegeben ist.
+      Diese Anzeige wird gerade geprüft oder ist gerade reserviert/verkauft.
+      Bearbeiten ist erst wieder möglich, wenn die Prüfung abgeschlossen ist
+      oder du den Status zurücksetzt.
     </div>
   </div>
 
