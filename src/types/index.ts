@@ -329,3 +329,35 @@ export interface FlaggedContent {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// ============================================================================
+// LISTING AUDIT TRAIL — provable record of warning state at edit time
+// ============================================================================
+
+export type ListingAuditEvent = 'edit_warning_cleared';
+
+export interface ListingAuditTrail {
+  _id?: ObjectId | string;
+  /** Listing this snapshot refers to (string form, matches listings._id.toString()). */
+  listingId: string;
+  /** Discriminator — currently only one value, but the collection's purpose is general
+   *  enough that future events (e.g. 'admin_warning_overridden') can land here too. */
+  event: ListingAuditEvent;
+  editedAt: Date;
+  /** userId of the editing user. Always === listing.sellerId given canMutate ownership
+   *  gate; field is here for self-contained audit reads without joining users. */
+  editedBy: string;
+
+  // ─── Pre-edit content snapshot ────────────────────────────────────────────
+  preEditTitle?: string;
+  preEditBody?: string; // descriptionPlainText at the moment of edit
+  preEditImages?: string[];
+
+  // ─── Pre-edit warning state ───────────────────────────────────────────────
+  /** Always true for `edit_warning_cleared`; explicit to allow future events that
+   *  fire on no-warning edits (e.g. admin overrides) without losing the discriminator. */
+  hadWarningLabel: boolean;
+  preEditWarningText?: string;
+
+  createdAt: Date;
+}

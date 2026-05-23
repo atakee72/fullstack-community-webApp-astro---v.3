@@ -58,14 +58,6 @@
     isStale,
   );
 
-  // Edit is independently gated: still blocked on warning-label (server
-  // returns 403 — mirrors calendar + forum precedent that editing a
-  // warning-labeled item could "fix" the flagged content out from under
-  // the warning). Mirror that gate in the UI as disabled-with-tooltip.
-  const canEdit = $derived(
-    listing.moderationStatus === 'approved' && !listing.hasWarningLabel,
-  );
-
   // Tooltip countdown when the bump button is disabled because the listing
   // is still fresh. Days until the freshness clock crosses 21d.
   const daysUntilStale = $derived.by((): number => {
@@ -143,22 +135,15 @@
     <!-- ─── 2×2 action grid ───────────────────────────────────────────────── -->
     <div class="owner-grid">
 
-      <!-- Bearbeiten — disabled-with-tooltip when warning-labeled (server
-           still 403s edits on warning-labeled listings, matches calendar +
-           forum precedent). -->
-      {#if canEdit}
-        <a
-          href="/marketplace/edit/{listing._id}"
-          class="owner-btn owner-btn--primary"
-        >{$t['market.owner.edit']}</a>
-      {:else}
-        <button
-          class="owner-btn owner-btn--primary"
-          disabled
-          aria-disabled="true"
-          title={$t['market.owner.edit.warningTooltip']}
-        >{$t['market.owner.edit']}</button>
-      {/if}
+      <!-- Bearbeiten — always active on warning-labeled listings too. The edit
+           endpoint re-runs full moderation on every content change AND writes a
+           pre-edit audit snapshot to listingAuditTrail before clearing the
+           warning, so the "editing evades the warning" attack isn't real and the
+           pre-edit state is provable. -->
+      <a
+        href="/marketplace/edit/{listing._id}"
+        class="owner-btn owner-btn--primary"
+      >{$t['market.owner.edit']}</a>
 
       <!-- Frisch hochholen / Auffrischen — enabled only when listing is
            past 21d freshness clock. Fresh listings: disabled with countdown
