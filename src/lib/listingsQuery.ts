@@ -46,13 +46,13 @@ export function buildListingsFilter(
       : []),
   ];
 
-  // Per A5 + Task 7.2: hide listings older than 60 days from non-owner views.
-  // Owners always see their own at any age (via sellerId arm) so they can
-  // bump-refresh. The widening branch (ownerScope: 'mine') already gates on
-  // sellerId === userId for the any-status arm, so it naturally excludes
-  // non-owner viewers.
-  const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
-  const sixtyDaysAgo = new Date(Date.now() - SIXTY_DAYS_MS);
+  // A5 superseded May 2026: drop the 60d hide. Single threshold at 21d
+  // keyed off max(lastBumpedAt, createdAt) — the "freshness clock". Past-21d
+  // listings disappear from the public feed entirely; only the author sees
+  // them (grayed + warning chip in Meine Anzeigen) until they bump or delete.
+  // Bumping resets the clock and brings the listing back into public view.
+  const TWENTY_ONE_DAYS_MS = 21 * 24 * 60 * 60 * 1000;
+  const twentyOneDaysAgo = new Date(Date.now() - TWENTY_ONE_DAYS_MS);
 
   const statusFilter: Filter<any> =
     userId && opts.ownerScope === 'mine'
@@ -63,13 +63,20 @@ export function buildListingsFilter(
           ],
         }
       : {
-          // Public branch: status in [available, reserved] AND createdAt within
-          // 60 days. Owners still see their own listings at any age via the
-          // sellerId arm.
+          // Public branch: status in [available, reserved] AND freshness clock
+          // (max of lastBumpedAt + createdAt) within the last 21 days. Owners
+          // still see their own listings at any age via the sellerId arm.
+          // $expr + $ifNull collapses the (lastBumpedAt OR createdAt) decision
+          // into one branch; downside is no index use, fine at current scale.
           $or: [
             {
               status: { $in: ['available', 'reserved'] },
-              createdAt: { $gte: sixtyDaysAgo },
+              $expr: {
+                $gte: [
+                  { $ifNull: ['$lastBumpedAt', '$createdAt'] },
+                  twentyOneDaysAgo,
+                ],
+              },
             },
             ...(userId ? [{ sellerId: userId }] : []),
           ],
@@ -200,10 +207,31 @@ export async function fetchListingsForSSR(
         it.lastBumpedAt instanceof Date
           ? Date.now() - it.lastBumpedAt.getTime() < 24 * 60 * 60 * 1000
           : false,
+      // Owner-facing virtual: true when the listing is past the 21-day public
+      // visibility clock. Drives the grayed card + warning chip in Meine
+      // Anzeigen. Always false for any listing a non-owner receives (the
+      // server-side filter ensures it); variable for the owner's own listings.
+      isPubliclyHidden: isPubliclyHiddenFrom(it.lastBumpedAt, it.createdAt),
     };
   }) as Listing[];
 
   return { items, total };
+}
+
+/**
+ * Compute the "past 21d freshness" boolean from the freshness clock.
+ * Used in both serializers + by fetchListingDetailForSSR.
+ */
+function isPubliclyHiddenFrom(
+  lastBumpedAt: Date | string | null | undefined,
+  createdAt: Date | string | null | undefined,
+): boolean {
+  const TWENTY_ONE_DAYS_MS = 21 * 24 * 60 * 60 * 1000;
+  const refRaw = lastBumpedAt ?? createdAt;
+  if (!refRaw) return false; // missing both — treat as fresh (defensive)
+  const refMs = refRaw instanceof Date ? refRaw.getTime() : new Date(refRaw).getTime();
+  if (Number.isNaN(refMs)) return false;
+  return Date.now() - refMs >= TWENTY_ONE_DAYS_MS;
 }
 
 /**
@@ -266,5 +294,87 @@ export async function fetchListingForSSR(
       it.lastBumpedAt instanceof Date
         ? Date.now() - it.lastBumpedAt.getTime() < 24 * 60 * 60 * 1000
         : false,
+    isPubliclyHidden: isPubliclyHiddenFrom(it.lastBumpedAt, it.createdAt),
   } as Listing;
+}
+
+/**
+ * Detail-page fetcher: discriminated union so the page can render the
+ * "hidden past 21d" friendly page (HTTP 200) instead of redirecting to
+ * not_found. Single raw findOne — no visibility filter, the kind derives
+ * from {existence, ownership, freshness}.
+ *
+ * Used by /marketplace/[id].astro. Edit page keeps using fetchListingForSSR.
+ */
+export type ListingDetailFetchResult =
+  | { kind: 'visible'; listing: Listing }
+  | { kind: 'hidden_past_21d' }
+  | { kind: 'not_found' };
+
+export async function fetchListingDetailForSSR(
+  id: string,
+  userId: string | null,
+): Promise<ListingDetailFetchResult> {
+  if (!ObjectId.isValid(id)) return { kind: 'not_found' };
+  const db = await connectDB();
+  const col = db.collection<Listing>('listings');
+  const item = await col.findOne({ _id: new ObjectId(id) } as any);
+  if (!item) return { kind: 'not_found' };
+
+  const it = item as any;
+  const sellerIdStr =
+    typeof it.sellerId === 'object' ? it.sellerId.toString() : it.sellerId;
+  const isOwner = !!(userId && sellerIdStr === userId);
+
+  // Visibility rules (mirror buildListingsFilter):
+  //   - Owner: see own at any status, any age
+  //   - Non-owner: must be available/reserved AND fresh (within 21d)
+  //   - Moderation: must be approved OR (pending + isUserReported) OR legacy
+  if (!isOwner) {
+    const modOk =
+      it.moderationStatus === 'approved' ||
+      it.moderationStatus === undefined ||
+      it.moderationStatus === null ||
+      (it.moderationStatus === 'pending' && it.isUserReported);
+    if (!modOk) return { kind: 'not_found' };
+
+    const statusOk =
+      it.status === 'available' || it.status === 'reserved';
+    if (!statusOk) return { kind: 'not_found' };
+
+    if (isPubliclyHiddenFrom(it.lastBumpedAt, it.createdAt)) {
+      return { kind: 'hidden_past_21d' };
+    }
+  }
+
+  const listing = {
+    ...it,
+    _id: it._id?.toString(),
+    sellerId: sellerIdStr,
+    bundleId: it.bundleId
+      ? typeof it.bundleId === 'object'
+        ? it.bundleId.toString()
+        : it.bundleId
+      : null,
+    createdAt:
+      it.createdAt instanceof Date ? it.createdAt.toISOString() : it.createdAt,
+    updatedAt:
+      it.updatedAt instanceof Date ? it.updatedAt.toISOString() : it.updatedAt,
+    reservedAt:
+      it.reservedAt instanceof Date
+        ? it.reservedAt.toISOString()
+        : it.reservedAt,
+    lastBumpedAt: isOwner
+      ? it.lastBumpedAt instanceof Date
+        ? it.lastBumpedAt.toISOString()
+        : it.lastBumpedAt
+      : undefined,
+    isBumped:
+      it.lastBumpedAt instanceof Date
+        ? Date.now() - it.lastBumpedAt.getTime() < 24 * 60 * 60 * 1000
+        : false,
+    isPubliclyHidden: isPubliclyHiddenFrom(it.lastBumpedAt, it.createdAt),
+  } as Listing;
+
+  return { kind: 'visible', listing };
 }

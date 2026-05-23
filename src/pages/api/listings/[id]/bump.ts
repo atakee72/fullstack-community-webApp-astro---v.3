@@ -4,7 +4,11 @@ import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { canMutateListing } from '../../../../lib/listingActions';
 
-const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+// A5 superseded May 2026: no rate limit on bumps. Bump is the freshness reset
+// mechanism — owners need to be able to use it whenever the listing slips out
+// of the public feed (>21d since last bump or createdAt). Still gated on the
+// canMutateListing guards (status === 'available', moderation approved,
+// not reserved/sold) so bumping a reserved/sold listing is still rejected.
 
 export const POST: APIRoute = async ({ params, request }) => {
   const session = await getSession(request);
@@ -42,19 +46,6 @@ export const POST: APIRoute = async ({ params, request }) => {
       JSON.stringify({ error: 'bump_blocked_by_status' }),
       { status: 409 },
     );
-  }
-
-  // 7-day rate limit per A5 (bumps are visible to the community —
-  // capping cadence prevents spammy "fresh" straps every day).
-  if (listing.lastBumpedAt) {
-    const since = Date.now() - new Date(listing.lastBumpedAt).getTime();
-    if (since < ONE_WEEK) {
-      const retryAt = new Date(new Date(listing.lastBumpedAt).getTime() + ONE_WEEK);
-      return new Response(
-        JSON.stringify({ error: 'bump_rate_limited', retryAt: retryAt.toISOString() }),
-        { status: 429 },
-      );
-    }
   }
 
   const now = new Date();

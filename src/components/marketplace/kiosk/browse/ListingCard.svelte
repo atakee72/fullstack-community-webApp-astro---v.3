@@ -16,9 +16,15 @@
   let {
     listing,
     currentUserId = null,
+    inOwnerView = false,
   }: {
     listing: Listing;
     currentUserId?: string | null;
+    /** True when the card is rendered inside the author's „Meine Anzeigen"
+        view (?view=mine). Drives the past-21d grayed + warning-chip look —
+        public feed never sees that state because the server filter excludes
+        past-21d listings from non-owner branches entirely. */
+    inOwnerView?: boolean;
   } = $props();
 
   // ── Derived strap state ──────────────────────────────────────────
@@ -51,10 +57,19 @@
     }
     prevBumped = bumped;
   });
-  const ageMs = $derived(now.getTime() - new Date(listing.createdAt).getTime());
-  const stale = $derived(ageMs >= 21 * 24 * 60 * 60 * 1000); // 21 days
+  // A5 superseded May 2026: stale/altpapier is no longer a public concept.
+  // The server-side filter (buildListingsFilter) excludes past-21d listings
+  // from non-owner branches, so a public card here is ALWAYS within the
+  // freshness clock. Owners viewing their own „Meine Anzeigen" see past-21d
+  // listings as grayed + warning chip via the isHiddenFromPublic path below.
   const reserved = $derived(listing.status === 'reserved');
   const draft = $derived(listing.status === 'draft');
+
+  // Owner-facing: this listing is past 21d → public can't see it; the author
+  // needs to bump (or delete). Server-computed `isPubliclyHidden` virtual.
+  const isHiddenFromPublic = $derived(
+    inOwnerView && listing.isPubliclyHidden === true,
+  );
 
   const resolvedCat = $derived(resolveCategory(listing.category));
 
@@ -94,7 +109,7 @@
 </script>
 
 <article
-  class="market-card {popClass} {stale ? 'market-stale' : 'market-fresh'} {ghostClass}"
+  class="market-card {popClass} {isHiddenFromPublic ? 'market-stale' : 'market-fresh'} {ghostClass}"
   style="
     background: var(--k-paper-warm);
     border: var(--k-border-ink);
@@ -114,10 +129,12 @@
       alt={listing.title}
     />
 
-    <!-- Top-left strap stack: entwurf → bump → reserviert → altpapier.
-         altbestand was removed in May 2026 — legacy categories are migrated
-         in place by scripts/migrate-legacy-categories.ts. The strap kind
-         + CSS stay in MarketStrap.svelte for any future direct-DB-edit edge. -->
+    <!-- Top-left strap stack: entwurf → bump → reserviert.
+         altpapier + altbestand were removed in May 2026 — past-21d listings
+         are hidden from public entirely; the owner sees a grayed card +
+         warning chip in their „Meine Anzeigen" view (see isHiddenFromPublic
+         branch below). The strap kinds + CSS stay in MarketStrap.svelte
+         for any future direct-DB-edit edge case. -->
     <div
       style="
         position: absolute; top: 14px; left: 14px;
@@ -134,9 +151,6 @@
       {/if}
       {#if reserved}
         <MarketStrap kind="reserviert" small={true} />
-      {/if}
-      {#if stale}
-        <MarketStrap kind="altpapier" small={true} />
       {/if}
       <!-- Author-only moderation status badge in strap stack -->
       {#if isAuthor && inferredBadge}
@@ -182,6 +196,25 @@
       display: flex; flex-direction: column; gap: 8px; flex: 1;
     "
   >
+    <!-- Owner-only warning chip: this listing is past 21d and hidden from
+         the public feed. Only the owner sees this card (it's in their
+         „Meine Anzeigen" view). Bump button on the detail page brings it
+         back into public view. -->
+    {#if isHiddenFromPublic}
+      <span
+        class="font-dmmono"
+        style="
+          align-self: flex-start;
+          font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em;
+          color: var(--k-ink); background: var(--k-ochre, #e8a53a);
+          border: 1.5px solid var(--k-ink);
+          border-radius: 4px;
+          padding: 2px 7px;
+          text-transform: uppercase;
+        "
+      >⚠ {$t['market.owner.notInPublicFeed']}</span>
+    {/if}
+
     <!-- Category chip + timestamp -->
     <div
       style="

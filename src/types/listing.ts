@@ -115,6 +115,14 @@ export interface Listing {
   // strap renders without leaking the exact bump timestamp.
   isBumped?: boolean;
 
+  // Server-computed virtual: true when the listing is past the 21-day
+  // public-visibility clock (max(lastBumpedAt, createdAt) < now - 21d).
+  // Drives the grayed card + warning chip in the author's „Meine Anzeigen"
+  // view. Always false for any listing a non-owner receives (the server-side
+  // filter in buildListingsFilter already excludes past-21d listings from
+  // public branches). Variable for the owner's own listings.
+  isPubliclyHidden?: boolean;
+
   // A9: bundle FK — reserved for v2, always null in v1
   bundleId?: string | null;
 }

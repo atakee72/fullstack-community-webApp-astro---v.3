@@ -1,9 +1,10 @@
 ---
 import KioskLayout from '../../layouts/KioskLayout.astro';
 import { getSession } from 'auth-astro/server';
-import { fetchListingForSSR } from '../../lib/listingsQuery';
+import { fetchListingDetailForSSR } from '../../lib/listingsQuery';
 import { resolveCategory } from '../../lib/marketplaceResolvers';
 import MarketDetailInner from '../../components/marketplace/kiosk/detail/MarketDetailInner.svelte';
+import ListingUnavailable from '../../components/marketplace/kiosk/states/ListingUnavailable.astro';
 
 Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
 
@@ -12,86 +13,109 @@ const userId = (session?.user as any)?.id ?? null;
 const { id } = Astro.params;
 
 if (!id) return Astro.redirect('/marketplace?not_found=1');
-const listing = await fetchListingForSSR(id, userId);
-if (!listing) return Astro.redirect('/marketplace?not_found=1');
 
-// Defensively reject non-owner viewers of rejected listings.
-// The SSR filter should already block this, but guard in case filter drifts.
-const isOwner = userId === String(listing.sellerId);
-if (listing.moderationStatus === 'rejected' && !isOwner) {
+const result = await fetchListingDetailForSSR(id, userId);
+
+if (result.kind === 'not_found') {
   return Astro.redirect('/marketplace?not_found=1');
 }
 
-const cat = resolveCategory(listing.category);
-const ogImage =
-  listing.images && listing.images.length > 0 ? listing.images[0] : '/og-image.png';
+// Past-21d, non-owner viewer: friendly "no longer available" page at the
+// same URL. HTTP 200 (Astro default) so the URL stays indexable-but-empty
+// rather than 404-broken; the moment the owner bumps, the next request
+// flips back to the full detail. Cache-Control: no-store is already set.
+const isHidden = result.kind === 'hidden_past_21d';
+const listing = result.kind === 'visible' ? result.listing : null;
 
-const bodyText =
-  typeof listing.description === 'string'
+// Defensively reject non-owner viewers of rejected listings.
+// fetchListingDetailForSSR already filters these for non-owners, but guard
+// in case the helper drifts.
+const isOwner = listing && userId === String(listing.sellerId);
+if (listing && listing.moderationStatus === 'rejected' && !isOwner) {
+  return Astro.redirect('/marketplace?not_found=1');
+}
+
+const cat = listing ? resolveCategory(listing.category) : null;
+const ogImage =
+  listing?.images && listing.images.length > 0 ? listing.images[0] : '/og-image.png';
+
+const bodyText = listing
+  ? typeof listing.description === 'string'
     ? listing.description
-    : (listing.descriptionPlainText ?? '');
+    : (listing.descriptionPlainText ?? '')
+  : '';
 
 // Price line for SSR meta
-const priceText =
-  listing.listingType === 'sell'
+const priceText = listing
+  ? listing.listingType === 'sell'
     ? `${listing.price} €${listing.originalPrice && listing.originalPrice > listing.price ? ' VB' : ''}`
     : listing.listingType === 'exchange'
     ? 'Tauschvorschlag'
-    : 'gratis';
+    : 'gratis'
+  : '';
 ---
 
-<KioskLayout
-  page="marketplace"
-  title={`${listing.title} · Marktplatz`}
-  description={bodyText.slice(0, 160)}
-  image={ogImage}
->
-  <!--
-    SSR static shell — visible to search engines, link-preview crawlers, and
-    assistive tech. Contains the listing's title, category, price, body, and
-    lead image directly in raw HTML. The Svelte island below layers on
-    interactivity (gallery, lightbox, ContactForm, OwnerActions, …).
+{isHidden ? (
+  <KioskLayout
+    page="marketplace"
+    title="Anzeige nicht verfügbar · Marktplatz"
+  >
+    <ListingUnavailable />
+  </KioskLayout>
+) : (
+  <KioskLayout
+    page="marketplace"
+    title={`${listing!.title} · Marktplatz`}
+    description={bodyText.slice(0, 160)}
+    image={ogImage}
+  >
+    <!--
+      SSR static shell — visible to search engines, link-preview crawlers, and
+      assistive tech. Contains the listing's title, category, price, body, and
+      lead image directly in raw HTML. The Svelte island below layers on
+      interactivity (gallery, lightbox, ContactForm, OwnerActions, …).
 
-    We render the shell VISIBLY (no display:none) so Google's content-quality
-    signals see real markup. The island adds the interactive layer alongside
-    it rather than replacing it.
-  -->
-  <div class="market-detail-ssr-shell" style="max-width: 1200px; margin: 0 auto; padding: 20px 16px 8px;">
-    <header>
-      <div style="font-family: var(--k-font-mono, monospace); font-size: 10px; letter-spacing: 0.12em; color: var(--k-wine, #b23a5b); font-weight: 600; margin-bottom: 6px; text-transform: uppercase;">
-        Markt · Schillerkiez
-      </div>
-      <h1 style="font-family: var(--k-font-display, sans-serif); font-size: clamp(28px, 5vw, 42px); font-weight: 800; letter-spacing: -0.02em; color: var(--k-ink, #1b1a17); line-height: 1.1; margin: 0 0 10px;">
-        {listing.title}
-      </h1>
-      <p style="font-family: var(--k-font-mono, monospace); font-size: 13px; color: var(--k-ink-soft, #5a5650); margin: 0 0 8px;">
-        {cat.label ?? listing.category} · {priceText}
+      We render the shell VISIBLY (no display:none) so Google's content-quality
+      signals see real markup. The island adds the interactive layer alongside
+      it rather than replacing it.
+    -->
+    <div class="market-detail-ssr-shell" style="max-width: 1200px; margin: 0 auto; padding: 20px 16px 8px;">
+      <header>
+        <div style="font-family: var(--k-font-mono, monospace); font-size: 10px; letter-spacing: 0.12em; color: var(--k-wine, #b23a5b); font-weight: 600; margin-bottom: 6px; text-transform: uppercase;">
+          Markt · Schillerkiez
+        </div>
+        <h1 style="font-family: var(--k-font-display, sans-serif); font-size: clamp(28px, 5vw, 42px); font-weight: 800; letter-spacing: -0.02em; color: var(--k-ink, #1b1a17); line-height: 1.1; margin: 0 0 10px;">
+          {listing!.title}
+        </h1>
+        <p style="font-family: var(--k-font-mono, monospace); font-size: 13px; color: var(--k-ink-soft, #5a5650); margin: 0 0 8px;">
+          {cat!.label ?? listing!.category} · {priceText}
+        </p>
+      </header>
+      {listing!.images?.[0] && (
+        <img
+          src={listing!.images[0]}
+          alt={listing!.title}
+          loading="lazy"
+          width="800"
+          height="500"
+          style="width: 100%; max-height: 320px; object-fit: cover; border-radius: 6px; margin-bottom: 12px; display: block;"
+        />
+      )}
+      <p style="font-family: var(--k-font-serif, Georgia, serif); font-style: italic; font-size: 16px; line-height: 1.6; color: var(--k-ink-soft, #4a4740); margin: 0 0 16px;">
+        {bodyText}
       </p>
-    </header>
-    {listing.images?.[0] && (
-      <img
-        src={listing.images[0]}
-        alt={listing.title}
-        loading="lazy"
-        width="800"
-        height="500"
-        style="width: 100%; max-height: 320px; object-fit: cover; border-radius: 6px; margin-bottom: 12px; display: block;"
-      />
-    )}
-    <p style="font-family: var(--k-font-serif, Georgia, serif); font-style: italic; font-size: 16px; line-height: 1.6; color: var(--k-ink-soft, #4a4740); margin: 0 0 16px;">
-      {bodyText}
-    </p>
-  </div>
+    </div>
 
-  <!--
-    Svelte island — renders the full interactive detail page:
-    gallery carousel, action toolbar, contact form / owner actions, seller card.
-    client:load so it hydrates immediately (listing data is already in the DOM).
-  -->
-  <MarketDetailInner
-    client:load
-    initialListing={listing}
-    {isOwner}
-    currentUserId={userId}
-  />
-</KioskLayout>
+    <!--
+      Svelte island — renders the full interactive detail page:
+      gallery carousel, action toolbar, contact form / owner actions, seller card.
+      client:load so it hydrates immediately (listing data is already in the DOM).
+    -->
+    <MarketDetailInner
+      client:load
+      initialListing={listing!}
+      isOwner={!!isOwner}
+      currentUserId={userId}
+    />
+  </KioskLayout>
+)}

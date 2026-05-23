@@ -1,0 +1,89 @@
+---
+// Rendered by /marketplace/[id].astro when a non-owner hits the URL of a
+// listing past the 21-day freshness clock. HTTP 200 keeps the URL stable +
+// indexable-but-empty rather than 404-broken. The owner can bring the
+// listing back into public view by bumping (which resets the clock); the
+// next request then renders the full detail page at the same URL.
+//
+// v1 DE only — the kiosk i18n store lives in client-side localStorage and
+// isn't reachable from an .astro file (SSR). Flip to a client-rendered
+// Svelte island if multi-locale matters later.
+---
+
+<div class="market-unavailable">
+  <div class="market-unavailable__panel">
+    <p class="market-unavailable__kicker">Markt · Schillerkiez</p>
+    <h1 class="market-unavailable__title">Diese Anzeige ist nicht mehr verfügbar.</h1>
+    <p class="market-unavailable__subtitle">
+      Möglicherweise wurde sie zurückgezogen oder nicht aktualisiert.
+    </p>
+    <a href="/marketplace" class="market-unavailable__cta">← Zurück zum Markt</a>
+  </div>
+</div>
+
+<style>
+  .market-unavailable {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 16px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .market-unavailable__panel {
+    background: var(--k-paper-warm, #efe9d7);
+    border: 1.5px dashed var(--k-rule, #c9c0a8);
+    border-radius: var(--k-radius-md, 6px);
+    padding: 36px 28px;
+    text-align: center;
+    max-width: 480px;
+    width: 100%;
+  }
+
+  .market-unavailable__kicker {
+    font-family: var(--k-font-mono, monospace);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--k-wine, #b23a5b);
+    font-weight: 600;
+    margin: 0 0 18px;
+    text-transform: uppercase;
+  }
+
+  .market-unavailable__title {
+    font-family: var(--k-font-display, sans-serif);
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    color: var(--k-ink, #1b1a17);
+    line-height: 1.2;
+    margin: 0 0 12px;
+  }
+
+  .market-unavailable__subtitle {
+    font-family: var(--k-font-serif, Georgia, serif);
+    font-style: italic;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--k-ink-soft, #5a5650);
+    margin: 0 0 22px;
+  }
+
+  .market-unavailable__cta {
+    display: inline-block;
+    font-family: var(--k-font-mono, monospace);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--k-ink, #1b1a17);
+    text-decoration: underline;
+    text-decoration-style: dashed;
+    text-decoration-color: var(--k-rule, #c9c0a8);
+    text-underline-offset: 4px;
+    padding: 4px 8px;
+    transition: color 150ms ease;
+  }
+
+  .market-unavailable__cta:hover {
+    color: var(--k-wine, #b23a5b);
+  }
+</style>

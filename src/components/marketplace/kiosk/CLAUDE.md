@@ -1,5 +1,12 @@
 # Marketplace (kiosk) notes
 
+> **A5 superseded May 2026** — see "Bump — no rate limit" and "Freshness decay
+> & public visibility" sections below. The original A5 (7-day cooldown +
+> altpapier strap that bump didn't clear + 60d hide) was replaced by a single
+> 21-day threshold that *hides* past-21d listings from public entirely + bump
+> as freshness reset + no rate limit.
+
+
 Loaded lazily when Claude reads/edits files in `src/components/marketplace/kiosk/` (or any subtree). The root `CLAUDE.md` keeps a pointer to this file so it can be pulled in even when working on related files outside this directory (e.g. `src/pages/api/listings/`, `src/lib/listingActions.ts`, `src/lib/listingsQuery.ts`).
 
 ### Page-accent rule (dual accent)
@@ -68,15 +75,24 @@ ALLOWED_ORIGINS=           # CSV of allowed origins, e.g. "https://mahalle.berli
 
 `ListingCard.svelte` uses `isBumped` as the canonical signal for the bump strap. **Never extend the public projection to expose `lastBumpedAt`** — bump timestamps are a privacy leak (tells competitors exactly when a seller is active/desperate).
 
-### Bump rate-limit (A5)
-- 7-day cooldown per listing. Endpoint: `POST /api/listings/[id]/bump`.
-- Returns `429 { error: 'rate_limited', retryAt: <ISO> }` on rate-limit hit. UI shows countdown in a toast.
-- `canMutateListing` (see below) guards the endpoint. Default behavior: blocks pending / warning / rejected / reserved / sold. Bump uses the default (no overrides).
-- Bump does **not** clear the `altpapier` strap. Freshness/staleness keys off `createdAt`, not `lastBumpedAt`. A bumped 25-day listing wears both `altpapier` and `bump` simultaneously — the bump signals "seller still active", altpapier signals "listing is old".
+### Bump — no rate limit (supersedes A5)
+- Endpoint: `POST /api/listings/[id]/bump`.
+- No cooldown. Bump is the freshness reset; sellers need to be able to use it whenever the listing slips out of the public feed (past the 21d freshness clock). Spamming it would be visible in the audit (`updatedAt` + `lastBumpedAt` timestamps) and gated by the user's own social signals — not a technical concern.
+- `canMutateListing` guards the endpoint: blocks pending / warning / rejected / reserved / sold. Bump uses the default (no `allowOn*` overrides).
+- **Bump resets the freshness clock.** A bumped 25-day listing is back in the public feed at the top, with the 24h `FRISCH HOCHGEHOLT` strap. No more `altpapier` strap simultaneously.
+- Owner-facing label: the bump button reads "frisch hochholen" normally; when the listing is past 21d it swaps to "↻ Auffrischen" — same action, clearer intent.
 
-### Freshness decay thresholds
-- **21 days** → `altpapier` strap (DB: `createdAt < now - 21d`). CSS: `.market-stale` class adds `opacity-0.6` + `saturate-[0.45]` via `motion-marketplace.css`. Card still visible to everyone.
-- **60 days** → server-side hidden from non-owner views. `buildListingsFilter` in `listingsQuery.ts` adds `createdAt >= now-60d` to the public `$match` pipeline. Owner sees their own listings at any age via the `sellerId === userId` `$or` arm.
+### Freshness decay & public visibility (supersedes A5 + Task 7.2)
+- **Freshness clock = `max(createdAt, lastBumpedAt)`.** Bumping resets it; editing does not.
+- **0–21 days since the clock**: visible in public feed, search, browse, direct URL. Normal card.
+- **>21 days since the clock**:
+  - **Hidden from public entirely.** `buildListingsFilter` in `listingsQuery.ts` uses `$expr: { $gte: [{ $ifNull: ['$lastBumpedAt', '$createdAt'] }, twentyOneDaysAgo] }` on the public branch. (Caveat: `$expr` doesn't use indexes — fine for current scale; future optimization is a precomputed `freshness` field with an index on it.)
+  - **Direct URL → "Diese Anzeige ist nicht mehr verfügbar." page** (HTTP 200, not 404). `fetchListingDetailForSSR` returns `{ kind: 'hidden_past_21d' }` and `[id].astro` renders `<ListingUnavailable />` inside the same `<KioskLayout>` shell at the same URL. Keeps the URL indexable-but-empty; the moment the owner bumps, the next request flips back to the full detail page.
+  - **Owner's „Meine Anzeigen" view**: the card renders grayed (`.market-stale` class — opacity 0.6 + saturate 0.45 via motion-marketplace.css) + an ochre `⚠ Nicht im public Feed · bump zum Hochholen` warning chip (i18n key `market.owner.notInPublicFeed`). Triggered when the orchestrator passes `inOwnerView={true}` AND the server-computed `listing.isPubliclyHidden === true`.
+  - **Owner's direct URL**: full detail page renders normally (owner bypass via `fetchListingDetailForSSR`'s `isOwner` branch).
+- **No auto-archive, no hard cutoff.** Past-21d listings live indefinitely in the author's private view until they bump or delete.
+- **`altpapier` / `altbestand` straps**: kinds + CSS retained in `MarketStrap.svelte` + `tokens.css` for defense; never rendered by `ListingCard` after May 2026.
+- **`isPubliclyHidden: boolean`** is a server-computed virtual on the `Listing` type. Always `false` for any listing a non-owner receives (server filter excludes them); variable for the owner's own. No privacy leak — boolean only, not a timestamp.
 
 ### Status visibility (A7)
 | Status | Visible to | Conditions |

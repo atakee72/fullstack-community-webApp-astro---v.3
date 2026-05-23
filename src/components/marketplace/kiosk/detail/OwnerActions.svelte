@@ -23,39 +23,37 @@
     listing.moderationStatus === 'pending' || !!listing.hasWarningLabel,
   );
 
-  const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
   const TWENTY_ONE_DAYS = 21 * 24 * 60 * 60 * 1000;
 
-  // Stale: listing is 21+ days old by createdAt (per A5 — stale keys off
-  // createdAt, not updatedAt). Bumping does NOT clear the altpapier strap;
-  // the refreshed listing wears altpapier + FRISCH HOCHGEHOLT simultaneously
-  // for 24h. Stale affects only the bump button label/tooltip.
-  const listingAgeMs = $derived(Date.now() - new Date(listing.createdAt).getTime());
-  const isStale = $derived(listingAgeMs >= TWENTY_ONE_DAYS);
+  // Stale (new semantics, May 2026 supersession of A5):
+  // — keyed off max(createdAt, lastBumpedAt), the "freshness clock".
+  // — When stale, the listing is hidden from the public feed entirely.
+  // — Bump resets the clock and brings it back into public view.
+  // The bump button's label swaps to "↻ Auffrischen" in this state — same
+  // action, clearer intent. Bumping does NOT change createdAt; the next
+  // bump-window starts from now.
+  //
+  // Freshness clock = max(createdAt, lastBumpedAt). When > 21d in the past,
+  // the listing is hidden from public (server-side filter) and the bump
+  // button shows the ↻ Auffrischen label so the owner knows what to do.
+  const freshnessMs = $derived.by(() => {
+    const lastBump = listing.lastBumpedAt ? new Date(listing.lastBumpedAt).getTime() : 0;
+    const created = new Date(listing.createdAt).getTime();
+    return Math.max(lastBump, created);
+  });
+  const isStale = $derived(Date.now() - freshnessMs >= TWENTY_ONE_DAYS);
 
+  // A5 superseded May 2026: no 7-day bump cooldown. Bump is the freshness
+  // reset; owners need to use it whenever the listing has slipped past the
+  // 21d public-visibility clock. The only guards are still:
+  //   - status === 'available' (can't bump reserved/sold/draft)
+  //   - moderationStatus === 'approved' (can't bump while AI mid-scan)
+  //   - !hasWarningLabel
   const canBump = $derived(
     listing.status === 'available' &&
     listing.moderationStatus === 'approved' &&
-    !listing.hasWarningLabel &&
-    (!listing.lastBumpedAt ||
-      Date.now() - new Date(listing.lastBumpedAt).getTime() >= ONE_WEEK),
+    !listing.hasWarningLabel,
   );
-
-  // Bump is rate-limited (visible but disabled with tooltip) when within 7 days
-  const bumpRateLimited = $derived(
-    listing.status === 'available' &&
-    listing.moderationStatus === 'approved' &&
-    !listing.hasWarningLabel &&
-    !!listing.lastBumpedAt &&
-    Date.now() - new Date(listing.lastBumpedAt).getTime() < ONE_WEEK,
-  );
-
-  // Days until bump is available again (for tooltip)
-  const bumpRetryDays = $derived.by((): number => {
-    if (!listing.lastBumpedAt) return 0;
-    const elapsed = Date.now() - new Date(listing.lastBumpedAt).getTime();
-    return Math.ceil((ONE_WEEK - elapsed) / (24 * 60 * 60 * 1000));
-  });
 
   const showReserveToggle = $derived(
     listing.status === 'available' || listing.status === 'reserved',
@@ -128,18 +126,12 @@
         class="owner-btn owner-btn--primary"
       >{$t['market.owner.edit']}</a>
 
-      <!-- Frisch hochholen / auffrischen — always visible; disabled + tooltip
-           when rate-limited. Label swaps to "auffrischen" when listing is
-           stale (createdAt ≥ 21d). Per A5: bumping does NOT clear altpapier;
-           the strap combo (altpapier + FRISCH HOCHGEHOLT) is intentional. -->
-      {#if bumpRateLimited}
-        <button
-          class="owner-btn owner-btn--outline"
-          disabled
-          title="Noch {bumpRetryDays} Tag{bumpRetryDays === 1 ? '' : 'e'} bis zum nächsten Hochholen"
-          aria-disabled="true"
-        >{isStale ? `↻ ${$t['market.owner.refresh.cta']}` : $t['market.owner.bump']}</button>
-      {:else if listing.status === 'available' && listing.moderationStatus === 'approved' && !listing.hasWarningLabel}
+      <!-- Frisch hochholen / Auffrischen — no rate limit (A5 superseded).
+           Label swaps to "↻ Auffrischen" when listing is stale (past 21d
+           freshness clock). A bump resets the clock and brings the listing
+           back into the public feed. Still gated on status === 'available'
+           + moderation approved + no warning label. -->
+      {#if canBump}
         <button
           class="owner-btn owner-btn--outline"
           onclick={handleBump}

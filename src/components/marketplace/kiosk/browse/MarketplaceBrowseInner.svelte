@@ -355,7 +355,7 @@
             href="/marketplace/{item._id}"
             style="display: block; text-decoration: none; color: inherit;"
           >
-            <ListingCard listing={item} {currentUserId} />
+            <ListingCard listing={item} {currentUserId} inOwnerView={filters.view === 'mine'} />
           </a>
         {/each}
       </div>
