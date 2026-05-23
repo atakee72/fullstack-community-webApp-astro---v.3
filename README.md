@@ -155,6 +155,11 @@ Vercel will automatically:
 - Handle SSR pages
 - Run cron jobs defined in `vercel.json` (daily news fetch at 6 AM UTC)
 
+### Manual deploy steps (run once per environment)
+
+- `pnpm tsx scripts/create-listing-indexes.ts` — idempotent. Creates the marketplace partial indexes (`listings.lastBumpedAt`, `listings.bundleId`) + the `listingContacts` rate-limit indexes + the `listingAuditTrail` history index. Re-run is a no-op.
+- `pnpm tsx scripts/migrate-legacy-categories.ts --dry-run` then `pnpm tsx scripts/migrate-legacy-categories.ts` — one-time backfill that maps pre-kiosk English category keys (furniture/electronics/etc.) → the 13 German kiosk taxonomy keys + defaults missing `delivery` to `'abholung'` + defaults missing `moderationStatus` to `'approved'`. Idempotent.
+
 ## 🔑 Key Features
 
 - **Hybrid Rendering**: SSG for static pages, SSR for dynamic content
@@ -167,7 +172,7 @@ Vercel will automatically:
 - **Content Moderation**: Multi-layer AI moderation (safety scan + GPT content check for spam/hate speech/harassment) + trilingual profanity filters (TR/EN/DE) with leetspeak detection + username validation at registration + community reporting
 - **Daily Posting Limits**: 5 per rolling 24h for topics, events, announcements, recommendations, and listings
 - **Newsboard**: AI-curated local news from 9 RSS feeds + NewsData.io, with GPT-4o relevance scoring
-- **Marketplace (kiosk)**: 3 listing kinds (verkaufen / tausch / verschenken), 9 kiosk taxonomy categories with soft-migration for legacy values, delivery enum (Abholung / Versand / Abholung & Versand), optional detail fields (5 German free-text fields + condition enum), editorial lead-of-the-day on page 1, contact-form relay via Resend (privacy-preserving — no email addresses exposed), bump CTA (7-day rate limit) + freshness decay (21d altpapier strap, 60d server-side hide from public feed), owner lifecycle (edit / bump / reserve / sold / delete with state-aware gating via `canMutateListing`), mobile FAB for new listings, SEO-friendly hybrid SSR-static + island-hydrate detail pages
+- **Marketplace (kiosk)**: 3 listing kinds (verkaufen / tausch / verschenken), **13 kiosk taxonomy categories** with one-time backfill of legacy English-key listings (`scripts/migrate-legacy-categories.ts`), delivery enum (Abholung / Versand / Abholung & Versand), optional detail fields (5 German free-text fields + condition enum), editorial lead-of-the-day on page 1, contact-form relay via Resend (privacy-preserving — no email addresses exposed), **single-threshold 21d visibility**: past-21d listings hide from public feed/search/direct URL (friendly "nicht mehr verfügbar" page at the same URL — HTTP 200, indexable-but-empty); author still sees them in „Meine Anzeigen" as grayed cards with a bump prompt, **no bump rate limit** (bump = freshness reset, available subject only to status/moderation guards), owner lifecycle (edit / bump / reserve / sold / delete with state-aware gating via `canMutateListing`). Warning-labeled AND rejected listings are editable — the edit endpoint re-runs full moderation + writes a pre-edit snapshot to `listingAuditTrail` for provability. Mobile FAB for new listings, SEO-friendly hybrid SSR-static + island-hydrate detail pages.
 - **Custom UI Dialogs**: Native `<dialog>`-based confirm modals and sonner toasts replace all browser-native dialogs
 - **Kiez Data Dashboard**: Interactive Schillerkiez neighborhood statistics with hand-drawn SVG charts, historical trends (demographics + social indicators 2013–2023), and live air quality data
 - **Forum (kiosk)**: Multi-collection merged feed (discussions + announcements + recommendations) on `/` with per-kind detail routes, per-kind card straps + chips, card height convergence (`line-clamp-3` body + `min-h-[340px]`), and resilient `Promise.allSettled` fetch (single-collection outage degrades to empty array for that kind only).
@@ -332,7 +337,7 @@ The `/schillerkiez` page shows neighborhood-level statistics for the Schillerkie
 - `GET /api/listings/daily-count` - Get user's daily listing count
 - `POST /api/listings/draft` - Save/update draft listing (relaxed validation, no moderation)
 - `POST /api/listings/draft/[id]/publish` - Publish draft (full moderation + daily limit check)
-- `POST /api/listings/[id]/bump` - Bump listing to top of feed (7-day rate limit per listing)
+- `POST /api/listings/[id]/bump` - Bump listing to reset its 21-day freshness clock + sort to top (no rate limit; gated only on status/moderation; supersedes the original A5 7-day cooldown)
 - `POST /api/listings/[id]/status` - Update listing status (available / reserved / sold / exchanged)
 - `POST /api/listings/[id]/contact` - Send buyer→seller contact message (Resend relay, no email exposure)
 

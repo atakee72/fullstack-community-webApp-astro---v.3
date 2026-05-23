@@ -153,6 +153,22 @@ Located at `src/lib/listingActions.ts`. Central guard called by all listing muta
 
 **Pattern for new endpoints:** call `canMutateListing(listing, session, opts)` at the top of the handler before any writes. Return its `Response` if it returns one.
 
+### Multi-gate alignment (edit + bump + status flows)
+
+When a mutation is gated, the gate logic lives in **three** places that must agree:
+
+1. **Page-frontmatter gate** in the corresponding `src/pages/marketplace/.../*.astro` (short-circuits navigation; redirects to a flash-toast URL).
+2. **API endpoint gate** in `src/pages/api/listings/...` (the `canMutateListing` call with its `allowOn*` opt-ins).
+3. **Compose-component gate** in `MarketComposeInner.svelte` (the `isEditBlocked` `$derived` that decides whether to render the form or the "Bearbeiten gesperrt" banner inline).
+
+If you lift or tighten one, **grep for the other two and update them in lockstep**. The warning-edit lift shipped in three commits because the page gate + the compose-inner gate were missed on the first attempt — clicking "bearbeiten" appeared to work (API accepted) but the form never rendered (component still blocked). Same shape for the rejected-edit lift afterward.
+
+Concretely: search for `moderationStatus === 'pending'`, `hasWarningLabel`, `allowOnRejected`, `allowOnWarningLabel`, `isEditBlocked` across the marketplace tree before declaring a gate change done.
+
+### `ListingImagePlaceholder` accepts `src` (not decorative-only)
+
+`src/components/marketplace/kiosk/primitives/ListingImagePlaceholder.svelte` looks like a riso-stripe placeholder but it accepts an optional `src` prop. When set, it overlays an `<img>` (object-cover + `optimizeCloudinary()`) on top of the stripes; stripes show through during load + at object-cover transparent edges as cat-tinted bleed. Both `ListingCard` and `ListingLead` pass `src={listing.images?.[0]}` — don't bypass the primitive thinking "it's just the placeholder." (Originally the JSX spec always showed the stripe pattern; we extended it for real listings without renaming because the fallback is still the placeholder.)
+
 ---
 
 ## Bundles (deferred to follow-up PR)
