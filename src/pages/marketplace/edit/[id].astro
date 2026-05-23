@@ -19,14 +19,20 @@ if (!listing) return Astro.redirect('/marketplace?not_found=1');
 // Owner gate
 if (String(listing.sellerId) !== userId) return Astro.redirect('/marketplace?not_owner=1');
 
-// Moderation gate — only `pending` is blocked here (mid-moderation, any edit
-// would race the server-side flow). Rejected + warning-labeled listings are
-// allowed through: the edit endpoint re-runs full moderation, writes a
-// pre-edit audit snapshot (listingAuditTrail), and auto-clears the warning
-// or rejection on clean re-mod. Reserved/sold reach the form (existing
-// behavior); the API 409s at submit. See plan
-// /home/atakee/.claude/plans/mighty-pondering-dawn.md.
-if (listing.moderationStatus === 'pending') {
+// Page gate mirrors canMutateListing's effective behavior for edit (which
+// passes { allowOnRejected, allowOnWarningLabel } — i.e. only blocks pending,
+// reserved, sold). Without these short-circuits the user could fill in the
+// compose form for a reserved/sold listing only to have the API 409 at submit.
+// - pending → mid-moderation, server-side flow in flight
+// - reserved/sold → trade state; use the status endpoint to leave those first
+// Rejected + warning-labeled listings still pass through: the edit endpoint
+// re-runs full moderation, writes a pre-edit audit snapshot (listingAuditTrail),
+// and auto-clears the warning/rejection on clean re-mod.
+if (
+  listing.moderationStatus === 'pending' ||
+  listing.status === 'reserved' ||
+  listing.status === 'sold'
+) {
   return Astro.redirect('/marketplace?edit_blocked=1');
 }
 ---
