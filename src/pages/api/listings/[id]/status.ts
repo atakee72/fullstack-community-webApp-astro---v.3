@@ -43,7 +43,12 @@ export const POST: APIRoute = async ({ params, request }) => {
   }
 
   // allowOnReserved: true — status transitions are HOW owners exit reserved.
-  const guard = canMutateListing(listing as any, userId, { allowOnReserved: true });
+  // allowOnWarningLabel: true — warning-labeled listings are publicly visible
+  // (blurred); status transitions (reserve/sold) don't change content.
+  const guard = canMutateListing(listing as any, userId, {
+    allowOnReserved: true,
+    allowOnWarningLabel: true,
+  });
   if (!guard.ok) {
     const httpStatus = guard.reason === 'not_owner' ? 403 : 409;
     return new Response(
