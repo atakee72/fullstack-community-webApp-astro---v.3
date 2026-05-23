@@ -107,3 +107,11 @@ These sections describe the **legacy React forum** (`ForumWrapper` / `ForumConta
 - **Author ribbon**: Semi-transparent teal `bg-[#4b9aaa]/70` (not solid).
 - **Read & Comment link**: Whitish `text-[#d4f0f4] hover:text-white`, italic, small (`text-[11px] md:text-xs`), underlined. Omitted on mobile image cards.
 - **Tag pills (cards + modal)**: `bg-[#4b9aaa]/30 border border-[#4b9aaa] text-[#d4f0f4]` (greenish-white outline). Card tags clickable → set search. Capped at **3 per card**; overflow shown as `+N more` button that opens the modal (full tag list there). Long single tags truncate at `max-w-[100px]` with `title=` tooltip on hover.
+
+### Known SEO gap — topic detail page (deferred)
+
+`/topics/[id].astro` mounts the forum island with `client:only="svelte"`, which means the topic body, comments, and metadata are NOT in raw HTML. Empirical Googlebot fetch (2026-05-20, during the marketplace SEO work) showed only ~255 chars of nav + footer chrome on a topic-detail URL — `<title>` is there, body content isn't. Same gap on the forum homepage (sampled 5 topic titles, 0 in raw HTML).
+
+**Fix pattern**: hybrid SSR-static + island-hydrate, same as the marketplace detail page implemented in `/marketplace/[id].astro`. Render title + body + first image in the Astro template directly; let the Svelte island layer on for interactivity (likes, comments, action toolbar). See `src/components/marketplace/kiosk/CLAUDE.md` → "Hybrid SSR-static + island-hydrate pattern" for the recipe + rationale.
+
+**Why deferred**: surfaced during the marketplace SEO investigation, not in the original forum redesign scope. Forum traffic is primarily logged-in users navigating in-app, so the SEO impact is lower than marketplace (which is search-discovery-driven). Worth a small separate PR after the marketplace stabilizes; not urgent.

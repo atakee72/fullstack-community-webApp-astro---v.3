@@ -78,3 +78,11 @@ Shipped 2026-05-12. Edit flow is a dedicated page at `/events/edit/[id]` that re
 
 ### `+ neuer termin` desktop CTA
 - The text CTA in the title block (`CalendarTitleBlock.svelte`) is `hidden lg:inline-flex` so it doesn't compete with the mobile FAB. If you ever bring back a non-FAB mobile flow, remove the `hidden lg:`.
+
+### Known SEO gap — event detail page (deferred)
+
+Same shape as forum's deferred SEO gap: the calendar surfaces mount Svelte islands with `client:only="svelte"`, so event titles + descriptions + dates are not in raw HTML for crawlers / link-preview bots. The marketplace SEO investigation (2026-05-20) flagged this as a sibling issue across forum + calendar.
+
+**Fix pattern**: hybrid SSR-static + island-hydrate, same recipe as `/marketplace/[id].astro`. Render event title + date + location + body in the Astro template directly; let the Svelte island layer on for interactivity (RSVP, comments, attendee stack). See `src/components/marketplace/kiosk/CLAUDE.md` → "Hybrid SSR-static + island-hydrate pattern" for the recipe + rationale.
+
+**Why deferred**: surfaced during the marketplace SEO investigation, not in the original calendar redesign scope. Calendar SEO matters most for individual event URLs shared in chats / social posts (where the link-preview crawler grabs OG metadata only — but body content in raw HTML still helps for in-page preview tools + accessibility readers). Worth a small separate PR after the marketplace stabilizes; not urgent.
