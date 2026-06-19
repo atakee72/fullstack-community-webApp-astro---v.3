@@ -2,7 +2,9 @@
   import { t } from '../../../../lib/kiosk-i18n';
   import { resolveCategory } from '../../../../lib/marketplaceResolvers';
 
-  type CatKey = 'moebel' | 'kleidung' | 'medien' | 'werkzeug' | 'pflanze' | 'elektronik' | 'fahrrad' | 'kind' | 'sonstiges';
+  type CatKey =
+    | 'moebel' | 'garten' | 'werkzeug' | 'kleidung' | 'medien' | 'elektronik'
+    | 'fahrrad' | 'pflanze' | 'kinder' | 'spielzeug' | 'handgemacht' | 'sport' | 'sonstiges';
 
   let { id, active = false, mini = false }:
     { id: string | null | undefined; active?: boolean; mini?: boolean } = $props();

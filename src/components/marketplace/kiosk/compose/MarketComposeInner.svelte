@@ -37,9 +37,13 @@
   } = $props();
 
   // ── Category definitions ─────────────────────────────────────────────
+  // Canonical 13-key kiosk taxonomy (matches KioskCategorySchema + the browse
+  // filter rail). Was a stale 9-key list using the pre-migration 'kind' key,
+  // which blocked creating in garten/spielzeug/handgemacht/sport and would fail
+  // Zod ('kind' → 'kinder').
   const CATEGORIES = [
-    'moebel', 'kleidung', 'medien', 'werkzeug',
-    'pflanze', 'elektronik', 'fahrrad', 'kind', 'sonstiges',
+    'moebel', 'garten', 'werkzeug', 'kleidung', 'medien', 'elektronik',
+    'fahrrad', 'pflanze', 'kinder', 'spielzeug', 'handgemacht', 'sport', 'sonstiges',
   ];
 
   // ── API kind → rail kind ─────────────────────────────────────────────
@@ -343,18 +347,10 @@
   });
 
   // ── Cat color for ImageSlots ──────────────────────────────────────────
-  const catColorMap: Record<string, string> = {
-    moebel: 'var(--k-wine)',
-    kleidung: 'var(--k-teal)',
-    medien: 'var(--k-moss)',
-    werkzeug: 'var(--k-ochre)',
-    pflanze: 'var(--k-moss)',
-    elektronik: 'var(--k-teal)',
-    fahrrad: 'var(--k-wine)',
-    kind: 'var(--k-ochre)',
-    sonstiges: 'var(--k-ink-mute)',
-  };
-  const catColor = $derived(category ? (catColorMap[category] ?? 'var(--k-wine)') : 'var(--k-wine)');
+  // Accent color derives straight from the canonical per-category token
+  // (--cat-{key} in tokens.css), so it stays in sync with the 13-key taxonomy.
+  // CSS fallback covers any legacy/unknown key (e.g. a resumed old-draft category).
+  const catColor = $derived(category ? `var(--cat-${category}, var(--k-wine))` : 'var(--k-wine)');
 </script>
 
 <!-- ─── Edit-blocked banner ─────────────────────────────────────────── -->

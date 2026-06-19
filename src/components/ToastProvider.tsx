@@ -22,8 +22,14 @@ export default function ToastProvider() {
   return (
     <>
       <Toaster
-        position="top-center"
+        position="bottom-center"
         theme="light"
+        // Bottom-center keeps the toast near where the action happens — top
+        // toasts were missed when the trigger (e.g. "als Entwurf sichern") sits
+        // at the bottom of a long form. mobileOffset clears the fixed bottom-nav
+        // (~48px) so the toast isn't hidden behind it on small screens.
+        offset={{ bottom: '24px' }}
+        mobileOffset={{ bottom: '80px' }}
         toastOptions={{
           unstyled: true,
           classNames: {
