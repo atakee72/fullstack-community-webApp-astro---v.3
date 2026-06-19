@@ -1,0 +1,12 @@
+---
+import KioskLayout from '../../layouts/KioskLayout.astro';
+import { getSession } from 'auth-astro/server';
+import NewsSubmitMinimal from '../../components/newsboard/kiosk/submit/NewsSubmitMinimal.svelte';
+
+const session = await getSession(Astro.request);
+if (!session?.user) return Astro.redirect('/login');
+---
+
+<KioskLayout title="News einreichen — Mahalle" description="Eine Nachricht aus dem Kiez einreichen." page="newsboard">
+  <NewsSubmitMinimal client:only="svelte" />
+</KioskLayout>
