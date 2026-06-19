@@ -52,7 +52,7 @@
     >
       <ArticleMeta quelle={article.quelle} publishedAt={article.publishedAt} submitterName={article.submitterName} />
       <div class="flex-1"></div>
-      <KioskBtn size="sm" href={article.sourceUrl}>{$t['news.readmore']}</KioskBtn>
+      <KioskBtn size="sm" href={article.sourceUrl} target="_blank" rel="noopener noreferrer">{$t['news.readmore']}</KioskBtn>
       {#if canSave}<SaveToggle saved={article.saved} onToggle={() => onSave(article.id)} />{/if}
     </div>
   </div>

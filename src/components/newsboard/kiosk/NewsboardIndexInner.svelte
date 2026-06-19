@@ -40,8 +40,9 @@
   let savedIds = $state<Set<string>>(new Set());
   let seq = 0;
 
-  // DB NewsItem → view-model.
-  function toVM(it: any): NewsVM {
+  // DB NewsItem → view-model. `ids` passed explicitly (not closed over) so the
+  // function stays safe to extract and never reads a stale `savedIds`.
+  function toVM(it: any, ids: Set<string>): NewsVM {
     const summary = it.aiSummary || it.description || '';
     return {
       id: String(it._id),
@@ -57,7 +58,7 @@
       fetchDate: it.fetchDate,
       submitterName: it.submittedBy?.name,
       forumLinks: 0,        // Phase 3
-      saved: savedIds.has(String(it._id)),
+      saved: ids.has(String(it._id)),
       read: false,          // Phase 3
       archived: false,      // Phase 3
     };
@@ -94,7 +95,7 @@
       const data = await res.json();
       if (mySeq !== seq) return; // stale
       const items = data.news ?? [];   // GET /api/news → { news: [...] }
-      articles = items.map(toVM);
+      articles = items.map((it: any) => toVM(it, savedIds));
       status = 'ready';
     } catch {
       if (mySeq !== seq) return;
@@ -102,12 +103,12 @@
     }
   }
 
-  // Initial load + re-fetch on time-window change. A Svelte `$effect` runs once
-  // after mount and again whenever a tracked read changes — here `activeZeitraum`
-  // (and `isAuth`, read synchronously inside refetch before the first await).
+  // Initial load + re-fetch when the time-window or auth state changes. The bare
+  // reads of `activeZeitraum` and `isAuth` register them as effect dependencies
+  // (reads inside the called refetch() are NOT tracked, so list them here).
   // sektion + saved are client-side filters, so they don't trigger a refetch.
   // No separate onMount needed; the `seq` guard discards any overlapping fetch.
-  $effect(() => { activeZeitraum; refetch(); });
+  $effect(() => { activeZeitraum; isAuth; refetch(); });
 
   // Derived view list
   const visible = $derived(

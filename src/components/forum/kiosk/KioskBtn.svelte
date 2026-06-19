@@ -7,6 +7,8 @@
     type = 'button',
     disabled = false,
     href,
+    target,
+    rel,
     onclick,
     children,
     class: extraClass = ''
@@ -16,6 +18,8 @@
     type?: 'button' | 'submit' | 'reset';
     disabled?: boolean;
     href?: string;
+    target?: string;
+    rel?: string;
     onclick?: (e: MouseEvent) => void;
     children: Snippet;
     class?: string;
@@ -54,7 +58,7 @@
 </script>
 
 {#if href}
-  <a {href} class={`${baseClass} ${sizeClass} ${variantClass} ${extraClass}`}>
+  <a {href} {target} {rel} class={`${baseClass} ${sizeClass} ${variantClass} ${extraClass}`}>
     {@render children()}
   </a>
 {:else}

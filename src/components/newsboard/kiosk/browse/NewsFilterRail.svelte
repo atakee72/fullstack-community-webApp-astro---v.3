@@ -5,7 +5,7 @@
 
   let {
     activeSektion = null,
-    activeZeitraum = 'today',
+    activeZeitraum = 'week',
     savedOnly = false,
     isAuthenticated = false,
     onSektionChange = (_s: SektionKey | null) => {},
