@@ -1,25 +1,25 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import PageHeader from '../components/ui/PageHeader.astro';
+import KioskLayout from '../layouts/KioskLayout.astro';
 import { getSession } from 'auth-astro/server';
-import NewsCardsWrapper from '../components/NewsCardsWrapper';
+import { computeIssueNumber } from '../lib/newsboard/newsFormat';
+import NewsboardIndexInner from '../components/newsboard/kiosk/NewsboardIndexInner.svelte';
+
+// Per-user save state makes caching unsafe (mirrors marketplace).
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
 
 const session = await getSession(Astro.request);
+const userId = (session?.user as any)?.id ?? null;
+
+// Server-fixed values (handoff: issue # computed server-side, not per client render).
+const issue = computeIssueNumber(new Date());
+const degraded = !import.meta.env.NEWSDATA_API_KEY;
 ---
 
-<BaseLayout title="Newsboard - Mahalle">
-  <div class="dark-glass-bg" aria-hidden="true"></div>
-  <div class="dark-glass-gradient" aria-hidden="true"></div>
-
-  <main class="relative z-10 min-h-[calc(100vh-60px)] py-2 md:py-3 font-inter carved-title" style="--carved-accent: #3b5ce0">
-    <div class="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
-      <PageHeader
-        title="Neighbourhood News"
-        subtitle="Stories from your community"
-        color="#3b5ce0"
-        subtitleClass="text-white/70"
-      />
-      <NewsCardsWrapper client:load session={session} />
-    </div>
-  </main>
-</BaseLayout>
+<KioskLayout title="News — Mahalle" description="Schillerkiez Kurier — die tägliche Zusammenfassung aus dem Kiez." page="newsboard">
+  <NewsboardIndexInner
+    client:only="svelte"
+    issue={issue}
+    degraded={degraded}
+    currentUserId={userId}
+  />
+</KioskLayout>
