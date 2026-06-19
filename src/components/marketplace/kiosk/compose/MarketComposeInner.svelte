@@ -79,6 +79,18 @@
 
   // ── UI state ─────────────────────────────────────────────────────────
   let publishing = $state(false);
+  let savingDraft = $state(false);
+
+  // ── Server-side draft support ─────────────────────────────────────────
+  // When a draft listing is loaded into create mode (via
+  // /marketplace/create?draft=<id> → passed as initialListing), track its id
+  // so "Als Entwurf speichern" updates the same row and publish routes to the
+  // draft-publish endpoint instead of creating a fresh listing.
+  let draftId = $state<string | null>(
+    initialListing?.status === 'draft' && initialListing._id
+      ? String(initialListing._id)
+      : null,
+  );
 
   // ── Draft storage key ─────────────────────────────────────────────────
   const DRAFT_KEY = `marketplace-compose-draft-${mode}`;
@@ -136,7 +148,11 @@
   let draftTimer: ReturnType<typeof setTimeout> | null = null;
 
   $effect(() => {
-    if (mode === 'edit') return;
+    // Skip localStorage autosave in edit mode AND when resuming a server-side
+    // draft (initialListing present). Otherwise the resumed draft's content
+    // would overwrite the `marketplace-compose-draft-create` key and leak into
+    // the next blank create. Server drafts persist explicitly via the button.
+    if (mode === 'edit' || initialListing) return;
     // Touch all reactive state to subscribe
     const snap = {
       kindRail,
@@ -183,38 +199,102 @@
   });
 
   // ── Publish ───────────────────────────────────────────────────────────
+  // Build the listing payload from current form state. Used by both publish
+  // and draft-save (draft accepts a partial — fields default to undefined).
+  function buildPayload() {
+    return {
+      title: title.trim(),
+      description: descriptionPlainText.trim(),
+      descriptionPlainText: descriptionPlainText.trim(),
+      listingType: kindRail ? RAIL_TO_API[kindRail] : undefined,
+      category: category || undefined,
+      delivery: delivery || undefined,
+      condition: condition || undefined,
+      specs: hasAnySpec(specs) ? specs : undefined,
+      price: kindRail === 'verkaufen' ? price ?? undefined : undefined,
+      originalPrice: kindRail === 'verkaufen' ? originalPrice ?? undefined : undefined,
+      images,
+    };
+  }
+
+  // ── Save as draft (create mode only) ──────────────────────────────────
+  // POSTs to /api/listings/draft (no moderation, no daily limit). Creates a
+  // status:'draft' row, or updates the existing one when draftId is set.
+  async function handleSaveDraft() {
+    if (savingDraft || publishing) return;
+    if (title.trim().length === 0) {
+      showError($t['market.compose.draft.needTitle']);
+      return;
+    }
+    savingDraft = true;
+    try {
+      const res = await fetch('/api/listings/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftId: draftId || undefined, ...buildPayload() }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || data.message || 'unknown_error');
+      }
+      const data = await res.json();
+      if (data.draftId) draftId = String(data.draftId);
+      // Persisted server-side — drop the localStorage autosave copy.
+      try { localStorage.removeItem(DRAFT_KEY); } catch {}
+      showSuccess($t['market.compose.draft.saved']);
+    } catch (e: any) {
+      showError(e.message || $t['market.compose.draft.error']);
+    } finally {
+      savingDraft = false;
+    }
+  }
+
   async function handlePublish() {
     if (!canPublish || publishing || isEditBlocked) return;
     publishing = true;
 
-    const payload = {
-      title: title.trim(),
-      description: descriptionPlainText.trim(),
-      descriptionPlainText: descriptionPlainText.trim(),
-      listingType: RAIL_TO_API[kindRail!],
-      category,
-      delivery,
-      condition: condition || undefined,
-      specs: hasAnySpec(specs) ? specs : undefined,
-      price: kindRail === 'verkaufen' ? price : undefined,
-      originalPrice: kindRail === 'verkaufen' ? originalPrice : undefined,
-      images,
-    };
+    const payload = buildPayload();
 
     try {
       let res: Response;
-      if (mode === 'create') {
-        res = await fetch('/api/listings/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-      } else {
+      if (mode === 'edit') {
         res = await fetch(`/api/listings/edit/${initialListing!._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
+      } else if (draftId) {
+        // Resuming a server-side draft: persist the latest edits to the draft
+        // row first, then publish it (publish reads from the DB, not the body).
+        await fetch('/api/listings/draft', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ draftId, ...payload }),
+        });
+        res = await fetch(`/api/listings/draft/${draftId}/publish`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } else {
+        res = await fetch('/api/listings/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      // Incomplete draft (publish endpoint validates required fields): keep the
+      // user on the form with a missing-field hint instead of a generic error.
+      if (res.status === 400) {
+        const data = await res.json().catch(() => ({}));
+        const missing = Array.isArray(data.missingFields) ? data.missingFields.join(', ') : '';
+        publishing = false;
+        showError(
+          missing
+            ? `${$t['market.compose.draft.incomplete']} ${missing}`
+            : data.message || data.error || 'unvollständig',
+        );
+        return;
       }
 
       if (!res.ok) {
@@ -801,6 +881,30 @@
           Abbrechen
         </button>
 
+        <!-- Save as draft (create mode only — incl. resuming a server draft) -->
+        {#if mode === 'create'}
+          <button
+            type="button"
+            onclick={handleSaveDraft}
+            disabled={savingDraft || publishing}
+            style="
+              padding: 10px 22px;
+              background: transparent;
+              border: 1.5px solid var(--k-ink);
+              border-radius: var(--k-radius-pill, 999px);
+              font-family: var(--k-font-display);
+              font-size: 14px;
+              font-weight: 600;
+              color: var(--k-ink);
+              cursor: {savingDraft || publishing ? 'not-allowed' : 'pointer'};
+              opacity: {savingDraft || publishing ? 0.5 : 1};
+            "
+            aria-busy={savingDraft}
+          >
+            {savingDraft ? '◐ …' : $t['market.compose.cta.draft']}
+          </button>
+        {/if}
+
         <!-- Publish -->
         <button
           type="button"
@@ -847,7 +951,10 @@
   <MarketComposeStickyPublish
     disabled={!canPublish || publishing}
     {publishing}
+    {savingDraft}
     onPublish={handlePublish}
+    onSaveDraft={mode === 'create' ? handleSaveDraft : undefined}
+    draftLabel={$t['market.compose.cta.draft']}
     onPreview={() => {
       // v1: scroll to preview section (desktop shows it inline; mobile hint)
       window.scrollTo({ top: 0, behavior: 'smooth' });

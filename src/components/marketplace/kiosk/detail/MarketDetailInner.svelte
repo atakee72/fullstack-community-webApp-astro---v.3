@@ -217,27 +217,10 @@
         <BackfillBanner {listing} />
       {/if}
 
-      <!-- Title block -->
+      <!-- Metadata block (kicker + H1 are rendered by the Astro SSR shell above;
+           removed here to avoid the duplicate that was hurting the page UX and
+           creating a duplicate-H1 a11y bug). -->
       <header>
-        <!-- Kicker -->
-        <div
-          class="kiosk-kicker"
-          style="color: var(--k-wine); margin-bottom: 6px;"
-        >MARKT · SCHILLERKIEZ</div>
-
-        <!-- Headline -->
-        <h1
-          style="
-            font-family: var(--k-font-display);
-            font-size: clamp(28px, 5vw, 42px);
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            color: var(--k-ink);
-            line-height: 1.1;
-            margin: 0 0 10px;
-          "
-        >{listing.title}</h1>
-
         <!-- Category chip + GEMELDET chip row -->
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
           <CategoryChip id={listing.category} active={true} />
@@ -271,19 +254,8 @@
           onDelete={handleDelete}
         />
       {:else}
-        <!-- Description body -->
-        {#if bodyText}
-          <p
-            style="
-              font-family: var(--k-font-serif, Georgia, serif);
-              font-style: italic;
-              font-size: 16px;
-              line-height: 1.6;
-              color: var(--k-ink-soft, #4a4740);
-              margin: 0;
-            "
-          >{bodyText}</p>
-        {/if}
+        <!-- Description body is rendered by the Astro SSR shell above;
+             removed here to avoid the duplicate that was hurting the page UX. -->
 
         <!-- SpecStrip (only when any spec is filled) -->
         <SpecStrip {listing} />

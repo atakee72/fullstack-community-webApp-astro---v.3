@@ -188,7 +188,7 @@ export default function UserProfile({ user: initialUser }: UserProfileProps) {
       <div className="bg-white rounded-xl shadow-lg p-4 md:p-5 mb-6 md:mb-8">
         <div className="flex flex-wrap gap-3">
           <a
-            href="/marketplace/my-listings"
+            href="/marketplace?view=mine"
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#4b9aaa]/10 to-[#4b9aaa]/5 border border-[#4b9aaa]/20 rounded-lg hover:border-[#4b9aaa]/40 hover:shadow-md transition-all text-[#4b9aaa] font-medium text-sm"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

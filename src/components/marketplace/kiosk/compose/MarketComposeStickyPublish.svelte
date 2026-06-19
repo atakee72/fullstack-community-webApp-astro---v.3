@@ -6,13 +6,20 @@
   let {
     disabled = false,
     publishing = false,
+    savingDraft = false,
     onPublish,
     onPreview,
+    onSaveDraft,
+    draftLabel = 'Entwurf',
   }: {
     disabled?: boolean;
     publishing?: boolean;
+    savingDraft?: boolean;
     onPublish: () => void;
     onPreview: () => void;
+    /** When provided, renders a "save as draft" button (create mode only). */
+    onSaveDraft?: () => void;
+    draftLabel?: string;
   } = $props();
 </script>
 
@@ -54,6 +61,33 @@
   >
     vorschau
   </button>
+
+  <!-- Save-as-draft button (ghost; create mode only) -->
+  {#if onSaveDraft}
+    <button
+      type="button"
+      onclick={onSaveDraft}
+      disabled={savingDraft || publishing}
+      style="
+        flex: 0 0 auto;
+        padding: 9px 14px;
+        background: transparent;
+        border: 1.5px solid var(--k-ink);
+        border-radius: var(--k-radius-pill, 999px);
+        font-family: var(--k-font-mono);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--k-ink);
+        cursor: {savingDraft || publishing ? 'not-allowed' : 'pointer'};
+        opacity: {savingDraft || publishing ? 0.5 : 1};
+      "
+      aria-busy={savingDraft}
+    >
+      {savingDraft ? '◐' : draftLabel}
+    </button>
+  {/if}
 
   <!-- Publish button (primary wine) -->
   <button

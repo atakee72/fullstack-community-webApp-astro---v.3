@@ -69,6 +69,23 @@
     tStr($t['market.owner.bump.disabledFresh'], { n: daysUntilStale }),
   );
 
+  // ─── Edit gate ─────────────────────────────────────────────────────────
+  // The 4th seat in the multi-gate alignment (page-frontmatter + API
+  // endpoint + compose-component + this button). All four must agree on
+  // which states block edit. Currently: pending / reserved / sold.
+  // `pending` is already short-circuited above (PendingLockBanner replaces
+  // the grid), so canEdit only has to filter reserved/sold here.
+  const canEdit = $derived(
+    listing.status !== 'reserved' && listing.status !== 'sold',
+  );
+  const editBlockedTooltip = $derived(
+    listing.status === 'reserved'
+      ? $t['market.owner.edit.blockedReserved']
+      : listing.status === 'sold'
+      ? $t['market.owner.edit.blockedSold']
+      : undefined,
+  );
+
   const showReserveToggle = $derived(
     listing.status === 'available' || listing.status === 'reserved',
   );
@@ -135,15 +152,28 @@
     <!-- ─── 2×2 action grid ───────────────────────────────────────────────── -->
     <div class="owner-grid">
 
-      <!-- Bearbeiten — always active on warning-labeled listings too. The edit
-           endpoint re-runs full moderation on every content change AND writes a
-           pre-edit audit snapshot to listingAuditTrail before clearing the
-           warning, so the "editing evades the warning" attack isn't real and the
-           pre-edit state is provable. -->
-      <a
-        href="/marketplace/edit/{listing._id}"
-        class="owner-btn owner-btn--primary"
-      >{$t['market.owner.edit']}</a>
+      <!-- Bearbeiten — active for approved/warning/rejected listings. Disabled
+           with a tooltip for reserved/sold (the page gate would redirect them
+           to /marketplace?edit_blocked=1 anyway; this prevents the dead-end UX
+           where the button looks clickable but bounces the owner back).
+           Pending is short-circuited above by PendingLockBanner. The edit
+           endpoint re-runs full moderation on every content change AND writes
+           a pre-edit audit snapshot to listingAuditTrail before clearing the
+           warning/rejection. -->
+      {#if canEdit}
+        <a
+          href="/marketplace/edit/{listing._id}"
+          class="owner-btn owner-btn--primary"
+        >{$t['market.owner.edit']}</a>
+      {:else}
+        <button
+          type="button"
+          class="owner-btn owner-btn--primary"
+          disabled
+          aria-disabled="true"
+          title={editBlockedTooltip}
+        >{$t['market.owner.edit']}</button>
+      {/if}
 
       <!-- Frisch hochholen / Auffrischen — enabled only when listing is
            past 21d freshness clock. Fresh listings: disabled with countdown

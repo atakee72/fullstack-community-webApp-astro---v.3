@@ -670,9 +670,29 @@ const de = {
   'market.owner.markReserved': 'als reserviert',
   'market.owner.clearReserved': 'Reservierung aufheben',
   'market.owner.markSold': 'als verkauft',
+  'market.owner.edit.blockedReserved': 'Erst Reservierung aufheben, um zu bearbeiten.',
+  'market.owner.edit.blockedSold': 'Verkaufte Anzeigen können nicht mehr bearbeitet werden.',
   'market.owner.lastBump': 'letzter Bump: vor {n} Tagen',
   'market.owner.delete': '✕ anzeige löschen',
   'market.owner.pendingBanner': 'In Prüfung — Bearbeiten ist während der KI-Prüfung deaktiviert. Dauert nur ein paar Sekunden.',
+  // Owner stats strip (Meine Anzeigen)
+  'market.owner.stats.total': 'Gesamt',
+  'market.owner.stats.active': 'Aktiv',
+  'market.owner.stats.sold': 'Verkauft',
+  'market.owner.stats.stale': 'Versteckt',
+  // Drafts (Entwürfe) section + actions
+  'market.owner.drafts.heading': 'Entwürfe',
+  'market.owner.draft.untitled': 'Ohne Titel',
+  'market.owner.draft.lastEdited': 'zuletzt bearbeitet',
+  'market.owner.draft.edit': 'bearbeiten',
+  'market.owner.draft.publish': 'veröffentlichen',
+  'market.owner.draft.delete': 'löschen',
+  'market.owner.draft.published': 'Entwurf veröffentlicht.',
+  'market.owner.draft.publishedPending': 'Entwurf eingereicht — wird gerade geprüft.',
+  'market.owner.draft.publishError': 'Entwurf konnte nicht veröffentlicht werden.',
+  'market.owner.draft.deleteConfirm': 'Diesen Entwurf wirklich löschen?',
+  'market.owner.draft.deleted': 'Entwurf gelöscht.',
+  'market.owner.draft.deleteError': 'Entwurf konnte nicht gelöscht werden.',
 
   // ─── Marketplace ─ Seller card ─────────────────────────────────────────
 
@@ -738,6 +758,10 @@ const de = {
   'market.compose.cta.draft': 'als Entwurf sichern',
   'market.compose.cta.publish': 'veröffentlichen →',
   'market.compose.cta.publishing': '◐ veröffentlicht…',
+  'market.compose.draft.saved': 'Entwurf gespeichert',
+  'market.compose.draft.needTitle': 'Bitte zuerst einen Titel eingeben.',
+  'market.compose.draft.error': 'Entwurf konnte nicht gespeichert werden.',
+  'market.compose.draft.incomplete': 'Entwurf unvollständig — es fehlt noch:',
 
   // Live preview pane.
   'market.compose.preview.waiting': '★ VORSCHAU WARTET',
@@ -1415,9 +1439,29 @@ const en: Dict = {
   'market.owner.markReserved': 'mark reserved',
   'market.owner.clearReserved': 'clear reservation',
   'market.owner.markSold': 'mark sold',
+  'market.owner.edit.blockedReserved': 'Clear the reservation first to edit.',
+  'market.owner.edit.blockedSold': 'Sold listings can no longer be edited.',
   'market.owner.lastBump': 'last bump: {n}d ago',
   'market.owner.delete': '✕ delete listing',
   'market.owner.pendingBanner': 'Under review — editing is disabled while AI checks. Takes only a few seconds.',
+  // Owner stats strip (My listings)
+  'market.owner.stats.total': 'Total',
+  'market.owner.stats.active': 'Active',
+  'market.owner.stats.sold': 'Sold',
+  'market.owner.stats.stale': 'Hidden',
+  // Drafts section + actions
+  'market.owner.drafts.heading': 'Drafts',
+  'market.owner.draft.untitled': 'Untitled',
+  'market.owner.draft.lastEdited': 'last edited',
+  'market.owner.draft.edit': 'edit',
+  'market.owner.draft.publish': 'publish',
+  'market.owner.draft.delete': 'delete',
+  'market.owner.draft.published': 'Draft published.',
+  'market.owner.draft.publishedPending': 'Draft submitted — under review.',
+  'market.owner.draft.publishError': 'Could not publish draft.',
+  'market.owner.draft.deleteConfirm': 'Really delete this draft?',
+  'market.owner.draft.deleted': 'Draft deleted.',
+  'market.owner.draft.deleteError': 'Could not delete draft.',
 
   // ─── Marketplace ─ Seller card ─────────────────────────────────────────
 
@@ -1475,6 +1519,10 @@ const en: Dict = {
   'market.compose.cta.draft': 'save as draft',
   'market.compose.cta.publish': 'publish →',
   'market.compose.cta.publishing': '◐ publishing…',
+  'market.compose.draft.saved': 'Draft saved',
+  'market.compose.draft.needTitle': 'Please enter a title first.',
+  'market.compose.draft.error': 'Could not save draft.',
+  'market.compose.draft.incomplete': 'Draft incomplete — still missing:',
 
   'market.compose.preview.waiting': '★ PREVIEW WAITING',
   'market.compose.preview.live': '★ LIVE PREVIEW',

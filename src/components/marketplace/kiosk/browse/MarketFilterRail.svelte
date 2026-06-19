@@ -97,8 +97,17 @@
   <!-- Row 1: Kind toggle + Saved + Mine + Search ──────────────────────── -->
   <div class="py-3 flex flex-wrap items-center gap-x-3 gap-y-2">
 
+    <!-- Mobile: kind + divider + saved + mine in a single horizontal-scroll
+         peek row so the row doesn't wrap to two lines. Desktop:
+         lg:flex-wrap + lg:overflow-visible releases the wrapper to normal
+         layout. Mirrors the pattern on Row 2 (categories). -->
+    <div
+      use:scrollFade
+      class="kiosk-scroll-fade no-scrollbar flex items-center gap-3 overflow-x-auto w-full lg:w-auto lg:flex-wrap lg:overflow-visible"
+    >
+
     <!-- Kind section: label + 4 pills -->
-    <div class="flex items-center gap-2 flex-wrap">
+    <div class="flex items-center gap-2 shrink-0">
       <!-- Label -->
       <span
         class="font-dmmono uppercase shrink-0"
@@ -137,7 +146,7 @@
     <!-- Saved + Mine toggles — both require a session; disabled for logged-out
          visitors so the API call doesn't silently return the unfiltered feed
          under a misleading "Meine Anzeigen" heading. -->
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 shrink-0">
       <button
         type="button"
         onclick={() => toggleView('saved')}
@@ -181,8 +190,10 @@
       </button>
     </div>
 
-    <!-- Search: label + input (pushed right on large screens) -->
-    <div class="flex items-center gap-2 lg:ml-auto">
+    </div><!-- /peek-scroll wrapper -->
+
+    <!-- Search: label + input (full-width on mobile/tablet; pushed right on lg+) -->
+    <div class="flex flex-1 items-center gap-2 lg:flex-initial lg:ml-auto">
       <span
         class="font-dmmono uppercase shrink-0 hidden sm:inline"
         style="font-size: 10px; color: var(--k-ink-mute); letter-spacing: 0.12em;"
@@ -195,14 +206,13 @@
         oninput={handleSearchInput}
         placeholder={$t['market.filter.search']}
         class="font-dmmono text-[12px] text-ink placeholder:text-ink-mute outline-none transition-colors duration-[150ms]
-               focus:ring-1 focus:ring-ink"
+               focus:ring-1 focus:ring-ink w-full lg:w-[320px]"
         style="
           padding: 5px 10px;
           background: var(--k-paper-soft);
           border: 1px solid var(--k-rule);
           border-radius: var(--k-radius-md, 8px);
           min-width: 0;
-          width: 180px;
         "
         aria-label={$t['market.filter.search.label']}
       />

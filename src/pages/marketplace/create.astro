@@ -1,15 +1,38 @@
 ---
 import KioskLayout from '../../layouts/KioskLayout.astro';
 import { getSession } from 'auth-astro/server';
+import { fetchListingForSSR } from '../../lib/listingsQuery';
 import MarketComposeInner from '../../components/marketplace/kiosk/compose/MarketComposeInner.svelte';
+import type { Listing } from '../../types/listing';
 
 const session = await getSession(Astro.request);
 if (!session?.user) {
-  return Astro.redirect('/login?redirect=/marketplace/create');
+  const draftQ = Astro.url.searchParams.get('draft');
+  const redirectTo = draftQ ? `/marketplace/create?draft=${draftQ}` : '/marketplace/create';
+  return Astro.redirect(`/login?redirect=${encodeURIComponent(redirectTo)}`);
 }
 const userId = (session.user as any).id;
+
+// Resume a server-side draft: /marketplace/create?draft=<id>. Owner-gated.
+// A draft is loaded into the same compose component (mode="create"); the
+// component detects status:'draft' and routes save/publish to the draft API.
+let initialListing: Listing | undefined;
+const draftId = Astro.url.searchParams.get('draft');
+if (draftId) {
+  const listing = await fetchListingForSSR(draftId, userId);
+  if (!listing) return Astro.redirect('/marketplace?not_found=1');
+  if (String(listing.sellerId) !== userId) return Astro.redirect('/marketplace?not_owner=1');
+  // Only drafts belong in the create-resume flow; published listings edit via the edit route.
+  if (listing.status !== 'draft') return Astro.redirect(`/marketplace/edit/${draftId}`);
+  initialListing = listing;
+}
 ---
 
 <KioskLayout page="marketplace" title="Neue Anzeige · Mahalle Markt">
-  <MarketComposeInner client:only="svelte" mode="create" currentUserId={userId} />
+  <MarketComposeInner
+    client:only="svelte"
+    mode="create"
+    currentUserId={userId}
+    initialListing={initialListing}
+  />
 </KioskLayout>

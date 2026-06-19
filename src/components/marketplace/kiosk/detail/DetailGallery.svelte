@@ -133,7 +133,10 @@
     {/if}
   </div>
 
-  <!-- Thumb strip -->
+  <!-- Thumb strip — hidden when there's nothing to navigate to (≤1 image).
+       The "n / m" badge in the main image already signals count; a lone
+       thumb would just be a smaller duplicate of the main view. -->
+  {#if count > 1}
   <div style="display: flex; gap: 6px; margin-top: 10px;">
     {#each images as img, i}
       <button
@@ -184,6 +187,7 @@
       {/each}
     {/each}
   </div>
+  {/if}
 
   <!-- Footer hint -->
   <div

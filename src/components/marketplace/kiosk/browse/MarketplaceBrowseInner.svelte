@@ -17,11 +17,13 @@
   import { onMount } from 'svelte';
   import { t } from '../../../../lib/kiosk-i18n';
   import { fetchListingsClient, type ListingsQueryFilters } from '../../../../hooks/api/useListingsQuery';
-  import type { Listing } from '../../../../types/listing';
-  import { showToast, showSuccess, showError } from '../../../../utils/toast';
+  import type { Listing, ListingStats } from '../../../../types/listing';
+  import { showToast, showSuccess, showError, confirmAction } from '../../../../utils/toast';
 
   import MarketTitleBlock from './MarketTitleBlock.svelte';
   import MarketFilterRail from './MarketFilterRail.svelte';
+  import OwnerStatsStrip from './OwnerStatsStrip.svelte';
+  import OwnerDraftsSection from './OwnerDraftsSection.svelte';
   import ListingLead from './ListingLead.svelte';
   import ListingCard from './ListingCard.svelte';
   import MarketSkeletonGrid from '../states/MarketSkeletonGrid.svelte';
@@ -67,6 +69,91 @@
   let loading = $state(false);
   let error = $state<Error | null>(null);
 
+  // ── Owner-view meta (stats strip + Entwürfe section) ─────────────────
+  // The grid is paginated (24/page), so it can't be trusted for totals or the
+  // full drafts list. /api/listings/my-listings returns accurate aggregate
+  // stats + ALL drafts; fetched only while in `?view=mine`. Seq-guarded like
+  // the grid's refetch().
+  let ownerStats = $state<ListingStats | null>(null);
+  let ownerDrafts = $state<Listing[]>([]);
+  let ownerMetaSeq = 0;
+
+  async function fetchOwnerMeta() {
+    const seq = ++ownerMetaSeq;
+    try {
+      const res = await fetch('/api/listings/my-listings', {
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      if (!res.ok) return;
+      const json = await res.json();
+      if (seq !== ownerMetaSeq) return; // stale
+      ownerStats = json.stats ?? null;
+      ownerDrafts = Array.isArray(json.drafts) ? json.drafts : [];
+    } catch {
+      // non-fatal — the strip/section simply won't render
+    }
+  }
+
+  // Load owner meta on entering owner view; clear it on leaving.
+  $effect(() => {
+    if (filters.view === 'mine' && currentUserId) {
+      void fetchOwnerMeta();
+    } else {
+      ownerStats = null;
+      ownerDrafts = [];
+    }
+  });
+
+  // ── Draft actions (Entwürfe section) ──────────────────────────────────
+  async function handlePublishDraft(id: string) {
+    try {
+      const res = await fetch(`/api/listings/draft/${id}/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      // Incomplete draft → send the owner to the compose to finish it.
+      if (res.status === 400) {
+        window.location.href = `/marketplace/create?draft=${id}`;
+        return;
+      }
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || d.message || 'unknown_error');
+      }
+      const d = await res.json();
+      showSuccess(
+        d.moderationStatus === 'pending'
+          ? $t['market.owner.draft.publishedPending']
+          : $t['market.owner.draft.published'],
+      );
+      await Promise.all([fetchOwnerMeta(), refetch()]);
+    } catch (e: any) {
+      showError(e.message || $t['market.owner.draft.publishError']);
+    }
+  }
+
+  async function handleDeleteDraft(id: string) {
+    const ok = await confirmAction($t['market.owner.draft.deleteConfirm'], {
+      title: $t['market.owner.draft.delete'],
+      confirmLabel: $t['market.owner.draft.delete'],
+      variant: 'danger',
+    });
+    if (!ok) return;
+    try {
+      const res = await fetch(`/api/listings/delete/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('delete_failed');
+      showSuccess($t['market.owner.draft.deleted']);
+      await Promise.all([fetchOwnerMeta(), refetch()]);
+    } catch {
+      showError($t['market.owner.draft.deleteError']);
+    }
+  }
+
   // ── Derived stats for MarketTitleBlock ───────────────────────────────
   const listingStats = $derived.by(() => {
     const now = Date.now();
@@ -99,14 +186,17 @@
     (filters.offset ?? 0) === 0 && !hasFilters && data.items.length > 0
   );
 
-  // Owner view: sort rejected listings to top (most urgent "you must act" signal).
+  // Owner view: drop drafts (they live in the dedicated Entwürfe section) and
+  // sort rejected listings to top (most urgent "you must act" signal).
   const sortedItems = $derived.by(() => {
     if (filters.view !== 'mine') return data.items;
-    return [...data.items].sort((a, b) => {
-      const aRej = a.moderationStatus === 'rejected' ? 0 : 1;
-      const bRej = b.moderationStatus === 'rejected' ? 0 : 1;
-      return aRej - bRej; // rejected first
-    });
+    return [...data.items]
+      .filter((it) => it.status !== 'draft')
+      .sort((a, b) => {
+        const aRej = a.moderationStatus === 'rejected' ? 0 : 1;
+        const bRej = b.moderationStatus === 'rejected' ? 0 : 1;
+        return aRej - bRej; // rejected first
+      });
   });
 
   // Grid items: skip the lead item when showLead is true.
@@ -289,6 +379,21 @@
   onSearchChange={(q) => updateFilters({ search: q })}
   onViewChange={(v) => updateFilters({ view: v as 'mine' | 'saved' | null })}
 />
+
+<!-- ─── Owner view: stats strip + Entwürfe section ─────────────────────── -->
+{#if filters.view === 'mine' && currentUserId}
+  {#if ownerStats}
+    <OwnerStatsStrip stats={ownerStats} />
+  {/if}
+  {#if ownerDrafts.length > 0}
+    <OwnerDraftsSection
+      drafts={ownerDrafts}
+      onEdit={(id) => { window.location.href = `/marketplace/create?draft=${id}`; }}
+      onPublish={handlePublishDraft}
+      onDelete={handleDeleteDraft}
+    />
+  {/if}
+{/if}
 
 <!-- ─── Loading — first paint (no cached items yet) ──────────────────── -->
 {#if loading && data.items.length === 0}

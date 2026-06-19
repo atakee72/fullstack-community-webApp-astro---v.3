@@ -145,6 +145,9 @@ export interface ListingStats {
   activeListings: number;
   soldItems: number;
   totalEarnings: number;
+  /** Active listings (available/reserved) past the 21d freshness clock —
+      live but hidden from the public feed until the owner bumps. */
+  staleCount: number;
 }
 
 // Legacy constants — kept for back-compat; new kiosk surfaces use i18n + design tokens instead

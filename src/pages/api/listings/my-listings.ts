@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../lib/mongodb';
+import { isPubliclyHiddenFrom } from '../../../lib/listingsQuery';
 import type { Listing, ListingStats } from '../../../types/listing';
 
 export const GET: APIRoute = async ({ request }) => {
@@ -36,7 +37,14 @@ export const GET: APIRoute = async ({ request }) => {
       soldItems: published.filter(l => l.status === 'sold').length,
       totalEarnings: published
         .filter(l => l.status === 'sold')
-        .reduce((sum, l) => sum + l.price, 0)
+        .reduce((sum, l) => sum + l.price, 0),
+      // Stale = live (available/reserved) but past the 21d freshness clock,
+      // so hidden from the public feed until the owner bumps. Drafts/sold excluded.
+      staleCount: published.filter(
+        l =>
+          (l.status === 'available' || l.status === 'reserved') &&
+          isPubliclyHiddenFrom((l as any).lastBumpedAt, l.createdAt),
+      ).length,
     };
 
     return new Response(JSON.stringify({ listings: published, drafts, stats }), {

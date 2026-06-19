@@ -62,43 +62,32 @@
   <article
     class="market-lead"
     style="
-      margin: 18px 36px;
       background: var(--k-paper-warm);
       border: var(--k-border-ink);
       border-radius: var(--k-radius-lg);
       box-shadow: 4px 4px 0 {catColorVar};
-      display: grid;
-      grid-template-columns: 1.35fr 1fr;
-      column-gap: 28px;
       overflow: hidden;
       position: relative;
     "
   >
     <!-- Top-edge strap: full width, absolute -->
     <div
+      class="market-lead-strap"
       style="
         position: absolute; top: 0; left: 0; right: 0;
         background: var(--k-ink); color: var(--k-paper);
-        padding: 6px 18px;
-        font-family: var(--k-font-mono); font-size: 10px; font-weight: 600;
-        letter-spacing: 0.18em; text-transform: uppercase;
-        display: flex; justify-content: space-between; align-items: center;
+        font-family: var(--k-font-mono); font-weight: 600;
+        letter-spacing: 0.14em; text-transform: uppercase;
+        display: flex; justify-content: space-between; align-items: center; gap: 8px;
         z-index: 2;
       "
     >
-      <span>{strapLabel}</span>
-      <span style="color: var(--k-ochre);">● {strapTime}</span>
+      <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{strapLabel}</span>
+      <span style="color: var(--k-ochre); white-space: nowrap; flex-shrink: 0;">● {strapTime}</span>
     </div>
 
     <!-- Image side -->
-    <div
-      style="
-        padding: 44px 0 18px 22px;
-        border-right: 1px dashed var(--k-rule);
-        padding-right: 14px;
-        margin-right: -14px;
-      "
-    >
+    <div class="market-lead-img">
       <ListingImagePlaceholder
         lead={true}
         category={listing.category}
@@ -135,19 +124,16 @@
     </div>
 
     <!-- Content side -->
-    <div
-      style="
-        padding: 44px 22px 18px 4px;
-        display: flex; flex-direction: column; gap: 10px;
-      "
-    >
+    <div class="market-lead-content">
       <CategoryChip id={listing.category} active={true} />
 
       <!-- Headline with carved-italic first segment -->
       <h2
+        class="market-lead-title"
         style="
-          font-size: 26px; font-weight: 800; letter-spacing: -0.022em;
+          font-weight: 800; letter-spacing: -0.022em;
           line-height: 1.1; margin: 0; color: var(--k-ink);
+          overflow-wrap: break-word; word-break: break-word;
         "
       >
         <span
@@ -206,3 +192,57 @@
     </div>
   </article>
 {/if}
+
+<style>
+  /* Mobile-first: single-column stack, tight margins, horizontal dashed divider. */
+  .market-lead {
+    margin: 14px 12px;
+    display: grid;
+    grid-template-columns: 1fr;
+    row-gap: 0;
+  }
+  .market-lead-strap {
+    padding: 6px 12px;
+    font-size: 9.5px;
+  }
+  .market-lead-img {
+    padding: 38px 14px 12px;
+    border-bottom: 1px dashed var(--k-rule);
+  }
+  .market-lead-content {
+    padding: 14px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+  .market-lead-title {
+    font-size: 22px;
+  }
+
+  /* Desktop: 2-column editorial layout per original design. */
+  @media (min-width: 1024px) {
+    .market-lead {
+      margin: 18px 36px;
+      grid-template-columns: 1.35fr 1fr;
+      column-gap: 28px;
+    }
+    .market-lead-strap {
+      padding: 6px 18px;
+      font-size: 10px;
+    }
+    .market-lead-img {
+      padding: 44px 0 18px 22px;
+      border-bottom: 0;
+      border-right: 1px dashed var(--k-rule);
+      padding-right: 14px;
+      margin-right: -14px;
+    }
+    .market-lead-content {
+      padding: 44px 22px 18px 4px;
+    }
+    .market-lead-title {
+      font-size: 26px;
+    }
+  }
+</style>

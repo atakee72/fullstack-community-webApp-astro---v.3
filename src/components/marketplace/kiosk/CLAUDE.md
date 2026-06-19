@@ -9,6 +9,53 @@
 
 Loaded lazily when Claude reads/edits files in `src/components/marketplace/kiosk/` (or any subtree). The root `CLAUDE.md` keeps a pointer to this file so it can be pulled in even when working on related files outside this directory (e.g. `src/pages/api/listings/`, `src/lib/listingActions.ts`, `src/lib/listingsQuery.ts`).
 
+> **Legacy dark-glass cluster removed (June 2026).** The pre-kiosk marketplace
+> UI (`/marketplace/sell`, `/marketplace/my-listings` pages + `ListingWizard`,
+> the `wizard/` step components, `MyListingsDashboard`, `dashboard/` components,
+> `ProductCard`, `ProductFilters`, `SearchBar`, `ReportListingModal`,
+> `ImageCropper`, `RichTextEditor`, `RichTextDisplay`) was deleted. Listing
+> creation is `/marketplace/create` (kiosk compose); "my listings" is
+> `/marketplace?view=mine`. **RichText was dropped entirely** — listing
+> descriptions are plain `descriptionPlainText` (kiosk compose uses a plain
+> textarea). The draft + `my-listings` API routes were KEPT (see drafts note below).
+
+### Server-side drafts (kiosk)
+- Drafts live in the `listings` collection as `status:'draft'` (no separate
+  collection). The draft API is intact and reused by the kiosk compose:
+  `POST /api/listings/draft` (save, no moderation/no daily-limit),
+  `POST /api/listings/draft/[id]/publish` (publish w/ full moderation + daily
+  limit), `GET /api/listings/my-listings` (returns `{ listings, drafts, stats }`).
+- **Save**: `MarketComposeInner` (create mode) has an "Als Entwurf speichern"
+  button → `POST /api/listings/draft`. Returned `draftId` is held in `$state`;
+  subsequent saves update the same row. localStorage autosave is the per-device
+  fallback; server drafts are explicit + cross-device.
+- **Resume**: `/marketplace/create?draft=<id>` → `create.astro` owner-gates +
+  loads the draft via `fetchListingForSSR`, passes it as `initialListing`
+  (mode stays `create`). The compose detects `status:'draft'` → tracks `draftId`.
+  **Gotcha**: the autosave `$effect` skips when `initialListing` is set (as well
+  as edit mode) — otherwise a resumed draft would pollute the
+  `marketplace-compose-draft-create` localStorage key. Don't remove that guard.
+- **Publish routing** in `handlePublish`: `mode==='edit'` → `PUT /edit/{id}`;
+  else `draftId` set → save latest then `POST /draft/{id}/publish`; else
+  `POST /create`. A 400 (incomplete) keeps the user on the form with a
+  missing-field hint (no redirect).
+
+### Owner view (`?view=mine`) — stats strip + Entwürfe section
+- Replaces the deleted dark-glass dashboard. `MarketplaceBrowseInner` fetches
+  `/api/listings/my-listings` via a seq-guarded `fetchOwnerMeta()` (mirrors the
+  grid's `refetch()`) **only** while `filters.view === 'mine'` — the paginated
+  grid can't be trusted for totals or the full drafts list.
+- **`OwnerStatsStrip.svelte`**: Total · Active · Sold · **Stale**. "Stale" =
+  active (available/reserved) listings past the 21d freshness clock, hidden from
+  public until bumped (server-computed `staleCount` on `ListingStats`, added in
+  `my-listings.ts` via `isPubliclyHiddenFrom`). Earnings intentionally dropped.
+- **`OwnerDraftsSection.svelte`**: dedicated "Entwürfe" block above the grid.
+  Dumb component; parent owns the API calls. Bearbeiten → `?draft=` resume;
+  Veröffentlichen → publish (400 → route to compose to finish); Löschen →
+  `DELETE /api/listings/delete/{id}` + refetch.
+- **Grid de-dupe**: `sortedItems` filters out `status:'draft'` in owner view so
+  drafts appear only in the Entwürfe section, not the grid.
+
 ### Page-accent rule (dual accent)
 - Marketplace uses **two** accents — not one:
   - `--k-accent: var(--k-wine)` — kickers (mono-uppercase eyebrows like `MARKTPLATZ`) and default surface accents. Wine is also the marketplace FAB color.
@@ -171,15 +218,16 @@ Located at `src/lib/listingActions.ts`. Central guard called by all listing muta
 
 ### Multi-gate alignment (edit + bump + status flows)
 
-When a mutation is gated, the gate logic lives in **three** places that must agree:
+When a mutation is gated, the gate logic lives in **four** places that must agree:
 
 1. **Page-frontmatter gate** in the corresponding `src/pages/marketplace/.../*.astro` (short-circuits navigation; redirects to a flash-toast URL).
 2. **API endpoint gate** in `src/pages/api/listings/...` (the `canMutateListing` call with its `allowOn*` opt-ins).
 3. **Compose-component gate** in `MarketComposeInner.svelte` (the `isEditBlocked` `$derived` that decides whether to render the form or the "Bearbeiten gesperrt" banner inline).
+4. **Entry-button gate** in `OwnerActions.svelte` (the `canEdit` `$derived` that toggles between an active `<a>` and a disabled-with-tooltip `<button>`). Without this, the button looks clickable, takes the owner to the gated page, and the page bounces them back to `/marketplace?edit_blocked=1` — a dead-end UX.
 
-If you lift or tighten one, **grep for the other two and update them in lockstep**. The warning-edit lift shipped in three commits because the page gate + the compose-inner gate were missed on the first attempt — clicking "bearbeiten" appeared to work (API accepted) but the form never rendered (component still blocked). Same shape for the rejected-edit lift afterward.
+If you lift or tighten one, **grep for the other three and update them in lockstep**. The warning-edit lift shipped in three commits because the page gate + the compose-inner gate were missed on the first attempt — clicking "bearbeiten" appeared to work (API accepted) but the form never rendered (component still blocked). Same shape for the rejected-edit lift afterward. The OwnerActions seat was discovered when reserved/sold listings dead-linked back to marketplace frontpage.
 
-Concretely: search for `moderationStatus === 'pending'`, `hasWarningLabel`, `allowOnRejected`, `allowOnWarningLabel`, `isEditBlocked` across the marketplace tree before declaring a gate change done.
+Concretely: search for `moderationStatus === 'pending'`, `hasWarningLabel`, `allowOnRejected`, `allowOnWarningLabel`, `isEditBlocked`, `canEdit` across the marketplace tree before declaring a gate change done.
 
 ### `ListingImagePlaceholder` accepts `src` (not decorative-only)
 

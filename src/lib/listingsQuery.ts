@@ -222,7 +222,7 @@ export async function fetchListingsForSSR(
  * Compute the "past 21d freshness" boolean from the freshness clock.
  * Used in both serializers + by fetchListingDetailForSSR.
  */
-function isPubliclyHiddenFrom(
+export function isPubliclyHiddenFrom(
   lastBumpedAt: Date | string | null | undefined,
   createdAt: Date | string | null | undefined,
 ): boolean {
