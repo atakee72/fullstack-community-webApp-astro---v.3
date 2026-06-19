@@ -247,3 +247,31 @@ Schema reserves `bundleId?: ObjectId` nullable FK on the `listings` collection +
 3. Forum / `/admin/moderation` reports asking "kann man mehrere Sachen zusammen verkaufen?" or equivalent.
 
 Until then: `bundleId` stays null on all listings. The Bundle UI surfaces (`BundleCard`, `BundleCompose`, `BundleDetail`) and the auto-dissolve cron are out-of-scope.
+
+---
+
+## Watch-items (deferred by design — build only when the trigger fires)
+
+These were deliberately NOT built for v1. They are not bugs or tech-debt to pay
+down now — each is parked behind a concrete trigger. Don't pre-build; revisit
+only when the named condition appears.
+
+1. **`$expr` freshness filter isn't index-backed.** `buildListingsFilter`'s public
+   branch uses `$expr: { $gte: [{ $ifNull: ['$lastBumpedAt','$createdAt'] }, 21d] }`,
+   which Mongo can't serve from an index. Fine at current scale (tens of listings).
+   **Trigger:** active listings cross ~500–1000, OR slow-query warnings appear in
+   Mongo/Vercel logs. **Fix when triggered:** precomputed `freshness` field
+   (= `max(createdAt, lastBumpedAt)`) written on create + bump, with an index on it;
+   needs a one-time backfill. Adds write-path cost — not worth it before the trigger.
+
+2. **`listingAuditTrail` has no read UI.** Write-once collection; inspected via mongo
+   shell. **Trigger:** an actual legal/regulatory data request, OR audit lookups
+   become routine (>2–3×). **Fix when triggered:** a small CLI dump script keyed by
+   `listingId` beats a full admin page; only build UI if lookups are frequent.
+
+3. **No admin "feature this listing" lever.** Intentional — listings are equal
+   citizens; the editorial lead is purely algorithmic (freshest wins). This is a
+   *product* decision, not a gap. **Trigger:** the community team asks to highlight a
+   specific listing (e.g. during an event). **Fix when triggered:** mirror the forum's
+   `isOfficial: boolean` + `pinnedUntil: Date | null` pattern on `listings` + an admin
+   endpoint (server-controlled, never client-settable — same as announcements).
