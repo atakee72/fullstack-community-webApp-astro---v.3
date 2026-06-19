@@ -1,0 +1,192 @@
+<script lang="ts">
+  import { t } from '../../../lib/kiosk-i18n';
+  import { showToast } from '../../../utils/toast';
+  import {
+    resolveSektion, resolveQuelle, type NewsVM, type SektionKey,
+  } from '../../../lib/newsboard/newsTaxonomy';
+  import { chronoBucket } from '../../../lib/newsboard/newsFormat';
+
+  import NewsMasthead from './browse/NewsMasthead.svelte';
+  import NewsTitleBlock from './browse/NewsTitleBlock.svelte';
+  import NewsFilterRail from './browse/NewsFilterRail.svelte';
+  import NewsCard from './browse/NewsCard.svelte';
+  import NewsCardLead from './browse/NewsCardLead.svelte';
+  import DateDivider from './browse/DateDivider.svelte';
+  import NewsSkeleton from './states/NewsSkeleton.svelte';
+  import NewsEmptyToday from './states/NewsEmptyToday.svelte';
+  import NewsEmptySaved from './states/NewsEmptySaved.svelte';
+  import NewsError from './states/NewsError.svelte';
+  import NewsDegradedBanner from './states/NewsDegradedBanner.svelte';
+
+  let {
+    issue,
+    degraded = false,
+    currentUserId = null,
+  }: { issue: number; degraded?: boolean; currentUserId?: string | null } = $props();
+
+  const isAuth = $derived(!!currentUserId);
+
+  // Filters
+  let activeSektion = $state<SektionKey | null>(null);
+  // Default to a 1-week window so the HEUTE/GESTERN/FRÜHER dividers have content
+  // (RSS publishedAt often predates the fetch day). The masthead "Artikel heute"
+  // still counts only today's bucket. The Zeitraum filter re-fetches the window.
+  let activeZeitraum = $state<string>('week');
+  let savedOnly = $state(false);
+
+  // Data
+  let status = $state<'loading' | 'ready' | 'error'>('loading');
+  let articles = $state<NewsVM[]>([]);
+  let savedIds = $state<Set<string>>(new Set());
+  let seq = 0;
+
+  // DB NewsItem → view-model.
+  function toVM(it: any): NewsVM {
+    const summary = it.aiSummary || it.description || '';
+    return {
+      id: String(it._id),
+      title: it.title,
+      titleEN: it.titleEN,
+      dek: (it.description || '').slice(0, 180),
+      summary: Array.isArray(summary) ? summary[0] : summary,
+      quelle: resolveQuelle(it.sourceName, it.source),
+      sektion: resolveSektion(it.aiCategory),
+      imageUrl: it.imageUrl || '',
+      sourceUrl: it.sourceUrl,
+      publishedAt: it.publishedAt ?? it.fetchedAt ?? new Date().toISOString(),
+      fetchDate: it.fetchDate,
+      submitterName: it.submittedBy?.name,
+      forumLinks: 0,        // Phase 3
+      saved: savedIds.has(String(it._id)),
+      read: false,          // Phase 3
+      archived: false,      // Phase 3
+    };
+  }
+
+  // Map Zeitraum → the API's dateFrom (ISO). today=last 1d, week=7d, month=30d.
+  function zeitraumDateFrom(z: string): string | undefined {
+    const now = Date.now();
+    const days = z === 'today' ? 1 : z === 'week' ? 7 : z === 'month' ? 30 : 0;
+    if (!days) return undefined;
+    return new Date(now - days * 86_400_000).toISOString().slice(0, 10);
+  }
+
+  async function refetch() {
+    const mySeq = ++seq;
+    status = 'loading';
+    try {
+      // saved IDs first (so toVM resolves `saved` correctly).
+      // GET /api/news/save → { savedIds: string[] }.
+      if (isAuth) {
+        try {
+          const sres = await fetch('/api/news/save');
+          if (sres.ok) {
+            const sj = await sres.json();
+            savedIds = new Set((sj.savedIds ?? []).map((x: any) => String(x)));
+          }
+        } catch { /* non-fatal */ }
+      }
+      const params = new URLSearchParams({ limit: '40', sortBy: 'approvedAt', sortOrder: 'desc' });
+      const from = zeitraumDateFrom(activeZeitraum);
+      if (from) params.set('dateFrom', from);
+      const res = await fetch(`/api/news?${params.toString()}`);
+      if (!res.ok) throw new Error(`news fetch ${res.status}`);
+      const data = await res.json();
+      if (mySeq !== seq) return; // stale
+      const items = data.news ?? [];   // GET /api/news → { news: [...] }
+      articles = items.map(toVM);
+      status = 'ready';
+    } catch {
+      if (mySeq !== seq) return;
+      status = 'error';
+    }
+  }
+
+  // Initial load + re-fetch on time-window change. A Svelte `$effect` runs once
+  // after mount and again whenever a tracked read changes — here `activeZeitraum`
+  // (and `isAuth`, read synchronously inside refetch before the first await).
+  // sektion + saved are client-side filters, so they don't trigger a refetch.
+  // No separate onMount needed; the `seq` guard discards any overlapping fetch.
+  $effect(() => { activeZeitraum; refetch(); });
+
+  // Derived view list
+  const visible = $derived(
+    articles
+      .filter((a) => (activeSektion ? a.sektion === activeSektion : true))
+      .filter((a) => (savedOnly ? a.saved : true))
+  );
+  const lead = $derived(!activeSektion && !savedOnly ? visible[0] : undefined);
+  const rest = $derived(lead ? visible.slice(1) : visible);
+
+  const today = $derived(rest.filter((a) => chronoBucket(a.publishedAt) === 'today'));
+  const yesterday = $derived(rest.filter((a) => chronoBucket(a.publishedAt) === 'yesterday'));
+  const older = $derived(rest.filter((a) => chronoBucket(a.publishedAt) === 'older'));
+
+  // "X Artikel heute" must reflect only today's bucket, even when a wider
+  // Zeitraum window is loaded.
+  const todayCount = $derived(articles.filter((a) => chronoBucket(a.publishedAt) === 'today').length);
+  const sourceCount = $derived(degraded ? 7 : 9);
+
+  async function handleSave(id: string) {
+    if (!isAuth) { showToast($t['news.save.login'], { type: 'info' }); return; }
+    const wasSaved = savedIds.has(id);
+    // optimistic
+    const next = new Set(savedIds);
+    wasSaved ? next.delete(id) : next.add(id);
+    savedIds = next;
+    articles = articles.map((a) => (a.id === id ? { ...a, saved: !wasSaved } : a));
+    try {
+      const res = await fetch('/api/news/save', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        // POST /api/news/save requires BOTH newsId and action ('save'|'unsave').
+        body: JSON.stringify({ newsId: id, action: wasSaved ? 'unsave' : 'save' }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      // rollback
+      const rb = new Set(savedIds);
+      wasSaved ? rb.add(id) : rb.delete(id);
+      savedIds = rb;
+      articles = articles.map((a) => (a.id === id ? { ...a, saved: wasSaved } : a));
+      showToast($t['news.save.error'], { type: 'error' });
+    }
+  }
+</script>
+
+<NewsTitleBlock />
+<NewsMasthead {issue} articleCount={todayCount} {sourceCount} {degraded} />
+{#if degraded}<NewsDegradedBanner />{/if}
+<NewsFilterRail
+  {activeSektion} {activeZeitraum} {savedOnly} isAuthenticated={isAuth}
+  onSektionChange={(s) => (activeSektion = s)}
+  onZeitraumChange={(z) => (activeZeitraum = z)}
+  onSavedToggle={(v) => (savedOnly = v)}
+/>
+
+{#if status === 'loading'}
+  <NewsSkeleton />
+{:else if status === 'error'}
+  <NewsError onRetry={refetch} />
+{:else if visible.length === 0}
+  {#if savedOnly}
+    <NewsEmptySaved onBack={() => (savedOnly = false)} />
+  {:else}
+    <NewsEmptyToday />
+  {/if}
+{:else}
+  <div style="padding:20px 36px 40px; display:flex; flex-direction:column; gap:16px;">
+    {#if lead}<NewsCardLead article={lead} onSave={handleSave} canSave={isAuth} />{/if}
+    {#if today.length}
+      <DateDivider label={$t['news.divider.today']} />
+      {#each today as a (a.id)}<NewsCard article={a} onSave={handleSave} canSave={isAuth} />{/each}
+    {/if}
+    {#if yesterday.length}
+      <DateDivider label={$t['news.divider.yesterday']} />
+      {#each yesterday as a (a.id)}<NewsCard article={a} onSave={handleSave} canSave={isAuth} />{/each}
+    {/if}
+    {#if older.length}
+      <DateDivider label={$t['news.divider.older']} />
+      {#each older as a (a.id)}<NewsCard article={a} onSave={handleSave} canSave={isAuth} />{/each}
+    {/if}
+  </div>
+{/if}
