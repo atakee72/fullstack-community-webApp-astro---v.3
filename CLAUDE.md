@@ -122,6 +122,8 @@ See `src/components/admin/CLAUDE.md` — full notes load when working in that su
 ### Newsboard
 See `src/pages/api/news/CLAUDE.md` — full notes load when working in that subtree (or read directly for UI work — frontend lives at `src/components/NewsCardsWrapper.tsx` and `src/components/ui/NewsCards.tsx`).
 
+**Kiosk UI** (June 2026): the Newsboard index was migrated to the kiosk design system — `src/pages/newsboard.astro` + `src/components/newsboard/kiosk/` (Svelte islands). Full notes: `src/components/newsboard/kiosk/CLAUDE.md` (loads when working in that subtree).
+
 ### Kiez Data Dashboard
 See `src/components/kiez/CLAUDE.md` — full notes (data pipeline, LOR codes, MSS column layout, charts, air quality, trend backfills) load when working in that subtree.
 
