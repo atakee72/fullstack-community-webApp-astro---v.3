@@ -100,7 +100,7 @@
 
 /* ── Per-page accent override (matches existing --carved-accent) ── */
 [data-page="forum"]        { --k-accent: var(--k-wine); }
-[data-page="newsboard"]    { --k-accent: var(--k-ochre); }
+[data-page="newsboard"]    { --k-accent: var(--k-ink); }
 [data-page="calendar"]     { --k-accent: var(--k-teal); }
 [data-page="schillerkiez"] { --k-accent: var(--k-moss); }
 
