@@ -78,12 +78,12 @@ re-touching the components:
 - The FilterRail "Ungelesen" toggle is disabled.
 - The orchestrator's `toVM()` hardcodes `forumLinks: 0, read: false, archived: false`.
 
-## Cards link OUT (not a regression)
+## Cards link to the detail route; the detail page links OUT
 
-`weiterlesen` + the headline link to the external `sourceUrl`
-(`target="_blank"`). This is design-correct — the Newsboard never renders the full
-article inline. An internal `/newsboard/[id]` detail route is **Phase 2** (not yet
-built).
+As of Phase 2, the feed cards' headline + `weiterlesen` link to the **internal**
+detail page `/newsboard/${id}` (same tab). The detail page's `weiterlesen bei …`
+button is what links to the external `sourceUrl` (`target="_blank"`) — the
+Newsboard never renders the full article inline.
 
 ## No-image placeholder is first-class
 
@@ -124,16 +124,50 @@ window; sektion + savedOnly are client-side filters (no refetch).
 - `tokens-newsboard.css` holds the sektion / quelle / read-decay / heat tokens
   (`--sektion-*`, `--quelle-*`, `--news-noimage-*`, `--news-heat-color`, etc.).
 
-## Deferred (Phase 2 / Phase 3)
+## Phase 2 (shipped, 2026-06-20)
+
+Plan: `docs/superpowers/plans/2026-06-20-newsboard-kiosk-redesign-phase2.md`.
+
+- **Detail route** `/newsboard/[id].astro` — SSR main column (kicker, H1, dek,
+  source, hero image, body paragraphs, source-footer link-out, AI/mod disclosure)
+  for SEO, with the interactive **sidebar** as an island (`NewsDetailInner.svelte`
+  → `detail/ReadingListControls` save toggle, `detail/ForumDiscussCTA`,
+  `detail/RelatedRail`). Mirrors the marketplace SSR-shell + island split (no
+  duplicate H1/body). `NewsDetail` type lives in the PURE `newsTaxonomy.ts` so the
+  island never imports the mongodb-importing `newsQuery.ts`. Server fetch:
+  `fetchNewsDetailForSSR(id, userId)` in `src/lib/newsboard/newsQuery.ts`
+  (visibility = approved OR own pending/rejected).
+- **Forum CTA prefill** — `ForumDiscussCTA` links to
+  `/topics/create?prefill_title=…&prefill_body=<sourceUrl>`; `ComposePageInner`
+  (forum) reads those params in `onMount` and seeds `initialValues`. The CTA's
+  exhausted state comes from `GET /api/topics/daily-count` (new endpoint).
+- **Full submit** — `submit/NewsSubmitInner.svelte` (replaced the Phase-1
+  `NewsSubmitMinimal` stub) with `QuotaIndicator` (5-slot), `SektionPicker`,
+  image upload (`POST /api/news/upload` → Cloudinary `mahalle/newsboard`), and the
+  rate-limited (quota-reached) state. Backend: `submit.ts` enforces 5/day rolling-24h
+  + stores the chosen section as `aiCategory` (the index resolver round-trips it);
+  `GET /api/news/daily-count` feeds the indicator; `sektion` added to
+  `NewsSubmitSchema`.
+- **Own-submission straps** — the feed shows the author's own pending/rejected
+  items with an `IN PRÜFUNG`/`ABGELEHNT` strap + reason (states 08/09); `NewsVM`
+  carries `moderationStatus` + `warningText`.
+- `KioskBtn` gained optional `target`/`rel` props (used by the lead CTA in Phase 1;
+  retained).
+
+## Deferred
 
 Not bugs or tech-debt — parked by design. Build when the phase lands:
 
-- Internal `/newsboard/[id]` detail route (Phase 2).
-- Full submit live preview + states 07-09 (Phase 2 — quota indicator, section
-  picker, and image upload landed in `NewsSubmitInner`; live preview still pending).
+- **SSR-prefetch of the index for SEO** (Phase 2, Task C1 — NOT yet landed): the
+  index is still `client:only`, so the feed text isn't in raw HTML. The plan's C1
+  switches to `client:load` + `fetchNewsForSSR` seeding, but the hydration risk
+  (server-vs-client relative-time strings like "vor 2 Std.") must be verified
+  against a running dev server before landing. Pending live verification.
+- Full submit **live preview card** (the design's "VORSCHAU · IM FEED" panel) — the
+  form ships without it; add later if wanted.
 - Read-state decay + a `news_read_state` store (Phase 3).
 - Heat indicator: real `heatCount` + a forum-link counter job (Phase 3).
-- Real `sektion` emitted from `fetch-daily.ts` (Phase 3).
+- Real `sektion` field emitted from `fetch-daily.ts` (Phase 3) — currently the
+  resolver maps `aiCategory`, and user submissions store the section as `aiCategory`.
 - Offline/cached state (state 05) — needs a service worker.
 - Masthead once-per-day intro animation.
-- SSR-prefetch of the index for SEO (currently `client:only`).
