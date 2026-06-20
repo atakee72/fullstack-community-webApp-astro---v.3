@@ -15,7 +15,9 @@
 
   onMount(async () => {
     try {
-      const res = await fetch('/api/news?limit=30&sortBy=approvedAt&sortOrder=desc');
+      // limit=50 (schema max) so quiet sektions still surface related items —
+      // the API has no sektion filter param yet (Phase 3); we filter client-side.
+      const res = await fetch('/api/news?limit=50&sortBy=approvedAt&sortOrder=desc');
       if (!res.ok) return;
       const data = await res.json();
       related = (data.news ?? [])

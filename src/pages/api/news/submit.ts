@@ -4,7 +4,7 @@ import { connectDB } from '../../../lib/mongodb';
 import type { NewsItem, FlaggedContent } from '../../../types';
 import { NewsSubmitSchema } from '../../../schemas/news.schema';
 import { parseRequestBody } from '../../../schemas/validation.utils';
-import { moderateText, createFlaggedContentRecord } from '../../../lib/moderation';
+import { moderateText, checkSpamWithGPT, mergeModerationResults, createFlaggedContentRecord } from '../../../lib/moderation';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -57,9 +57,16 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Run content moderation on title + description + comment
+    // Run content moderation on title + description + comment.
+    // Parity with all other content types (CLAUDE.md): the OpenAI safety scan
+    // (moderateText) runs in parallel with the GPT spam/ad/hate/harassment check
+    // (checkSpamWithGPT); merged → null when nothing flagged, else a combined result.
     const textToModerate = `${title}\n\n${description}${submitterComment ? `\n\n${submitterComment}` : ''}`;
-    const moderationResult = await moderateText(textToModerate);
+    const [moderationResult, spamResult] = await Promise.all([
+      moderateText(textToModerate),
+      checkSpamWithGPT(textToModerate, 'neighborhood news submission'),
+    ]);
+    const mergedResult = mergeModerationResults(moderationResult, spamResult);
 
     // All user-submitted news goes to moderation queue regardless of AI result
     // This ensures admin reviews every submission before it appears on the newsboard
@@ -88,8 +95,8 @@ export const POST: APIRoute = async ({ request }) => {
     // Create flagged content record for admin review
     const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
 
-    if (moderationResult.needsReview) {
-      // AI flagged — create record with AI details
+    if (mergedResult) {
+      // Flagged by the safety scan and/or the GPT check — record merged details
       const flaggedRecord = createFlaggedContentRecord(
         'news',
         { title, body: description },
@@ -98,7 +105,7 @@ export const POST: APIRoute = async ({ request }) => {
           name: session.user.name || undefined,
           email: session.user.email || undefined
         },
-        moderationResult
+        mergedResult
       );
       flaggedRecord.contentId = result.insertedId.toString();
       await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
