@@ -21,7 +21,7 @@ bottom.
   computes server-fixed props (`issue`, `degraded`, `currentUserId`) and sets
   `Cache-Control: no-store` (per-user save state makes caching unsafe — mirrors
   marketplace).
-- **Submit** = `src/pages/newsboard/submit.astro` → `submit/NewsSubmitMinimal.svelte`.
+- **Submit** = `src/pages/newsboard/submit.astro` → `submit/NewsSubmitInner.svelte`.
   Auth-gated: frontmatter redirects to `/login` when no session.
 
 ## Folder layout
@@ -33,7 +33,7 @@ bottom.
   `ReadDot`, `SaveToggle`, `ArticleImage`, `ArticleMeta`.
 - `states/` — `NewsSkeleton`, `NewsEmptyToday`, `NewsEmptySaved`, `NewsError`,
   `NewsDegradedBanner`.
-- `submit/` — `NewsSubmitMinimal`.
+- `submit/` — `NewsSubmitInner`, `QuotaIndicator`, `SektionPicker`.
 
 ## Pure helpers — keep them dependency-pure
 
@@ -129,8 +129,8 @@ window; sektion + savedOnly are client-side filters (no refetch).
 Not bugs or tech-debt — parked by design. Build when the phase lands:
 
 - Internal `/newsboard/[id]` detail route (Phase 2).
-- Full submit: 5/day quota indicator, section picker, image upload, live preview,
-  states 07-09 (Phase 2; `NewsSubmitMinimal` is the Phase-1 stub).
+- Full submit live preview + states 07-09 (Phase 2 — quota indicator, section
+  picker, and image upload landed in `NewsSubmitInner`; live preview still pending).
 - Read-state decay + a `news_read_state` store (Phase 3).
 - Heat indicator: real `heatCount` + a forum-link counter job (Phase 3).
 - Real `sektion` emitted from `fetch-daily.ts` (Phase 3).
