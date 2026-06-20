@@ -1,0 +1,92 @@
+---
+import KioskLayout from '../../layouts/KioskLayout.astro';
+import { getSession } from 'auth-astro/server';
+import { fetchNewsDetailForSSR } from '../../lib/newsboard/newsQuery';
+import { resolveSektion, resolveQuelle, SEKTION_TOKEN, QUELLE_META } from '../../lib/newsboard/newsTaxonomy';
+import NewsDetailInner from '../../components/newsboard/kiosk/NewsDetailInner.svelte';
+
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
+
+const { id } = Astro.params;
+const session = await getSession(Astro.request);
+const userId = (session?.user as any)?.id ?? null;
+
+const article = id ? await fetchNewsDetailForSSR(id, userId) : null;
+if (!article) return Astro.redirect('/newsboard');
+
+const sektion = resolveSektion(article.aiCategory);
+const quelle = resolveQuelle(article.sourceName, article.source);
+const sektionLabelDe: Record<string, string> = {
+  politik: 'Politik', kultur: 'Kultur', lokales: 'Lokales', wirtschaft: 'Wirtschaft',
+  verkehr: 'Verkehr', klima: 'Klima', sport: 'Sport',
+};
+const isUser = article.source === 'user_submitted';
+const bodyText = (article.aiSummary || article.description || '').trim();
+const paragraphs = bodyText.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+const dek = article.description && article.aiSummary ? article.description : '';
+
+// Per-article token styles precomputed (backtick interpolation → style={…}).
+const sektionChipStyle = `font-size:10px; font-weight:600; letter-spacing:0.12em; padding:2px 8px; background:var(${SEKTION_TOKEN[sektion]}); color:var(${SEKTION_TOKEN[sektion]}-text); border:1px solid var(--k-ink); border-radius:var(--k-radius-sm);`;
+const quelleMarkStyle = `background:var(${QUELLE_META[quelle].token}); color:var(--k-paper); font-weight:700; font-size:9px; padding:2px 5px; border-radius:3px;`;
+---
+
+<KioskLayout title={`${article.title} — Mahalle`} description={article.description?.slice(0, 160)} page="newsboard">
+  <div class="px-4 md:px-9" style="padding-top:14px; padding-bottom:14px; border-bottom:1px dashed var(--k-rule); font-family:var(--k-font-mono); font-size:11px;">
+    <a href="/newsboard" style="color:var(--k-ink-soft); text-decoration:underline dashed; text-underline-offset:3px;">← zurück zum Feed</a>
+  </div>
+
+  <div class="px-4 md:px-9" style="padding-top:30px; padding-bottom:50px;">
+    <div class="news-detail-grid">
+      <!-- MAIN COLUMN — static SSR HTML for SEO -->
+      <article>
+        {isUser && (
+          <div class="inline-flex items-center" style="gap:8px; padding:6px 12px; background:var(--k-moss); color:var(--k-paper); border:var(--k-border-ink); border-radius:var(--k-radius-sm); font-family:var(--k-font-mono); font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:16px; box-shadow:2px 2px 0 var(--k-ink);">
+            <span>↗</span> Eingereicht von einer Nachbarin
+          </div>
+        )}
+        <div class="flex items-center" style="gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+          <span class="font-dmmono uppercase" style={sektionChipStyle}>{sektionLabelDe[sektion]}</span>
+          <span class="font-dmmono" style="font-size:10px; color:var(--k-ink-mute); letter-spacing:0.1em;">· {isUser ? 'freigegeben' : 'veröffentlicht'} {article.fetchDate ?? ''}</span>
+        </div>
+
+        <h1 class="font-bricolage" style="font-weight:800; font-size:clamp(30px,5vw,52px); line-height:1.02; letter-spacing:-0.035em; margin:0 0 16px; color:var(--k-ink); max-width:22ch;">{article.title}</h1>
+
+        {dek && <p class="font-instrument italic" style="font-size:clamp(17px,2.4vw,22px); line-height:1.35; color:var(--k-ink-soft); margin:0 0 22px; max-width:55ch;">{dek}</p>}
+
+        <div class="flex items-center" style="gap:10px; flex-wrap:wrap; margin-bottom:22px; padding-bottom:14px; border-bottom:1px dashed var(--k-rule); font-family:var(--k-font-mono); font-size:11px; color:var(--k-ink-mute);">
+          <span style="display:inline-flex; align-items:center; gap:5px; border:1px solid var(--k-ink); background:var(--k-paper-warm); border-radius:var(--k-radius-sm); padding:2px 8px 2px 2px;">
+            <span style={quelleMarkStyle}>{QUELLE_META[quelle].short.toUpperCase()}</span>
+            <span style="text-transform:lowercase;">{QUELLE_META[quelle].name}</span>
+          </span>
+        </div>
+
+        {article.imageUrl && (
+          <img src={article.imageUrl} alt={article.title} loading="eager" class="w-full object-cover" style="aspect-ratio:16/9; border:var(--k-border-ink); border-radius:var(--k-radius-md); margin-bottom:24px;" />
+        )}
+
+        <div class="font-bricolage" style="font-size:15.5px; line-height:1.6; color:var(--k-ink); max-width:70ch; display:flex; flex-direction:column; gap:16px;">
+          {paragraphs.map((p) => <p style="margin:0;">{p}</p>)}
+        </div>
+
+        <div class="flex items-center justify-between" style="gap:14px; flex-wrap:wrap; margin-top:28px; padding:18px 0; border-top:1px solid var(--k-ink); border-bottom:1px solid var(--k-ink);">
+          <div class="font-dmmono" style="font-size:9.5px; color:var(--k-ink-mute); letter-spacing:0.14em;">ORIGINAL · ZUM VOLLSTÄNDIGEN ARTIKEL</div>
+          <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer" class="font-bricolage" style="font-weight:600; font-size:13px; padding:6px 14px; background:var(--k-ink); color:var(--k-paper); border:2px solid var(--k-ink); border-radius:var(--k-radius-pill); text-decoration:none; box-shadow:2px 2px 0 var(--k-wine);">weiterlesen bei {article.sourceName} →</a>
+        </div>
+
+        <div class="font-dmmono" style="margin-top:16px; padding:12px 14px; background:var(--k-paper-soft); border:1px dashed var(--k-rule); border-radius:var(--k-radius-sm); font-size:10px; color:var(--k-ink-mute); line-height:1.6;">
+          {isUser ? '↳ Dieser Beitrag wurde von einer Nachbarin eingereicht und durchlief die automatische Moderation. Inhalt liegt in der Verantwortung der Einreicherin.' : '↳ Die Zusammenfassung wurde maschinell erstellt (GPT-4o). Für Detail und Kontext: vollständiger Artikel bei der Quelle.'}
+        </div>
+      </article>
+
+      <!-- SIDEBAR — interactive island -->
+      <NewsDetailInner client:load article={article} currentUserId={userId} />
+    </div>
+  </div>
+
+  <style>
+    .news-detail-grid { display: grid; grid-template-columns: 1fr; gap: 36px; }
+    @media (min-width: 1024px) {
+      .news-detail-grid { grid-template-columns: 1fr 320px; }
+    }
+  </style>
+</KioskLayout>
