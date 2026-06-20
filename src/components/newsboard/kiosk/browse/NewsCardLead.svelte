@@ -28,7 +28,7 @@
       <HeatChip count={article.forumLinks} />
     </div>
 
-    <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer" class="block no-underline">
+    <a href={`/newsboard/${article.id}`} class="block no-underline">
       <h2
         class="font-bricolage"
         style="font-weight:800; font-size:42px; line-height:1.02; letter-spacing:-0.035em;
@@ -52,7 +52,7 @@
     >
       <ArticleMeta quelle={article.quelle} publishedAt={article.publishedAt} submitterName={article.submitterName} />
       <div class="flex-1"></div>
-      <KioskBtn size="sm" href={article.sourceUrl} target="_blank" rel="noopener noreferrer">{$t['news.readmore']}</KioskBtn>
+      <KioskBtn size="sm" href={`/newsboard/${article.id}`}>{$t['news.readmore']}</KioskBtn>
       {#if canSave}<SaveToggle saved={article.saved} onToggle={() => onSave(article.id)} />{/if}
     </div>
   </div>

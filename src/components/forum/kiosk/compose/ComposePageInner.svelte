@@ -68,6 +68,24 @@
         existingImages: []
       };
     }
+
+    // News → forum prefill: ?prefill_title / ?prefill_body (set by the
+    // newsboard "im Forum diskutieren" CTA). Takes precedence over draft.
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const pt = sp.get('prefill_title');
+      const pb = sp.get('prefill_body');
+      if (pt || pb) {
+        initialValues = {
+          title: pt ?? initialValues?.title ?? '',
+          body: pb ?? initialValues?.body ?? '',
+          kind: initialValues?.kind ?? 'discussion',
+          tags: initialValues?.tags ?? [],
+          pendingFiles: [],
+          existingImages: []
+        };
+      }
+    } catch { /* no window / bad params — ignore */ }
   });
 
   // Debounced auto-save. Writes title/body/kind/tags only — pending

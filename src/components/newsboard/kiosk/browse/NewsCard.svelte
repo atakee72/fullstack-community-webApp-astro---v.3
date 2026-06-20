@@ -33,7 +33,7 @@
       <HeatChip count={article.forumLinks} mini />
     </div>
 
-    <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer" class="block no-underline">
+    <a href={`/newsboard/${article.id}`} class="block no-underline">
       <h3
         class="font-bricolage"
         style="font-weight:700; font-size:22px; line-height:1.15; letter-spacing:-0.02em;
@@ -55,7 +55,7 @@
       <ArticleMeta quelle={article.quelle} publishedAt={article.publishedAt} submitterName={article.submitterName} />
       <div class="flex-1"></div>
       <a
-        href={article.sourceUrl} target="_blank" rel="noopener noreferrer"
+        href={`/newsboard/${article.id}`}
         class="font-dmmono"
         style="font-size:10px; color:var(--k-ink-soft); text-decoration:underline dashed; text-underline-offset:3px;"
       >{$t['news.readmore']}</a>
