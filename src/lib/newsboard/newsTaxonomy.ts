@@ -105,3 +105,24 @@ export interface NewsVM {
   read: boolean;        // always false in phase 1
   archived: boolean;    // always false in phase 1
 }
+
+// Prop-safe article-detail shape (serialized for crossing the island boundary).
+// Lives here (pure module) so the detail island can import the type without
+// touching the mongodb-importing newsQuery.ts.
+export interface NewsDetail {
+  id: string;
+  source: 'ai_fetched' | 'user_submitted';
+  title: string;
+  description: string;
+  aiSummary?: string;
+  imageUrl: string;
+  sourceUrl: string;
+  sourceName: string;
+  aiCategory?: string;
+  moderationStatus: 'approved' | 'pending' | 'rejected';
+  warningText?: string;
+  submittedByName?: string;
+  publishedAt: string; // ISO
+  fetchDate?: string;
+  approvedAt?: string;  // ISO
+}
