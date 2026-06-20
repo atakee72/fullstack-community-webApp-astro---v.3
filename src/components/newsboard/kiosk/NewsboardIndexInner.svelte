@@ -61,6 +61,8 @@
       saved: ids.has(String(it._id)),
       read: false,          // Phase 3
       archived: false,      // Phase 3
+      moderationStatus: it.moderationStatus ?? 'approved',
+      warningText: it.warningText,
     };
   }
 

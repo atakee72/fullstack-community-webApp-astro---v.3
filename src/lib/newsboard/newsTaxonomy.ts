@@ -104,6 +104,8 @@ export interface NewsVM {
   saved: boolean;
   read: boolean;        // always false in phase 1
   archived: boolean;    // always false in phase 1
+  moderationStatus: 'approved' | 'pending' | 'rejected';
+  warningText?: string;
 }
 
 // Prop-safe article-detail shape (serialized for crossing the island boundary).
