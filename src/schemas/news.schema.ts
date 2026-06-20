@@ -8,6 +8,7 @@ export const NewsSubmitSchema = z.object({
   sourceName: z.string().min(1, 'Source name is required').max(100),
   imageUrl: z.string().url().optional().or(z.literal('')),
   submitterComment: z.string().max(500).optional(),
+  sektion: z.enum(['politik', 'kultur', 'lokales', 'wirtschaft', 'verkehr', 'klima', 'sport']),
 });
 
 // Schema for query parameters when listing news

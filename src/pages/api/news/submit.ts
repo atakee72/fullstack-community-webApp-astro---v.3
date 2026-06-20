@@ -19,6 +19,23 @@ export const POST: APIRoute = async ({ request }) => {
 
     const userId = session.user.id;
 
+    // Daily submit limit (5 per rolling 24h) — mirrors topics/events/listings.
+    const dbEarly = await connectDB();
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const todayCount = await dbEarly.collection('news').countDocuments({
+      submittedBy: userId,
+      source: 'user_submitted',
+      createdAt: { $gte: dayAgo },
+    });
+    if (todayCount >= 5) {
+      return new Response(JSON.stringify({
+        error: 'Daily submission limit reached',
+        message: 'You can submit up to 5 news items per day. Please try again tomorrow.',
+        dailyLimit: 5,
+        currentCount: todayCount,
+      }), { status: 429, headers: { 'Content-Type': 'application/json' } });
+    }
+
     // Validate request body
     const validation = await parseRequestBody(request, NewsSubmitSchema);
 
@@ -26,10 +43,10 @@ export const POST: APIRoute = async ({ request }) => {
       return validation.response;
     }
 
-    const { title, description, sourceUrl, sourceName, imageUrl, submitterComment } = validation.data;
+    const { title, description, sourceUrl, sourceName, imageUrl, submitterComment, sektion } = validation.data;
 
     // Check for duplicate URL
-    const db = await connectDB();
+    const db = dbEarly;
     const newsCollection = db.collection<NewsItem>('news');
 
     const existing = await newsCollection.findOne({ sourceUrl });
@@ -55,6 +72,7 @@ export const POST: APIRoute = async ({ request }) => {
       imageUrl: imageUrl || undefined,
       sourceUrl,
       sourceName,
+      aiCategory: sektion,
       submittedBy: userId as any,
       submitterComment: submitterComment || undefined,
       moderationStatus,
