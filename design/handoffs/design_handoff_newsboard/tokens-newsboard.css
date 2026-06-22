@@ -1,0 +1,163 @@
+/* ════════════════════════════════════════════════════════════════════
+ * KIOSK · NEWSBOARD · TOKEN EXTENSION
+ * ════════════════════════════════════════════════════════════════════
+ * Newsboard adds three families of tokens on top of base Kiosk tokens:
+ *   1. Sektion taxonomy (7 sections)
+ *   2. Quelle taxonomy (9 sources + user-submitted bucket)
+ *   3. Read-decay + heat indicator
+ *
+ * Imported AFTER tokens.css. Forum / Calendar / Marketplace tokens are
+ * untouched.
+ *
+ * The JSX (kiosk-newsboard.jsx) is the source of truth — this file is
+ * a convenience extract for CSS-level styling. If they disagree, JSX
+ * wins.
+ * ════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─── Carved title accent (Newsboard surface) ───
+   *  Forum = wine · Calendar = teal · Marketplace = wine · Newsboard = INK.
+   *  Restrained newspaper-traditional — headlines do the work. */
+  --carved-accent-newsboard: var(--k-ink);
+
+  /* ────────────────────────────────────────────────────────────────
+   * SEKTION (7 taxonomy slots)
+   * Used on small inline tags + filter rail ONLY.
+   * Never floods backgrounds. Sections label articles; the rest of
+   * the page stays ink-on-paper.
+   * ──────────────────────────────────────────────────────────────── */
+  --sektion-politik:    var(--k-wine);     /* Politics  */
+  --sektion-kultur:     var(--k-plum);     /* Culture   */
+  --sektion-lokales:    var(--k-ink);      /* Local     */
+  --sektion-wirtschaft: var(--k-moss);     /* Economy   */
+  --sektion-verkehr:    var(--k-teal);     /* Transit   */
+  --sektion-klima:      #8aa67a;           /* Climate   (aux green — shared w/ marketplace cat-pflanze) */
+  --sektion-sport:      var(--k-ochre);    /* Sport     */
+
+  /* Text-on color (auto, but pinned for tags-on-color) */
+  --sektion-politik-text:    var(--k-paper);
+  --sektion-kultur-text:     var(--k-paper);
+  --sektion-lokales-text:    var(--k-paper);
+  --sektion-wirtschaft-text: var(--k-paper);
+  --sektion-verkehr-text:    var(--k-paper);
+  --sektion-klima-text:      var(--k-ink);    /* light bg → dark text */
+  --sektion-sport-text:      var(--k-ink);    /* ochre → dark text */
+
+  /* ────────────────────────────────────────────────────────────────
+   * QUELLE (9 sources + user-submitted bucket)
+   * Source accent surfaces ONLY on the source chip's letter mark.
+   * Never used as a page accent.
+   * ──────────────────────────────────────────────────────────────── */
+  --quelle-rbb:      var(--k-teal);      /* rbb24                    */
+  --quelle-tsp:      var(--k-wine);      /* Tagesspiegel             */
+  --quelle-taz:      var(--k-ink);       /* taz                      */
+  --quelle-bzb:      var(--k-ochre);     /* BZ Berlin                */
+  --quelle-bmp:      var(--k-plum);      /* Berliner Morgenpost      */
+  --quelle-nwk:      var(--k-moss);      /* Neuköllner Wochenkurier  */
+  --quelle-nkn:      var(--k-wine);      /* neukoellner.net          */
+  --quelle-nd:       var(--k-danger);    /* Neues Deutschland        */
+  --quelle-newsdata: var(--k-ink-mute);  /* NewsData (API, optional) */
+  --quelle-user:     var(--k-ink-soft);  /* user-submitted bucket    */
+
+  /* ────────────────────────────────────────────────────────────────
+   * READ-DECAY opacity scale
+   * Three states drive the "marked-up newspaper" feel:
+   *   fresh    = unread, full contrast
+   *   seen     = user opened it, visibly faded
+   *   archived = user marked done (saved view only)
+   * Transition is INSTANT (no fade) — marking should feel committed.
+   * ──────────────────────────────────────────────────────────────── */
+  --news-read-opacity-fresh:    1;
+  --news-read-opacity-seen:     0.55;
+  --news-read-opacity-archived: 0.32;
+
+  /* ────────────────────────────────────────────────────────────────
+   * HEAT indicator
+   * ≥2 forum posts linking to an article → ochre ♨ chip appears.
+   * Server-side computed in articles resolver, cached 10 min.
+   * Spam protection: only forum posts > 1h old count.
+   * ──────────────────────────────────────────────────────────────── */
+  --news-heat-threshold:  2;            /* default — server-side controlled */
+  --news-heat-color:      var(--k-ochre);
+  --news-heat-text:       var(--k-ink);
+
+  /* ────────────────────────────────────────────────────────────────
+   * USER-SUBMITTED quota
+   * Soft limit, surfaced as a 5-slot quota indicator on the submit page.
+   * Forum-post-from-article quota (5/day) is SEPARATE — even if newsboard
+   * quota is fine, the "im Forum diskutieren" CTA may be exhausted.
+   * ──────────────────────────────────────────────────────────────── */
+  --news-submit-quota:    5;            /* per user per day */
+  --news-forum-quota:     5;            /* shared w/ forum cap — separate counter */
+
+  /* ────────────────────────────────────────────────────────────────
+   * SUBMITTED strap (moss) — distinguishes user-eingereicht articles
+   * Background = user color, text = paper, border = ink.
+   * ──────────────────────────────────────────────────────────────── */
+  --news-submitted-strap-bg:   var(--k-moss);
+  --news-submitted-strap-text: var(--k-paper);
+
+  /* ────────────────────────────────────────────────────────────────
+   * MASTHEAD typography rhythm
+   * (Soft tokens — most of the masthead is one-off display copy in JSX)
+   * ──────────────────────────────────────────────────────────────── */
+  --news-masthead-size-desktop: 88px;
+  --news-masthead-size-mobile:  36px;
+  --news-masthead-line-rule:    2px;    /* top/bottom rules */
+
+  /* ────────────────────────────────────────────────────────────────
+   * NO-IMAGE placeholder
+   * 4-step RSS image fallback fails ~15-20% of the time.
+   * Placeholder = dashed border + source-letter monogram +
+   * "kein bild" / "no image" label.
+   * ──────────────────────────────────────────────────────────────── */
+  --news-noimage-border: 1px dashed var(--k-rule);
+  --news-noimage-bg:     var(--k-paper-soft);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ *  PAGE-SCOPED OVERRIDE
+ *  When body or page-root carries data-page="newsboard", the carved
+ *  accent resolves to ink (newsboard's identity).
+ * ════════════════════════════════════════════════════════════════════ */
+
+[data-page="newsboard"] {
+  --carved-accent: var(--carved-accent-newsboard);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ *  READ-DECAY application
+ *  Apply to article cards via [data-read-state="seen|archived"].
+ *  Decay is OPACITY only — never display:none or aria-hidden.
+ *  Screen readers should still surface the content.
+ * ════════════════════════════════════════════════════════════════════ */
+
+.news-card[data-read-state="fresh"]    { opacity: var(--news-read-opacity-fresh); }
+.news-card[data-read-state="seen"]     { opacity: var(--news-read-opacity-seen); }
+.news-card[data-read-state="archived"] { opacity: var(--news-read-opacity-archived); }
+
+/* ARIA hooks (informational, never structural) */
+.news-card[data-read-state="seen"]     [data-news-read-aria]::before { content: "gelesen · "; }
+.news-card[data-read-state="archived"] [data-news-read-aria]::before { content: "archiviert · "; }
+
+/* ════════════════════════════════════════════════════════════════════
+ *  Notes for CC (lessons-learned, do not regress):
+ *  ────────────────────────────────────────────────────────────────────
+ *  · Read-state is AUTH-GATED. Logged-in users persist server-side.
+ *    Guests see all articles as unread; the read-toggle is hidden for
+ *    them. NO localStorage fallback.
+ *
+ *  · TODAY.issue (Nr. 142) = days since notional launch Jan 3 2026.
+ *    Computed server-side, fixed per-day, NOT per-render.
+ *
+ *  · fetchDate for user-submitted articles = APPROVAL timestamp,
+ *    not submission. Masthead copy avoids "what happened today" —
+ *    uses "kuratiert für den…" instead.
+ *
+ *  · NewsData API key is OPTIONAL. If absent or failing, the degraded
+ *    variant (RSS-only banner) renders. 7/9 sources still curate
+ *    normally — this is NOT an error state.
+ *
+ *  · German curly quotes: opener „ (U+201E) + closer " (U+201C).
+ *    Straight ASCII " breaks Babel after „. Lint with /„[^„"]*?"/g.
+ * ════════════════════════════════════════════════════════════════════ */
