@@ -150,7 +150,16 @@ Plan: `docs/superpowers/plans/2026-06-20-newsboard-kiosk-redesign-phase2.md`.
   `NewsSubmitSchema`.
 - **Own-submission straps** — the feed shows the author's own pending/rejected
   items with an `IN PRÜFUNG`/`ABGELEHNT` strap + reason (states 08/09); `NewsVM`
-  carries `moderationStatus` + `warningText`.
+  carries `moderationStatus` + `warningText`. **Gotcha (fixed 2026-06-22):**
+  user-submitted non-approved items have **no `fetchDate`** (it's set only at admin
+  approval), and `/api/news` leads its sort with `fetchDate: -1` + a page limit —
+  so an author's own pending item sank below the limit and never reached the feed,
+  making the strap effectively dead. `/api/news` now runs a separate query to
+  surface own pending/rejected at the **top of page 1** (honoring the existing
+  `$or` intent), and `NewsboardIndexInner` floats `ownNonApproved` above the feed
+  body while keeping the lead an **approved** item (`NewsCardLead` renders no
+  strap). Any non-approved item in the client list is the current user's own — the
+  API never returns other users' non-approved news.
 - `KioskBtn` gained optional `target`/`rel` props (used by the lead CTA in Phase 1;
   retained).
 - **SSR-prefetch of the index for SEO** (Task C1, landed 2026-06-22) — the index is
