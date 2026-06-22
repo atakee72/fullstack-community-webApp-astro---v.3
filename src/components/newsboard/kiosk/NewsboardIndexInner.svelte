@@ -22,7 +22,8 @@
     issue,
     degraded = false,
     currentUserId = null,
-  }: { issue: number; degraded?: boolean; currentUserId?: string | null } = $props();
+    initialArticles = [],
+  }: { issue: number; degraded?: boolean; currentUserId?: string | null; initialArticles?: any[] } = $props();
 
   const isAuth = $derived(!!currentUserId);
 
@@ -34,9 +35,10 @@
   let activeZeitraum = $state<string>('week');
   let savedOnly = $state(false);
 
-  // Data
-  let status = $state<'loading' | 'ready' | 'error'>('loading');
-  let articles = $state<NewsVM[]>([]);
+  // Data — seed first paint from the server-fetched articles (C1: SSR-prefetch).
+  // toVM is a hoisted function declaration, so calling it here is fine.
+  let status = $state<'loading' | 'ready' | 'error'>(initialArticles.length ? 'ready' : 'loading');
+  let articles = $state<NewsVM[]>(initialArticles.map((it) => toVM(it, new Set<string>())));
   let savedIds = $state<Set<string>>(new Set());
   let seq = 0;
 
@@ -110,7 +112,18 @@
   // (reads inside the called refetch() are NOT tracked, so list them here).
   // sektion + saved are client-side filters, so they don't trigger a refetch.
   // No separate onMount needed; the `seq` guard discards any overlapping fetch.
-  $effect(() => { activeZeitraum; isAuth; refetch(); });
+  // C1: when the server seeded articles, skip the initial client fetch (the seed
+  // matches the default `week` window). A logged-in user still needs a follow-up
+  // fetch to resolve `saved` state, so only skip for anonymous visitors.
+  let firstRun = true;
+  $effect(() => {
+    activeZeitraum; isAuth;
+    if (firstRun) {
+      firstRun = false;
+      if (initialArticles.length && !isAuth) return;
+    }
+    refetch();
+  });
 
   // Derived view list
   const visible = $derived(

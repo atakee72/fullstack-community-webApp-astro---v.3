@@ -56,3 +56,39 @@ export async function fetchNewsDetailForSSR(id: string, userId: string | null): 
   }
   return toDetail(item);
 }
+
+// Lightweight list fetch for first-paint SSR of the index. Returns serialized
+// rows shaped like the /api/news response items so the island can map them
+// with the same toVM. Default window: last 7 days, newest first, limit 40.
+// NOTE: this duplicates the index API's visibility filter — keep them in sync
+// (both live for the same reason; a Phase-3 refactor could extract a shared
+// buildNewsFilter). Acceptable duplication for now.
+export async function fetchNewsForSSR(userId: string | null, days = 7, limit = 40): Promise<any[]> {
+  const db = await connectDB();
+  const news = db.collection<NewsItem>('news');
+  const since = new Date(Date.now() - days * 86_400_000);
+  const filter: Record<string, any> = {
+    publishedAt: { $gte: since },
+    $or: [
+      { moderationStatus: 'approved' },
+      ...(userId ? [
+        { submittedBy: userId, moderationStatus: 'pending' },
+        { submittedBy: userId, moderationStatus: 'rejected' },
+      ] : []),
+    ],
+  };
+  const items = await news.find(filter as any)
+    .sort({ fetchDate: -1, source: -1, aiRelevanceScore: -1, approvedAt: -1, _id: -1 })
+    .limit(limit).toArray();
+  // Serialize ids/dates so the array is prop-safe across the island boundary.
+  return items.map((it: any) => ({
+    ...it,
+    _id: String(it._id),
+    submittedBy: it.submittedBy && typeof it.submittedBy === 'object' ? it.submittedBy : it.submittedBy,
+    publishedAt: it.publishedAt instanceof Date ? it.publishedAt.toISOString() : it.publishedAt,
+    fetchedAt: it.fetchedAt instanceof Date ? it.fetchedAt.toISOString() : it.fetchedAt,
+    approvedAt: it.approvedAt instanceof Date ? it.approvedAt.toISOString() : it.approvedAt,
+    createdAt: it.createdAt instanceof Date ? it.createdAt.toISOString() : it.createdAt,
+    updatedAt: it.updatedAt instanceof Date ? it.updatedAt.toISOString() : it.updatedAt,
+  }));
+}

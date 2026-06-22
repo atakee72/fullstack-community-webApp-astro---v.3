@@ -2,6 +2,7 @@
 import KioskLayout from '../layouts/KioskLayout.astro';
 import { getSession } from 'auth-astro/server';
 import { computeIssueNumber } from '../lib/newsboard/newsFormat';
+import { fetchNewsForSSR } from '../lib/newsboard/newsQuery';
 import NewsboardIndexInner from '../components/newsboard/kiosk/NewsboardIndexInner.svelte';
 
 // Per-user save state makes caching unsafe (mirrors marketplace).
@@ -13,13 +14,18 @@ const userId = (session?.user as any)?.id ?? null;
 // Server-fixed values (handoff: issue # computed server-side, not per client render).
 const issue = computeIssueNumber(new Date());
 const degraded = !import.meta.env.NEWSDATA_API_KEY;
+// C1: SSR-prefetch the feed so headlines/dek/summary land in raw HTML for SEO.
+// The island seeds first paint from this and (for anon visitors) skips the
+// initial client fetch. Window matches the island's default `week`.
+const initialArticles = await fetchNewsForSSR(userId);
 ---
 
 <KioskLayout title="News — Mahalle" description="Schillerkiez Kurier — die tägliche Zusammenfassung aus dem Kiez." page="newsboard">
   <NewsboardIndexInner
-    client:only="svelte"
+    client:load
     issue={issue}
     degraded={degraded}
     currentUserId={userId}
+    initialArticles={initialArticles}
   />
 </KioskLayout>
