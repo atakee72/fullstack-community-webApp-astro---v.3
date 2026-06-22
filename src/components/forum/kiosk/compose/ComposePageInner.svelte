@@ -34,7 +34,6 @@
     RateLimitError
   } from '../../../../lib/forumMutations';
   import { t } from '../../../../lib/kiosk-i18n';
-  import { onMount } from 'svelte';
 
   let { currentUser } = $props<{
     currentUser: { id: string; name?: string; image?: string | null };
@@ -52,14 +51,20 @@
     existingImages: []
   });
 
-  // Restore draft on mount.
-  let initialValues: Partial<ComposeValues> | undefined = $state(undefined);
-  onMount(() => {
+  // Compute initial form values SYNCHRONOUSLY, before <ComposeForm> initializes.
+  // ComposeForm snapshots `initialValues` into local $state at init, so setting
+  // this in onMount (which fires AFTER the child mounts) was too late — the fields
+  // never populated. This island is client:only, so `window` is available at
+  // script-init time. Precedence: ?prefill_title / ?prefill_body (the newsboard
+  // "im Forum diskutieren" CTA) over a saved draft.
+  function computeInitialValues(): Partial<ComposeValues> | undefined {
+    let result: Partial<ComposeValues> | undefined;
+
     let saved: DraftValues | null = null;
     topicDraft.subscribe((v) => (saved = v))();
     if (saved) {
       const s = saved as DraftValues;
-      initialValues = {
+      result = {
         title: s.title,
         body: s.body,
         kind: s.kind,
@@ -69,24 +74,27 @@
       };
     }
 
-    // News → forum prefill: ?prefill_title / ?prefill_body (set by the
-    // newsboard "im Forum diskutieren" CTA). Takes precedence over draft.
-    try {
-      const sp = new URLSearchParams(window.location.search);
-      const pt = sp.get('prefill_title');
-      const pb = sp.get('prefill_body');
-      if (pt || pb) {
-        initialValues = {
-          title: pt ?? initialValues?.title ?? '',
-          body: pb ?? initialValues?.body ?? '',
-          kind: initialValues?.kind ?? 'discussion',
-          tags: initialValues?.tags ?? [],
-          pendingFiles: [],
-          existingImages: []
-        };
-      }
-    } catch { /* no window / bad params — ignore */ }
-  });
+    if (typeof window !== 'undefined') {
+      try {
+        const sp = new URLSearchParams(window.location.search);
+        const pt = sp.get('prefill_title');
+        const pb = sp.get('prefill_body');
+        if (pt || pb) {
+          result = {
+            title: pt ?? result?.title ?? '',
+            body: pb ?? result?.body ?? '',
+            kind: result?.kind ?? 'discussion',
+            tags: result?.tags ?? [],
+            pendingFiles: [],
+            existingImages: []
+          };
+        }
+      } catch { /* bad params — ignore */ }
+    }
+    return result;
+  }
+
+  const initialValues: Partial<ComposeValues> | undefined = computeInitialValues();
 
   // Debounced auto-save. Writes title/body/kind/tags only — pending
   // files are local object URLs that don't survive a reload anyway.
