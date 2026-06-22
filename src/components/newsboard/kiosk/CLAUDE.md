@@ -153,16 +153,24 @@ Plan: `docs/superpowers/plans/2026-06-20-newsboard-kiosk-redesign-phase2.md`.
   carries `moderationStatus` + `warningText`.
 - `KioskBtn` gained optional `target`/`rel` props (used by the lead CTA in Phase 1;
   retained).
+- **SSR-prefetch of the index for SEO** (Task C1, landed 2026-06-22) — the index is
+  now `client:load` (was `client:only`), seeded from `fetchNewsForSSR(userId)` in
+  the server-only `newsQuery.ts`. The feed headlines/dek/summary render in raw HTML
+  (verified: ~39 `<h3>` server-rendered). The island accepts an `initialArticles`
+  prop, seeds `articles`/`status` on first paint, and skips the initial client
+  fetch **for anonymous visitors only** (logged-in users still refetch once to
+  resolve `saved` state, since the SSR seed uses an empty saved set). Hydration was
+  verified clean (0 console errors/warnings) in **both** `de` and `en` locales —
+  Svelte 5 reconciles relative-time / locale text differences silently via
+  reactivity on mount (only DOM *structure* must match SSR, and it does because the
+  seed and the client fetch share the same source + default `week` window). The
+  `fetchNewsForSSR` filter duplicates the `/api/news` visibility filter — keep them
+  in sync (Phase-3 could extract a shared `buildNewsFilter`).
 
 ## Deferred
 
 Not bugs or tech-debt — parked by design. Build when the phase lands:
 
-- **SSR-prefetch of the index for SEO** (Phase 2, Task C1 — NOT yet landed): the
-  index is still `client:only`, so the feed text isn't in raw HTML. The plan's C1
-  switches to `client:load` + `fetchNewsForSSR` seeding, but the hydration risk
-  (server-vs-client relative-time strings like "vor 2 Std.") must be verified
-  against a running dev server before landing. Pending live verification.
 - Full submit **live preview card** (the design's "VORSCHAU · IM FEED" panel) — the
   form ships without it; add later if wanted.
 - Read-state decay + a `news_read_state` store (Phase 3).
