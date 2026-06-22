@@ -2,6 +2,20 @@
 
 Loaded lazily when Claude reads/edits files in `src/components/forum/kiosk/` (or any subtree). The root `CLAUDE.md` keeps a pointer to this file so it can be pulled in even when working on related files outside this directory (e.g. `src/pages/api/topics/`, `src/lib/topicsQuery.ts`).
 
+### Compose `initialValues` must be computed synchronously (NOT in onMount)
+`ComposeForm.svelte` snapshots the `initialValues` prop into local `$state` at
+init (`let title = $state(initialValues?.title ?? '')`). It does **not** re-read
+the prop afterwards. So `ComposePageInner` must compute `initialValues`
+**synchronously at script-init time**, before the child renders — computing it in
+`onMount` (which fires *after* the child has already initialized from `undefined`)
+silently leaves every field empty. The island is `client:only`, so `window` (for
+the `?prefill_title`/`?prefill_body` params) is available at script init; the
+draft-restore store read is synchronous too. This drives both the localStorage
+draft-restore and the newsboard "im Forum diskutieren" prefill. The seeded values
+propagate to the preview/submit mirror automatically via ComposeForm's
+`$effect(() => onChange(...))`, which fires on mount. (Bug fixed 2026-06-22 — both
+paths were dead because the compute lived in onMount.)
+
 ### Multi-collection feed on `/`
 - The forum index merges **topics + announcements + recommendations** into a single date-desc feed via `Promise.allSettled` parallel fetch (both SSR in `src/pages/index.astro` and the client query in `ForumIndexInner.svelte`). Each item is decorated with `kind: 'discussion' | 'announcement' | 'recommendation'`. queryKey is `['forum', 'all']`.
 - **Resilience**: a `safe()` helper wraps each fetch so a single-collection outage degrades to an empty array for that kind (others still render). Throws only when all three fetches fail (`okCount === 0`) — that's the case where `query.isError` flips and `ErrorPanel` renders with its `↻ neu laden` button.
