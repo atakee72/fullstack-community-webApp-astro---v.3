@@ -131,16 +131,25 @@
       .filter((a) => (activeSektion ? a.sektion === activeSektion : true))
       .filter((a) => (savedOnly ? a.saved : true))
   );
-  const lead = $derived(!activeSektion && !savedOnly ? visible[0] : undefined);
-  const rest = $derived(lead ? visible.slice(1) : visible);
+  // The author's own pending/rejected submissions (the API only ever returns the
+  // current user's non-approved items, so any non-approved here is theirs). Float
+  // them to the top of the feed where NewsCard renders the IN-PRÜFUNG/ABGELEHNT
+  // strap — and keep them OUT of the lead (NewsCardLead has no strap) and the
+  // chrono buckets (a pending item has no meaningful publish slot yet).
+  const ownNonApproved = $derived(visible.filter((a) => a.moderationStatus !== 'approved'));
+  const approvedItems = $derived(visible.filter((a) => a.moderationStatus === 'approved'));
+  const lead = $derived(!activeSektion && !savedOnly ? approvedItems[0] : undefined);
+  const rest = $derived(lead ? approvedItems.slice(1) : approvedItems);
 
   const today = $derived(rest.filter((a) => chronoBucket(a.publishedAt) === 'today'));
   const yesterday = $derived(rest.filter((a) => chronoBucket(a.publishedAt) === 'yesterday'));
   const older = $derived(rest.filter((a) => chronoBucket(a.publishedAt) === 'older'));
 
-  // "X Artikel heute" must reflect only today's bucket, even when a wider
-  // Zeitraum window is loaded.
-  const todayCount = $derived(articles.filter((a) => chronoBucket(a.publishedAt) === 'today').length);
+  // "X Artikel heute" must reflect only today's APPROVED bucket, even when a wider
+  // Zeitraum window is loaded (pending items don't count as published articles).
+  const todayCount = $derived(
+    articles.filter((a) => a.moderationStatus === 'approved' && chronoBucket(a.publishedAt) === 'today').length
+  );
   const sourceCount = $derived(degraded ? 7 : 9);
 
   async function handleSave(id: string) {
@@ -191,6 +200,9 @@
   {/if}
 {:else}
   <div style="padding:20px 36px 40px; display:flex; flex-direction:column; gap:16px;">
+    {#if ownNonApproved.length}
+      {#each ownNonApproved as a (a.id)}<NewsCard article={a} onSave={handleSave} canSave={isAuth} />{/each}
+    {/if}
     {#if lead}<NewsCardLead article={lead} onSave={handleSave} canSave={isAuth} />{/if}
     {#if today.length}
       <DateDivider label={$t['news.divider.today']} />

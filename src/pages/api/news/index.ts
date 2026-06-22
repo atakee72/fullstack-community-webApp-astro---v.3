@@ -70,10 +70,27 @@ export const GET: APIRoute = async ({ url, request }) => {
       newsCollection.countDocuments(filter)
     ]);
 
+    // The combined sort leads with `fetchDate: -1`, but user-submitted pending/
+    // rejected items have NO fetchDate (it's only set at admin approval). So a
+    // missing fetchDate sorts last, sinking the author's own submissions below
+    // the page limit — they'd never reach the feed where the status strap renders.
+    // The $or above already INTENDS to show the author their own pending/rejected;
+    // surface them explicitly at the top of page 1 (no date window) so the intent
+    // actually holds. Tiny set (≤5/day), so an extra query + prepend is cheap.
+    let ownPending: NewsItem[] = [];
+    if (currentUserId && offset === 0) {
+      ownPending = await newsCollection
+        .find({ submittedBy: currentUserId, moderationStatus: { $in: ['pending', 'rejected'] } })
+        .sort({ createdAt: -1 })
+        .toArray();
+    }
+    const ownIds = new Set(ownPending.map((i) => String(i._id)));
+    const mergedItems = [...ownPending, ...items.filter((i) => !ownIds.has(String(i._id)))];
+
     // Populate submitter info for user-submitted news
     const usersCollection = db.collection('users');
     const populatedItems = await Promise.all(
-      items.map(async (item) => {
+      mergedItems.map(async (item) => {
         if (item.source === 'user_submitted' && item.submittedBy && typeof item.submittedBy === 'string') {
           try {
             const submitter = await usersCollection.findOne(
