@@ -1,0 +1,83 @@
+/* ════════════════════════════════════════════════════════════
+   MAHALLE · AUTH TOKEN EXTENSION
+   Batch 3 · lead surface (login · register · verify · forgot · splash)
+
+   Auth is the brand-front, so it earns its OWN carved accent: OCHRE.
+   No other surface uses ochre as its primary:
+     Forum = wine · Calendar = teal · Marketplace = wine · Newsboard = ink.
+
+   These tokens EXTEND the base Kiosk system (tokens.css from the
+   design-system handoff). Nothing here is duplicated from base —
+   only the auth-specific additions. Values mirror window.kiosk in
+   directions/kiosk-system.jsx so design + code stay in lockstep.
+   ════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Auth carved accent ─────────────────────────────────── */
+  /* The single per-page accent variable the dark-glass redesign
+     established (--carved-accent). Auth sets it to ochre.        */
+  --auth-accent: #e8a53a;          /* = kiosk.color.ochre        */
+  --carved-accent: var(--auth-accent); /* page-scope alias       */
+
+  /* ── Surfaces (inherited from base, listed for reference) ──── */
+  --paper:      #f3ead8;   /* page background                     */
+  --paper-soft: #ebe1c7;   /* recessed field background           */
+  --paper-warm: #f7f0de;   /* raised card surface                 */
+  --ink:        #1b1a17;   /* body text · primary CTA fill        */
+  --ink-soft:   #3a362e;   /* secondary text                      */
+  --ink-mute:   #7a7264;   /* mono labels · placeholders          */
+  --rule:       #c9bea3;   /* dashed dividers                     */
+
+  /* ── State colors (inherited; auth uses all four) ──────────── */
+  --success: #5a8a3a;      /* verify confirmed · strong password  */
+  --warn:    #c8881e;      /* unverified banner · weak password   */
+  --danger:  #a83245;      /* wrong-pw · email-taken · mismatch   */
+  --info:    #3a7282;      /* info banners                        */
+
+  /* ── Auth card anatomy ─────────────────────────────────────── */
+  --auth-card-radius: 22px;            /* = kiosk.r.xl            */
+  --auth-card-toprule: 4px;            /* ochre top-rule on card  */
+  --auth-card-pad: 30px;
+  --auth-field-radius: 12px;           /* = kiosk.r.md           */
+  --auth-pill-radius: 999px;           /* CTA + lang toggle       */
+
+  /* ── Riso offset-print shadows (no blur — it's a stamp) ────── */
+  --auth-print:    3px 3px 0 var(--ink);
+  --auth-print-sm: 2px 2px 0 var(--ink);
+  --auth-print-accent: 3px 3px 0 var(--auth-accent); /* CTA shadow */
+
+  /* ── Borders ───────────────────────────────────────────────── */
+  --border-ink:      1.5px solid var(--ink);
+  --border-ink-bold: 2px solid var(--ink);
+  --border-hair:     1px solid var(--rule);
+
+  /* ── Password-strength meter ramp (4 segments, 0–4 score) ──── */
+  --pw-0: var(--danger);   /* too short  */
+  --pw-1: var(--danger);   /* weak       */
+  --pw-2: var(--warn);     /* ok         */
+  --pw-3: #6b8a4a;         /* good (moss) */
+  --pw-4: var(--success);  /* strong     */
+
+  /* ── Auth security knobs (mirror the spec; back them in env) ── */
+  --auth-ratelimit-attempts: 5;   /* failed sign-ins → lockout    */
+  --auth-reset-token-minutes: 30; /* forgot-pw token TTL          */
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Per-page scope. KioskLayout should emit data-page="auth" on the
+   auth route group so this accent is contained (mirrors the
+   data-page="marketplace" pattern from Batch 2.2).
+   ────────────────────────────────────────────────────────────── */
+[data-page="auth"] {
+  --carved-accent: var(--auth-accent);
+}
+
+/* Card top-rule helper — the 4px ochre rule that signs every auth card */
+.auth-card {
+  background: var(--paper-warm);
+  border: var(--border-ink);
+  border-top: var(--auth-card-toprule) solid var(--auth-accent);
+  border-radius: var(--auth-card-radius);
+  box-shadow: var(--auth-print);
+  padding: var(--auth-card-pad);
+}
