@@ -1030,7 +1030,7 @@ const de = {
   'auth.register.terms.termsLink': 'Nutzungsbedingungen',
   'auth.register.terms.mid': ' und ',
   'auth.register.terms.privacyLink': 'Datenschutz',
-  'auth.register.note': 'Kein Klarname nötig. Dein „Verifiziert im Kiez"-Abzeichen vergibt das Team später separat.',
+  'auth.register.note': 'Kein Klarname nötig. Dein „Verifiziert im Kiez“-Abzeichen vergibt das Team später separat.',
   'auth.register.alt': 'Schon dabei? ',
   'auth.register.altLink': 'Anmelden',
   'auth.register.successTitle': 'Konto erstellt — willkommen im Kiez',
