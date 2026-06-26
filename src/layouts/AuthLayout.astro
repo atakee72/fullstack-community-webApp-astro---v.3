@@ -1,0 +1,57 @@
+---
+// Editorial Kiosk layout for the logged-out front door (login · register).
+// Sibling to KioskLayout, but WITHOUT the full app nav — a logged-out visitor
+// shouldn't see Forum/Calendar/… links. Slim masthead + centered card on paper.
+import AuthLangToggle from '../components/auth/kiosk/AuthLangToggle.svelte';
+import { ViewTransitions } from 'astro:transitions';
+
+export interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = 'Mahalle — a community web app for local neighborhoods.',
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} | Mahalle</title>
+    <ViewTransitions />
+  </head>
+
+  <body
+    class="min-h-screen k-paper-bg text-ink font-bricolage antialiased flex flex-col"
+    data-page="auth"
+  >
+    <!-- slim auth masthead: monogram + wordmark + region + DE/EN -->
+    <header class="flex items-center justify-between" style="padding:18px 32px; border-bottom:1px dashed var(--k-rule);">
+      <a href="/" class="flex items-center no-underline" style="gap:10px; color:var(--k-ink);">
+        <span class="font-instrument" style="width:34px; height:34px; background:var(--k-ochre); border-radius:50%; border:2px solid var(--k-ink); transform:rotate(-4deg); display:flex; align-items:center; justify-content:center; font-style:italic; font-size:20px; color:var(--k-ink);">m</span>
+        <span class="font-bricolage" style="font-size:20px; font-weight:800; letter-spacing:-0.03em;">mahalle</span>
+      </a>
+      <div class="flex items-center" style="gap:14px;">
+        <span class="font-dmmono hidden sm:inline" style="font-size:10px; color:var(--k-ink-mute); letter-spacing:0.12em;">SCHILLERKIEZ · NEUKÖLLN · BERLIN</span>
+        <AuthLangToggle client:load />
+      </div>
+    </header>
+
+    <main class="flex-1 flex items-center justify-center" style="padding:28px 22px;">
+      <div style="width:100%; max-width:460px;">
+        <slot />
+      </div>
+    </main>
+  </body>
+</html>
+
+<style is:global>
+  @import '../styles/global.css';
+</style>
