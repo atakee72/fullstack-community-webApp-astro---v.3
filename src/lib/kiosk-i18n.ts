@@ -1052,7 +1052,13 @@ const de = {
   'auth.err.emailTakenTitle': 'E-Mail bereits registriert',
   'auth.err.emailTakenBody': 'Es gibt schon ein Konto mit dieser Adresse.',
   'auth.err.emailTakenAction': 'Stattdessen anmelden',
-  'auth.err.generic': 'Etwas ist schiefgelaufen. Bitte versuch es erneut.'
+  'auth.err.generic': 'Etwas ist schiefgelaufen. Bitte versuch es erneut.',
+
+  // ── Auth (Phase 2: heartbeat) ──
+  'auth.heartbeat.live': 'live im Kiez',
+  'auth.heartbeat.events': 'Events heute',
+  'auth.heartbeat.posts': 'neue Beiträge',
+  'auth.heartbeat.air': 'Luft'
 } as const;
 
 type Dict = typeof de;
@@ -1971,7 +1977,12 @@ const en: Dict = {
   'auth.err.emailTakenTitle': 'Email already registered',
   'auth.err.emailTakenBody': 'An account with this address already exists.',
   'auth.err.emailTakenAction': 'Sign in instead',
-  'auth.err.generic': 'Something went wrong. Please try again.'
+  'auth.err.generic': 'Something went wrong. Please try again.',
+
+  'auth.heartbeat.live': 'live in the Kiez',
+  'auth.heartbeat.events': 'events today',
+  'auth.heartbeat.posts': 'new posts',
+  'auth.heartbeat.air': 'air'
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };
