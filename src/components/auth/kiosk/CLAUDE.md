@@ -55,7 +55,11 @@ Frontend-only, no backend. Both live in `AuthLayout` (login/register only).
   so it is once-per-session app-wide. `prefers-reduced-motion` (or video-can't-play)
   → skip the video and show the CSS carve-in reveal fallback (ochre monogram + wordmark
   + tagline). Scoped to AuthLayout; extending to `KioskLayout` (the deferred "Kiosk
-  variant TBD") is a future follow-up, not done here.
+  variant TBD") is a future follow-up, not done here. **Gotcha for that follow-up:**
+  `KioskSplash` and the global `SplashScreen.astro` share the `mahalle-splash-shown`
+  sessionStorage key — they must NEVER co-mount on the same page, or both `is:inline`
+  scripts fight over the flag and one overlay flashes then vanishes. (Safe today:
+  AuthLayout never includes SplashScreen.)
 
 Still deferred to later Phase-2 plans (each needs net-new secure backend): email-verify
 (soft gate — nag, don't block; dev-log link fallback when no `RESEND_API_KEY`),
