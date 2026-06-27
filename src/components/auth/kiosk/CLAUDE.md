@@ -62,7 +62,8 @@ Still deferred to later Phase-2 plans (each needs net-new secure backend): email
 forgot-password, rate-limit (state 05).
 
 ## Phase 1 scope / deferred
-Phase 1 = login + register reskin ONLY. Deferred to later phases: splash,
-`KiezHeartbeat`, email-verify (states 11–13), forgot-password backend, rate-limit
-(state 05), unverified banner (state 04). The "Passwort vergessen?" link points to
-`/forgot-password` (a Phase-2 route) and 404s until built.
+Phase 1 = login + register reskin ONLY. Splash + `KiezHeartbeat` shipped in
+Phase 2A (above). Still deferred to later phases: email-verify (states 11–13),
+forgot-password backend, rate-limit (state 05), unverified banner (state 04). The
+"Passwort vergessen?" link points to `/forgot-password` (a Phase-2 route) and 404s
+until built.
