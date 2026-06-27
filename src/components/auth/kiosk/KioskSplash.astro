@@ -21,12 +21,13 @@
     var overlay = document.getElementById('kiosk-splash');
     if (!overlay) return;
 
-    // Once-per-session or reduced motion → never show.
+    // Reduced motion → never show. Checked OUTSIDE the try below because
+    // matchMedia never throws, so reduced-motion is honored even if
+    // sessionStorage access throws in privacy mode.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { overlay.remove(); return; }
+    // Once-per-session gate.
     try {
-      if (
-        sessionStorage.getItem('mahalle-splash-shown') ||
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      ) { overlay.remove(); return; }
+      if (sessionStorage.getItem('mahalle-splash-shown')) { overlay.remove(); return; }
     } catch (e) { /* privacy mode — fall through and show */ }
 
     overlay.style.display = 'flex';
