@@ -36,6 +36,31 @@ changes to `auth.config.ts` or `register.ts`.
 Login shows ONE generic error ("E-Mail oder Passwort stimmt nicht.") for both
 wrong-password and unknown-email. Never distinguish them externally.
 
+## Phase 2A — Splash + KiezHeartbeat (shipped, 2026-06-27)
+
+Frontend-only, no backend. Both live in `AuthLayout` (login/register only).
+
+- **`KiezHeartbeat.svelte`** — ambient "live im Kiez" strip in the AuthLayout footer
+  (`client:load`). Fetches three EXISTING public GETs client-side with a 3s abort
+  and per-stat graceful fallback (a failed stat is omitted; the strip always renders
+  the live label): air = `/api/kiez-air` `overallLabel`; posts = `/api/news?limit=1&dateFrom=<today>`
+  `pagination.total`; events = `/api/events` count of `startDate === today` (counted from
+  the API's default page, so approximate if there are many events — acceptable for an
+  ambient strip). Pulse dot keyframe is reduced-motion-gated. It is ambient, not
+  load-bearing — never throws, never blocks paint.
+- **`KioskSplash.astro`** — once-per-session splash overlay on the auth front door.
+  Reuses `SplashScreen.astro`'s proven logic (`/LogoVideo.mp4`, dual-gate dismiss =
+  video-ended AND window-load, 4s safety timeout) but paper-skinned for kiosk. Gate =
+  `sessionStorage['mahalle-splash-shown']` — the SAME key as the global SplashScreen,
+  so it is once-per-session app-wide. `prefers-reduced-motion` (or video-can't-play)
+  → skip the video and show the CSS carve-in reveal fallback (ochre monogram + wordmark
+  + tagline). Scoped to AuthLayout; extending to `KioskLayout` (the deferred "Kiosk
+  variant TBD") is a future follow-up, not done here.
+
+Still deferred to later Phase-2 plans (each needs net-new secure backend): email-verify
+(soft gate — nag, don't block; dev-log link fallback when no `RESEND_API_KEY`),
+forgot-password, rate-limit (state 05).
+
 ## Phase 1 scope / deferred
 Phase 1 = login + register reskin ONLY. Deferred to later phases: splash,
 `KiezHeartbeat`, email-verify (states 11–13), forgot-password backend, rate-limit
