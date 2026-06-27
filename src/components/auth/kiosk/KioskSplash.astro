@@ -1,0 +1,102 @@
+---
+// Kiosk auth splash — once-per-session reveal on the auth front door.
+// Reuses the proven SplashScreen.astro logic (LogoVideo.mp4 + dual-gate dismiss
+// + sessionStorage gate + 4s safety), paper-skinned for kiosk. On reduced motion
+// or when the video can't play, falls back to a CSS carve-in of the ochre
+// monogram + wordmark. Scoped to AuthLayout (login/register) only.
+---
+<div id="kiosk-splash" style="display:none;">
+  <video id="kiosk-splash-video" src="/LogoVideo.mp4" muted playsinline preload="auto" fetchpriority="high"></video>
+  <div id="kiosk-splash-fallback" aria-hidden="true">
+    <div class="ks-monogram font-instrument">m</div>
+    <div class="ks-word font-bricolage">mahalle</div>
+    <div class="ks-tag font-instrument">dein Kiez, an einem Ort</div>
+  </div>
+  <div id="kiosk-splash-bar"><span></span></div>
+  <div class="ks-loading font-dmmono">WIRD GELADEN · SCHILLERKIEZ</div>
+</div>
+
+<script is:inline data-astro-rerun>
+  (function () {
+    var overlay = document.getElementById('kiosk-splash');
+    if (!overlay) return;
+
+    // Once-per-session or reduced motion → never show.
+    try {
+      if (
+        sessionStorage.getItem('mahalle-splash-shown') ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ) { overlay.remove(); return; }
+    } catch (e) { /* privacy mode — fall through and show */ }
+
+    overlay.style.display = 'flex';
+    overlay.style.opacity = '1';
+
+    var dismissed = false, videoReady = false, pageReady = false;
+    var video = document.getElementById('kiosk-splash-video');
+    var fallback = document.getElementById('kiosk-splash-fallback');
+
+    function dismiss() {
+      if (dismissed || !videoReady || !pageReady) return;
+      dismissed = true;
+      try { sessionStorage.setItem('mahalle-splash-shown', '1'); } catch (e) {}
+      var a = overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, easing: 'ease-out', fill: 'forwards' });
+      a.finished.then(function () { overlay.remove(); });
+    }
+    function videoDone() { videoReady = true; dismiss(); }
+    function pageLoaded() { pageReady = true; dismiss(); }
+
+    if (video) {
+      video.addEventListener('loadeddata', function () { video.classList.add('ready'); });
+      video.play().then(function () {
+        if (fallback) fallback.style.display = 'none';   // real video plays → hide CSS fallback
+      }).catch(function () {
+        // autoplay blocked / no video → show the CSS reveal, then dismiss
+        if (video) video.style.display = 'none';
+        setTimeout(function () { videoReady = true; pageReady = true; dismiss(); }, 1400);
+      });
+      video.addEventListener('ended', videoDone);
+      video.addEventListener('timeupdate', function () {
+        if (video.currentTime >= video.duration - 0.1) videoDone();
+      });
+    } else {
+      videoReady = true;
+    }
+
+    if (document.readyState === 'complete') pageReady = true;
+    else window.addEventListener('load', pageLoaded);
+
+    setTimeout(function () {
+      if (document.getElementById('kiosk-splash')) { videoReady = true; pageReady = true; dismiss(); }
+    }, 4000);
+  })();
+</script>
+
+<style>
+  #kiosk-splash {
+    position: fixed; inset: 0; z-index: 9999;
+    display: none; align-items: center; justify-content: center; flex-direction: column;
+    background: var(--k-paper);
+  }
+  #kiosk-splash-video { max-width: 60%; max-height: 60%; visibility: hidden; }
+  #kiosk-splash-video.ready { visibility: visible; }
+  /* CSS reveal fallback (shown until the real video plays; sole content on reduced/no-video) */
+  #kiosk-splash-fallback { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .ks-monogram {
+    width: 96px; height: 96px; display: flex; align-items: center; justify-content: center;
+    background: var(--k-ochre); color: var(--k-ink); border: 2px solid var(--k-ink); border-radius: 50%;
+    font-style: italic; font-size: 60px; transform: rotate(-4deg);
+    animation: ksCarve 1.2s cubic-bezier(.2,.8,.2,1.2) both;
+  }
+  .ks-word { font-weight: 800; font-size: 56px; letter-spacing: -0.04em; color: var(--k-ink); animation: ksFade 0.8s ease-out 0.5s both; }
+  .ks-tag { font-style: italic; font-size: 18px; color: var(--k-ink-soft); animation: ksFade 0.8s ease-out 0.9s both; }
+  .ks-loading { position: absolute; bottom: 16px; font-size: 10px; letter-spacing: 0.16em; color: var(--k-ink-mute); }
+  #kiosk-splash-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--k-paper-soft); }
+  #kiosk-splash-bar span { display: block; height: 100%; background: var(--k-ochre); transform-origin: left; animation: ksBar 2.6s ease-in-out both; }
+  @keyframes ksCarve { 0% { opacity: 0; transform: translateY(14px) scale(0.82) rotate(-8deg); } 100% { opacity: 1; transform: translateY(0) scale(1) rotate(-4deg); } }
+  @keyframes ksFade { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+  @keyframes ksBar { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+  @media (prefers-reduced-motion: reduce) {
+    .ks-monogram, .ks-word, .ks-tag, #kiosk-splash-bar span { animation: none; }
+  }
+</style>

@@ -4,6 +4,7 @@
 // shouldn't see Forum/Calendar/… links. Slim masthead + centered card on paper.
 import AuthLangToggle from '../components/auth/kiosk/AuthLangToggle.svelte';
 import KiezHeartbeat from '../components/auth/kiosk/KiezHeartbeat.svelte';
+import KioskSplash from '../components/auth/kiosk/KioskSplash.astro';
 import { ViewTransitions } from 'astro:transitions';
 
 export interface Props {
@@ -33,6 +34,7 @@ const {
     class="min-h-screen k-paper-bg text-ink font-bricolage antialiased flex flex-col"
     data-page="auth"
   >
+    <KioskSplash />
     <!-- slim auth masthead: monogram + wordmark + region + DE/EN -->
     <header class="flex items-center justify-between" style="padding:18px 32px; border-bottom:1px dashed var(--k-rule);">
       <a href="/" class="flex items-center no-underline" style="gap:10px; color:var(--k-ink);">
