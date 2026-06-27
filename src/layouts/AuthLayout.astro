@@ -3,6 +3,7 @@
 // Sibling to KioskLayout, but WITHOUT the full app nav — a logged-out visitor
 // shouldn't see Forum/Calendar/… links. Slim masthead + centered card on paper.
 import AuthLangToggle from '../components/auth/kiosk/AuthLangToggle.svelte';
+import KiezHeartbeat from '../components/auth/kiosk/KiezHeartbeat.svelte';
 import { ViewTransitions } from 'astro:transitions';
 
 export interface Props {
@@ -49,6 +50,9 @@ const {
         <slot />
       </div>
     </main>
+    <footer class="flex justify-center" style="padding:0 0 26px;">
+      <KiezHeartbeat client:load />
+    </footer>
   </body>
 </html>
 
