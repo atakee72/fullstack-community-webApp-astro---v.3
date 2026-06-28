@@ -23,11 +23,21 @@ export const POST: APIRoute = async ({ request }) => {
     if (user) {
       const rawToken = await createPasswordResetToken(user._id.toString());
       if (rawToken) {
-        const origin = new URL(request.url).origin;
-        const link = `${origin}/reset-password?token=${rawToken}`;
+        // SECURITY: build the link from the TRUSTED configured base URL, NOT the
+        // request Host header. `new URL(request.url).origin` reflects the attacker-
+        // controllable Host, which would let a poisoned-Host reset request mail the
+        // victim a link pointing at an attacker domain (token-leak → account
+        // takeover). NEXTAUTH_URL is the canonical app origin in prod; fall back to
+        // the request origin only in dev (where NEXTAUTH_URL is unset / not a threat).
+        const base = (import.meta.env.NEXTAUTH_URL || new URL(request.url).origin).replace(/\/+$/, '');
+        const link = `${base}/reset-password?token=${rawToken}`;
         await sendPasswordResetEmail(email, link);
       }
       // rawToken === null → resend guard hit; silently succeed (still generic).
+      // NOTE (accepted/deferred): the known-user path is measurably slower than the
+      // unknown path (DB write + email I/O), a timing side-channel (CWE-208). The
+      // response BODY/STATUS never enumerates; equalizing timing needs a constant-
+      // time or background-job design — deferred to the auth rate-limit/hardening plan.
     }
 
     return generic();
