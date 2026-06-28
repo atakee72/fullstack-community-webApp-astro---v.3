@@ -77,10 +77,24 @@ export async function resetPasswordWithToken(rawToken: string, newPassword: stri
   );
   if (!claimed) return false;
 
-  const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
-  await db.collection('users').updateOne(
-    { _id: claimed.userId as ObjectId },
-    { $set: { password: hashed, updatedAt: new Date().toISOString() } }
-  );
-  return true;
+  try {
+    const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await db.collection('users').updateOne(
+      { _id: claimed.userId as ObjectId },
+      { $set: { password: hashed, updatedAt: new Date().toISOString() } }
+    );
+    // Invalidate any other unused tokens for this user (closes the rare
+    // concurrent-create leftover so only this reset's token was ever live).
+    await tokens.deleteMany({ userId: claimed.userId, usedAt: null });
+    return true;
+  } catch (err) {
+    // The password write failed AFTER the token was claimed — roll the claim
+    // back so the link stays usable and the user isn't locked out mid-flow.
+    await tokens.updateOne({ _id: (claimed as any)._id }, { $set: { usedAt: null } })
+      .catch((rollbackErr) => {
+        console.error('resetPasswordWithToken: rollback ALSO failed — token may be permanently burnt:', rollbackErr);
+      });
+    console.error('resetPasswordWithToken: write failed, rolled back claim:', err);
+    return false;
+  }
 }
