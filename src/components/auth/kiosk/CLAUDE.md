@@ -63,7 +63,33 @@ Frontend-only, no backend. Both live in `AuthLayout` (login/register only).
 
 Still deferred to later Phase-2 plans (each needs net-new secure backend): email-verify
 (soft gate — nag, don't block; dev-log link fallback when no `RESEND_API_KEY`),
-forgot-password, rate-limit (state 05).
+rate-limit (state 05).
+
+## Forgot / reset password (shipped, 2026-06-27)
+
+Net-new secure backend, kiosk front-end. Reuses the existing Resend + `src/emails/`
+react-email pattern.
+
+- **Token lib** `src/lib/auth/passwordReset.ts` (SERVER-ONLY): `createPasswordResetToken`
+  (single-use, 30-min, latest-wins + 60s resend guard, returns RAW token),
+  `findValidResetToken` (read-only, for the SSR page check), `resetPasswordWithToken`
+  (atomic `findOneAndUpdate` claim → bcrypt-12 rewrite of `users.password`). Tokens are
+  stored ONLY as `sha256(raw)` in the new **`passwordResetTokens`** collection
+  (`{ tokenHash, userId, expiresAt, usedAt, createdAt }`); the raw token lives only in
+  the emailed link.
+- **Email** `src/lib/auth/sendResetEmail.ts` + `src/emails/PasswordResetEmail.tsx`.
+  Reset link is built from the trusted `NEXTAUTH_URL` (not request Host header) and fails
+  closed in production if unset (CWE-640 host-header-injection protection). Dev-log fallback:
+  when `RESEND_API_KEY` is empty it `console.log`s the link instead of sending (so the flow
+  is testable in dev) — read the dev server stdout to get the link.
+- **Endpoints**: `POST /api/auth/forgot-password` (ALWAYS generic 200 — anti-enumeration;
+  issues token + sends/logs link for real users only); `POST /api/auth/reset-password`
+  (`ResetPasswordSchema` validation; generic `invalid_or_expired` for bad/expired/used
+  tokens). Does NOT touch `emailVerified` (that's the verify plan).
+- **Pages**: `/forgot-password` (`AuthForgotInner` request→sent, anti-enum identical
+  confirm) and `/reset-password?token=…` (`reset-password.astro` SSR-validates the token
+  → `AuthResetInner` reset→done, or a hardcoded-DE "invalid link" card). The Phase-1 login
+  "Passwort vergessen?" link now resolves.
 
 ## Phase 1 scope / deferred
 Phase 1 = login + register reskin ONLY. Splash + `KiezHeartbeat` shipped in

@@ -140,6 +140,7 @@ See `src/components/kiez/CLAUDE.md` — full notes (data pipeline, LOR codes, MS
 - `savedNews` - User bookmarks for news (userId + newsId pairs, server-side persistence)
 - `savedPosts` - User bookmarks for forum posts (userId + postId pairs, server-side persistence)
 - `flaggedContent` - Content flagged by AI or user reports (for admin review queue)
+- `passwordResetTokens` - Single-use password-reset tokens (`{ tokenHash (sha256 of raw), userId, expiresAt, usedAt, createdAt }`); raw token only in the emailed link. 30-min TTL, atomic single-use consume. See `src/lib/auth/passwordReset.ts`.
 - `listingAuditTrail` - Pre-edit snapshots of marketplace listings whose moderation state is about to be cleared by an author edit (warning labels OR rejections). One record per warning-clearing or rejection-clearing edit. Write-once, never reviewed by admin. Event discriminator: `'edit_warning_cleared'` or `'edit_rejection_cleared'`. See `src/components/marketplace/kiosk/CLAUDE.md`.
 - `schillerkiez_demographics` - AfS demographic data per PLR area per period (unique: `plr_code + period`)
 - `schillerkiez_social` - MSS social index data per PLR area per report period (unique: `plr_code + period`)
