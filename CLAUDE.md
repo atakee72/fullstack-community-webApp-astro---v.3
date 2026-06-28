@@ -151,6 +151,7 @@ Required in `.env`:
 ```
 AUTH_SECRET=            # NextAuth secret
 AUTH_TRUST_HOST=true
+NEXTAUTH_URL=           # Canonical app origin (e.g. https://mahalle.berlin). REQUIRED in prod — the password-reset link is built from this, NOT the request Host header (host-header-injection protection). If unset in prod the forgot-password flow FAILS CLOSED (no reset email sent). Dev falls back to the request origin.
 MONGODB_URI=            # MongoDB connection string
 CLOUDINARY_CLOUD_NAME=  # Image upload
 CLOUDINARY_API_KEY=

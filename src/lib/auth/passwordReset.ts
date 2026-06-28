@@ -83,10 +83,6 @@ export async function resetPasswordWithToken(rawToken: string, newPassword: stri
       { _id: claimed.userId as ObjectId },
       { $set: { password: hashed, updatedAt: new Date().toISOString() } }
     );
-    // Invalidate any other unused tokens for this user (closes the rare
-    // concurrent-create leftover so only this reset's token was ever live).
-    await tokens.deleteMany({ userId: claimed.userId, usedAt: null });
-    return true;
   } catch (err) {
     // The password write failed AFTER the token was claimed — roll the claim
     // back so the link stays usable and the user isn't locked out mid-flow.
@@ -97,4 +93,14 @@ export async function resetPasswordWithToken(rawToken: string, newPassword: stri
     console.error('resetPasswordWithToken: write failed, rolled back claim:', err);
     return false;
   }
+
+  // Password is already changed — invalidate any other unused tokens for this
+  // user (closes the rare concurrent-create leftover). Best-effort + POST-success:
+  // a failure here must NOT roll back the completed reset, so it's outside the
+  // try above and never returns false.
+  await tokens.deleteMany({ userId: claimed.userId, usedAt: null })
+    .catch((cleanupErr) => {
+      console.error('resetPasswordWithToken: sibling-token cleanup failed (reset still succeeded):', cleanupErr);
+    });
+  return true;
 }
