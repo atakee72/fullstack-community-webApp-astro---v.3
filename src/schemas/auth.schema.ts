@@ -82,6 +82,21 @@ export const ChangePasswordSchema = z.object({
   path: ["confirmPassword"]
 });
 
+// Reset Password Schema (forgot-password flow — token + new password)
+export const ResetPasswordSchema = z.object({
+  token: z.string().min(1, 'Missing token'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(100, 'Password is too long')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$/, 'Password must contain at least one uppercase letter, one lowercase letter, and one number'),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ['confirmPassword']
+});
+
+export type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>;
+
 // Type exports
 export type LoginInput = z.infer<typeof LoginSchema>;
 export type RegisterInput = z.infer<typeof RegisterSchema>;
