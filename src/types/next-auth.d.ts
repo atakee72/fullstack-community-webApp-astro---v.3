@@ -19,6 +19,7 @@ declare module '@auth/core/types' {
     user: {
       id: string;
       role?: 'user' | 'admin';
+      emailVerified?: boolean;
       email?: string | null;
       name?: string | null;
       image?: string | null;
@@ -28,6 +29,9 @@ declare module '@auth/core/types' {
   interface User {
     id?: string;
     role?: 'user' | 'admin';
+    // Wide union: AdapterUser narrows this to Date | null; our credentials
+    // authorize() returns a boolean. Keep all three assignable.
+    emailVerified?: boolean | Date | null;
     email?: string | null;
     name?: string | null;
     image?: string | null;
@@ -38,5 +42,6 @@ declare module '@auth/core/jwt' {
   interface JWT {
     id?: string;
     role?: 'user' | 'admin';
+    emailVerified?: boolean;
   }
 }

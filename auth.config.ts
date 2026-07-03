@@ -52,6 +52,8 @@ export default defineConfig({
                     name: user.name || user.userName || '',
                     image: user.image || user.userPicture || '',
                     role: (user.role === 'admin' ? 'admin' : 'user') as 'admin' | 'user',
+                    // Boolean-normalized: legacy docs may hold false/null/Date.
+                    emailVerified: user.emailVerified === true,
                 };
             }
         })
@@ -67,6 +69,9 @@ export default defineConfig({
             if (user) {
                 token.id = user.id;
                 token.role = (user as any).role ?? 'user';
+                // Snapshot at login — goes stale if the user verifies mid-session;
+                // VerifyEmailBanner live-checks /api/auth/verification-status.
+                token.emailVerified = (user as any).emailVerified === true;
             }
             return token;
         },
@@ -74,6 +79,7 @@ export default defineConfig({
             if (session.user) {
                 session.user.id = token.id as string;
                 session.user.role = (token as any).role ?? 'user';
+                (session.user as any).emailVerified = (token as any).emailVerified === true;
             }
             return session;
         }
