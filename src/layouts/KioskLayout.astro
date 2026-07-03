@@ -12,6 +12,7 @@
 import { getSession } from 'auth-astro/server';
 import KioskNav from '../components/forum/kiosk/KioskNav.svelte';
 import KioskFooter from '../components/forum/kiosk/KioskFooter.svelte';
+import VerifyEmailBanner from '../components/auth/kiosk/VerifyEmailBanner.svelte';
 import ToastProvider from '../components/ToastProvider';
 import { ViewTransitions } from 'astro:transitions';
 
@@ -64,6 +65,7 @@ const {
     data-page={page}
   >
     <KioskNav client:load currentPath={currentPath} user={session?.user ?? null} />
+    {session?.user && session.user.emailVerified !== true && <VerifyEmailBanner client:load />}
     <ToastProvider client:load />
 
     <main class="flex-1">
