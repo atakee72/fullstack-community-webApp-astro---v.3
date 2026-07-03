@@ -3,6 +3,7 @@ import { connectDB } from '../../../lib/mongodb';
 import { PasswordResetSchema } from '../../../schemas/auth.schema';
 import { createPasswordResetToken } from '../../../lib/auth/passwordReset';
 import { sendPasswordResetEmail } from '../../../lib/auth/sendResetEmail';
+import { getTrustedBaseUrl } from '../../../lib/auth/baseUrl';
 
 // Anti-enumeration: this endpoint ALWAYS returns the same generic 200 — it never
 // reveals whether an account exists for the given email.
@@ -23,16 +24,9 @@ export const POST: APIRoute = async ({ request }) => {
     if (user) {
       const rawToken = await createPasswordResetToken(user._id.toString());
       if (rawToken) {
-        // SECURITY: build the link from the TRUSTED configured base URL, NOT the
-        // request Host header. `new URL(request.url).origin` reflects the attacker-
-        // controllable Host, which would let a poisoned-Host reset request mail the
-        // victim a link pointing at an attacker domain (token leak → account
-        // takeover, CWE-640). FAIL CLOSED: the request-origin fallback is allowed
-        // ONLY in dev. In production, if NEXTAUTH_URL is misconfigured/unset we
-        // REFUSE to build the link from the untrusted Host rather than mail a
-        // poisoned link — the user simply gets no email (still a generic 200).
-        const base = (import.meta.env.NEXTAUTH_URL || '').replace(/\/+$/, '')
-          || (import.meta.env.PROD ? '' : new URL(request.url).origin);
+        // SECURITY: trusted-base + prod fail-closed logic lives in
+        // src/lib/auth/baseUrl.ts (CWE-640 — see comment there).
+        const base = getTrustedBaseUrl(request);
         if (base) {
           await sendPasswordResetEmail(email, `${base}/reset-password?token=${rawToken}`);
         } else {
