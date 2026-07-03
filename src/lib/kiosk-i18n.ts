@@ -1095,7 +1095,33 @@ const de = {
   'auth.heartbeat.live': 'live im Kiez',
   'auth.heartbeat.events': 'Events heute',
   'auth.heartbeat.posts': 'neue Beiträge',
-  'auth.heartbeat.air': 'Luft'
+  'auth.heartbeat.air': 'Luft',
+
+  // ── Auth (Phase 2: email-verify) ──
+  'auth.verify.eyebrow': 'FAST GESCHAFFT',
+  'auth.verify.title.a': 'Schau in dein ',
+  'auth.verify.title.accent': 'Postfach',
+  'auth.verify.title.b': '.',
+  'auth.verify.sub': 'Wir haben einen Bestätigungslink geschickt an',
+  'auth.verify.body': 'Klick den Link in der Mail, um dein Konto zu aktivieren. Kein Brief da? Prüf den Spam-Ordner.',
+  'auth.verify.resend': 'Link erneut senden',
+  'auth.verify.resendLoading': 'sende …',
+  'auth.verify.resentNote': 'Neuer Link verschickt — gültig für 24 Std.',
+  'auth.verify.throttled': 'Gerade erst gesendet — warte kurz und versuch es dann nochmal.',
+  'auth.verify.back': '← zurück zur Anmeldung',
+  'auth.verify.confirming': 'Bestätige …',
+  'auth.verify.confirmedEyebrow': 'KONTO AKTIV',
+  'auth.verify.confirmedTitle': 'Bestätigt — willkommen im Kiez.',
+  'auth.verify.confirmedBody': 'Dein Konto ist aktiv. Du wirst weitergeleitet …',
+  'auth.verify.invalidEyebrow': 'LINK ABGELAUFEN',
+  'auth.verify.invalidTitle': 'Link ungültig oder abgelaufen',
+  'auth.verify.invalidBody': 'Dieser Bestätigungslink ist nicht mehr gültig. Fordere einen neuen an.',
+  'auth.verify.invalidLoginCta': 'Zur Anmeldung',
+  'auth.banner.verifyTitle': 'Bestätige deine E-Mail-Adresse.',
+  'auth.banner.verifyBody': 'Wir haben dir einen Link geschickt — schau in dein Postfach.',
+  'auth.banner.verifyResend': 'Link erneut senden',
+  'auth.banner.verifySent': 'Link verschickt ✓',
+  'auth.banner.verifyDismiss': 'Ausblenden'
 } as const;
 
 type Dict = typeof de;
@@ -2056,7 +2082,33 @@ const en: Dict = {
   'auth.heartbeat.live': 'live in the Kiez',
   'auth.heartbeat.events': 'events today',
   'auth.heartbeat.posts': 'new posts',
-  'auth.heartbeat.air': 'air'
+  'auth.heartbeat.air': 'air',
+
+  // ── Auth (Phase 2: email-verify) ──
+  'auth.verify.eyebrow': 'ALMOST THERE',
+  'auth.verify.title.a': 'Check your ',
+  'auth.verify.title.accent': 'inbox',
+  'auth.verify.title.b': '.',
+  'auth.verify.sub': 'We sent a confirmation link to',
+  'auth.verify.body': 'Click the link in the email to activate your account. No mail? Check your spam folder.',
+  'auth.verify.resend': 'Resend link',
+  'auth.verify.resendLoading': 'sending …',
+  'auth.verify.resentNote': 'New link sent — valid for 24 hrs.',
+  'auth.verify.throttled': 'Just sent — wait a moment and try again.',
+  'auth.verify.back': '← back to sign in',
+  'auth.verify.confirming': 'Confirming …',
+  'auth.verify.confirmedEyebrow': 'ACCOUNT ACTIVE',
+  'auth.verify.confirmedTitle': 'Confirmed — welcome to the Kiez.',
+  'auth.verify.confirmedBody': 'Your account is active. Redirecting you …',
+  'auth.verify.invalidEyebrow': 'LINK EXPIRED',
+  'auth.verify.invalidTitle': 'Link invalid or expired',
+  'auth.verify.invalidBody': 'This confirmation link is no longer valid. Request a new one.',
+  'auth.verify.invalidLoginCta': 'To sign in',
+  'auth.banner.verifyTitle': 'Confirm your email address.',
+  'auth.banner.verifyBody': 'We sent you a link — check your inbox.',
+  'auth.banner.verifyResend': 'Resend link',
+  'auth.banner.verifySent': 'Link sent ✓',
+  'auth.banner.verifyDismiss': 'Dismiss'
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };
