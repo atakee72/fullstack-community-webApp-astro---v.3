@@ -61,9 +61,7 @@ Frontend-only, no backend. Both live in `AuthLayout` (login/register only).
   scripts fight over the flag and one overlay flashes then vanishes. (Safe today:
   AuthLayout never includes SplashScreen.)
 
-Still deferred to later Phase-2 plans (each needs net-new secure backend): email-verify
-(soft gate — nag, don't block; dev-log link fallback when no `RESEND_API_KEY`),
-rate-limit (state 05).
+Still deferred to later Phase-2 plans: rate-limit (state 05).
 
 ## Forgot / reset password (shipped, 2026-06-27)
 
@@ -91,9 +89,44 @@ react-email pattern.
   → `AuthResetInner` reset→done, or a hardcoded-DE "invalid link" card). The Phase-1 login
   "Passwort vergessen?" link now resolves.
 
+## Email verify — soft gate (shipped, 2026-07-03)
+
+SOFT gate: login and all features work unverified — verification only drives
+the nag surfaces. Mirrors the forgot-password stack.
+
+- **Token lib** `src/lib/auth/emailVerify.ts` (SERVER-ONLY): `createEmailVerifyToken`
+  (single-use, **24h** TTL, latest-wins + 60s resend guard, returns RAW token),
+  `findValidVerifyToken` (read-only, SSR page check), `verifyEmailWithToken`
+  (atomic claim → sets `users.emailVerified: true`, rollback on write failure).
+  Tokens stored ONLY as `sha256(raw)` in **`emailVerifyTokens`**
+  (`{ tokenHash, userId, expiresAt, usedAt, createdAt }`).
+- **Base URL**: emailed links use `getTrustedBaseUrl()` from `src/lib/auth/baseUrl.ts`
+  (extracted from forgot-password; NEXTAUTH_URL, prod fail-closed, CWE-640).
+- **Email** `src/lib/auth/sendVerifyEmail.ts` + `src/emails/VerifyEmail.tsx`;
+  dev-log fallback when `RESEND_API_KEY` is empty (link in dev-server stdout).
+- **Endpoints**: `POST /api/auth/verify-email` ({token}, sessionless — link may open
+  in another browser; POST-not-GET so scanner prefetches can't burn tokens);
+  `POST /api/auth/resend-verification` (session-gated own-account, 429 on 60s guard);
+  `GET /api/auth/verification-status` (session-gated LIVE DB read — beats stale JWT).
+- **Page** `/verify-email` (`AuthVerifyInner`): no token → "sent" card (session
+  required, redirects `/login`; already-verified redirects `/`); `?token=` →
+  SSR read-only validate, island auto-POSTs to consume → confirmed card →
+  redirect `/` (or `/login` if sessionless). Invalid/expired → resend (if logged
+  in) or login CTA. Register now lands here after auto-login.
+- **Session flag**: `emailVerified` propagates `authorize → jwt → session` (like
+  `role`; augmentation in `src/types/next-auth.d.ts` — `User` side is
+  `boolean | Date | null` to stay assignable from AdapterUser). **Stale-JWT
+  gotcha**: the flag snapshots at login; anything that must be CURRENT reads
+  `/api/auth/verification-status`, not the session.
+- **Banner** `VerifyEmailBanner.svelte`, mounted in `KioskLayout` for sessions
+  with `emailVerified !== true`. Hidden until a live status check confirms
+  unverified; dismiss = `sessionStorage['mahalle-verify-banner-dismissed']`
+  (per browser session). Design deviations from the mock: 24h copy (not 30 min),
+  no "E-Mail ändern" button (email-change feature doesn't exist).
+- Existing `emailVerified: false` users got NO email blast — banner + self-resend only.
+
 ## Phase 1 scope / deferred
 Phase 1 = login + register reskin ONLY. Splash + `KiezHeartbeat` shipped in
-Phase 2A (above). Still deferred to later phases: email-verify (states 11–13),
-forgot-password backend, rate-limit (state 05), unverified banner (state 04). The
-"Passwort vergessen?" link points to `/forgot-password` (a Phase-2 route) and 404s
-until built.
+Phase 2A (above). Forgot/reset password + email-verify soft gate + unverified banner
+shipped in subsequent phases (see sections above). Still deferred: rate-limit (state 05).
+The "Passwort vergessen?" link resolves (shipped 2026-06-27).
