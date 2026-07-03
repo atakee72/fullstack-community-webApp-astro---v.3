@@ -69,7 +69,7 @@
       const result = await signIn('credentials', { email: email.trim(), password, redirect: false });
       if (result?.error) { window.location.href = '/login'; return; }
       status = 'success';
-      window.location.href = '/';
+      window.location.href = '/verify-email';
     } catch {
       nameErr = $t['auth.err.generic'];
       status = 'idle';

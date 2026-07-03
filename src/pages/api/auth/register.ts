@@ -2,6 +2,9 @@ import type { APIRoute } from "astro";
 import clientPromise from "../../../lib/mongodb";
 import bcrypt from "bcrypt";
 import { checkNameProfanity } from "../../../lib/moderation";
+import { createEmailVerifyToken } from "../../../lib/auth/emailVerify";
+import { sendVerifyEmail } from "../../../lib/auth/sendVerifyEmail";
+import { getTrustedBaseUrl } from "../../../lib/auth/baseUrl";
 
 export const POST: APIRoute = async ({ request }) => {
     try {
@@ -60,6 +63,24 @@ export const POST: APIRoute = async ({ request }) => {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         });
+
+        // Send the verification email (best-effort — registration must succeed
+        // even if this fails; the user can resend from /verify-email).
+        try {
+            const rawToken = await createEmailVerifyToken(result.insertedId.toString());
+            if (rawToken) {
+                // SECURITY: link base from trusted NEXTAUTH_URL, fail-closed in
+                // prod (CWE-640 — see src/lib/auth/baseUrl.ts).
+                const base = getTrustedBaseUrl(request);
+                if (base) {
+                    await sendVerifyEmail(email, `${base}/verify-email?token=${rawToken}`);
+                } else {
+                    console.error('register: NEXTAUTH_URL not configured in production — skipping verification email (user can resend once configured)');
+                }
+            }
+        } catch (err) {
+            console.error('register: verification email failed (registration still succeeded):', err);
+        }
 
         return new Response(
             JSON.stringify({
