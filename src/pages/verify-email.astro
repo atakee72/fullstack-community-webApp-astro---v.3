@@ -1,0 +1,40 @@
+---
+import { getSession } from 'auth-astro/server';
+import { ObjectId } from 'mongodb';
+import AuthLayout from '../layouts/AuthLayout.astro';
+import AuthVerifyInner from '../components/auth/kiosk/AuthVerifyInner.svelte';
+import { findValidVerifyToken } from '../lib/auth/emailVerify';
+import { connectDB } from '../lib/mongodb';
+
+const token = new URL(Astro.request.url).searchParams.get('token') ?? '';
+const session = await getSession(Astro.request);
+
+// Token mode works WITHOUT a session (the link may be opened in a different
+// browser than the one that registered). Read-only check here — the island
+// consumes the token via POST /api/auth/verify-email after hydration.
+const tokenValid = token ? (await findValidVerifyToken(token)) !== null : false;
+
+// Sent mode (no token) shows "check your inbox" for the logged-in user.
+if (!token) {
+  if (!session?.user?.id) return Astro.redirect('/login');
+  const db = await connectDB();
+  const user = await db.collection('users').findOne(
+    { _id: new ObjectId(session.user.id) },
+    { projection: { emailVerified: 1 } }
+  );
+  // Already verified → nothing to do here.
+  if (user?.emailVerified === true) return Astro.redirect('/');
+}
+
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
+---
+
+<AuthLayout title="E-Mail bestätigen">
+  <AuthVerifyInner
+    client:only="svelte"
+    token={token}
+    tokenValid={tokenValid}
+    email={session?.user?.email ?? ''}
+    hasSession={!!session?.user}
+  />
+</AuthLayout>
