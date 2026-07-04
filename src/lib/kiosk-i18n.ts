@@ -1121,7 +1121,13 @@ const de = {
   'auth.banner.verifyBody': 'Wir haben dir einen Link geschickt — schau in dein Postfach.',
   'auth.banner.verifyResend': 'Link erneut senden',
   'auth.banner.verifySent': 'Link verschickt ✓',
-  'auth.banner.verifyDismiss': 'Ausblenden'
+  'auth.banner.verifyDismiss': 'Ausblenden',
+
+  // ── Auth (rate-limit, state 05) ──
+  'auth.err.lockedTitle': 'Zu viele Versuche',
+  'auth.err.lockedBody.a': 'Aus Sicherheitsgründen pausiert. Versuch es in ',
+  'auth.err.lockedBody.b': ' Min. erneut.',
+  'auth.err.tooMany': 'Zu viele Versuche — warte kurz und versuch es später erneut.'
 } as const;
 
 type Dict = typeof de;
@@ -2108,7 +2114,13 @@ const en: Dict = {
   'auth.banner.verifyBody': 'We sent you a link — check your inbox.',
   'auth.banner.verifyResend': 'Resend link',
   'auth.banner.verifySent': 'Link sent ✓',
-  'auth.banner.verifyDismiss': 'Dismiss'
+  'auth.banner.verifyDismiss': 'Dismiss',
+
+  // ── Auth (rate-limit, state 05) ──
+  'auth.err.lockedTitle': 'Too many attempts',
+  'auth.err.lockedBody.a': 'Paused for security. Try again in ',
+  'auth.err.lockedBody.b': ' min.',
+  'auth.err.tooMany': 'Too many attempts — wait a bit and try again later.'
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };
