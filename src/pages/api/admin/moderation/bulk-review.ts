@@ -4,36 +4,18 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import type { FlaggedContent } from '../../../../types';
 import { BulkReviewActionSchema } from '../../../../schemas/moderation.schema';
 import { processReviewAction } from '../../../../lib/reviewAction';
-
-// TODO: Add proper admin role check (same as index.ts)
-const isAdmin = (userId: string): boolean => {
-  const ADMIN_USER_IDS: string[] = [];
-  return ADMIN_USER_IDS.length === 0 || ADMIN_USER_IDS.includes(userId);
-};
+import { requireAdminSession } from '../../../../lib/auth';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const session = await getSession(request);
-
-    if (!session?.user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (!isAdmin(session.user.id)) {
-      return new Response(JSON.stringify({ error: 'Forbidden - Admin access required' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    // Admin gate: session + role === 'admin' (no fallback — see src/lib/auth.ts)
+    const guard = await requireAdminSession(request);
+    if (!guard.ok) return guard.response;
 
     const body = await request.json();
     const validation = BulkReviewActionSchema.safeParse(body);
@@ -79,7 +61,7 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       try {
-        const result = await processReviewAction(db, item, action, session.user.id, {
+        const result = await processReviewAction(db, item, action, guard.userId, {
           rejectionReason: action === 'reject'
             ? (rejectionReason || 'Content violated community guidelines')
             : undefined,

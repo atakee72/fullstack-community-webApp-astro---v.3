@@ -4,7 +4,8 @@ Loaded lazily when Claude reads/edits files in `src/components/admin/`.
 
 ### Auth gate
 - All admin pages auth-gate at the page level (frontmatter `getSession()` + redirect to `/login` if no session, then `if (session.user.role !== 'admin') return Astro.redirect('/')`).
-- API endpoints under `/api/admin/*` should gate via `requireAdminSession()` from `src/lib/auth.ts` — returns a pre-shaped 401/403 `Response` if the session lacks admin role. Used cleanly by `/api/admin/announcements/*`. The older `/api/admin/moderation/{review,bulk-review,index}.ts` still use a degraded `ADMIN_USER_IDS.length === 0 || includes(userId)` stopgap (any logged-in user passes when the array is empty) — switch them to `requireAdminSession` in a follow-up.
+- API endpoints under `/api/admin/*` should gate via `requireAdminSession()` from `src/lib/auth.ts` — returns a pre-shaped 401/403 `Response` if the session lacks admin role. Used cleanly by `/api/admin/announcements/*`.
+  All `/api/admin/*` endpoints (announcements AND moderation) now gate via `requireAdminSession()` — the old `ADMIN_USER_IDS` stopgap was removed (2026-07).
 - Both admin pages today (`/admin/moderation`, `/admin/announcements`) still use **`BaseLayout`** (legacy dark-glass), not `KioskLayout`. Admin kiosk migration is queued — see `project_kiosk_deferred.md`.
 
 ### Admin Moderation Table (`ModerationQueue.svelte`)

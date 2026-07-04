@@ -5,40 +5,16 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../../lib/mongodb';
 import type { FlaggedContent } from '../../../../types';
 import { FlaggedContentQuerySchema } from '../../../../schemas/moderation.schema';
-
-// TODO: Add proper admin role check
-const isAdmin = (userId: string): boolean => {
-  // For now, you can hardcode your admin user ID or check a role field
-  // This should be updated to check user.role === 'admin' from database
-  const ADMIN_USER_IDS = [
-    // Add your admin user IDs here
-  ];
-  return ADMIN_USER_IDS.length === 0 || ADMIN_USER_IDS.includes(userId);
-};
+import { requireAdminSession } from '../../../../lib/auth';
 
 export const GET: APIRoute = async ({ request, url }) => {
   try {
-    // Check authentication
-    const session = await getSession(request);
-
-    if (!session?.user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Check admin role
-    if (!isAdmin(session.user.id)) {
-      return new Response(JSON.stringify({ error: 'Forbidden - Admin access required' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    // Admin gate: session + role === 'admin' (no fallback — see src/lib/auth.ts)
+    const guard = await requireAdminSession(request);
+    if (!guard.ok) return guard.response;
 
     // Parse query parameters
     const params = Object.fromEntries(url.searchParams);

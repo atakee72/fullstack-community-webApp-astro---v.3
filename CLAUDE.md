@@ -72,7 +72,6 @@ src/
 - **Role**: users have `role?: 'user' | 'admin'` on their MongoDB doc. The `authorize` → `jwt` → `session` callback chain in `auth.config.ts` propagates it so `session.user.role` is available on every API route + page. Type augmentation lives in `src/types/next-auth.d.ts` (must augment `@auth/core/types` and `@auth/core/jwt`, not `next-auth/*` — that's the package the lib actually uses).
 - **emailVerified (soft gate)**: propagated through the same `authorize` → `jwt` → `session` chain as `role`, so `session.user.emailVerified` exists everywhere — but it SNAPSHOTS at login (JWT). For live truth use `GET /api/auth/verification-status`. Verification never blocks login or features; it only drives `/verify-email` + the `VerifyEmailBanner` nag in `KioskLayout`. Emailed links (reset + verify) build their base URL via `getTrustedBaseUrl()` (`src/lib/auth/baseUrl.ts`, NEXTAUTH_URL, prod fail-closed).
 - **Admin gate helper**: `requireAdminSession(request)` in `src/lib/auth.ts` returns `{ ok: true, userId }` or a pre-shaped 401/403 `Response`. Used by all `/api/admin/announcements/*` endpoints.
-- **Pre-existing security TODO**: `/api/admin/moderation/{review,bulk-review,index}.ts` still use a degraded `ADMIN_USER_IDS.length === 0 || includes(userId)` fallback (hardcoded array, empty by default → any logged-in user passes). Switch them to `session.user.role === 'admin'` (no fallback) in a follow-up PR.
 
 ### API Routes
 All API routes in `src/pages/api/` follow this pattern:
