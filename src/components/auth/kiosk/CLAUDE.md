@@ -152,6 +152,9 @@ truncated to 32 chars (same salt as the contact relay).
 - **Login/register failure detection** probes `/api/auth/session` after
   `signIn()` — auth-astro's `signIn` (redirect:false) returns a raw Response
   with no `.error`; never reintroduce a `result?.error` check.
+- **Known limit of the anti-enum posture**: `register`'s 409-on-taken-email is
+  an unavoidable account-existence oracle (inherent to signup UX) — bounded by
+  the 5/h/IP throttle. Login/forgot-password stay fully generic.
 
 ## Phase 1 scope / deferred
 Phase 1 = login + register reskin ONLY. Splash + `KiezHeartbeat` shipped in
