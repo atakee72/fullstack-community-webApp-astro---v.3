@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import { signIn } from 'auth-astro/client';
   import { t } from '../../../lib/kiosk-i18n';
   import { LoginSchema } from '../../../schemas/auth.schema';
@@ -13,8 +14,31 @@
   let credErr = $state(false);     // generic wrong email-or-password
   let status = $state<'idle' | 'loading' | 'success'>('idle');
 
+  // State 05 — locked out. >0 seconds remaining → danger banner + disabled form.
+  let lockSec = $state(0);
+  let lockTimer: ReturnType<typeof setInterval> | null = null;
+  const locked = $derived(lockSec > 0);
+  const lockLabel = $derived(`${Math.floor(lockSec / 60)}:${String(lockSec % 60).padStart(2, '0')}`);
+
+  function startLock(sec: number) {
+    lockSec = Math.max(1, Math.round(sec));
+    credErr = false;
+    if (lockTimer) clearInterval(lockTimer);
+    lockTimer = setInterval(() => {
+      lockSec -= 1;
+      if (lockSec <= 0 && lockTimer) {
+        clearInterval(lockTimer);
+        lockTimer = null;
+      }
+    }, 1000);
+  }
+  onDestroy(() => {
+    if (lockTimer) clearInterval(lockTimer);
+  });
+
   async function submit(e: Event) {
     e.preventDefault();
+    if (locked) return;
     emailErr = null; pwErr = null; credErr = false;
 
     const parsed = LoginSchema.safeParse({ email, password });
@@ -27,12 +51,32 @@
 
     status = 'loading';
     try {
-      const result = await signIn('credentials', {
+      await signIn('credentials', {
         email: parsed.data.email,
         password: parsed.data.password,
         redirect: false,
       });
-      if (result?.error) {
+      // auth-astro's signIn() (redirect:false) resolves with a raw Response —
+      // it never exposes `.error` — so failure is detected via the only
+      // shape-independent signal: whether a session now exists. Preserves
+      // anti-enumeration: still ONE generic banner for all failure kinds.
+      const sess = await fetch('/api/auth/session').then((r) => r.json()).catch(() => null);
+      if (!sess?.user) {
+        // Distinguish lockout (state 05) from plain bad credentials via the
+        // peek-only status endpoint — reveals lockout state, never existence.
+        try {
+          const res = await fetch('/api/auth/login-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: parsed.data.email }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (data?.locked) {
+            startLock(data.retryAfterSec);
+            status = 'idle';
+            return;
+          }
+        } catch { /* fall through to generic */ }
         // Anti-enumeration: ONE generic message for wrong-pw AND email-not-found.
         credErr = true;
         status = 'idle';
@@ -53,6 +97,10 @@
     {$t['auth.login.title.a']}<span class="font-instrument" style="font-style:italic; font-weight:400; color:var(--k-accent);">{$t['auth.login.title.accent']}</span>{$t['auth.login.title.b']}
   </h1>
 
+  {#if locked}
+    <AuthBanner kind="danger" title={$t['auth.err.lockedTitle']}
+      body={`${$t['auth.err.lockedBody.a']}${lockLabel}${$t['auth.err.lockedBody.b']}`} />
+  {/if}
   {#if credErr}
     <AuthBanner kind="danger" title={$t['auth.err.credentials']} />
   {/if}
@@ -64,19 +112,19 @@
     <AuthField
       label={$t['auth.login.email']} placeholder={$t['auth.login.emailPh']}
       type="email" name="email" autocomplete="email"
-      value={email} error={emailErr}
+      value={email} error={emailErr} disabled={locked}
       oninput={(v) => (email = v)} />
     <div>
       <AuthField
         label={$t['auth.login.pw']} placeholder={$t['auth.login.pwPh']}
         type="password" name="password" autocomplete="current-password"
-        value={password} error={pwErr} showToggle
+        value={password} error={pwErr} showToggle disabled={locked}
         oninput={(v) => (password = v)} />
       <div style="text-align:right; margin-top:7px;">
         <a href="/forgot-password" class="font-dmmono no-underline" style="font-size:11px; color:var(--k-ink-soft); border-bottom:1px dashed var(--k-ink-mute);">{$t['auth.login.forgot']}</a>
       </div>
     </div>
-    <AuthPrimaryBtn loading={status === 'loading'}>
+    <AuthPrimaryBtn loading={status === 'loading'} disabled={locked}>
       {status === 'loading' ? $t['auth.login.ctaLoading'] : status === 'success' ? $t['auth.login.ctaDone'] : $t['auth.login.cta']}
     </AuthPrimaryBtn>
   </form>

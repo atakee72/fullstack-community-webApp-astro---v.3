@@ -3,6 +3,7 @@ import Credentials from "@auth/core/providers/credentials";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "./src/lib/mongodb";
 import bcrypt from "bcrypt";
+import { peekRateLimit, consumeRateLimit, clearRateLimit, LOGIN_MAX_FAILS, LOGIN_WINDOW_MS } from "./src/lib/auth/rateLimit";
 
 export default defineConfig({
     adapter: MongoDBAdapter(clientPromise, {
@@ -21,15 +22,30 @@ export default defineConfig({
                     return null;
                 }
 
+                // Normalized identifier for lockout + lookup. Collation
+                // strength 2 makes the lookup case-insensitive so legacy
+                // docs with mixed-case stored emails keep working.
+                const emailNorm = String(credentials.email).trim().toLowerCase();
+                const lockKey = `login:${emailNorm}`;
+
+                // State-05 lockout: 5 failed attempts per 15 min per
+                // identifier — checked BEFORE any DB/bcrypt work, and it
+                // applies to existing AND unknown emails identically (no
+                // enumeration signal). While locked, even a correct
+                // password is refused (design: fields disabled).
+                const gate = await peekRateLimit(lockKey, LOGIN_MAX_FAILS, LOGIN_WINDOW_MS);
+                if (gate.limited) return null;
+
                 const client = await clientPromise;
                 const db = client.db();
 
-                // Find user by email in the users collection
-                const user = await db.collection('users').findOne({
-                    email: credentials.email as string
-                });
+                const user = await db.collection('users').findOne(
+                    { email: emailNorm },
+                    { collation: { locale: 'en', strength: 2 } }
+                );
 
                 if (!user) {
+                    await consumeRateLimit(lockKey, LOGIN_MAX_FAILS, LOGIN_WINDOW_MS);
                     return null;
                 }
 
@@ -40,8 +56,12 @@ export default defineConfig({
                 );
 
                 if (!isValidPassword) {
+                    await consumeRateLimit(lockKey, LOGIN_MAX_FAILS, LOGIN_WINDOW_MS);
                     return null;
                 }
+
+                // Success — clear accumulated failures for this identifier.
+                await clearRateLimit(lockKey);
 
                 // Return user object that will be stored in the session.
                 // `role` defaults to 'user' if the field is missing on the
