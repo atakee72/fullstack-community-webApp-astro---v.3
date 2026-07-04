@@ -5,8 +5,9 @@ import { checkNameProfanity } from "../../../lib/moderation";
 import { createEmailVerifyToken } from "../../../lib/auth/emailVerify";
 import { sendVerifyEmail } from "../../../lib/auth/sendVerifyEmail";
 import { getTrustedBaseUrl } from "../../../lib/auth/baseUrl";
+import { consumeRateLimit, hashIp, clientIpFrom } from "../../../lib/auth/rateLimit";
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, clientAddress }) => {
     try {
         const { name, email, password } = await request.json();
 
@@ -25,6 +26,21 @@ export const POST: APIRoute = async ({ request }) => {
             );
         }
 
+        // Per-IP throttle: 5 registrations/hour. Sits BEFORE the profanity
+        // check so bulk signups can't burn OpenAI moderation calls.
+        const ipHash = hashIp(clientIpFrom(request, clientAddress));
+        const ipLimit = await consumeRateLimit(`reg:ip:${ipHash}`, 5, 60 * 60 * 1000);
+        if (ipLimit.limited) {
+            return new Response(
+                JSON.stringify({ error: 'rate_limited' }),
+                { status: 429, headers: { 'Content-Type': 'application/json' } }
+            );
+        }
+
+        // Canonical form: emails are stored lowercase (legacy mixed-case docs
+        // are matched via collation on lookups).
+        const emailNorm = typeof email === 'string' ? email.trim().toLowerCase() : '';
+
         // Check display name for profanity (Turkish + English + German + OpenAI)
         const nameCheck = await checkNameProfanity(name);
         if (!nameCheck.clean) {
@@ -38,8 +54,12 @@ export const POST: APIRoute = async ({ request }) => {
         const client = await clientPromise;
         const db = client.db();
 
-        // Check if user already exists
-        const existingUser = await db.collection('users').findOne({ email });
+        // Check if user already exists (case-insensitive — catches legacy
+        // mixed-case docs too)
+        const existingUser = await db.collection('users').findOne(
+            { email: emailNorm },
+            { collation: { locale: 'en', strength: 2 } }
+        );
         if (existingUser) {
             return new Response(
                 JSON.stringify({ error: 'User with this email already exists' }),
@@ -54,7 +74,7 @@ export const POST: APIRoute = async ({ request }) => {
         // Create user
         const result = await db.collection('users').insertOne({
             name,
-            email,
+            email: emailNorm,
             password: hashedPassword,
             image: '',
             emailVerified: false,
@@ -73,7 +93,7 @@ export const POST: APIRoute = async ({ request }) => {
                 // prod (CWE-640 — see src/lib/auth/baseUrl.ts).
                 const base = getTrustedBaseUrl(request);
                 if (base) {
-                    await sendVerifyEmail(email, `${base}/verify-email?token=${rawToken}`);
+                    await sendVerifyEmail(emailNorm, `${base}/verify-email?token=${rawToken}`);
                 } else {
                     console.error('register: NEXTAUTH_URL not configured in production — skipping verification email (user can resend once configured)');
                 }

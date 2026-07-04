@@ -60,14 +60,19 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         if (res.status === 409) { emailTaken = true; status = 'idle'; return; }
+        if (res.status === 429) { nameErr = $t['auth.err.tooMany']; status = 'idle'; return; }
         // 400 (e.g. profanity) or 500 → inline on the relevant field / generic
         nameErr = data?.error || $t['auth.err.generic'];
         status = 'idle';
         return;
       }
       // Auto-login after successful registration (mirrors prior behavior).
-      const result = await signIn('credentials', { email: email.trim(), password, redirect: false });
-      if (result?.error) { window.location.href = '/login'; return; }
+      // auth-astro's signIn() (redirect:false) resolves with a raw Response —
+      // it never exposes `.error` — so failure is detected via the only
+      // shape-independent signal: whether a session now exists.
+      await signIn('credentials', { email: email.trim(), password, redirect: false });
+      const sess = await fetch('/api/auth/session').then((r) => r.json()).catch(() => null);
+      if (!sess?.user) { window.location.href = '/login'; return; }
       status = 'success';
       window.location.href = '/verify-email';
     } catch {
