@@ -5,6 +5,13 @@ import { connectDB } from '../../../lib/mongodb';
 import { createEmailVerifyToken } from '../../../lib/auth/emailVerify';
 import { sendVerifyEmail } from '../../../lib/auth/sendVerifyEmail';
 import { getTrustedBaseUrl } from '../../../lib/auth/baseUrl';
+import { consumeRateLimit } from '../../../lib/auth/rateLimit';
+
+const ALLOWED_ORIGINS_RAW = import.meta.env.ALLOWED_ORIGINS || '';
+function getAllowedOrigins(): string[] {
+  if (!ALLOWED_ORIGINS_RAW) return [];
+  return ALLOWED_ORIGINS_RAW.split(',').map((o: string) => o.trim()).filter(Boolean);
+}
 
 // Re-sends the verification link for the LOGGED-IN user's own account.
 // Session-gated → no enumeration surface (you can only resend to yourself).
@@ -14,6 +21,15 @@ export const POST: APIRoute = async ({ request }) => {
     new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
   try {
+    // CSRF origin guard (same pattern as the contact relay): browsers always
+    // send Origin on cross-site POSTs; our own fetches carry our origin.
+    // Skipped when ALLOWED_ORIGINS is unset (dev).
+    const origin = request.headers.get('origin') ?? '';
+    const allowed = getAllowedOrigins();
+    if (allowed.length > 0 && !allowed.includes(origin)) {
+      return json({ error: 'Forbidden' }, 403);
+    }
+
     const session = await getSession(request);
     if (!session?.user?.id) return json({ error: 'Unauthorized' }, 401);
 
@@ -21,6 +37,10 @@ export const POST: APIRoute = async ({ request }) => {
     const user = await db.collection('users').findOne({ _id: new ObjectId(session.user.id) });
     if (!user) return json({ error: 'Unauthorized' }, 401);
     if (user.emailVerified === true) return json({ ok: true, alreadyVerified: true }, 200);
+
+    // Belt-and-braces on top of the token lib's 60s guard: 10 resends/hour.
+    const cap = await consumeRateLimit(`resendv:${String(user._id)}`, 10, 60 * 60 * 1000);
+    if (cap.limited) return json({ error: 'throttled' }, 429);
 
     const rawToken = await createEmailVerifyToken(String(user._id));
     if (!rawToken) return json({ error: 'throttled' }, 429);
