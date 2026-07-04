@@ -61,7 +61,7 @@ Frontend-only, no backend. Both live in `AuthLayout` (login/register only).
   scripts fight over the flag and one overlay flashes then vanishes. (Safe today:
   AuthLayout never includes SplashScreen.)
 
-Still deferred to later Phase-2 plans: rate-limit (state 05).
+Rate-limit (state 05) shipped — see the Rate-limit / hardening section.
 
 ## Forgot / reset password (shipped, 2026-06-27)
 
@@ -125,8 +125,37 @@ the nag surfaces. Mirrors the forgot-password stack.
   no "E-Mail ändern" button (email-change feature doesn't exist).
 - Existing `emailVerified: false` users got NO email blast — banner + self-resend only.
 
+## Rate-limit / hardening — state 05 (shipped, 2026-07-04)
+
+Fixed-window limiter in `src/lib/auth/rateLimit.ts` (SERVER-ONLY) over the
+**`rateLimits`** collection (`{ key: '<baseKey>#<windowId>', baseKey, count,
+expiresAt }`, TTL-cleaned; indexes via `pnpm tsx scripts/create-auth-indexes.ts`
+— run against prod at deploy). IPs stored only as sha256(ip + CONTACT_IP_SALT)
+truncated to 32 chars (same salt as the contact relay).
+
+- **Login lockout (state 05)**: 5 failed attempts / 15 min per lowercased
+  email, enforced INSIDE `authorize()` (peek before bcrypt, consume on fail,
+  clear on success). Applies to unknown emails identically — no enumeration.
+  While locked even the correct password is refused. UI: `AuthLoginInner`
+  asks peek-only `POST /api/auth/login-status` after a failed signIn and
+  shows the danger banner + m:ss countdown + disabled fields.
+- **forgot-password**: 5/h per IP + 3/h per email, SILENT (still generic 200,
+  send skipped). Also bounds the CWE-208 timing side-channel. Lookup now
+  collation-insensitive (strength 2).
+- **register**: 5/h per IP → 429 (`auth.err.tooMany` in the UI), placed
+  BEFORE the OpenAI profanity check (cost guard). New emails stored
+  lowercase; duplicate check collation-insensitive.
+- **resend-verification**: ALLOWED_ORIGINS CSRF origin guard (contact-relay
+  pattern, skipped when unset) + 10/h per user cap on top of the 60s guard.
+- **Not limited**: `POST /api/auth/verify-email` — 256-bit random tokens make
+  brute force infeasible; a limiter would only add a DoS lever.
+- **Login/register failure detection** probes `/api/auth/session` after
+  `signIn()` — auth-astro's `signIn` (redirect:false) returns a raw Response
+  with no `.error`; never reintroduce a `result?.error` check.
+
 ## Phase 1 scope / deferred
 Phase 1 = login + register reskin ONLY. Splash + `KiezHeartbeat` shipped in
 Phase 2A (above). Forgot/reset password + email-verify soft gate + unverified banner
-shipped in subsequent phases (see sections above). Still deferred: rate-limit (state 05).
+shipped in subsequent phases (see sections above). Rate-limit (state 05) shipped —
+see the Rate-limit / hardening section.
 The "Passwort vergessen?" link resolves (shipped 2026-06-27).

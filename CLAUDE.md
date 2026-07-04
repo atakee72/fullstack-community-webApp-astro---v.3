@@ -142,6 +142,7 @@ See `src/components/kiez/CLAUDE.md` — full notes (data pipeline, LOR codes, MS
 - `flaggedContent` - Content flagged by AI or user reports (for admin review queue)
 - `passwordResetTokens` - Single-use password-reset tokens (`{ tokenHash (sha256 of raw), userId, expiresAt, usedAt, createdAt }`); raw token only in the emailed link. 30-min TTL, atomic single-use consume. See `src/lib/auth/passwordReset.ts`.
 - `emailVerifyTokens` - Single-use email-verification tokens (`{ tokenHash (sha256 of raw), userId, expiresAt, usedAt, createdAt }`); raw token only in the emailed link. 24h TTL, atomic single-use consume, sets `users.emailVerified: true`. See `src/lib/auth/emailVerify.ts`.
+- `rateLimits` - Fixed-window rate-limit buckets (`{ key: '<baseKey>#<windowId>', baseKey, count, expiresAt }`, TTL index). Used by login lockout (5 fails/15min), forgot-password (5/h IP + 3/h email, silent), register (5/h IP), resend-verification (10/h user). See `src/lib/auth/rateLimit.ts`; indexes via `scripts/create-auth-indexes.ts`.
 - `listingAuditTrail` - Pre-edit snapshots of marketplace listings whose moderation state is about to be cleared by an author edit (warning labels OR rejections). One record per warning-clearing or rejection-clearing edit. Write-once, never reviewed by admin. Event discriminator: `'edit_warning_cleared'` or `'edit_rejection_cleared'`. See `src/components/marketplace/kiosk/CLAUDE.md`.
 - `schillerkiez_demographics` - AfS demographic data per PLR area per period (unique: `plr_code + period`)
 - `schillerkiez_social` - MSS social index data per PLR area per report period (unique: `plr_code + period`)
@@ -162,8 +163,8 @@ CRON_SECRET=            # Vercel cron job authentication
 NEWSDATA_API_KEY=       # NewsData.io API (optional, for additional news sources)
 RESEND_API_KEY=         # Resend.com API key (marketplace contact relay)
 SENDING_FROM_EMAIL=     # e.g. "Mahalle <noreply@mahalle.berlin>" (contact relay sender)
-CONTACT_IP_SALT=        # 32+ chars, fixed across deploys (hashes IPs in contact rate-limit keys)
-ALLOWED_ORIGINS=        # CSV of allowed origins for contact relay CSRF guard (default: https://mahalle.berlin)
+CONTACT_IP_SALT=        # 32+ chars, fixed across deploys (hashes IPs in contact rate-limit keys). Also used by auth rate limiting (src/lib/auth/rateLimit.ts).
+ALLOWED_ORIGINS=        # CSV of allowed origins for contact relay + resend-verification CSRF guard. Must match the real deploy origin (currently https://mahalle-das-kiezgesichterbuch.vercel.app) or be unset. Currently UNSET in Vercel prod — the guard is a no-op until set.
 STATS_XLSX_URL=         # AfS demographics XLSX URL (sync script + GitHub Actions)
 STATS_PERIOD=           # AfS period, e.g. "2025h2" (sync script + GitHub Actions)
 MSS_XLSX_URL=           # MSS social index XLSX URL (optional, sync script)
