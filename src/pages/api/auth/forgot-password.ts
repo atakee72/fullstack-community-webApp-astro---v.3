@@ -4,10 +4,11 @@ import { PasswordResetSchema } from '../../../schemas/auth.schema';
 import { createPasswordResetToken } from '../../../lib/auth/passwordReset';
 import { sendPasswordResetEmail } from '../../../lib/auth/sendResetEmail';
 import { getTrustedBaseUrl } from '../../../lib/auth/baseUrl';
+import { consumeRateLimit, hashIp, clientIpFrom } from '../../../lib/auth/rateLimit';
 
 // Anti-enumeration: this endpoint ALWAYS returns the same generic 200 — it never
 // reveals whether an account exists for the given email.
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, clientAddress }) => {
   const generic = () =>
     new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
@@ -18,8 +19,25 @@ export const POST: APIRoute = async ({ request }) => {
     if (!parsed.success) return generic();
 
     const email = parsed.data.email;
+
+    // Rate limits — SILENT: the response stays the same generic 200 either
+    // way (no probing signal); limited requests just skip token+send.
+    // 5/hour per IP + 3/hour per target email. Also bounds the known-vs-
+    // unknown timing side-channel (CWE-208) to guarded volumes.
+    const ipHash = hashIp(clientIpFrom(request, clientAddress));
+    const [ipLimit, emailLimit] = await Promise.all([
+      consumeRateLimit(`fp:ip:${ipHash}`, 5, 60 * 60 * 1000),
+      consumeRateLimit(`fp:email:${email}`, 3, 60 * 60 * 1000),
+    ]);
+    if (ipLimit.limited || emailLimit.limited) return generic();
+
     const db = await connectDB();
-    const user = await db.collection('users').findOne({ email });
+    // Collation strength 2 = case-insensitive: matches legacy docs whose
+    // stored email casing differs from the (lowercased) submitted one.
+    const user = await db.collection('users').findOne(
+      { email },
+      { collation: { locale: 'en', strength: 2 } }
+    );
 
     if (user) {
       const rawToken = await createPasswordResetToken(user._id.toString());
