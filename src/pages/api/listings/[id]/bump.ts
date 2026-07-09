@@ -3,6 +3,7 @@ import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { canMutateListing } from '../../../../lib/listingActions';
+import { rejectIfBanned } from '../../../../lib/auth/banGuard';
 
 // A5 superseded May 2026: no rate limit on bumps. Bump is the freshness reset
 // mechanism — owners need to be able to use it whenever the listing slips out
@@ -16,6 +17,10 @@ export const POST: APIRoute = async ({ params, request }) => {
   if (!userId) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 });
   }
+
+  // Ban enforcement: banned accounts are read-only (3-strike Sperre).
+  const bannedRes = await rejectIfBanned(userId);
+  if (bannedRes) return bannedRes;
 
   const { id } = params;
   if (!id || !ObjectId.isValid(id)) {

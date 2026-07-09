@@ -8,6 +8,7 @@ import { ListingUpdateSchema } from '../../../../schemas/listing.schema';
 import { parseRequestBody, isValidObjectId } from '../../../../schemas/validation.utils';
 import { moderatePost, checkSpamWithGPT, checkImagesWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../../lib/moderation';
 import { canMutateListing } from '../../../../lib/listingActions';
+import { rejectIfBanned } from '../../../../lib/auth/banGuard';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
@@ -19,6 +20,10 @@ export const PUT: APIRoute = async ({ request, params }) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
+    // Ban enforcement: banned accounts are read-only (3-strike Sperre).
+    const bannedRes = await rejectIfBanned(session.user.id);
+    if (bannedRes) return bannedRes;
 
     const { id } = params;
 

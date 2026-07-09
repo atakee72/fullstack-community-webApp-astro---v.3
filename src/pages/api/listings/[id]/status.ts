@@ -4,6 +4,7 @@ import { connectDB } from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 import { canMutateListing } from '../../../../lib/listingActions';
+import { rejectIfBanned } from '../../../../lib/auth/banGuard';
 
 const StatusPayloadSchema = z.object({
   status: z.enum(['available', 'reserved', 'sold']),
@@ -23,6 +24,10 @@ export const POST: APIRoute = async ({ params, request }) => {
   if (!userId) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 });
   }
+
+  // Ban enforcement: banned accounts are read-only (3-strike Sperre).
+  const bannedRes = await rejectIfBanned(userId);
+  if (bannedRes) return bannedRes;
 
   const { id } = params;
   if (!id || !ObjectId.isValid(id)) {

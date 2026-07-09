@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
 import { v2 as cloudinary } from 'cloudinary';
+import { rejectIfBanned } from '../../../lib/auth/banGuard';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -20,6 +21,10 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
+    // Ban enforcement: banned accounts are read-only (3-strike Sperre).
+    const bannedRes = await rejectIfBanned(session.user.id);
+    if (bannedRes) return bannedRes;
 
     const userId = session.user.id;
 
