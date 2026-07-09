@@ -5,6 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
+import { ObjectId } from 'mongodb';
 import { connectDB } from '../../../../lib/mongodb';
 import type { FlaggedContent } from '../../../../types';
 import { FlaggedContentQuerySchema } from '../../../../schemas/moderation.schema';
@@ -30,7 +31,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       });
     }
 
-    const { reviewStatus, contentType, decision, source, authorId, sortBy, sortOrder, limit, offset } = validation.data;
+    const { reviewStatus, contentType, decision, source, authorId, sortBy, sortOrder, limit, offset, urgentFirst } = validation.data;
 
     // Build filter
     const filter: Record<string, any> = {};
@@ -49,11 +50,19 @@ export const GET: APIRoute = async ({ request, url }) => {
     const db = await connectDB();
     const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
 
+    const sortDir = sortOrder === 'asc' ? 1 : -1;
+    // urgentFirst: 'urgent_review' > 'pending_review' > 'approved'
+    // lexicographically, so a descending sort on `decision` floats urgent
+    // items above everything on every page (design: urgent always on top).
+    const sort: Record<string, 1 | -1> = urgentFirst
+      ? { decision: -1, [sortBy]: sortDir }
+      : { [sortBy]: sortDir };
+
     // Get flagged content with pagination
     const [items, total] = await Promise.all([
       flaggedCollection
         .find(filter)
-        .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
+        .sort(sort)
         .skip(offset)
         .limit(limit)
         .toArray(),
@@ -69,8 +78,25 @@ export const GET: APIRoute = async ({ request, url }) => {
       flaggedCollection.countDocuments({ reviewStatus: 'pending', decision: 'urgent_review' })
     ]);
 
+    // Join author strike counts for the queue cards (strike dots ●●○ +
+    // the 2-strike "Ablehnung = Sperre (3/3)" flag). authorId may be
+    // 'system' (AI-fetched news) or stale — those get 0/false.
+    const authorIds = [...new Set(items.map((i: any) => i.authorId).filter((id: string) => id && ObjectId.isValid(id)))];
+    const authors = authorIds.length
+      ? await db.collection('users')
+          .find({ _id: { $in: authorIds.map((id) => new ObjectId(id)) } },
+                { projection: { moderationStrikes: 1, isBanned: 1 } })
+          .toArray()
+      : [];
+    const byId = new Map(authors.map((a) => [a._id.toString(), a]));
+    const enriched = items.map((i: any) => ({
+      ...i,
+      authorStrikes: byId.get(i.authorId)?.moderationStrikes ?? 0,
+      authorIsBanned: byId.get(i.authorId)?.isBanned === true,
+    }));
+
     return new Response(JSON.stringify({
-      items,
+      items: enriched,
       pagination: {
         total,
         limit,

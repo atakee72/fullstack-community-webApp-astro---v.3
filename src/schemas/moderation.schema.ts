@@ -123,6 +123,8 @@ export const FlaggedContentQuerySchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
   limit: z.coerce.number().min(1).max(100).default(20),
   offset: z.coerce.number().min(0).default(0),
+  // NOT z.coerce.boolean() — that coerces the string "false" to true.
+  urgentFirst: z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
 });
 
 // ============================================================================
