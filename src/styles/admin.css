@@ -1,0 +1,99 @@
+/* ════════════════════════════════════════════════════════════
+   MAHALLE · ADMIN MODERATION MOTION
+   Extends the base Kiosk motion language. Admin motion is calm
+   and procedural — the only thing that pulses is urgency.
+   Transcribed from design/handoffs/design_handoff_admin/motion-admin.css
+   with token names swapped to the project's --k-* custom properties.
+   ════════════════════════════════════════════════════════════ */
+
+:root {
+  --adm-sev-high: #a05a28; /* admin-only aux severity tone */
+}
+
+/* ── 01 · Urgent pulse ─────────────────────────────────────────
+   DRINGEND strap on urgent queue cards. Opacity only — no scale,
+   no color shift. 1.6s, runs while the card is pending.          */
+@keyframes admPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+.adm-strap-urgent { animation: admPulse 1.6s ease-in-out infinite; }
+
+/* ── 02 · Action-in-flight pill ────────────────────────────────
+   Optimistic UI: on approve/warn/reject the card dims to 0.55,
+   buttons disable, a centered pill („wird abgelehnt…“) pulses
+   faster than the urgent strap.                                  */
+.adm-action-pending { animation: admPulse 1.2s ease-in-out infinite; }
+
+/* ── 03 · Card settle-out ──────────────────────────────────────
+   On API success the decided card leaves the queue: collapse
+   height + fade, 220ms, ease-in. Cards below close the gap via
+   the same transition — no re-layout jump.                       */
+@keyframes admSettleOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+.adm-card-settle { animation: admSettleOut 220ms ease-in forwards; }
+
+/* ── 04 · Skeleton sweep ───────────────────────────────────────
+   Queue loading state. Same sweep vocabulary as Newsboard.       */
+@keyframes admSweep {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.adm-skeleton-bar {
+  background: linear-gradient(90deg,
+    var(--k-paper-soft) 25%, rgba(201, 190, 163, 0.4) 50%, var(--k-paper-soft) 75%);
+  background-size: 200% 100%;
+  animation: admSweep 1.4s linear infinite;
+}
+.adm-skeleton-bar:nth-child(2) { animation-delay: 0.15s; }
+.adm-skeleton-bar:nth-child(3) { animation-delay: 0.3s; }
+
+/* ── 05 · Modal entrance ───────────────────────────────────────
+   Reject / warning / Ban-Bremse / bulk-preview modals: backdrop
+   fades in 160ms, card stamps in with the standard Kiosk print
+   pop (translate from the shadow offset — like a stamp landing). */
+@keyframes admModalIn {
+  from { opacity: 0; transform: translate(3px, 3px); box-shadow: 0 0 0 var(--k-accent, #6f2f59); }
+  to   { opacity: 1; transform: translate(0, 0); }
+}
+.adm-modal-card { animation: admModalIn 180ms ease-out; }
+
+/* ── 06 · Strike dot fill ──────────────────────────────────────
+   In the reject-modal consequence box the new strike dot fills
+   AFTER the modal lands (240ms delay) — the consequence is seen,
+   not just stated.                                               */
+@keyframes admStrikeFill {
+  from { background: transparent; transform: scale(0.6); }
+  to   { background: var(--k-danger, #a83245); transform: scale(1); }
+}
+.adm-strike-new { animation: admStrikeFill 200ms ease-out 240ms backwards; }
+
+/* ── 07 · Toast ────────────────────────────────────────────────
+   Bulk-result + ban-triggered toasts: rise 8px + fade in 200ms,
+   hold 6s (they carry consequences — longer than default),
+   fade out 300ms.                                                */
+@keyframes admToastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.adm-toast { animation: admToastIn 200ms ease-out; }
+
+/* ── Reduced motion ────────────────────────────────────────────
+   Urgency must survive without animation: the urgent strap stays
+   solid danger (color + border already carry it). Skeletons go
+   static paperSoft. Settles become instant.                      */
+@media (prefers-reduced-motion: reduce) {
+  .adm-strap-urgent,
+  .adm-action-pending,
+  .adm-skeleton-bar,
+  .adm-card-settle,
+  .adm-modal-card,
+  .adm-strike-new,
+  .adm-toast {
+    animation: none;
+  }
+  .adm-card-settle { opacity: 0; }
+  .adm-strike-new { background: var(--k-danger, #a83245); }
+}

@@ -104,6 +104,7 @@
 [data-page="calendar"]     { --k-accent: var(--k-teal); }
 [data-page="schillerkiez"] { --k-accent: var(--k-moss); }
 [data-page="auth"]         { --k-accent: var(--k-ochre); }
+[data-page="admin"]        { --k-accent: var(--k-plum); }
 
 /* --k-accent-italic is scoped to italicized verb emphasis in marketplace
    headlines. Do NOT use for buttons, borders, fills, or any other accent
