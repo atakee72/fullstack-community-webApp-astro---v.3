@@ -2,9 +2,16 @@
 import KioskLayout from '../../layouts/KioskLayout.astro';
 import { getSession } from 'auth-astro/server';
 import NewsSubmitInner from '../../components/newsboard/kiosk/submit/NewsSubmitInner.svelte';
+import { isUserBanned } from '../../lib/auth/banGuard';
 
 const session = await getSession(Astro.request);
 if (!session?.user) return Astro.redirect('/login');
+
+// Ban enforcement: banned accounts are read-only — no compose surfaces.
+// The SuspendedBanner on the target page explains why.
+if (await isUserBanned(session.user.id)) {
+  return Astro.redirect('/', 302);
+}
 ---
 
 <KioskLayout title="News einreichen — Mahalle" description="Eine Nachricht aus dem Kiez einreichen." page="newsboard">

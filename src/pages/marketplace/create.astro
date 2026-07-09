@@ -4,6 +4,7 @@ import { getSession } from 'auth-astro/server';
 import { fetchListingForSSR } from '../../lib/listingsQuery';
 import MarketComposeInner from '../../components/marketplace/kiosk/compose/MarketComposeInner.svelte';
 import type { Listing } from '../../types/listing';
+import { isUserBanned } from '../../lib/auth/banGuard';
 
 const session = await getSession(Astro.request);
 if (!session?.user) {
@@ -11,6 +12,13 @@ if (!session?.user) {
   const redirectTo = draftQ ? `/marketplace/create?draft=${draftQ}` : '/marketplace/create';
   return Astro.redirect(`/login?redirect=${encodeURIComponent(redirectTo)}`);
 }
+
+// Ban enforcement: banned accounts are read-only — no compose surfaces.
+// The SuspendedBanner on the target page explains why.
+if (await isUserBanned(session.user.id)) {
+  return Astro.redirect('/', 302);
+}
+
 const userId = (session.user as any).id;
 
 // Resume a server-side draft: /marketplace/create?draft=<id>. Owner-gated.
