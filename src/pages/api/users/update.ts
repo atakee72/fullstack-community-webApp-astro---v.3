@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
 import clientPromise from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { rejectIfBanned } from '../../../lib/auth/banGuard';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -12,6 +13,10 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    // Ban enforcement: banned accounts are read-only (3-strike Sperre).
+    const bannedRes = await rejectIfBanned(session.user.id);
+    if (bannedRes) return bannedRes;
 
     const { name, hobbies } = await request.json();
     if (!name || !hobbies) {

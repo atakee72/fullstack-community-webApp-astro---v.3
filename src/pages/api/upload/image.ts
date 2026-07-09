@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { v2 as cloudinary } from 'cloudinary';
 import { connectDB } from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { rejectIfBanned } from '../../../lib/auth/banGuard';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -35,6 +36,10 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
+    // Ban enforcement: banned accounts are read-only (3-strike Sperre).
+    const bannedRes = await rejectIfBanned(String(decoded.userId ?? ''));
+    if (bannedRes) return bannedRes;
 
     // Get the form data
     const formData = await request.formData();
