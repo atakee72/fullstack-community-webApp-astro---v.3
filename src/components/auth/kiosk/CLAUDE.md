@@ -187,6 +187,11 @@ truncated to 32 chars (same salt as the contact relay).
   (Design's inline DEAKTIVIERT composer state deferred — server 403s are
   the enforcement.)
 - **Un-ban**: manual DB flip (`isBanned: false`) — admin UI is future work.
+- **Known gap (accepted 2026-07-09)**: `/api/admin/*` write endpoints gate on
+  `role === 'admin'` only, not `isBanned` — a striked-to-ban admin would keep
+  admin powers (auto-ban never demotes `role`). Narrow by construction
+  (admins are trusted superusers); revisit when the admin moderation
+  redesign touches these endpoints.
 
 ## Phase 1 scope / deferred
 Phase 1 = login + register reskin ONLY. Splash + `KiezHeartbeat` shipped in
