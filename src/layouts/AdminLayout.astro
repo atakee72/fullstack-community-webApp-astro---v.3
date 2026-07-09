@@ -6,6 +6,7 @@
 // Session-independent by design — the page (moderation.astro) resolves
 // getSession and passes only what the masthead needs (adminName).
 import AuthLangToggle from '../components/auth/kiosk/AuthLangToggle.svelte';
+import ToastProvider from '../components/ToastProvider';
 import { ViewTransitions } from 'astro:transitions';
 
 export interface Props {
@@ -78,6 +79,7 @@ const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
     <main class="flex-1">
       <slot />
     </main>
+    <ToastProvider client:load />
   </body>
 </html>
 
