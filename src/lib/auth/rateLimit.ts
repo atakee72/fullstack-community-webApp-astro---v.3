@@ -21,6 +21,13 @@ if (!IP_SALT && import.meta.env.PROD) {
 export const LOGIN_MAX_FAILS = 5;
 export const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
+// Ban-notice flag: authorize() marks "correct password on a banned account"
+// so the peek-only login-status endpoint can tell the login UI to show the
+// „Konto gesperrt" card. Prove-then-tell: only a verified password sets it.
+// authorize() and login-status MUST share this window (windowId derives
+// from windowMs — mismatched values would read different buckets).
+export const BAN_FLAG_WINDOW_MS = 5 * 60 * 1000;
+
 export interface RateLimitResult {
   limited: boolean;
   retryAfterSec: number;

@@ -3,7 +3,7 @@ import Credentials from "@auth/core/providers/credentials";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "./src/lib/mongodb";
 import bcrypt from "bcrypt";
-import { peekRateLimit, consumeRateLimit, clearRateLimit, LOGIN_MAX_FAILS, LOGIN_WINDOW_MS } from "./src/lib/auth/rateLimit";
+import { peekRateLimit, consumeRateLimit, clearRateLimit, LOGIN_MAX_FAILS, LOGIN_WINDOW_MS, BAN_FLAG_WINDOW_MS } from "./src/lib/auth/rateLimit";
 
 export default defineConfig({
     adapter: MongoDBAdapter(clientPromise, {
@@ -57,6 +57,18 @@ export default defineConfig({
 
                 if (!isValidPassword) {
                     await consumeRateLimit(lockKey, LOGIN_MAX_FAILS, LOGIN_WINDOW_MS);
+                    return null;
+                }
+
+                // Ban enforcement (3-strike Sperre): a banned account never
+                // gets a session — even with the correct password. Because
+                // the password IS proven at this point, it is safe to drop a
+                // short-lived flag that login-status may reveal to the UI
+                // (prove-then-tell; no new enumeration oracle). Deliberately
+                // does NOT consume the login lockout (not a credential
+                // failure) and does NOT clear it either.
+                if (user.isBanned === true) {
+                    await consumeRateLimit(`banflag:${emailNorm}`, 1, BAN_FLAG_WINDOW_MS).catch(() => {});
                     return null;
                 }
 
