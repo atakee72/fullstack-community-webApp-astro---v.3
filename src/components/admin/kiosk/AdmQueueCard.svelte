@@ -128,11 +128,11 @@
             <blockquote class="font-instrument" style="margin: 8px 0 0; padding: 8px 12px; background: var(--k-paper-soft); border-radius: var(--k-radius-sm); border: 1px solid var(--k-rule); font-style: italic; font-size: 13px; color: var(--k-ink-soft);">„{item.reportDetails}“</blockquote>
           {/if}
         </div>
-      {:else if isNews}
+      {:else if isNews && typeof item.scores?.relevance === 'number'}
         <span style="display: inline-flex; align-items: baseline; gap: 6px; font-family: var(--k-font-mono); font-size: 10.5px; color: var(--k-info); background: var(--k-paper-warm); padding: 3px 9px; border-radius: var(--k-radius-sm); border: 1px solid var(--k-info);">
-          {$t['admin.card.relevance']} <b style="font-size: 11px;">{Math.round(item.scores?.relevance ?? item.maxScore * 100)}/100</b>
+          {$t['admin.card.relevance']} <b style="font-size: 11px;">{Math.round(item.scores.relevance)}/100</b>
         </span>
-      {:else}
+      {:else if item.flaggedCategories.length > 0}
         <span class="font-dmmono" style="font-size: 10px; color: var(--k-ink-mute); letter-spacing: 0.08em;">{$t['admin.card.flaggedAs']}</span>
         {#each item.flaggedCategories as cat (cat)}
           <AdmCatChip catKey={cat} score={item.scores?.[cat] ?? 0} />

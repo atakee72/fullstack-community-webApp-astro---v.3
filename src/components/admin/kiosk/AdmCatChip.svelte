@@ -24,7 +24,7 @@
     display: inline-flex; align-items: baseline; gap: 6px;
     font-family: var(--k-font-mono); font-size: 10.5px; font-weight: 500;
     color: {color}; background: var(--k-paper-warm);
-    padding: 3px 9px; border-radius: var(--k-radius-sm); border: 1px solid {color}66;
+    padding: 3px 9px; border-radius: var(--k-radius-sm); border: 1px solid color-mix(in srgb, {color} 40%, transparent);
   "
 >
   <span>{label}</span>

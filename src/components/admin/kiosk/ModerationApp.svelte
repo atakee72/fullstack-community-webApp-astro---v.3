@@ -9,7 +9,7 @@
    *   loadError, actioning, settling, fetchQueue(), runSingleAction().
    */
   import { onMount } from 'svelte';
-  import { t, locale, tStr } from '../../../lib/kiosk-i18n';
+  import { t, tStr } from '../../../lib/kiosk-i18n';
   import { ADM_TYPES, type FlaggedItem } from '../../../lib/adminModeration';
   import { showToast, showError } from '../../../utils/toast';
   import AdmStatRow from './AdmStatRow.svelte';
@@ -188,11 +188,11 @@
   }
   function handleWarn(_item: FlaggedItem) {
     // Task 5/6 wires the modal
-    showToast($locale === 'de' ? 'Formular folgt — noch nicht verfügbar.' : 'Form coming soon — not wired yet.', { type: 'info' });
+    showToast($t['admin.act.stub'], { type: 'info' });
   }
   function handleReject(_item: FlaggedItem) {
     // Task 5/6 wires the modal
-    showToast($locale === 'de' ? 'Formular folgt — noch nicht verfügbar.' : 'Form coming soon — not wired yet.', { type: 'info' });
+    showToast($t['admin.act.stub'], { type: 'info' });
   }
 </script>
 
