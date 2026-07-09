@@ -110,7 +110,7 @@ export const POST: APIRoute = async ({ request }) => {
 - **User reports**: Community can flag content via report button (all content types including calendar event comments via `EventViewModal`)
 - **Admin queue**: `/admin/moderation` page (Svelte: `ModerationQueue.svelte`) with filter tabs (All/Posts/Comments/Events/Announcements/Recommendations/Marketplace)
 - **Warning labels**: Approved-with-warning content shows blur overlay until user clicks "Show content anyway" (persisted to localStorage)
-- **Strike system**: 3 strikes = automatic user ban
+- **Strike system**: 3 strikes = automatic user ban — enforced at login (no session for banned accounts) and on all content-write APIs (403 `account_banned` via `src/lib/auth/banGuard.ts`); banned users keep read access
 - **Status flow**: `pending` → `approved`/`rejected` (with optional warning label)
 - **Bulk review**: `POST /api/admin/moderation/bulk-review` — approve/reject up to 50 items at once. Skips already-reviewed items, processes all even if some fail, returns partial results with ban notifications.
 - **Shared review logic**: `src/lib/reviewAction.ts` — `processReviewAction()` handles updating flagged content, original content, comment parent arrays, strike system, and auto-ban. Used by both `review.ts` and `bulk-review.ts`.
@@ -128,7 +128,7 @@ See `src/pages/api/news/CLAUDE.md` — full notes load when working in that subt
 See `src/components/kiez/CLAUDE.md` — full notes (data pipeline, LOR codes, MSS column layout, charts, air quality, trend backfills) load when working in that subtree.
 
 ## Database Collections
-- `users` - User accounts (includes `moderationStrikes`, `isBanned`, plus `role?: 'user' | 'admin'` — admin role unlocks `/admin/announcements`, the moderation queue, and the `isOfficial`-true admin-create endpoint; defaults to `'user'`)
+- `users` - User accounts (includes `moderationStrikes`, `strikeHistory` (per-strike ledger: date/reason/contentType/contentId/reviewedBy), `isBanned` — ENFORCED: banned accounts cannot log in and all content-write APIs return 403 `account_banned` (see `src/lib/auth/banGuard.ts`); plus `role?: 'user' | 'admin'` — admin role unlocks `/admin/announcements`, the moderation queue, and the `isOfficial`-true admin-create endpoint; defaults to `'user'`)
 - `topics` - Forum posts (includes `moderationStatus`, `isUserReported`, `rejectionReason`, `images` fields)
 - `events` - Calendar events (includes `moderationStatus`, `isUserReported` fields)
 - `announcements` - Community + official announcements (includes `moderationStatus`, `isUserReported`, `rejectionReason`, `images`, plus **`isOfficial?: boolean`** + **`pinnedUntil?: Date | null`** for admin-posted official announcements with the 7-day pin lifecycle — server-controlled, never settable from client input; see admin dashboard at `/admin/announcements`)

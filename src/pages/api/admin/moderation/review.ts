@@ -14,12 +14,8 @@ import { requireAdminSession } from '../../../../lib/auth';
 
 const MAX_STRIKES = 3;
 
-// TODO: Implement ban enforcement (future feature)
-// When user is banned (isBanned: true), we need to:
-// 1. Check isBanned in auth callback → reject login with "Account suspended" message
-// 2. Add middleware/check to content creation APIs (topics, comments, etc.)
-// 3. Optionally force logout / invalidate existing sessions immediately
-// 4. Show "Your account has been suspended" banner to banned users
+// Ban enforcement lives in auth.config.ts (login block), src/lib/auth/banGuard.ts
+// (write-API guard + compose-page SSR gate) and SuspendedBanner (user-facing).
 
 export const POST: APIRoute = async ({ request }) => {
   try {

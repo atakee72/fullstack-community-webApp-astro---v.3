@@ -156,6 +156,38 @@ truncated to 32 chars (same salt as the contact relay).
   an unavoidable account-existence oracle (inherent to signup UX) — bounded by
   the 5/h/IP throttle. Login/forgot-password stay fully generic.
 
+## Ban enforcement — 3-strike Sperre (shipped, 2026-07-09)
+
+`isBanned: true` (set by the moderation strike system) is now ENFORCED:
+
+- **Login**: `authorize()` refuses banned accounts even with the correct
+  password (no session). Prove-then-tell signal: after bcrypt success it
+  drops a `banflag:<email>` marker (rateLimits collection, 5-min window,
+  `BAN_FLAG_WINDOW_MS`); the peek-only `login-status` endpoint returns
+  `banned: true` while the marker lives, and `AuthLoginInner` swaps the
+  card for the „Konto gesperrt" screen (danger top-rule + roundel +
+  moderation contact). No new enumeration oracle: only a proven password
+  can set the flag. Accepted residual: third parties polling login-status
+  for that email inside the 5-min window see the flag too.
+- **Writes**: `rejectIfBanned(userId)` in `src/lib/auth/banGuard.ts`
+  (SERVER-ONLY — never import from islands) guards all public-facing write
+  APIs (content create/edit, comments, likes, RSVP, uploads, listings
+  lifecycle, news submit, reports, profile update) with
+  403 `{ error: 'account_banned' }`. LIVE DB read every time — the JWT
+  snapshots at login and bans happen mid-session. Deliberately NOT
+  guarded: deletes (own-content removal), bookmarks/saves, view counters,
+  and the anonymous listing contact relay (no session identity to check;
+  IP-hash rate limits bound abuse).
+- **Session UX**: `SuspendedBanner.svelte` (KioskLayout, above
+  VerifyEmailBanner) live-checks `GET /api/auth/account-status` and shows
+  the non-dismissible danger banner. Negative results are cached in
+  sessionStorage (`mahalle-ban-checked-ok`) so the check runs once per
+  browser session; a banned result is never cached.
+- **Compose pages**: SSR frontmatter gate redirects banned users to `/`.
+  (Design's inline DEAKTIVIERT composer state deferred — server 403s are
+  the enforcement.)
+- **Un-ban**: manual DB flip (`isBanned: false`) — admin UI is future work.
+
 ## Phase 1 scope / deferred
 Phase 1 = login + register reskin ONLY. Splash + `KiezHeartbeat` shipped in
 Phase 2A (above). Forgot/reset password + email-verify soft gate + unverified banner
