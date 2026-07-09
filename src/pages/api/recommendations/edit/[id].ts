@@ -7,6 +7,7 @@ import type { Recommendation, EditHistory } from '../../../../types';
 import { RecommendationUpdateSchema } from '../../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../../schemas/validation.utils';
 import { isOwner } from '../../../../utils/authHelpers';
+import { rejectIfBanned } from '../../../../lib/auth/banGuard';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
@@ -19,6 +20,10 @@ export const PUT: APIRoute = async ({ request, params }) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
+    // Ban enforcement: banned accounts are read-only (3-strike Sperre).
+    const bannedRes = await rejectIfBanned(session.user.id);
+    if (bannedRes) return bannedRes;
 
     const userId = session.user.id;
     const recommendationId = params.id;

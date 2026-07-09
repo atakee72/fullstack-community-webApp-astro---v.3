@@ -6,6 +6,7 @@ import type { Announcement, FlaggedContent } from '../../../types';
 import { AnnouncementCreateSchema } from '../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../schemas/validation.utils';
 import { moderateText, checkSpamWithGPT, checkImagesWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../lib/moderation';
+import { rejectIfBanned } from '../../../lib/auth/banGuard';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -18,6 +19,10 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
+    // Ban enforcement: banned accounts are read-only (3-strike Sperre).
+    const bannedRes = await rejectIfBanned(session.user.id);
+    if (bannedRes) return bannedRes;
 
     const userId = session.user.id;
 
