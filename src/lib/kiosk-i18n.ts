@@ -1127,7 +1127,14 @@ const de = {
   'auth.err.lockedTitle': 'Zu viele Versuche',
   'auth.err.lockedBody.a': 'Aus Sicherheitsgründen pausiert. Versuch es in ',
   'auth.err.lockedBody.b': ' Min. erneut.',
-  'auth.err.tooMany': 'Zu viele Versuche — warte kurz und versuch es später erneut.'
+  'auth.err.tooMany': 'Zu viele Versuche — warte kurz und versuch es später erneut.',
+
+  // ── Auth (ban enforcement) ──
+  'auth.banned.title.a': 'Konto ',
+  'auth.banned.title.accent': 'gesperrt',
+  'auth.banned.body': 'Dein Konto wurde nach drei Verstößen gegen die Kiez-Regeln gesperrt. Anmelden ist nicht mehr möglich.',
+  'auth.banned.contactQ': 'Fragen zur Sperre?',
+  'auth.banned.contactMail': 'moderation@mahalle.berlin'
 } as const;
 
 type Dict = typeof de;
@@ -2120,7 +2127,14 @@ const en: Dict = {
   'auth.err.lockedTitle': 'Too many attempts',
   'auth.err.lockedBody.a': 'Paused for security. Try again in ',
   'auth.err.lockedBody.b': ' min.',
-  'auth.err.tooMany': 'Too many attempts — wait a bit and try again later.'
+  'auth.err.tooMany': 'Too many attempts — wait a bit and try again later.',
+
+  // ── Auth (ban enforcement) ──
+  'auth.banned.title.a': 'Account ',
+  'auth.banned.title.accent': 'suspended',
+  'auth.banned.body': 'Your account was suspended after three violations of the Kiez rules. Signing in is no longer possible.',
+  'auth.banned.contactQ': 'Questions about the suspension?',
+  'auth.banned.contactMail': 'moderation@mahalle.berlin'
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };

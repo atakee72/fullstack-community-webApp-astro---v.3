@@ -20,6 +20,10 @@
   const locked = $derived(lockSec > 0);
   const lockLabel = $derived(`${Math.floor(lockSec / 60)}:${String(lockSec % 60).padStart(2, '0')}`);
 
+  // Ban enforcement (design A): correct password on a banned account.
+  // Replaces the whole card — there is nothing else to do on this page.
+  let bannedState = $state(false);
+
   function startLock(sec: number) {
     lockSec = Math.max(1, Math.round(sec));
     credErr = false;
@@ -71,6 +75,11 @@
             body: JSON.stringify({ email: parsed.data.email }),
           });
           const data = await res.json().catch(() => ({}));
+          if (data?.banned) {
+            bannedState = true;
+            status = 'idle';
+            return;
+          }
           if (data?.locked) {
             startLock(data.retryAfterSec);
             status = 'idle';
@@ -91,52 +100,67 @@
   }
 </script>
 
-<div class="auth-card">
-  <div class="font-dmmono" style="font-size:11px; letter-spacing:0.18em; color:var(--k-accent); font-weight:600;">{$t['auth.login.eyebrow']}</div>
-  <h1 class="font-bricolage" style="font-weight:800; font-size:38px; letter-spacing:-0.035em; line-height:1; margin:8px 0 0; color:var(--k-ink);">
-    {$t['auth.login.title.a']}<span class="font-instrument" style="font-style:italic; font-weight:400; color:var(--k-accent);">{$t['auth.login.title.accent']}</span>{$t['auth.login.title.b']}
-  </h1>
-
-  {#if locked}
-    <AuthBanner kind="danger" title={$t['auth.err.lockedTitle']}
-      body={`${$t['auth.err.lockedBody.a']}${lockLabel}${$t['auth.err.lockedBody.b']}`} />
-  {/if}
-  {#if credErr}
-    <AuthBanner kind="danger" title={$t['auth.err.credentials']} />
-  {/if}
-  {#if status === 'success'}
-    <AuthBanner kind="success" title={$t['auth.login.successTitle']} body={$t['auth.login.successBody']} />
-  {/if}
-
-  <form onsubmit={submit} style="display:flex; flex-direction:column; gap:16px; margin-top:22px;">
-    <AuthField
-      label={$t['auth.login.email']} placeholder={$t['auth.login.emailPh']}
-      type="email" name="email" autocomplete="email"
-      value={email} error={emailErr} disabled={locked}
-      oninput={(v) => (email = v)} />
-    <div>
-      <AuthField
-        label={$t['auth.login.pw']} placeholder={$t['auth.login.pwPh']}
-        type="password" name="password" autocomplete="current-password"
-        value={password} error={pwErr} showToggle disabled={locked}
-        oninput={(v) => (password = v)} />
-      <div style="text-align:right; margin-top:7px;">
-        <a href="/forgot-password" class="font-dmmono no-underline" style="font-size:11px; color:var(--k-ink-soft); border-bottom:1px dashed var(--k-ink-mute);">{$t['auth.login.forgot']}</a>
+<div class="auth-card" class:auth-card-banned={bannedState}>
+  {#if bannedState}
+    <div style="text-align:center;">
+      <div class="banned-roundel" aria-hidden="true">✕</div>
+      <h1 class="font-bricolage" style="font-weight:800; font-size:26px; letter-spacing:-0.025em; margin:0; color:var(--k-ink);">
+        {$t['auth.banned.title.a']}<span class="font-instrument" style="font-style:italic; font-weight:400; color:var(--k-danger);">{$t['auth.banned.title.accent']}</span>
+      </h1>
+      <p class="font-bricolage" style="font-size:13.5px; line-height:1.55; color:var(--k-ink-soft); margin:10px 0 0;">
+        {$t['auth.banned.body']}
+      </p>
+      <div class="font-dmmono banned-contact">
+        {$t['auth.banned.contactQ']}<br />{$t['auth.banned.contactMail']}
       </div>
     </div>
-    <AuthPrimaryBtn loading={status === 'loading'} disabled={locked}>
-      {status === 'loading' ? $t['auth.login.ctaLoading'] : status === 'success' ? $t['auth.login.ctaDone'] : $t['auth.login.cta']}
-    </AuthPrimaryBtn>
-  </form>
+  {:else}
+    <div class="font-dmmono" style="font-size:11px; letter-spacing:0.18em; color:var(--k-accent); font-weight:600;">{$t['auth.login.eyebrow']}</div>
+    <h1 class="font-bricolage" style="font-weight:800; font-size:38px; letter-spacing:-0.035em; line-height:1; margin:8px 0 0; color:var(--k-ink);">
+      {$t['auth.login.title.a']}<span class="font-instrument" style="font-style:italic; font-weight:400; color:var(--k-accent);">{$t['auth.login.title.accent']}</span>{$t['auth.login.title.b']}
+    </h1>
 
-  <div class="flex items-center" style="gap:12px; margin:20px 0 16px;">
-    <div style="flex:1; border-top:1px dashed var(--k-rule);"></div>
-    <span class="font-dmmono uppercase" style="font-size:9.5px; color:var(--k-ink-mute); letter-spacing:0.16em;">{$t['auth.login.or']}</span>
-    <div style="flex:1; border-top:1px dashed var(--k-rule);"></div>
-  </div>
-  <div class="font-bricolage" style="text-align:center; font-size:13.5px; color:var(--k-ink-soft);">
-    {$t['auth.login.alt']}<a href="/register" class="no-underline" style="font-weight:700; color:var(--k-ink); border-bottom:2px solid var(--k-accent);">{$t['auth.login.altLink']}</a>
-  </div>
+    {#if locked}
+      <AuthBanner kind="danger" title={$t['auth.err.lockedTitle']}
+        body={`${$t['auth.err.lockedBody.a']}${lockLabel}${$t['auth.err.lockedBody.b']}`} />
+    {/if}
+    {#if credErr}
+      <AuthBanner kind="danger" title={$t['auth.err.credentials']} />
+    {/if}
+    {#if status === 'success'}
+      <AuthBanner kind="success" title={$t['auth.login.successTitle']} body={$t['auth.login.successBody']} />
+    {/if}
+
+    <form onsubmit={submit} style="display:flex; flex-direction:column; gap:16px; margin-top:22px;">
+      <AuthField
+        label={$t['auth.login.email']} placeholder={$t['auth.login.emailPh']}
+        type="email" name="email" autocomplete="email"
+        value={email} error={emailErr} disabled={locked}
+        oninput={(v) => (email = v)} />
+      <div>
+        <AuthField
+          label={$t['auth.login.pw']} placeholder={$t['auth.login.pwPh']}
+          type="password" name="password" autocomplete="current-password"
+          value={password} error={pwErr} showToggle disabled={locked}
+          oninput={(v) => (password = v)} />
+        <div style="text-align:right; margin-top:7px;">
+          <a href="/forgot-password" class="font-dmmono no-underline" style="font-size:11px; color:var(--k-ink-soft); border-bottom:1px dashed var(--k-ink-mute);">{$t['auth.login.forgot']}</a>
+        </div>
+      </div>
+      <AuthPrimaryBtn loading={status === 'loading'} disabled={locked}>
+        {status === 'loading' ? $t['auth.login.ctaLoading'] : status === 'success' ? $t['auth.login.ctaDone'] : $t['auth.login.cta']}
+      </AuthPrimaryBtn>
+    </form>
+
+    <div class="flex items-center" style="gap:12px; margin:20px 0 16px;">
+      <div style="flex:1; border-top:1px dashed var(--k-rule);"></div>
+      <span class="font-dmmono uppercase" style="font-size:9.5px; color:var(--k-ink-mute); letter-spacing:0.16em;">{$t['auth.login.or']}</span>
+      <div style="flex:1; border-top:1px dashed var(--k-rule);"></div>
+    </div>
+    <div class="font-bricolage" style="text-align:center; font-size:13.5px; color:var(--k-ink-soft);">
+      {$t['auth.login.alt']}<a href="/register" class="no-underline" style="font-weight:700; color:var(--k-ink); border-bottom:2px solid var(--k-accent);">{$t['auth.login.altLink']}</a>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -147,5 +171,21 @@
     border-radius: 22px;
     box-shadow: 3px 3px 0 var(--k-ink);
     padding: 30px;
+  }
+  .auth-card-banned {
+    border-top-color: var(--k-danger);
+    box-shadow: 3px 3px 0 var(--k-danger);
+  }
+  .banned-roundel {
+    width: 46px; height: 46px; margin: 0 auto 12px;
+    background: var(--k-danger); border-radius: 50%;
+    border: 1.5px solid var(--k-ink);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--k-paper); font-size: 20px; font-weight: 700;
+  }
+  .banned-contact {
+    font-size: 10.5px; color: var(--k-ink-mute); margin-top: 14px;
+    padding: 9px 12px; background: var(--k-paper-soft);
+    border-radius: 8px; border: 1px solid var(--k-rule); line-height: 1.5;
   }
 </style>
