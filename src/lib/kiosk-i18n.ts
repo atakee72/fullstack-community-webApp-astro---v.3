@@ -1122,6 +1122,8 @@ const de = {
   'auth.banner.verifyResend': 'Link erneut senden',
   'auth.banner.verifySent': 'Link verschickt ✓',
   'auth.banner.verifyDismiss': 'Ausblenden',
+  'auth.banner.suspendedTitle': 'Dein Konto ist gesperrt.',
+  'auth.banner.suspendedBody': 'Du kannst mitlesen, aber nichts mehr posten, kommentieren oder inserieren.',
 
   // ── Auth (rate-limit, state 05) ──
   'auth.err.lockedTitle': 'Zu viele Versuche',
@@ -2122,6 +2124,8 @@ const en: Dict = {
   'auth.banner.verifyResend': 'Resend link',
   'auth.banner.verifySent': 'Link sent ✓',
   'auth.banner.verifyDismiss': 'Dismiss',
+  'auth.banner.suspendedTitle': 'Your account is suspended.',
+  'auth.banner.suspendedBody': 'You can still read along, but you can no longer post, comment or list items.',
 
   // ── Auth (rate-limit, state 05) ──
   'auth.err.lockedTitle': 'Too many attempts',
