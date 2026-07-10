@@ -1204,6 +1204,7 @@ const de = {
   'admin.bulk.rejectAll': 'alle ablehnen…',
   'admin.bulk.clear': 'auswahl aufheben',
   'admin.bulk.hint': 'ablehnen vergibt Verwarnungen — Vorschau folgt',
+  'admin.bulk.capNotice': 'Nur die ersten 50 werden verarbeitet (API-Limit).',
   'admin.page.prev': '← zurück',
   'admin.page.next': 'weiter →',
   'admin.page.of': 'Seite {p} von {t} · {n} {what} · zeige',
@@ -1255,7 +1256,25 @@ const de = {
   'admin.toast.reject.success': '{author} abgelehnt & verwarnt — {n}/3 Verwarnungen.',
   'admin.toast.ban.title': '{author} wurde gesperrt — 3/3 Verwarnungen.',
   'admin.toast.ban.sub': 'Sperre aufheben: im Protokoll → Autor → „entsperren“',
-  'admin.toast.warn.success': 'Beitrag von {author} mit Hinweis freigegeben.'
+  'admin.toast.warn.success': 'Beitrag von {author} mit Hinweis freigegeben.',
+
+  // ── Bulk-reject "Folgen-Vorschau" modal (Task 7, NOVEL §02) — DE-only ──
+  'admin.modal.bulk.kicker': 'BULK · {n} AUSGEWÄHLT',
+  'admin.modal.bulk.title': 'Alle ablehnen —',
+  'admin.modal.bulk.titleAccent': 'mit Folgen',
+  'admin.modal.bulk.reasonLabel': 'Gemeinsamer Grund',
+  'admin.modal.bulk.reasonHint': 'gilt für alle {n} · wird den Autor:innen angezeigt',
+  'admin.modal.bulk.consequencesTitle': 'FOLGEN FÜR DIE STRIKE-KONTEN',
+  'admin.modal.bulk.banBadge': 'WIRD GESPERRT',
+  'admin.modal.bulk.ackLead': 'Mir ist klar: {n} Konto/Konten werden dabei gesperrt.',
+  'admin.modal.bulk.ackBody': 'Ohne Häkchen bleibt „alle ablehnen“ deaktiviert.',
+  'admin.modal.bulk.footnote': 'bereits geprüfte Fälle werden übersprungen',
+  'admin.modal.bulk.cta': '✕ {n} ablehnen',
+  'admin.toast.bulk.rejected': 'Bulk abgeschlossen: {n} abgelehnt',
+  'admin.toast.bulk.approved': 'Bulk abgeschlossen: {n} freigegeben',
+  'admin.toast.bulk.alreadyProcessed': '{n} bereits bearbeitet',
+  'admin.toast.bulk.failed': '{n} fehlgeschlagen',
+  'admin.toast.bulk.banned': '{n} Konto/Konten gesperrt'
 } as const;
 
 // Key parity between de/en stays type-enforced; literal-VALUE parity does
@@ -2327,6 +2346,7 @@ const en: Dict = {
   'admin.bulk.rejectAll': 'reject all…',
   'admin.bulk.clear': 'clear',
   'admin.bulk.hint': 'rejecting adds strikes — preview follows',
+  'admin.bulk.capNotice': 'Only the first 50 will be processed (API limit).',
   'admin.page.prev': '← prev',
   'admin.page.next': 'next →',
   'admin.page.of': 'page {p} of {t} · {n} {what} · show',
@@ -2376,7 +2396,26 @@ const en: Dict = {
   'admin.toast.reject.success': '{author} abgelehnt & verwarnt — {n}/3 Verwarnungen.',
   'admin.toast.ban.title': '{author} wurde gesperrt — 3/3 Verwarnungen.',
   'admin.toast.ban.sub': 'Sperre aufheben: im Protokoll → Autor → „entsperren“',
-  'admin.toast.warn.success': 'Beitrag von {author} mit Hinweis freigegeben.'
+  'admin.toast.warn.success': 'Beitrag von {author} mit Hinweis freigegeben.',
+
+  // ── Bulk-reject "Folgen-Vorschau" modal (Task 7, NOVEL §02) — identical
+  // to `de` — see the comment on that block above.
+  'admin.modal.bulk.kicker': 'BULK · {n} AUSGEWÄHLT',
+  'admin.modal.bulk.title': 'Alle ablehnen —',
+  'admin.modal.bulk.titleAccent': 'mit Folgen',
+  'admin.modal.bulk.reasonLabel': 'Gemeinsamer Grund',
+  'admin.modal.bulk.reasonHint': 'gilt für alle {n} · wird den Autor:innen angezeigt',
+  'admin.modal.bulk.consequencesTitle': 'FOLGEN FÜR DIE STRIKE-KONTEN',
+  'admin.modal.bulk.banBadge': 'WIRD GESPERRT',
+  'admin.modal.bulk.ackLead': 'Mir ist klar: {n} Konto/Konten werden dabei gesperrt.',
+  'admin.modal.bulk.ackBody': 'Ohne Häkchen bleibt „alle ablehnen“ deaktiviert.',
+  'admin.modal.bulk.footnote': 'bereits geprüfte Fälle werden übersprungen',
+  'admin.modal.bulk.cta': '✕ {n} ablehnen',
+  'admin.toast.bulk.rejected': 'Bulk abgeschlossen: {n} abgelehnt',
+  'admin.toast.bulk.approved': 'Bulk abgeschlossen: {n} freigegeben',
+  'admin.toast.bulk.alreadyProcessed': '{n} bereits bearbeitet',
+  'admin.toast.bulk.failed': '{n} fehlgeschlagen',
+  'admin.toast.bulk.banned': '{n} Konto/Konten gesperrt'
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };

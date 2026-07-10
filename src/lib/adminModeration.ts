@@ -154,3 +154,76 @@ export interface FlaggedItem {
 export function isUrgent(item: FlaggedItem): boolean {
   return item.decision === 'urgent_review';
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Bulk-reject "Folgen-Vorschau" (NOVEL §02) — pure per-author strike math
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface BulkDeltaRow {
+  id: string;
+  title: string;
+  author: string;
+  from: number;
+  to: number;
+  ban: boolean;
+  note: string | null;
+}
+
+/**
+ * Sequential per-author strike summation, mirroring exactly how
+ * `processReviewAction` (src/lib/reviewAction.ts) processes a bulk-reject
+ * request: the API walks `flaggedContentIds` in the order the client sent
+ * them, incrementing each author's `moderationStrikes` one item at a time
+ * (never re-reading `authorStrikes` mid-batch). So must this preview —
+ * `items` MUST be in the same order as the eventual POST body, or the
+ * preview will lie about which item bans which account.
+ *
+ * `from` is seeded from `item.authorStrikes` (the value at fetch time) on
+ * an author's first item in the selection, then carried forward from the
+ * running total for any subsequent items by the same author within this
+ * same selection — this is what makes two 1-strike hits by the same author
+ * add up to a 3rd-strike ban, even though neither item's OWN
+ * `authorStrikes` field says so.
+ *
+ * `ban` is true only on the first item that pushes an author's running
+ * count to >= 3 (MAX_STRIKES) — later items by an already-banned author in
+ * the same batch don't re-flag (mirrors the UI's "one ban event per
+ * author" framing; the server itself keeps incrementing past 3 but only
+ * sets `isBanned` once).
+ */
+export function computeBulkDeltas(items: FlaggedItem[]): BulkDeltaRow[] {
+  const running = new Map<string, number>(); // authorId -> current running strike count
+  const hits = new Map<string, number>(); // authorId -> nth hit within this selection
+  const banned = new Set<string>(); // authorId already produced a ban row in this selection
+
+  const rows: BulkDeltaRow[] = [];
+
+  for (const item of items) {
+    if (!item._id) continue;
+    const { authorId } = item;
+
+    const from = running.has(authorId) ? running.get(authorId)! : item.authorStrikes;
+    const to = Math.min(from + 1, 3);
+
+    const hitN = (hits.get(authorId) ?? 0) + 1;
+    hits.set(authorId, hitN);
+
+    const crossesThreshold = from + 1 >= 3;
+    const ban = crossesThreshold && !banned.has(authorId);
+    if (ban) banned.add(authorId);
+
+    rows.push({
+      id: item._id,
+      title: item.title || (item.body ? `„${item.body.slice(0, 76)}…“` : item.contentType),
+      author: item.authorName ?? item.authorId,
+      from,
+      to,
+      ban,
+      note: hitN >= 2 ? `${hitN}. Treffer in dieser Auswahl` : null,
+    });
+
+    running.set(authorId, to);
+  }
+
+  return rows;
+}

@@ -1,12 +1,16 @@
 <script lang="ts">
   /**
-   * Admin moderation orchestrator — queue view (Task 4). Owns fetch state,
-   * filter/pagination state, and the optimistic approve flow. `onWarn`/
-   * `onReject` are stubs until Tasks 5/6 wire the reject/warning modals.
+   * Admin moderation orchestrator — queue view. Owns fetch state,
+   * filter/pagination state, the optimistic single-item approve/warn/reject
+   * flow (Tasks 4–6), and the bulk-selection + bulk approve/reject flow
+   * (Task 7). `onWarn`/`onReject`/bulk-reject all open their respective
+   * modal; `runSingleAction` and the bulk handlers both share the same
+   * `actioning`/`settling` overlay contract with `AdmQueueCard`.
    *
    * State contract (consumed by Tasks 5–9 — keep names/shapes stable):
    *   view, filterType, items, counts, total, page, pageSize, loading,
-   *   loadError, actioning, settling, fetchQueue(), runSingleAction().
+   *   loadError, actioning, settling, selected, fetchQueue(),
+   *   runSingleAction().
    */
   import { onMount } from 'svelte';
   import { t, tStr } from '../../../lib/kiosk-i18n';
@@ -15,9 +19,11 @@
   import AdmStatRow from './AdmStatRow.svelte';
   import AdmTitleBlock from './AdmTitleBlock.svelte';
   import AdmFilterRail from './AdmFilterRail.svelte';
+  import AdmBulkBar from './AdmBulkBar.svelte';
   import AdmQueueCard from './AdmQueueCard.svelte';
   import AdmRejectModal from './AdmRejectModal.svelte';
   import AdmWarningModal from './AdmWarningModal.svelte';
+  import AdmBulkRejectModal from './AdmBulkRejectModal.svelte';
 
   let { adminName }: { adminName: string } = $props();
 
@@ -34,17 +40,33 @@
   let actioning = $state<Map<string, string>>(new Map()); // id → pending pill label
   let settling = $state<Set<string>>(new Set()); // id → settle-out animation
 
-  // Local-only: bulk selection is not part of this task's scope (no bulk
-  // bar yet — a later task builds it). The checkbox still needs somewhere
-  // to write, so the visual "selected" border/shadow works once that bar
-  // lands, without this component owning any bulk-action logic itself.
-  let selectedIds = $state<Set<string>>(new Set());
+  // ── Bulk selection (Task 7) ─────────────────────────────────────────────
+  let selected = $state<Set<string>>(new Set());
   function toggleSelect(id?: string) {
     if (!id) return;
-    const next = new Set(selectedIds);
+    const next = new Set(selected);
     if (next.has(id)) next.delete(id);
     else next.add(id);
-    selectedIds = next;
+    selected = next;
+  }
+  function clearSelection() {
+    selected = new Set();
+  }
+
+  // Selected items in the same order the queue renders them (== the order
+  // `fetchQueue` got back from the server) — `computeBulkDeltas` does
+  // sequential per-author summation that mirrors the API's own sequential
+  // processing, so this order must match what gets POSTed as
+  // `flaggedContentIds`. The API caps at 50; pageSize is capped at 50 too
+  // so `selected.size` can't exceed it through normal use, but the slice
+  // is defensive in case that invariant ever breaks.
+  function getSelectedItems(): FlaggedItem[] {
+    let sel = items.filter((it) => it._id && selected.has(it._id));
+    if (sel.length > 50) {
+      sel = sel.slice(0, 50);
+      showToast($t['admin.bulk.capNotice'], { type: 'info' });
+    }
+    return sel;
   }
 
   const totalPages = $derived(Math.max(1, Math.ceil(total / pageSize)));
@@ -90,6 +112,7 @@
   function handleFilterChange(f: 'all' | (typeof ADM_TYPES)[number] | 'reported') {
     filterType = f;
     page = 0;
+    clearSelection();
     void fetchQueue();
   }
 
@@ -103,12 +126,14 @@
   function handlePageChange(p: number) {
     if (p < 0 || p >= totalPages) return;
     page = p;
+    clearSelection();
     void fetchQueue();
   }
 
   function handlePageSizeChange(size: number) {
     pageSize = size;
     page = 0;
+    clearSelection();
     void fetchQueue();
   }
 
@@ -182,8 +207,8 @@
   }
 
   // Approve is fully wired (also used for report-dismiss — same 'approve'
-  // action per the API). Warn/reject are stubs until Tasks 5/6 add the
-  // reason/warning-text modals.
+  // action per the API). Warn opens AdmWarningModal, reject opens
+  // AdmRejectModal (below) — both wired since Tasks 5/6.
   function handleApprove(item: FlaggedItem) {
     if (!item._id) return;
     void runSingleAction(item._id, 'approve');
@@ -247,6 +272,100 @@
       });
     }
   }
+
+  // ── Bulk actions (Task 7) ────────────────────────────────────────────────
+  let bulkBusy = $state(false);
+  let bulkRejectItems = $state<FlaggedItem[] | null>(null);
+
+  // §05 result toast — built from `results[]` + `bansTriggered`. Shared by
+  // both bulk approve and bulk reject; only non-zero parts are appended.
+  function showBulkResultToast(action: 'approve' | 'reject', results: Array<{ status: string }>, bansTriggered: number) {
+    const succeeded = results.filter((r) => r.status === 'approved' || r.status === 'rejected').length;
+    const alreadyProcessed = results.filter((r) => r.status === 'already_processed').length;
+    const failed = results.filter((r) => r.status === 'failed').length;
+
+    let msg = tStr(action === 'reject' ? $t['admin.toast.bulk.rejected'] : $t['admin.toast.bulk.approved'], { n: succeeded });
+    if (alreadyProcessed > 0) msg += ` · ${tStr($t['admin.toast.bulk.alreadyProcessed'], { n: alreadyProcessed })}`;
+    if (failed > 0) msg += ` · ${tStr($t['admin.toast.bulk.failed'], { n: failed })}`;
+    if (bansTriggered > 0) msg += ` — ${tStr($t['admin.toast.bulk.banned'], { n: bansTriggered })}`;
+
+    showToast(msg, { type: bansTriggered > 0 ? 'error' : 'success', duration: 6000 });
+  }
+
+  // Failed/already-processed items are left alone here on purpose — they
+  // stay 'pending' server-side, so the `fetchQueue()` refetch in `finally`
+  // naturally keeps them in the list (or drops them if they did succeed).
+  async function runBulkAction(
+    selItems: FlaggedItem[],
+    action: 'approve' | 'reject',
+    rejectionReason?: string
+  ): Promise<void> {
+    if (selItems.length === 0) return;
+    bulkBusy = true;
+
+    const label = action === 'reject' ? $t['admin.act.pendingReject'] : $t['admin.act.pendingApprove'];
+    const startActioning = new Map(actioning);
+    for (const it of selItems) if (it._id) startActioning.set(it._id, label);
+    actioning = startActioning;
+
+    try {
+      const res = await fetch('/api/admin/moderation/bulk-review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          flaggedContentIds: selItems.map((it) => it._id),
+          action,
+          ...(action === 'reject' ? { rejectionReason } : {}),
+        }),
+      });
+
+      let json: any = null;
+      try {
+        json = await res.json();
+      } catch {
+        /* non-JSON error body — fall through to generic message below */
+      }
+
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.error || json?.message || `Request failed (${res.status})`);
+      }
+
+      showBulkResultToast(action, json.results ?? [], json.bansTriggered ?? 0);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : String(err));
+    } finally {
+      const endActioning = new Map(actioning);
+      for (const it of selItems) if (it._id) endActioning.delete(it._id);
+      actioning = endActioning;
+      clearSelection();
+      bulkBusy = false;
+      void fetchQueue();
+    }
+  }
+
+  function handleBulkApproveAll() {
+    void runBulkAction(getSelectedItems(), 'approve');
+  }
+
+  function handleBulkRejectOpen() {
+    const selItems = getSelectedItems();
+    if (selItems.length === 0) return;
+    bulkRejectItems = selItems;
+  }
+
+  function handleBulkRejectCancel() {
+    bulkRejectItems = null;
+  }
+
+  function handleBulkRejectConfirm(reason: string) {
+    const selItems = bulkRejectItems;
+    bulkRejectItems = null; // close immediately — actioning pills on the
+    // cards below carry the rest of the feedback, same division of labor
+    // as the single-item reject flow.
+    if (!selItems || selItems.length === 0) return;
+    void runBulkAction(selItems, 'reject', reason);
+  }
 </script>
 
 <AdmStatRow {counts} />
@@ -254,6 +373,16 @@
 
 {#if view === 'queue'}
   <AdmFilterRail active={filterType} onFilterChange={handleFilterChange} />
+
+  {#if selected.size > 0}
+    <AdmBulkBar
+      count={selected.size}
+      busy={bulkBusy}
+      onApproveAll={handleBulkApproveAll}
+      onRejectAll={handleBulkRejectOpen}
+      onClear={clearSelection}
+    />
+  {/if}
 
   <div style="padding: 0 36px 28px; display: flex; flex-direction: column; gap: 16px; position: relative;">
     {#if loading && items.length === 0}
@@ -291,7 +420,7 @@
       {#each items as item (item._id)}
         <AdmQueueCard
           {item}
-          selected={selectedIds.has(item._id ?? '')}
+          selected={selected.has(item._id ?? '')}
           onToggleSelect={() => toggleSelect(item._id)}
           onApprove={handleApprove}
           onWarn={handleWarn}
@@ -345,4 +474,8 @@
 
 {#if warnTarget}
   <AdmWarningModal item={warnTarget} onCancel={handleWarnCancel} onConfirm={handleWarnConfirm} />
+{/if}
+
+{#if bulkRejectItems}
+  <AdmBulkRejectModal items={bulkRejectItems} onCancel={handleBulkRejectCancel} onConfirm={handleBulkRejectConfirm} />
 {/if}
