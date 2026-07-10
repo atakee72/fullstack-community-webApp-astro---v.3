@@ -108,15 +108,15 @@ export const POST: APIRoute = async ({ request }) => {
 - **Result merging**: `mergeModerationResults()` combines all checks into a single flagged record
 - **Daily posting limits**: 5 per rolling 24h for topics, events, announcements, recommendations, and marketplace listings. Comments excluded (lightweight/conversational). Checked before validation to save API costs.
 - **User reports**: Community can flag content via report button (all content types including calendar event comments via `EventViewModal`)
-- **Admin queue**: `/admin/moderation` page (Svelte: `ModerationQueue.svelte`) with filter tabs (All/Posts/Comments/Events/Announcements/Recommendations/Marketplace)
+- **Admin queue**: `/admin/moderation` page (kiosk design system: `AdminLayout.astro` + `src/components/admin/kiosk/ModerationApp.svelte` orchestrator + `Adm*` components) with filter tabs (All/Discussion/Comment/Event/Announcement/Recommendation/Marketplace/News + ⚑ Reported), plus a desktop-only Protokoll (history) view and bulk approve/reject.
 - **Warning labels**: Approved-with-warning content shows blur overlay until user clicks "Show content anyway" (persisted to localStorage)
 - **Strike system**: 3 strikes = automatic user ban — enforced at login (no session for banned accounts) and on all content-write APIs (403 `account_banned` via `src/lib/auth/banGuard.ts`); banned users keep read access
 - **Status flow**: `pending` → `approved`/`rejected` (with optional warning label)
 - **Bulk review**: `POST /api/admin/moderation/bulk-review` — approve/reject up to 50 items at once. Skips already-reviewed items, processes all even if some fail, returns partial results with ban notifications.
-- **Shared review logic**: `src/lib/reviewAction.ts` — `processReviewAction()` handles updating flagged content, original content, comment parent arrays, strike system, and auto-ban. Used by both `review.ts` and `bulk-review.ts`.
+- **Shared review logic**: `src/lib/reviewAction.ts` — `processReviewAction()` handles updating flagged content, original content, comment parent arrays, strike system, and auto-ban. Used by both `review.ts` and `bulk-review.ts`. `bansTriggered`/`userBanned` count per **TRANSITION** (not-banned → banned), guarded by `isBanned !== true` before setting the ban — rejecting multiple items from an already-banned author no longer inflates the count.
 - Key fields: `moderationStatus`, `isUserReported`, `hasWarningLabel`, `warningText` on content
 
-### Admin Moderation Table (`ModerationQueue.svelte`)
+### Admin Moderation Table (kiosk: `ModerationApp.svelte` + `Adm*` components)
 See `src/components/admin/CLAUDE.md` — full notes load when working in that subtree.
 
 ### Newsboard
@@ -218,7 +218,7 @@ See `src/components/auth/kiosk/CLAUDE.md` — full notes load when working in th
 ### Pagination
 - **React component**: `src/components/ui/Pagination.tsx` — reusable with props for accent color, page size options, item label
 - **Used in**: Forum (`ForumContainer.tsx`, client-side slicing, 12/24/48), Newsboard (`NewsCards.tsx`, server-side, 12/24/48)
-- **Svelte inline**: Marketplace (`MarketplaceBrowse.svelte`), Blog (`BlogSearch.svelte`), Admin Moderation (`ModerationQueue.svelte`) — same layout, adapted to Svelte syntax
+- **Svelte inline**: Marketplace (`MarketplaceBrowse.svelte`), Blog (`BlogSearch.svelte`), Admin Moderation (`ModerationApp.svelte`, queue + Protokoll each with their own pager) — same layout, adapted to Svelte syntax
 - **Features**: First/Prev/Next/Last buttons, "Page X of Y · N items" display, optional page size dropdown
 - **Accent colors**: Wine/burgundy for forum and newsboard, teal for marketplace/moderation, white-on-dark for blog
 
@@ -331,6 +331,7 @@ Each main page has its own accent color used for **kickers** (mono-uppercase eye
 |---|---|---|
 | Forum | wine | `text-wine` (`#b23a5b`) |
 | Calendar | teal | `text-teal` (`#3f8f9f`) |
+| Admin | plum | `text-[#6f2f59]` via `--k-plum` |
 | Newsboard / Marketplace / Profile / Blog | TBD | — |
 
 When migrating a surface into kiosk, swap kicker + italic-accent text to the page's color. **Don't touch:** live-now indicators, today indicator, weekend day labels, required-field asterisks, compose step numbers (`01`, `02`, …), CTA wine-shadows, modal wine-shadows, or wine-filled FABs — those are semantic/sticker accents, not brand accent, and stay wine across all surfaces.

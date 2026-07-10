@@ -2,21 +2,49 @@
 
 Loaded lazily when Claude reads/edits files in `src/components/admin/`.
 
-### Auth gate
-- All admin pages auth-gate at the page level (frontmatter `getSession()` + redirect to `/login` if no session, then `if (session.user.role !== 'admin') return Astro.redirect('/')`).
-- API endpoints under `/api/admin/*` should gate via `requireAdminSession()` from `src/lib/auth.ts` — returns a pre-shaped 401/403 `Response` if the session lacks admin role. Used cleanly by `/api/admin/announcements/*`.
-  All `/api/admin/*` endpoints (announcements AND moderation) now gate via `requireAdminSession()` — the old `ADMIN_USER_IDS` stopgap was removed (2026-07).
-- Both admin pages today (`/admin/moderation`, `/admin/announcements`) still use **`BaseLayout`** (legacy dark-glass), not `KioskLayout`. Admin kiosk migration is queued — see `project_kiosk_deferred.md`.
+## Auth gate
+- All admin pages auth-gate at the page level (frontmatter `getSession()` + redirect to `/login` if no session). `moderation.astro` additionally checks `session.user.role !== 'admin'` and renders the §09 "no access" state inline (see below) rather than redirecting — the page itself is reachable by any logged-in user, only the queue content is gated.
+- API endpoints under `/api/admin/*` gate via `requireAdminSession()` from `src/lib/auth.ts` — returns a pre-shaped 401/403 `Response` if there's no session or the session lacks admin role. Used by every `/api/admin/announcements/*` and `/api/admin/moderation/*` endpoint. No `ADMIN_USER_IDS` fallback.
+- **Banned-admin gap**: `requireAdminSession()` checks role but not `isBanned` — a banned account that still has `role: 'admin'` keeps moderation access. Documented in `src/components/auth/kiosk/CLAUDE.md`; candidate to close when touching admin APIs next (not fixed here).
+- `/admin/moderation` uses **`AdminLayout`** (kiosk, plum accent). `/admin/announcements` still uses **`BaseLayout`** (legacy dark-glass) — that migration is the next admin surface, not yet started.
 
-### Admin Moderation Table (`ModerationQueue.svelte`)
-- **Sortable columns**: Date (`createdAt`), Flagged For (`maxScore`), Decision (`reviewStatus`) — click header to toggle asc/desc
-- **Column visibility**: "Columns" dropdown to show/hide columns; Reason/Warning hidden by default
-- **Improved pagination**: Page size selector (10/25/50), First/Prev/Next/Last buttons, "Page X of Y"
-- **Bulk actions** (queue view only): Select items via checkboxes → Approve All / Reject All with `confirmAction()` dialogs
-- **Human-readable categories**: Raw strings like `spam_check:irrelevant_nonsense` displayed as "Irrelevant content", `image_safety:sexual` as "Sexual image", etc. (via `CATEGORY_LABELS` map + `formatCategory()`)
-- **Rejection reason flows to author**: when admin types a `reason` in the rejection prompt (`ModerationQueue.svelte:898`), it's POSTed to `/api/admin/moderation/review` → saved as `topic.rejectionReason` via `processReviewAction()` (`src/lib/reviewAction.ts:79`). The kiosk forum's `OwnStatusBanner state="rejected"` reads that field and renders it as an italic blockquote below the generic body. Test with the rejection prompt — the text the admin types lands directly in the author's view.
+## Kiosk moderation app (`/admin/moderation`)
 
-### Admin Official Announcements (`AdminAnnouncementsPanel.svelte` + `/admin/announcements.astro`)
+**Page**: `src/pages/admin/moderation.astro` — SSR resolves the session, redirects logged-out users to `/login`, and for logged-in non-admins renders the §09 "Dieser Bereich gehört der Moderation" state inline (DE-only, static copy) instead of mounting the app. Admins get `<ModerationApp client:only="svelte" adminName={...} />`.
+
+**Layout**: `src/layouts/AdminLayout.astro` — plum accent (`--k-plum`, `[data-page="admin"]`), desktop masthead (INTERNER BEREICH ribbon + wordmark + back-link + `AuthLangToggle` + avatar initial) and a separate slimmer mobile masthead. No `KioskNav` — this isn't part of the public app nav. Session-independent by design; only consumes `adminName` for the avatar.
+  - Note: the "← zurück zum Forum" link (both here and in `moderation.astro`'s §09 state) points at `/forum`, which has no matching Astro page — the forum actually lives at `/`. Pre-existing dead link, not introduced or fixed by this task.
+
+**Orchestrator**: `src/components/admin/kiosk/ModerationApp.svelte` — owns all queue + history state (fetch, filters, pagination, selection, modals) and renders two fully separate responsive trees:
+  - **Desktop (`hidden md:block`)**: stat row → title block with Prüfstapel/Protokoll view toggle → filter rail → (queue) bulk bar when `selected.size > 0` + `AdmQueueCard` list + pager, or (history) decision-filter tabs + column menu + `AdmHistoryTable` + pager.
+  - **Mobile (`md:hidden`)**: `AdmTriageCard` stack only — no view toggle (history is simply unreachable), no checkboxes, no bulk bar, no column menu. Footer note states outright: *"Protokoll + Bulk-Aktionen nur am Desktop — mobil wird triagiert, nicht verwaltet."* Both trees share the same `items`/`counts`/`actioning`/`settling` state — `fetchQueue()` runs once on mount regardless of which tree is visible.
+  - Modals (`AdmRejectModal`, `AdmWarningModal`, `AdmBulkRejectModal`) render outside both responsive blocks, shared by desktop and (for reject/warn) mobile.
+
+**Adm* component roster** (all in `src/components/admin/kiosk/`): `AdmStatRow`, `AdmTitleBlock`, `AdmFilterRail`, `AdmBulkBar`, `AdmQueueCard` (desktop card), `AdmTriageCard` (mobile card), `AdmHistoryTable`, `AdmColumnMenu`, `AdmRejectModal`, `AdmWarningModal`, `AdmBulkRejectModal`, `AdmModalShell` (shared dialog chrome — focus trap + dialog semantics), plus small atoms: `AdmActionBtn`, `AdmCatChip`, `AdmCheckbox`, `AdmDecisionChip`, `AdmSourceStrap`, `AdmStrikeDots`, `AdmTitleBlock`, `AdmTypeChip`.
+
+**Taxonomy/types module**: `src/lib/adminModeration.ts` — **pure, no server imports** (no `mongodb`/`fs`/etc.) because it's imported by `client:only="svelte"` islands; see root `CLAUDE.md` "Server-only modules bleeding into client bundles" for why that boundary matters here specifically. Exports `ADM_TYPES`, `ADM_CATS`/`ADM_SEV_COLOR` (severity taxonomy), `ADM_REPORT_REASONS`, the `FlaggedItem` type (mirrors `FlaggedContent` but with string dates/`_id` for JSON responses, plus the API-only `authorStrikes`/`authorIsBanned` join fields), and `computeBulkDeltas()` (see below).
+
+### API contracts
+- **`GET /api/admin/moderation`** — query params `reviewStatus` (`pending`/`approved`/`rejected`/`reviewed` — `reviewed` = `{ $in: ['approved','rejected'] }`, i.e. "never pending"), `contentType`, `decision`, `source` (`ai_moderation`/`user_report` — the ⚑ Gemeldet filter sends `source=user_report`), `authorId`, `sortBy`/`sortOrder`, `limit`/`offset`, and **`urgentFirst`** (bool — sorts `{ decision: -1, [sortBy]: sortDir }`; since `'urgent_review' > 'pending_review' > 'approved'` lexicographically, a descending sort on `decision` floats urgent items to the top of every page). Response includes `items` (each enriched with `authorStrikes`/`authorIsBanned` via a join against `users` on `authorId`), `pagination`, and `counts` (`pending`/`approved`/`approvedWithWarning`/`rejected`/`urgent`) — the stat row and toggle badges read `counts` directly, independent of the current filter/page.
+- **`GET /api/admin/moderation/author-strikes?authorId=`** — Ban-Bremse ledger: returns `{ strikes, isBanned, history: [{ date, contentType, reason, title }] }` (max 10, newest-first from the user doc's `strikeHistory`, cross-referenced against `flaggedContent` for titles). Called by `AdmRejectModal` only when `item.authorStrikes >= 2` (i.e. this rejection would be the 3rd strike).
+- **`POST /api/admin/moderation/review`** — single-item action (`approve`/`reject`/`approve_with_warning`). Returns `{ success, userBanned?, strikeCount? }`; `userBanned` gates the §08 ban toast in `ModerationApp.handleRejectConfirm`.
+- **`POST /api/admin/moderation/bulk-review`** — same actions, batched (`flaggedContentIds[]`, capped at 50 both client- and server-side). Returns `{ success, results: [{ id, status, strikeCount? }], bansTriggered }`. `bansTriggered` drives the §05 bulk toast and is capped by transition, see below.
+
+### The two novel guards
+1. **Ban-Bremse** (`AdmRejectModal.svelte`) — when `item.authorStrikes >= 2`, the reject modal escalates: fetches the strike ledger via `author-strikes`, shows it inline, and requires an explicit danger-tinted checkbox ("Ja, {author} sperren…") in addition to the reason text before the CTA (`canSubmit`) enables. Purely client-side gating on top of a server that would ban regardless — the guard exists so a ban is never a side-effect the admin didn't consciously acknowledge ("Sperren passiert nie beiläufig").
+2. **Folgen-Vorschau** (`AdmBulkRejectModal.svelte` + `computeBulkDeltas()` in `adminModeration.ts`) — before a bulk reject fires, the modal renders a per-item strike delta table (`from → to`, "N. Treffer in dieser Auswahl" for repeat authors within the same selection, "WIRD GESPERRT" badge on the item that crosses the threshold) and requires an ack checkbox counting *distinct accounts* that will be banned. `computeBulkDeltas` does sequential per-author summation in **selection order** (must match the `flaggedContentIds` POST order) mirroring exactly how `processReviewAction` processes the batch server-side — `ban: true` is set only on the first item per author that crosses 3, not on every item past the threshold.
+
+**Bans-per-transition server fix** (`src/lib/reviewAction.ts`, `processReviewAction`): `userBanned`/`bansTriggered` count only the **not-banned → banned transition**, guarded by `userUpdate.isBanned !== true` before setting `isBanned: true`. Without that guard, rejecting multiple pending items from an *already-banned* author (e.g. a bulk batch with 3 items from one author who's already at 3+ strikes) would re-set `userBanned = true` on every item, inflating `bansTriggered` in `bulk-review.ts` past the number of accounts actually crossing the line — verified with a single-author/3-item bulk fixture returning `bansTriggered: 1` (not 2) and exactly one `bannedAt` timestamp.
+
+### i18n rule (`src/lib/kiosk-i18n.ts`, `admin.*` keys)
+- **Queue + history chrome is properly translated DE/EN**: stat row labels, view toggle (Prüfstapel/Protokoll ↔ Review queue/History), filter rail, history filter tabs, column menu, pagination strings.
+- **Modals and state copy are DE-contract with EN = DE** (deliberate, documented at the `en` dict's `admin.modal.*`/`admin.toast.*`/`admin.state.*` block with a comment: "Identical to `de`"): reject modal, Ban-Bremse modal, warning modal, bulk Folgen-Vorschau modal, all toasts, and empty/error/loading state copy render the same German text regardless of the DE/EN toggle. EN copy for these is an explicit deferred follow-up (see task-10-brief.md's deferred list), not a bug.
+
+### Mobile-triage rule
+Below `md`, the app is triage-only by design (per the design handoff's non-negotiable "mobil wird triagiert, nicht verwaltet"): single-column `AdmTriageCard` stack with the same approve/warn/reject actions and modals as desktop, but **no** Protokoll (history), bulk selection, or column menu — those three surfaces are desktop-only and simply don't render below the breakpoint. Don't add mobile affordances for them; if history/bulk needs to become mobile-reachable, that's a deliberate scope change, not a bug fix.
+
+## Admin Official Announcements (`AdminAnnouncementsPanel.svelte` + `/admin/announcements.astro`)
+**Still legacy `BaseLayout`** (dark-glass) — not migrated to the kiosk design system. Next admin surface queued for a kiosk reskin.
 - **Page**: SSR-fetches all officials (`{ isOfficial: true }`, sorted createdAt desc, limit 50) via `populateAuthors`, passes as `initialItems` to the panel.
 - **Composer** (top of panel): single-page form (NOT a multi-step wizard — announcements are simpler than marketplace listings). Fields: title (5–200), body (10–5000), tags (comma-separated, max 5). No image upload in v1 — admins post plain-text officials.
 - **List** below: officials with status badge (📌 angeheftet · läuft in N Tagen / abgelaufen) + per-row actions: edit (inline expand), pin (`PATCH { pinnedUntil: now+7d }`), unpin (`PATCH { pinnedUntil: null }`), delete (`DELETE` with `confirmAction`).
