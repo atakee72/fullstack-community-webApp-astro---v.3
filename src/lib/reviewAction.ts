@@ -158,7 +158,13 @@ export async function processReviewAction(
       if (userUpdate) {
         newStrikeCount = userUpdate.moderationStrikes || 1;
 
-        if (newStrikeCount >= MAX_STRIKES) {
+        // Bans are counted per TRANSITION (not-banned -> banned), mirroring
+        // the bulk Folgen-Vorschau acknowledgment (computeBulkDeltas flags
+        // only the first item that crosses the threshold for a given
+        // author). Without the `isBanned !== true` guard, every subsequent
+        // rejection of an already-banned author's content would re-set
+        // userBanned = true, over-counting bansTriggered in bulk-review.ts.
+        if (newStrikeCount >= MAX_STRIKES && userUpdate.isBanned !== true) {
           await usersCollection.updateOne(
             { _id: new ObjectId(flaggedContent.authorId) },
             {

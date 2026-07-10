@@ -161,7 +161,8 @@ export function isUrgent(item: FlaggedItem): boolean {
 
 export interface BulkDeltaRow {
   id: string;
-  title: string;
+  title: string | null;
+  contentType: string;
   author: string;
   from: number;
   to: number;
@@ -214,7 +215,8 @@ export function computeBulkDeltas(items: FlaggedItem[]): BulkDeltaRow[] {
 
     rows.push({
       id: item._id,
-      title: item.title || (item.body ? `„${item.body.slice(0, 76)}…“` : item.contentType),
+      title: item.title || (item.body ? `„${item.body.slice(0, 76)}…“` : null),
+      contentType: item.contentType,
       author: item.authorName ?? item.authorId,
       from,
       to,

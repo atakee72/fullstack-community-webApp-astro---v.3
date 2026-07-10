@@ -100,7 +100,7 @@
         "
       >
         <div style="flex: 1;">
-          <div style="font-size: 12.5px; font-weight: 700; letter-spacing: -0.01em;">{r.title}</div>
+          <div style="font-size: 12.5px; font-weight: 700; letter-spacing: -0.01em;">{r.title ?? $t[`admin.type.${r.contentType}` as keyof typeof $t]}</div>
           <div class="font-dmmono" style="font-size: 10px; color: var(--k-ink-mute); margin-top: 2px;">{r.author}{r.note ? ` · ${r.note}` : ''}</div>
         </div>
         <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
