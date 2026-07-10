@@ -17,6 +17,7 @@
   import AdmFilterRail from './AdmFilterRail.svelte';
   import AdmQueueCard from './AdmQueueCard.svelte';
   import AdmRejectModal from './AdmRejectModal.svelte';
+  import AdmWarningModal from './AdmWarningModal.svelte';
 
   let { adminName }: { adminName: string } = $props();
 
@@ -187,9 +188,28 @@
     if (!item._id) return;
     void runSingleAction(item._id, 'approve');
   }
-  function handleWarn(_item: FlaggedItem) {
-    // Task 6 wires the warning modal
-    showToast($t['admin.act.stub'], { type: 'info' });
+  // ── Warning modal ────────────────────────────────────────────────────────
+  let warnTarget = $state<FlaggedItem | null>(null);
+
+  function handleWarn(item: FlaggedItem) {
+    warnTarget = item;
+  }
+
+  function handleWarnCancel() {
+    warnTarget = null;
+  }
+
+  async function handleWarnConfirm(warningText: string) {
+    const item = warnTarget;
+    if (!item?._id) return;
+    warnTarget = null; // close immediately — the card's own optimistic
+    // dim/settle (runSingleAction) carries the rest of the feedback.
+
+    const author = item.authorName ?? item.authorId;
+    const result = await runSingleAction(item._id, 'approve_with_warning', { warningText });
+    if (!result.ok) return; // runSingleAction already surfaced the error toast
+
+    showToast(tStr($t['admin.toast.warn.success'], { author }), { type: 'success' });
   }
 
   // ── Reject modal (incl. Ban-Bremse) ─────────────────────────────────────
@@ -321,4 +341,8 @@
 
 {#if rejectTarget}
   <AdmRejectModal item={rejectTarget} onCancel={handleRejectCancel} onConfirm={handleRejectConfirm} />
+{/if}
+
+{#if warnTarget}
+  <AdmWarningModal item={warnTarget} onCancel={handleWarnCancel} onConfirm={handleWarnConfirm} />
 {/if}

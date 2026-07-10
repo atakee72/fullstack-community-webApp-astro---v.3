@@ -1243,9 +1243,19 @@ const de = {
   'admin.modal.ban.checkboxLead': 'Ja, {author} sperren.',
   'admin.modal.ban.checkboxBody': 'Kein Login, kein Posten mehr — bis ein Admin die Sperre aufhebt. Bestehende Beiträge bleiben (Nachweis der Moderation).',
   'admin.modal.ban.cta': '✕ ablehnen & sperren',
+  'admin.modal.warn.kicker': 'FREIGEBEN · MIT HINWEIS',
+  'admin.modal.warn.title': 'Hinweis',
+  'admin.modal.warn.titleAccent': 'ergänzen',
+  'admin.modal.warn.textLabel': 'Hinweistext',
+  'admin.modal.warn.textHint': 'öffentlich sichtbar · max. 200 Zeichen',
+  'admin.modal.warn.previewLabel': 'VORSCHAU AUF DEM BEITRAG',
+  'admin.modal.warn.previewStrap': '⚠ HINWEIS DER MODERATION',
+  'admin.modal.warn.previewPlaceholder': 'Hinweistext erscheint hier live.',
+  'admin.modal.warn.cta': '⚠ freigeben mit hinweis',
   'admin.toast.reject.success': '{author} abgelehnt & verwarnt — {n}/3 Verwarnungen.',
   'admin.toast.ban.title': '{author} wurde gesperrt — 3/3 Verwarnungen.',
-  'admin.toast.ban.sub': 'Sperre aufheben: im Protokoll → Autor → „entsperren“'
+  'admin.toast.ban.sub': 'Sperre aufheben: im Protokoll → Autor → „entsperren“',
+  'admin.toast.warn.success': 'Beitrag von {author} mit Hinweis freigegeben.'
 } as const;
 
 // Key parity between de/en stays type-enforced; literal-VALUE parity does
@@ -2354,9 +2364,19 @@ const en: Dict = {
   'admin.modal.ban.checkboxLead': 'Ja, {author} sperren.',
   'admin.modal.ban.checkboxBody': 'Kein Login, kein Posten mehr — bis ein Admin die Sperre aufhebt. Bestehende Beiträge bleiben (Nachweis der Moderation).',
   'admin.modal.ban.cta': '✕ ablehnen & sperren',
+  'admin.modal.warn.kicker': 'FREIGEBEN · MIT HINWEIS',
+  'admin.modal.warn.title': 'Hinweis',
+  'admin.modal.warn.titleAccent': 'ergänzen',
+  'admin.modal.warn.textLabel': 'Hinweistext',
+  'admin.modal.warn.textHint': 'öffentlich sichtbar · max. 200 Zeichen',
+  'admin.modal.warn.previewLabel': 'VORSCHAU AUF DEM BEITRAG',
+  'admin.modal.warn.previewStrap': '⚠ HINWEIS DER MODERATION',
+  'admin.modal.warn.previewPlaceholder': 'Hinweistext erscheint hier live.',
+  'admin.modal.warn.cta': '⚠ freigeben mit hinweis',
   'admin.toast.reject.success': '{author} abgelehnt & verwarnt — {n}/3 Verwarnungen.',
   'admin.toast.ban.title': '{author} wurde gesperrt — 3/3 Verwarnungen.',
-  'admin.toast.ban.sub': 'Sperre aufheben: im Protokoll → Autor → „entsperren“'
+  'admin.toast.ban.sub': 'Sperre aufheben: im Protokoll → Autor → „entsperren“',
+  'admin.toast.warn.success': 'Beitrag von {author} mit Hinweis freigegeben.'
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };
