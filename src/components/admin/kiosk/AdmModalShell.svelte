@@ -18,7 +18,7 @@
    * component (`{#if item}`) rather than passing an `open` boolean, so
    * onMount/onDestroy map cleanly to modal open/close.
    */
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import type { Snippet } from 'svelte';
 
   let {
@@ -33,16 +33,68 @@
     children?: Snippet;
   } = $props();
 
+  // Focus trap: plain fixed div (not native <dialog>), so inertness has
+  // to be hand-rolled — remember the pre-open focus target, move focus
+  // inside on mount, trap Tab within the card's focusable elements
+  // (recomputed on every Tab keydown since contents can change, e.g.
+  // CTA enabling/disabling), and restore focus on destroy/close.
+  const FOCUSABLE_SELECTOR =
+    'a[href], button:not([disabled]), textarea, input, [tabindex]:not([tabindex="-1"])';
+
+  let cardEl: HTMLDivElement | undefined = $state();
+  let previouslyFocused: HTMLElement | null = null;
+
+  function getFocusable(): HTMLElement[] {
+    if (!cardEl) return [];
+    return Array.from(cardEl.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+  }
+
   onMount(() => {
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+
+    previouslyFocused = document.activeElement as HTMLElement | null;
+    const focusable = getFocusable();
+    if (focusable.length > 0) {
+      focusable[0].focus();
+    } else if (cardEl) {
+      cardEl.setAttribute('tabindex', '-1');
+      cardEl.focus();
+    }
+
     return () => {
       document.body.style.overflow = prevOverflow;
     };
   });
 
+  onDestroy(() => {
+    previouslyFocused?.focus?.();
+  });
+
   function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') onClose();
+    if (e.key === 'Escape') {
+      onClose();
+      return;
+    }
+    if (e.key !== 'Tab') return;
+
+    const focusable = getFocusable();
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+
+    if (e.shiftKey) {
+      if (active === first || !cardEl?.contains(active)) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (active === last || !cardEl?.contains(active)) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
   }
 
   function handleBackdropClick(e: MouseEvent) {
@@ -59,6 +111,7 @@
   role="presentation"
 >
   <div
+    bind:this={cardEl}
     class="adm-modal-card"
     role="dialog"
     aria-modal="true"
