@@ -24,6 +24,8 @@
   import AdmRejectModal from './AdmRejectModal.svelte';
   import AdmWarningModal from './AdmWarningModal.svelte';
   import AdmBulkRejectModal from './AdmBulkRejectModal.svelte';
+  import AdmHistoryTable from './AdmHistoryTable.svelte';
+  import AdmColumnMenu from './AdmColumnMenu.svelte';
 
   let { adminName }: { adminName: string } = $props();
 
@@ -118,9 +120,11 @@
 
   function handleViewChange(v: 'queue' | 'history') {
     view = v;
-    // History (§03 empty / ledger list) is out of scope for Task 4 — the
-    // toggle switches the local view flag only; a later task builds the
-    // reviewed-items list behind it.
+    // Queue state (filterType/page/items/selected/…) is left completely
+    // untouched here — it isn't refetched, so toggling back to 'queue'
+    // shows exactly what was there before. History refetches on every
+    // entry so it's never stale.
+    if (v === 'history') void fetchHistory();
   }
 
   function handlePageChange(p: number) {
@@ -140,6 +144,99 @@
   onMount(() => {
     void fetchQueue();
   });
+
+  // ── History (Protokoll) state (Task 8) ──────────────────────────────────
+  // Separate from the queue's own page/pageSize/items/loading/loadError —
+  // switching views never touches queue state, so toggling back always
+  // shows the queue exactly as it was left.
+  let histFilter = $state<'all' | 'approved' | 'rejected'>('all');
+  let sortBy = $state<'createdAt' | 'maxScore' | 'reviewStatus'>('createdAt');
+  let sortOrder = $state<'asc' | 'desc'>('desc');
+  let hiddenCols = $state<Set<string>>(new Set(['reason']));
+  let histItems = $state<FlaggedItem[]>([]);
+  let histTotal = $state(0);
+  let histPage = $state(0);
+  let histPageSize = $state(10);
+  let histLoading = $state(true);
+  let histLoadError = $state(false);
+
+  const histTotalPages = $derived(Math.max(1, Math.ceil(histTotal / histPageSize)));
+
+  let histFetchSeq = 0;
+
+  async function fetchHistory(): Promise<void> {
+    const seq = ++histFetchSeq;
+    histLoading = true;
+    histLoadError = false;
+    try {
+      const params = new URLSearchParams();
+      // "Alle" = reviewed (approved + rejected) — NEVER pending. Non-negotiable:
+      // the queue and history views must stay disjoint.
+      params.set('reviewStatus', histFilter === 'all' ? 'reviewed' : histFilter);
+      params.set('sortBy', sortBy);
+      params.set('sortOrder', sortOrder);
+      params.set('limit', String(histPageSize));
+      params.set('offset', String(histPage * histPageSize));
+      // No urgentFirst — history has no urgency concept, it's a settled ledger.
+
+      const res = await fetch(`/api/admin/moderation?${params.toString()}`, { credentials: 'include' });
+      if (seq !== histFetchSeq) return;
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const json = await res.json();
+      if (seq !== histFetchSeq) return;
+
+      histItems = Array.isArray(json.items) ? json.items : [];
+      histTotal = json.pagination?.total ?? 0;
+    } catch {
+      if (seq !== histFetchSeq) return;
+      histLoadError = true;
+    } finally {
+      if (seq === histFetchSeq) histLoading = false;
+    }
+  }
+
+  function handleHistFilterChange(f: 'all' | 'approved' | 'rejected') {
+    histFilter = f;
+    histPage = 0;
+    void fetchHistory();
+  }
+
+  function handleHistSort(col: 'createdAt' | 'maxScore' | 'reviewStatus') {
+    if (sortBy === col) {
+      sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortBy = col;
+      sortOrder = 'desc';
+    }
+    histPage = 0;
+    void fetchHistory();
+  }
+
+  function handleHistColToggle(id: string) {
+    const next = new Set(hiddenCols);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    hiddenCols = next;
+  }
+
+  function handleHistPageChange(p: number) {
+    if (p < 0 || p >= histTotalPages) return;
+    histPage = p;
+    void fetchHistory();
+  }
+
+  function handleHistPageSizeChange(size: number) {
+    histPageSize = size;
+    histPage = 0;
+    void fetchHistory();
+  }
+
+  const HIST_FILTERS = ['all', 'approved', 'rejected'] as const;
+  const HIST_FILTER_LABEL_KEY = {
+    all: 'admin.filter.all',
+    approved: 'admin.hist.filter.approved',
+    rejected: 'admin.hist.filter.rejected',
+  } as const;
 
   // ── Review action (optimistic §04 flow) ─────────────────────────────────
   async function runSingleAction(
@@ -464,8 +561,100 @@
   </div>
 
 {:else}
-  <!-- History (Protokoll) — later task builds the reviewed-items ledger. -->
-  <div class="font-dmmono" style="padding: 36px; color: var(--k-ink-mute);">Protokoll folgt in einer späteren Aufgabe.</div>
+  <!-- History (Protokoll) — no checkboxes, no bulk bar; disjoint from the
+       queue (reviewStatus is always 'reviewed'/'approved'/'rejected', never
+       'pending'). -->
+  <div style="padding: 14px 36px 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+    {#each HIST_FILTERS as f (f)}
+      <button
+        type="button"
+        onclick={() => handleHistFilterChange(f)}
+        class="font-bricolage"
+        style="
+          padding: 5px 12px; font-size: 12.5px; font-weight: 600;
+          background: {histFilter === f ? 'var(--k-ink)' : 'transparent'};
+          color: {histFilter === f ? 'var(--k-paper)' : 'var(--k-ink)'};
+          border: var(--k-border-ink); border-radius: var(--k-radius-pill); cursor: pointer;
+        "
+      >{$t[HIST_FILTER_LABEL_KEY[f]]}</button>
+    {/each}
+    <span class="font-dmmono" style="font-size: 10.5px; color: var(--k-ink-mute); margin-left: 6px;">{$t['admin.hist.allNote']}</span>
+    <div style="margin-left: auto;">
+      <AdmColumnMenu hidden={hiddenCols} onToggle={handleHistColToggle} />
+    </div>
+  </div>
+
+  <div style="padding: 0 36px 28px;">
+    {#if histLoading && histItems.length === 0}
+      <!-- loading — same skeleton sweep as the queue -->
+      {#each [0, 1, 2] as i (i)}
+        <div style="border: 1px solid var(--k-rule); border-radius: var(--k-radius-md); padding: 12px 14px; background: var(--k-paper); margin-top: 12px;">
+          <div class="adm-skeleton-bar" style="height: 10px; width: 38%; border-radius: 5px;"></div>
+          <div class="adm-skeleton-bar" style="height: 10px; width: 82%; border-radius: 5px; margin-top: 8px;"></div>
+        </div>
+      {/each}
+
+    {:else if histLoadError}
+      <!-- §06 error, same treatment as the queue -->
+      <div style="border: 1.5px solid var(--k-danger); border-radius: var(--k-radius-md); background: var(--k-paper-warm); padding: 14px 16px;">
+        <div class="font-bricolage" style="font-size: 13.5px; font-weight: 800;">{$t['admin.state.error.title']}</div>
+        <div style="font-size: 12px; color: var(--k-ink-soft); margin-top: 4px; line-height: 1.5;">{$t['admin.state.error.body']}</div>
+        <button
+          type="button"
+          onclick={() => fetchHistory()}
+          class="font-bricolage"
+          style="margin-top: 10px; display: inline-block; background: var(--k-ink); color: var(--k-paper); border-radius: var(--k-radius-pill); padding: 6px 14px; font-size: 12px; font-weight: 700; box-shadow: 2px 2px 0 var(--k-danger); border: none; cursor: pointer;"
+        >{$t['admin.state.error.retry']}</button>
+      </div>
+
+    {:else if !histItems.length}
+      <!-- §03 empty — no decisions made yet -->
+      <div style="text-align: center; padding: 26px 12px;">
+        <div class="font-bricolage" style="font-size: 17px; font-weight: 800; letter-spacing: -0.02em;">{$t['admin.state.histEmpty.title']}</div>
+        <div class="font-instrument" style="font-style: italic; font-size: 13.5px; color: var(--k-ink-soft); margin-top: 4px;">{$t['admin.state.histEmpty.body']}</div>
+        <button
+          type="button"
+          onclick={() => handleViewChange('queue')}
+          class="font-bricolage"
+          style="margin-top: 12px; background: transparent; color: var(--k-accent); border: none; font-size: 13px; font-weight: 700; cursor: pointer;"
+        >{$t['admin.state.histEmpty.cta']}</button>
+      </div>
+
+    {:else}
+      <AdmHistoryTable items={histItems} {hiddenCols} {sortBy} {sortOrder} onSort={handleHistSort} />
+
+      <!-- pagination footer (Task 4 pattern, admin.page.decisions label) -->
+      <div style="display: flex; justify-content: center; gap: 14px; align-items: center; font-family: var(--k-font-mono); font-size: 11px; color: var(--k-ink-mute); padding-top: 16px; flex-wrap: wrap;">
+        <button
+          type="button"
+          disabled={histPage === 0}
+          onclick={() => handleHistPageChange(histPage - 1)}
+          style="border: var(--k-border-ink); border-radius: var(--k-radius-pill); padding: 5px 14px; color: var(--k-ink); font-weight: 600; background: transparent; opacity: {histPage === 0 ? 0.5 : 1}; cursor: {histPage === 0 ? 'not-allowed' : 'pointer'};"
+        >{$t['admin.page.prev']}</button>
+
+        <span>
+          {tStr($t['admin.page.of'], { p: histPage + 1, t: histTotalPages, n: histTotal, what: $t['admin.page.decisions'] })}
+          <select
+            value={histPageSize}
+            onchange={(e) => handleHistPageSizeChange(Number((e.target as HTMLSelectElement).value))}
+            class="font-dmmono"
+            style="margin-left: 4px; border: 1px solid var(--k-rule); border-radius: var(--k-radius-sm); background: var(--k-paper); color: var(--k-ink); font-size: 11px; padding: 2px 4px;"
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+          </select>
+        </span>
+
+        <button
+          type="button"
+          disabled={histPage >= histTotalPages - 1}
+          onclick={() => handleHistPageChange(histPage + 1)}
+          style="border: var(--k-border-ink); border-radius: var(--k-radius-pill); padding: 5px 14px; color: var(--k-ink); font-weight: 600; background: transparent; opacity: {histPage >= histTotalPages - 1 ? 0.5 : 1}; cursor: {histPage >= histTotalPages - 1 ? 'not-allowed' : 'pointer'};"
+        >{$t['admin.page.next']}</button>
+      </div>
+    {/if}
+  </div>
 {/if}
 
 {#if rejectTarget}

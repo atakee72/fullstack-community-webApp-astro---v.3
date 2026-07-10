@@ -156,6 +156,25 @@ export function isUrgent(item: FlaggedItem): boolean {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// History (Protokoll) table — column set (Task 8)
+// ─────────────────────────────────────────────────────────────────────────
+
+/** Fixed column order for the Protokoll table + the column-visibility menu.
+ * Single source of truth so `AdmHistoryTable` (rendering) and
+ * `AdmColumnMenu` (the "last visible column" guard) can't drift apart. */
+export const ADM_HISTORY_COLS = [
+  'date',
+  'source',
+  'type',
+  'content',
+  'author',
+  'flagged',
+  'decision',
+  'reason',
+] as const;
+export type AdmHistoryColId = (typeof ADM_HISTORY_COLS)[number];
+
+// ─────────────────────────────────────────────────────────────────────────
 // Bulk-reject "Folgen-Vorschau" (NOVEL §02) — pure per-author strike math
 // ─────────────────────────────────────────────────────────────────────────
 

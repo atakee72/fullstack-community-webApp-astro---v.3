@@ -1274,7 +1274,31 @@ const de = {
   'admin.toast.bulk.approved': 'Bulk abgeschlossen: {n} freigegeben',
   'admin.toast.bulk.alreadyProcessed': '{n} bereits bearbeitet',
   'admin.toast.bulk.failed': '{n} fehlgeschlagen',
-  'admin.toast.bulk.banned': '{n} Konto/Konten gesperrt'
+  'admin.toast.bulk.banned': '{n} Konto/Konten gesperrt',
+
+  // ── History (Protokoll) table — Task 8 ──────────────────────────────────
+  'admin.hist.col.date': 'Datum',
+  'admin.hist.col.source': 'Quelle',
+  'admin.hist.col.type': 'Typ',
+  'admin.hist.col.content': 'Inhalt',
+  'admin.hist.col.author': 'Autor:in',
+  'admin.hist.col.flagged': 'Markiert als',
+  'admin.hist.col.decision': 'Entscheid',
+  'admin.hist.col.reason': 'Grund / Hinweis',
+  'admin.hist.reviewed': 'geprüft',
+  'admin.hist.filter.approved': 'Freigegeben',
+  'admin.hist.filter.rejected': 'Abgelehnt',
+  'admin.hist.allNote': '„Alle“ = freigegeben + abgelehnt — nie offen',
+  'admin.hist.columns': '▦ Spalten',
+  'admin.hist.minCol': 'mind. 1 Spalte bleibt sichtbar',
+  'admin.dec.approved': '✓ freigegeben',
+  'admin.dec.warning': '⚠ mit hinweis',
+  'admin.dec.rejected': '✕ abgelehnt',
+  'admin.page.decisions': 'Entscheide',
+  // DE-contract: EN mirrors DE verbatim (marked in the task-8 brief).
+  'admin.state.histEmpty.title': 'Noch keine Entscheide.',
+  'admin.state.histEmpty.body': 'Sobald du frei gibst oder ablehnst, entsteht hier das Protokoll.',
+  'admin.state.histEmpty.cta': '→ zum Prüfstapel'
 } as const;
 
 // Key parity between de/en stays type-enforced; literal-VALUE parity does
@@ -2415,7 +2439,31 @@ const en: Dict = {
   'admin.toast.bulk.approved': 'Bulk abgeschlossen: {n} freigegeben',
   'admin.toast.bulk.alreadyProcessed': '{n} bereits bearbeitet',
   'admin.toast.bulk.failed': '{n} fehlgeschlagen',
-  'admin.toast.bulk.banned': '{n} Konto/Konten gesperrt'
+  'admin.toast.bulk.banned': '{n} Konto/Konten gesperrt',
+
+  // ── History (Protokoll) table — Task 8 ──────────────────────────────────
+  'admin.hist.col.date': 'Date',
+  'admin.hist.col.source': 'Source',
+  'admin.hist.col.type': 'Type',
+  'admin.hist.col.content': 'Content',
+  'admin.hist.col.author': 'Author',
+  'admin.hist.col.flagged': 'Flagged as',
+  'admin.hist.col.decision': 'Decision',
+  'admin.hist.col.reason': 'Reason / warning',
+  'admin.hist.reviewed': 'rev',
+  'admin.hist.filter.approved': 'Approved',
+  'admin.hist.filter.rejected': 'Rejected',
+  'admin.hist.allNote': '“All” = approved + rejected — never pending',
+  'admin.hist.columns': '▦ Columns',
+  'admin.hist.minCol': 'at least 1 column stays visible',
+  'admin.dec.approved': '✓ approved',
+  'admin.dec.warning': '⚠ with warning',
+  'admin.dec.rejected': '✕ rejected',
+  'admin.page.decisions': 'decisions',
+  // DE-contract: EN mirrors DE verbatim (per the task-8 brief).
+  'admin.state.histEmpty.title': 'Noch keine Entscheide.',
+  'admin.state.histEmpty.body': 'Sobald du frei gibst oder ablehnst, entsteht hier das Protokoll.',
+  'admin.state.histEmpty.cta': '→ zum Prüfstapel'
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };
