@@ -1214,7 +1214,38 @@ const de = {
   'admin.state.empty.last': 'letzter Entscheid: {when}',
   'admin.state.error.title': 'Stapel nicht erreichbar.',
   'admin.state.error.body': 'Der Server antwortet nicht. Nichts ist verloren — der Stapel wartet.',
-  'admin.state.error.retry': '⟳ erneut versuchen'
+  'admin.state.error.retry': '⟳ erneut versuchen',
+
+  // ── Admin decision flows (kiosk) — reject modal + Ban-Bremse (Task 5) ──
+  // DE-only copy contract per READMEFIRST.md ("Flows … are DE-only by
+  // design (internal tool; the copy contract is the DE version)") — the
+  // `en` dict below repeats these values verbatim rather than translating.
+  'admin.modal.cancel': 'abbrechen',
+  'admin.modal.reject.kicker': 'ABLEHNEN · SCHRITT 1 VON 1',
+  'admin.modal.reject.title': 'Beitrag',
+  'admin.modal.reject.titleAccent': 'ablehnen',
+  'admin.modal.reject.reasonLabel': 'Grund der Ablehnung',
+  'admin.modal.reject.reasonHint': 'wird Autor:in angezeigt',
+  'admin.modal.reject.notesLabel': 'Interne Notiz',
+  'admin.modal.reject.notesHint': 'nur fürs Protokoll · optional',
+  'admin.modal.reject.notesPlaceholder': 'z. B. Kontext, Absprachen, Wiedervorlage…',
+  'admin.modal.reject.consequence': '{n}. Verwarnung für {author}.',
+  'admin.modal.reject.consequenceNext': 'Noch eine Ablehnung, dann wird das Konto gesperrt (3/3).',
+  'admin.modal.reject.cta': '✕ ablehnen & verwarnen',
+  'admin.modal.ban.badge': 'BAN-BREMSE · 3. VERWARNUNG',
+  'admin.modal.ban.kicker': 'ABLEHNEN · MIT FOLGEN',
+  'admin.modal.ban.title': 'Diese Ablehnung',
+  'admin.modal.ban.titleAccent': 'sperrt das Konto',
+  'admin.modal.ban.ledgerTitle': 'STRIKE-KONTO · {author}',
+  'admin.modal.ban.ledgerToday': 'heute',
+  'admin.modal.ban.ledgerNow': '← DIESE',
+  'admin.modal.ban.ledgerUnavailable': 'Strike-Historie nicht verfügbar',
+  'admin.modal.ban.checkboxLead': 'Ja, {author} sperren.',
+  'admin.modal.ban.checkboxBody': 'Kein Login, kein Posten mehr — bis ein Admin die Sperre aufhebt. Bestehende Beiträge bleiben (Nachweis der Moderation).',
+  'admin.modal.ban.cta': '✕ ablehnen & sperren',
+  'admin.toast.reject.success': '{author} abgelehnt & verwarnt — {n}/3 Verwarnungen.',
+  'admin.toast.ban.title': '{author} wurde gesperrt — 3/3 Verwarnungen.',
+  'admin.toast.ban.sub': 'Sperre aufheben: im Protokoll → Autor → „entsperren“'
 } as const;
 
 // Key parity between de/en stays type-enforced; literal-VALUE parity does
@@ -2296,7 +2327,36 @@ const en: Dict = {
   'admin.state.empty.last': 'letzter Entscheid: {when}',
   'admin.state.error.title': 'Stapel nicht erreichbar.',
   'admin.state.error.body': 'Der Server antwortet nicht. Nichts ist verloren — der Stapel wartet.',
-  'admin.state.error.retry': '⟳ erneut versuchen'
+  'admin.state.error.retry': '⟳ erneut versuchen',
+
+  // ── Admin decision flows (kiosk) — reject modal + Ban-Bremse (Task 5) ──
+  // Identical to `de` — see the comment on that block above.
+  'admin.modal.cancel': 'abbrechen',
+  'admin.modal.reject.kicker': 'ABLEHNEN · SCHRITT 1 VON 1',
+  'admin.modal.reject.title': 'Beitrag',
+  'admin.modal.reject.titleAccent': 'ablehnen',
+  'admin.modal.reject.reasonLabel': 'Grund der Ablehnung',
+  'admin.modal.reject.reasonHint': 'wird Autor:in angezeigt',
+  'admin.modal.reject.notesLabel': 'Interne Notiz',
+  'admin.modal.reject.notesHint': 'nur fürs Protokoll · optional',
+  'admin.modal.reject.notesPlaceholder': 'z. B. Kontext, Absprachen, Wiedervorlage…',
+  'admin.modal.reject.consequence': '{n}. Verwarnung für {author}.',
+  'admin.modal.reject.consequenceNext': 'Noch eine Ablehnung, dann wird das Konto gesperrt (3/3).',
+  'admin.modal.reject.cta': '✕ ablehnen & verwarnen',
+  'admin.modal.ban.badge': 'BAN-BREMSE · 3. VERWARNUNG',
+  'admin.modal.ban.kicker': 'ABLEHNEN · MIT FOLGEN',
+  'admin.modal.ban.title': 'Diese Ablehnung',
+  'admin.modal.ban.titleAccent': 'sperrt das Konto',
+  'admin.modal.ban.ledgerTitle': 'STRIKE-KONTO · {author}',
+  'admin.modal.ban.ledgerToday': 'heute',
+  'admin.modal.ban.ledgerNow': '← DIESE',
+  'admin.modal.ban.ledgerUnavailable': 'Strike-Historie nicht verfügbar',
+  'admin.modal.ban.checkboxLead': 'Ja, {author} sperren.',
+  'admin.modal.ban.checkboxBody': 'Kein Login, kein Posten mehr — bis ein Admin die Sperre aufhebt. Bestehende Beiträge bleiben (Nachweis der Moderation).',
+  'admin.modal.ban.cta': '✕ ablehnen & sperren',
+  'admin.toast.reject.success': '{author} abgelehnt & verwarnt — {n}/3 Verwarnungen.',
+  'admin.toast.ban.title': '{author} wurde gesperrt — 3/3 Verwarnungen.',
+  'admin.toast.ban.sub': 'Sperre aufheben: im Protokoll → Autor → „entsperren“'
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };

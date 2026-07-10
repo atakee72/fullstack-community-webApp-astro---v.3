@@ -16,6 +16,7 @@
   import AdmTitleBlock from './AdmTitleBlock.svelte';
   import AdmFilterRail from './AdmFilterRail.svelte';
   import AdmQueueCard from './AdmQueueCard.svelte';
+  import AdmRejectModal from './AdmRejectModal.svelte';
 
   let { adminName }: { adminName: string } = $props();
 
@@ -187,12 +188,44 @@
     void runSingleAction(item._id, 'approve');
   }
   function handleWarn(_item: FlaggedItem) {
-    // Task 5/6 wires the modal
+    // Task 6 wires the warning modal
     showToast($t['admin.act.stub'], { type: 'info' });
   }
-  function handleReject(_item: FlaggedItem) {
-    // Task 5/6 wires the modal
-    showToast($t['admin.act.stub'], { type: 'info' });
+
+  // ── Reject modal (incl. Ban-Bremse) ─────────────────────────────────────
+  let rejectTarget = $state<FlaggedItem | null>(null);
+
+  function handleReject(item: FlaggedItem) {
+    rejectTarget = item;
+  }
+
+  function handleRejectCancel() {
+    rejectTarget = null;
+  }
+
+  async function handleRejectConfirm(reason: string, notes: string) {
+    const item = rejectTarget;
+    if (!item?._id) return;
+    rejectTarget = null; // close immediately — the card's own optimistic
+    // dim/settle (runSingleAction) carries the rest of the feedback.
+
+    const author = item.authorName ?? item.authorId;
+    const result = await runSingleAction(item._id, 'reject', { rejectionReason: reason, notes });
+    if (!result.ok) return; // runSingleAction already surfaced the error toast
+
+    if (result.userBanned) {
+      // §08 — ban toast. Only ever reachable via the confirmed Ban-Bremse
+      // checkbox (AdmRejectModal.canSubmit gates the CTA) — never casual.
+      showToast(tStr($t['admin.toast.ban.title'], { author }), {
+        type: 'error',
+        description: $t['admin.toast.ban.sub'],
+        duration: 6000,
+      });
+    } else {
+      showToast(tStr($t['admin.toast.reject.success'], { author, n: result.strikeCount ?? 0 }), {
+        type: 'success',
+      });
+    }
   }
 </script>
 
@@ -284,4 +317,8 @@
 {:else}
   <!-- History (Protokoll) — later task builds the reviewed-items ledger. -->
   <div class="font-dmmono" style="padding: 36px; color: var(--k-ink-mute);">Protokoll folgt in einer späteren Aufgabe.</div>
+{/if}
+
+{#if rejectTarget}
+  <AdmRejectModal item={rejectTarget} onCancel={handleRejectCancel} onConfirm={handleRejectConfirm} />
 {/if}
