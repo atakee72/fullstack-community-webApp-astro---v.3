@@ -153,7 +153,12 @@
               </td>
             {/if}
             {#if visible('source')}
-              <td style="padding: 12px 14px;"><AdmSourceStrap {item} /></td>
+              <td style="padding: 12px 14px;">
+                <!-- decision stays 'urgent_review' on reviewed docs; neutralize it so a
+                     settled decision never wears the pulsing DRINGEND strap (design:
+                     kiosk-admin-history.jsx strips decision for history rows). -->
+                <AdmSourceStrap item={{ ...item, decision: 'pending_review' }} />
+              </td>
             {/if}
             {#if visible('type')}
               <td style="padding: 12px 14px;"><AdmTypeChip type={item.contentType} /></td>

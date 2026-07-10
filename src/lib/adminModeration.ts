@@ -141,6 +141,7 @@ export interface FlaggedItem {
   reviewedBy?: string;
   reviewedAt?: string;
   reviewNotes?: string;
+  rejectionReason?: string;
 
   // If approved, should it have a warning label?
   hasWarningLabel?: boolean;

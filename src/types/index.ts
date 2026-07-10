@@ -320,6 +320,7 @@ export interface FlaggedContent {
   reviewedBy?: string;
   reviewedAt?: Date;
   reviewNotes?: string;
+  rejectionReason?: string;
 
   // If approved, should it have a warning label?
   hasWarningLabel?: boolean;
