@@ -64,11 +64,13 @@ The app is mid-migration from a **dark-glass** aesthetic (deep indigo `#0e1033` 
 |---|---|
 | Forum (`/`, `/topics/[id]`, `/announcements/[id]`, `/recommendations/[id]`) | ✅ Kiosk (Svelte) |
 | Calendar (`/calendar`, `/events/edit/[id]`) | ✅ Kiosk (Svelte) |
-| Newsboard | 🚧 Legacy dark-glass |
+| Newsboard (`/newsboard`, `/newsboard/[id]`, `/newsboard/submit`) | ✅ Kiosk (Svelte) |
 | Marketplace (`/marketplace`, `/marketplace/[id]`, `/marketplace/create`, `/marketplace/edit/[id]`) | ✅ Kiosk (Svelte) |
+| Auth (`/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`) | ✅ Kiosk (Svelte, own `AuthLayout`) |
+| Admin moderation (`/admin/moderation`) | ✅ Kiosk (Svelte, own `AdminLayout`) |
+| Admin announcements (`/admin/announcements`) | 🚧 Legacy dark-glass |
 | Profile | 🚧 Legacy dark-glass |
 | Blog | 🚧 Legacy dark-glass |
-| Admin (announcements panel + moderation queue) | 🚧 Legacy / mixed |
 
 ### Page-accent rule (kiosk)
 Each migrated page has its own accent color used for kickers (mono-uppercase eyebrows) and carved-italic title accents:
@@ -77,8 +79,11 @@ Each migrated page has its own accent color used for kickers (mono-uppercase eye
 |---|---|
 | Forum | Wine `#b23a5b` |
 | Calendar | Teal `#3f8f9f` |
-| Newsboard / Profile / Blog | TBD |
+| Newsboard | Ink `#1b1a17` |
 | Marketplace | Wine `#b23a5b` (kickers) + Ochre `#eccc6e` (italic headline accents only) |
+| Auth | Ochre `#e8a53a` |
+| Admin | Plum `#6f2f59` |
+| Profile / Blog | TBD |
 
 Semantic accents stay constant across all kiosk surfaces (never swapped per page): live-now indicator (ochre dot), today indicator, weekend-day labels, required-field asterisks, compose step numbers (`01`, `02`, …), CTA wine-shadows, modal wine-shadows, the mobile wine FAB.
 
@@ -170,6 +175,8 @@ Vercel will automatically:
 - **Responsive Design**: Mobile-first approach
 - **Performance**: Optimized with Astro's island architecture
 - **Content Moderation**: Multi-layer AI moderation (safety scan + GPT content check for spam/hate speech/harassment) + trilingual profanity filters (TR/EN/DE) with leetspeak detection + username validation at registration + community reporting
+- **Admin moderation back-office (kiosk)**: card-based review queue with urgent-first sorting + author strike dots, Protokoll history table, decision modals replacing browser prompts — incl. the **Ban-Bremse** (third-strike rejections require an explicit ban confirmation with the author's strike ledger inline) and a **bulk consequence preview** (per-author strike deltas + ban acknowledgment before any bulk reject) — plus a mobile triage mode
+- **3-strike ban enforcement**: banned accounts cannot log in (kiosk „Konto gesperrt" card, enumeration-safe) and existing sessions turn read-only (26 write APIs return 403, non-dismissible suspended banner, compose pages redirect) — bans only ever happen through the confirmed moderation flows
 - **Daily Posting Limits**: 5 per rolling 24h for topics, events, announcements, recommendations, and listings
 - **Newsboard**: AI-curated local news from 9 RSS feeds + NewsData.io, with GPT-4o relevance scoring
 - **Marketplace (kiosk)**: 3 listing kinds (verkaufen / tausch / verschenken), **13 kiosk taxonomy categories** with one-time backfill of legacy English-key listings (`scripts/migrate-legacy-categories.ts`), delivery enum (Abholung / Versand / Abholung & Versand), optional detail fields (5 German free-text fields + condition enum), editorial lead-of-the-day on page 1, contact-form relay via Resend (privacy-preserving — no email addresses exposed), **single-threshold 21d visibility**: past-21d listings hide from public feed/search/direct URL (friendly "nicht mehr verfügbar" page at the same URL — HTTP 200, indexable-but-empty); author still sees them in „Meine Anzeigen" as grayed cards with a bump prompt, **no bump rate limit** (bump = freshness reset, available subject only to status/moderation guards), owner lifecycle (edit / bump / reserve / sold / delete with state-aware gating via `canMutateListing`). Warning-labeled AND rejected listings are editable — the edit endpoint re-runs full moderation + writes a pre-edit snapshot to `listingAuditTrail` for provability. Mobile FAB for new listings, SEO-friendly hybrid SSR-static + island-hydrate detail pages.
