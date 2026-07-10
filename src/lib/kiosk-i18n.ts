@@ -1298,7 +1298,16 @@ const de = {
   // DE-contract: EN mirrors DE verbatim (marked in the task-8 brief).
   'admin.state.histEmpty.title': 'Noch keine Entscheide.',
   'admin.state.histEmpty.body': 'Sobald du frei gibst oder ablehnst, entsteht hier das Protokoll.',
-  'admin.state.histEmpty.cta': '→ zum Prüfstapel'
+  'admin.state.histEmpty.cta': '→ zum Prüfstapel',
+
+  // ── Mobile triage (Task 9) — "mobil wird triagiert, nicht verwaltet" ──
+  'admin.mobile.triage': 'TRIAGE — EIN FALL NACH DEM ANDEREN',
+  'admin.mobile.note': 'Protokoll + Bulk-Aktionen nur am Desktop — mobil wird triagiert, nicht verwaltet.',
+  'admin.mobile.urgent': 'dringend',
+  'admin.mobile.open': 'offen',
+  'admin.mobile.act.ok': 'frei',
+  'admin.mobile.act.warn': 'hinweis',
+  'admin.mobile.act.reject': 'ablehnen'
 } as const;
 
 // Key parity between de/en stays type-enforced; literal-VALUE parity does
@@ -2463,7 +2472,16 @@ const en: Dict = {
   // DE-contract: EN mirrors DE verbatim (per the task-8 brief).
   'admin.state.histEmpty.title': 'Noch keine Entscheide.',
   'admin.state.histEmpty.body': 'Sobald du frei gibst oder ablehnst, entsteht hier das Protokoll.',
-  'admin.state.histEmpty.cta': '→ zum Prüfstapel'
+  'admin.state.histEmpty.cta': '→ zum Prüfstapel',
+
+  // ── Mobile triage (Task 9) — "mobil wird triagiert, nicht verwaltet" ──
+  'admin.mobile.triage': 'TRIAGE — ONE CASE AT A TIME',
+  'admin.mobile.note': "History + bulk actions are desktop-only — mobile triages, doesn't manage.",
+  'admin.mobile.urgent': 'urgent',
+  'admin.mobile.open': 'open',
+  'admin.mobile.act.ok': 'ok',
+  'admin.mobile.act.warn': 'warn',
+  'admin.mobile.act.reject': 'reject'
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };

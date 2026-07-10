@@ -37,7 +37,8 @@ const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
     class="min-h-screen k-paper-bg text-ink font-bricolage antialiased flex flex-col"
     data-page="admin"
   >
-    <div>
+    <!-- ═══ Desktop (≥ md) masthead — full ribbon + branding + back-link. ═══ -->
+    <div class="hidden md:block">
       <!-- Internal-area ribbon — static DE, locked decision (Task 1 brief). -->
       <div
         class="flex items-center justify-between font-dmmono"
@@ -73,6 +74,32 @@ const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
             aria-label={`Angemeldet als ${trimmedAdminName || 'Admin'}`}
           >{adminInitial}</div>
         </div>
+      </header>
+    </div>
+
+    <!-- ═══ Mobile (< md) masthead — slim ribbon + compact wordmark. ═══
+         Per JSX kiosk-admin.jsx:482-491. No back-link, no avatar — those
+         are desktop-only chrome; AuthLangToggle stays available (moved
+         into this row) so DE/EN swap still works on mobile. -->
+    <div class="md:hidden">
+      <div
+        class="font-dmmono"
+        style="background:var(--k-accent); color:var(--k-paper); padding:6px 18px; font-size:9px; letter-spacing:0.12em;"
+      >INTERN · NUR ADMIN</div>
+
+      <header
+        class="flex items-center justify-between"
+        style="padding:14px 18px; border-bottom:1px dashed var(--k-rule);"
+      >
+        <div class="flex items-center" style="gap:9px;">
+          <div
+            class="font-instrument"
+            style="width:32px; height:32px; background:var(--k-accent); border-radius:50%; border:2px solid var(--k-ink); display:flex; align-items:center; justify-content:center; font-style:italic; font-size:19px; color:var(--k-paper);"
+          >m</div>
+          <div class="font-bricolage" style="font-size:17px; font-weight:800; letter-spacing:-0.02em;">moderation</div>
+        </div>
+
+        <AuthLangToggle client:load />
       </header>
     </div>
 

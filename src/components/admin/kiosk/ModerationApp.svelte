@@ -26,6 +26,7 @@
   import AdmBulkRejectModal from './AdmBulkRejectModal.svelte';
   import AdmHistoryTable from './AdmHistoryTable.svelte';
   import AdmColumnMenu from './AdmColumnMenu.svelte';
+  import AdmTriageCard from './AdmTriageCard.svelte';
 
   let { adminName }: { adminName: string } = $props();
 
@@ -465,6 +466,9 @@
   }
 </script>
 
+<!-- ═══ Desktop (≥ md) — Tasks 4–8, unchanged: view toggle, stat row, ═══
+     filter rail, bulk bar, history. ═══════════════════════════════════ -->
+<div class="hidden md:block">
 <AdmStatRow {counts} />
 <AdmTitleBlock {view} onViewChange={handleViewChange} />
 
@@ -656,7 +660,108 @@
     {/if}
   </div>
 {/if}
+</div>
 
+<!-- ═══ Mobile (< md) — triage only, per the handoff rule "mobil wird ═══
+     triagiert, nicht verwaltet": count line, TRIAGE label, the triage
+     stack (queue items only — no view toggle, so history is simply
+     unreachable here), footer note, pager. No checkboxes, no bulk bar,
+     no column menu. Shares `items`/`counts`/`actioning`/`settling` with
+     the desktop block above — `fetchQueue()` runs unconditionally on
+     mount, so this list is populated regardless of the desktop `view`
+     toggle's current position. ═══════════════════════════════════════ -->
+<div class="md:hidden">
+  <div class="font-dmmono" style="padding: 10px 18px 0; font-size: 10.5px; font-weight: 600; color: var(--k-danger); text-align: right;">
+    {counts?.urgent ?? 0} {$t['admin.mobile.urgent']} · {counts?.pending ?? 0} {$t['admin.mobile.open']}
+  </div>
+
+  <div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 14px;">
+    <div class="font-dmmono" style="font-size: 10px; color: var(--k-ink-mute); letter-spacing: 0.1em;">{$t['admin.mobile.triage']}</div>
+
+    {#if loading && items.length === 0}
+      <!-- §01 loading — skeleton sweep -->
+      {#each [0, 1, 2] as i (i)}
+        <div style="border: 1px solid var(--k-rule); border-radius: var(--k-radius-md); padding: 12px 14px; background: var(--k-paper);">
+          <div class="adm-skeleton-bar" style="height: 10px; width: 38%; border-radius: 5px;"></div>
+          <div class="adm-skeleton-bar" style="height: 10px; width: 82%; border-radius: 5px; margin-top: 8px;"></div>
+          <div class="adm-skeleton-bar" style="height: 10px; width: 64%; border-radius: 5px; margin-top: 8px;"></div>
+        </div>
+      {/each}
+
+    {:else if loadError}
+      <!-- §06 error -->
+      <div style="border: 1.5px solid var(--k-danger); border-radius: var(--k-radius-md); background: var(--k-paper-warm); padding: 14px 16px;">
+        <div class="font-bricolage" style="font-size: 13.5px; font-weight: 800;">{$t['admin.state.error.title']}</div>
+        <div style="font-size: 12px; color: var(--k-ink-soft); margin-top: 4px; line-height: 1.5;">{$t['admin.state.error.body']}</div>
+        <button
+          type="button"
+          onclick={() => fetchQueue()}
+          class="font-bricolage"
+          style="margin-top: 10px; display: inline-block; background: var(--k-ink); color: var(--k-paper); border-radius: var(--k-radius-pill); padding: 6px 14px; font-size: 12px; font-weight: 700; box-shadow: 2px 2px 0 var(--k-danger); border: none; cursor: pointer;"
+        >{$t['admin.state.error.retry']}</button>
+      </div>
+
+    {:else if !items.length && counts}
+      <!-- §02 empty — the good state -->
+      <div style="text-align: center; padding: 26px 12px;">
+        <div style="width: 44px; height: 44px; margin: 0 auto 12px; border-radius: 50%; border: 1.5px solid var(--k-success); display: flex; align-items: center; justify-content: center; color: var(--k-success); font-size: 19px; font-weight: 700;">✓</div>
+        <div class="font-bricolage" style="font-size: 17px; font-weight: 800; letter-spacing: -0.02em;">{$t['admin.state.empty.title']}</div>
+        <div class="font-instrument" style="font-style: italic; font-size: 13.5px; color: var(--k-ink-soft); margin-top: 4px;">{$t['admin.state.empty.sub']}</div>
+      </div>
+
+    {:else}
+      {#each items as item (item._id)}
+        <AdmTriageCard
+          {item}
+          onApprove={handleApprove}
+          onWarn={handleWarn}
+          onReject={handleReject}
+          actioningLabel={item._id ? (actioning.get(item._id) ?? null) : null}
+          settling={item._id ? settling.has(item._id) : false}
+        />
+      {/each}
+    {/if}
+
+    <div class="font-dmmono" style="font-size: 10px; color: var(--k-ink-mute); text-align: center; padding-top: 4px;">
+      {$t['admin.mobile.note']}
+    </div>
+
+    {#if items.length > 0 && !loading && !loadError}
+      <!-- pagination footer — same pager as desktop, mobile padding -->
+      <div style="display: flex; justify-content: center; gap: 10px; align-items: center; font-family: var(--k-font-mono); font-size: 11px; color: var(--k-ink-mute); flex-wrap: wrap;">
+        <button
+          type="button"
+          disabled={page === 0}
+          onclick={() => handlePageChange(page - 1)}
+          style="border: var(--k-border-ink); border-radius: var(--k-radius-pill); padding: 5px 14px; color: var(--k-ink); font-weight: 600; background: transparent; opacity: {page === 0 ? 0.5 : 1}; cursor: {page === 0 ? 'not-allowed' : 'pointer'};"
+        >{$t['admin.page.prev']}</button>
+
+        <span>
+          {tStr($t['admin.page.of'], { p: page + 1, t: totalPages, n: total, what: $t['admin.page.pending'] })}
+          <select
+            value={pageSize}
+            onchange={(e) => handlePageSizeChange(Number((e.target as HTMLSelectElement).value))}
+            class="font-dmmono"
+            style="margin-left: 4px; border: 1px solid var(--k-rule); border-radius: var(--k-radius-sm); background: var(--k-paper); color: var(--k-ink); font-size: 11px; padding: 2px 4px;"
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+          </select>
+        </span>
+
+        <button
+          type="button"
+          disabled={page >= totalPages - 1}
+          onclick={() => handlePageChange(page + 1)}
+          style="border: var(--k-border-ink); border-radius: var(--k-radius-pill); padding: 5px 14px; color: var(--k-ink); font-weight: 600; background: transparent; opacity: {page >= totalPages - 1 ? 0.5 : 1}; cursor: {page >= totalPages - 1 ? 'not-allowed' : 'pointer'};"
+        >{$t['admin.page.next']}</button>
+      </div>
+    {/if}
+  </div>
+</div>
+
+<!-- ═══ Shared: modals + toasts (outside both responsive blocks) ═══ -->
 {#if rejectTarget}
   <AdmRejectModal item={rejectTarget} onCancel={handleRejectCancel} onConfirm={handleRejectConfirm} />
 {/if}
