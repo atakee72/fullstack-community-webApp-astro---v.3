@@ -14,8 +14,8 @@ profile, Chronik, konto-change flows, account deletion.
 
 `src/pages/profile.astro` — thin shell: SSR session + `getProfileMe()` (fast
 path, avoids a client round-trip on first paint), passes `initialProfile` +
-`loggedIn` into `ProfileInner.svelte` (`client:only="svelte"`, no SEO benefit
-— this is a private, logged-in-only page).
+`loggedIn` into `ProfileInner.svelte` (`client:load` — SSR renders the shell,
+then hydrates; no SEO stakes on this private, logged-in-only page).
 
 `ProfileInner.svelte` is the **single orchestrator** — it owns every piece of
 fetch/mutation state (`profile`, `standing`, `standingError`, `banned`) and
@@ -71,7 +71,7 @@ All shared types/constants (`ProfileMe`, `ProfileStanding`, `ActivityItem`,
 `ActivityFilter`, `PROFILE_NAME_REGEX`, `HOBBY_MAX_COUNT`, `AVATAR_MAX_BYTES`,
 ...) live in `src/lib/profile/profileShared.ts` — a dependency-free module
 (no `mongodb`, no `fs`) so it's safe to import from both server routes and
-`client:only` Svelte components. `src/lib/profile/profileQuery.ts` and
+`client:*` Svelte islands. `src/lib/profile/profileQuery.ts` and
 `src/lib/profile/handle.ts` are the two server/pure siblings: `profileQuery.ts`
 imports `connectDB` (server-only), `handle.ts` is pure (imported by both
 server code and the standalone backfill script).
