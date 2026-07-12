@@ -30,6 +30,29 @@ export interface ProfileStanding {
   rejected: StandingRejectedItem[]; // newest first, max 20
 }
 
+// Maps a flaggedContent contentType (moderation domain) onto the profile's
+// cross-surface accent grouping ('forum' | 'markt' | 'kalender' | 'kurier').
+// Used by PModerationCard's rejected rows AND the Task 9 activity ledger —
+// keep the mapping in this pure module so both consumers agree.
+export function contentTypeToSurface(
+  ct: StandingRejectedItem['contentType']
+): 'forum' | 'markt' | 'kalender' | 'kurier' {
+  switch (ct) {
+    case 'marketplace':
+      return 'markt';
+    case 'event':
+      return 'kalender';
+    case 'news':
+      return 'kurier';
+    case 'topic':
+    case 'announcement':
+    case 'recommendation':
+    case 'comment':
+    default:
+      return 'forum';
+  }
+}
+
 export const PROFILE_NAME_REGEX = /^[\p{L}\p{N} _-]{3,30}$/u;
 export const HOBBY_MAX_COUNT = 10;
 export const HOBBY_MAX_LEN = 50;
