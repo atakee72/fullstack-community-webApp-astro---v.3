@@ -38,7 +38,7 @@ export async function getProfileMe(userId: string): Promise<ProfileMe | null> {
   const _id = new ObjectId(userId);
   const user = await db.collection('users').findOne(
     { _id },
-    { projection: { name: 1, handle: 1, email: 1, userPicture: 1, image: 1, hobbies: 1, verified: 1, createdAt: 1, isBanned: 1, motto: 1, pendingEmail: 1 } }
+    { projection: { name: 1, handle: 1, email: 1, userPicture: 1, image: 1, hobbies: 1, verified: 1, createdAt: 1, isBanned: 1, motto: 1, pendingEmail: 1, deletionScheduledAt: 1 } }
   );
   if (!user) return null;
   const handle = typeof user.handle === 'string' ? user.handle : await ensureHandle(userId);
@@ -75,5 +75,11 @@ export async function getProfileMe(userId: string): Promise<ProfileMe | null> {
     stats: { posts: posts + ann + rec, listings, events, danke },
     motto: typeof user.motto === 'string' ? user.motto : null,
     pendingEmail: typeof user.pendingEmail === 'string' ? user.pendingEmail : null,
+    deletionScheduledAt:
+      user.deletionScheduledAt instanceof Date
+        ? user.deletionScheduledAt.toISOString()
+        : typeof user.deletionScheduledAt === 'string'
+          ? user.deletionScheduledAt
+          : null,
   };
 }

@@ -28,7 +28,7 @@
   // Design source: design/handoffs/design_handoff_profile/jsx/kiosk-profile.jsx
   // (ProfileOwnDesktop grid) + kiosk-profile-states.jsx (§09, §10).
 
-  import { formatDdMm, type ChronikData, type ProfileMe, type ProfileStanding } from '../../../lib/profile/profileShared';
+  import { formatDdMm, formatDdMmYyyy, type ChronikData, type ProfileMe, type ProfileStanding } from '../../../lib/profile/profileShared';
   import { t, tStr, locale } from '../../../lib/kiosk-i18n';
   import { showSuccess, showError } from '../../../utils/toast';
   import ProfileTitleBlock from './ProfileTitleBlock.svelte';
@@ -40,6 +40,7 @@
   import PKontoCard from './PKontoCard.svelte';
   import PEmailChangePanel from './PEmailChangePanel.svelte';
   import PPasswordChangePanel from './PPasswordChangePanel.svelte';
+  import PDeleteAccountModal from './PDeleteAccountModal.svelte';
   import PChronikStrip from './PChronikStrip.svelte';
   import PActivityLedger from './PActivityLedger.svelte';
   import PMobileFold from './atoms/PMobileFold.svelte';
@@ -215,9 +216,49 @@
     pwPanelOpen = false;
   }
 
+  // ─── Delete account (Task 10) ──────────────────────────────────────────
+  // Same single-mount reasoning as the email/password panels: PKontoCard is
+  // double-mounted, so the stateful modal lives here instead, gated by
+  // `deleteModalOpen`. Both PKontoCard mounts get `deletionScheduledAt` +
+  // `deletionDateLabel` (pre-formatted so PKontoCard stays a pure
+  // props-in/markup-out component, same reasoning as `bannedAtLabel` below)
+  // plus the SAME `openDeleteModal`/`cancelDeletionRequest` function
+  // references, so the Gefahrenzone/banner and the modal's own submit path
+  // can never drift.
+  //
+  // NOTHING here deletes or anonymizes data — scheduling only sets
+  // `deletionScheduledAt` via POST /api/profile/delete-account/schedule;
+  // the day-7 anonymization pipeline is Task 11.
+  let deleteModalOpen = $state(false);
+  function openDeleteModal() {
+    deleteModalOpen = true;
+  }
+  function closeDeleteModal() {
+    deleteModalOpen = false;
+  }
+  function handleDeletionScheduled(deletionScheduledAt: string) {
+    if (!profile) return;
+    profile = { ...profile, deletionScheduledAt };
+  }
+  async function cancelDeletionRequest() {
+    try {
+      await fetch('/api/profile/delete-account/cancel', { method: 'POST' });
+    } catch {
+      // /cancel is idempotent + always-200 server-side; a dropped response
+      // here just means we didn't get the ack — clear local state anyway
+      // (mirrors cancelEmailChange()'s same fallback reasoning above).
+    }
+    if (!profile) return;
+    profile = { ...profile, deletionScheduledAt: null };
+  }
+
   const banned = $derived((standing?.isBanned ?? false) || (profile?.isBanned ?? false));
 
   const bannedAtLabel = $derived(standing?.bannedAt ? formatDdMm(standing.bannedAt, $locale) : null);
+
+  const deletionDateLabel = $derived(
+    profile?.deletionScheduledAt ? formatDdMmYyyy(profile.deletionScheduledAt, $locale) : null
+  );
 
   // Mirrors PModerationCard's own accent derivation — the mobile fold
   // wraps the "bare" content of that same card, so its top-rule must track
@@ -332,6 +373,10 @@
           onResendEmail={resendEmailChange}
           onCancelEmail={cancelEmailChange}
           onChangePassword={openPwPanel}
+          deletionScheduledAt={profile.deletionScheduledAt}
+          deletionDateLabel={deletionDateLabel}
+          onOpenDelete={openDeleteModal}
+          onCancelDeletion={cancelDeletionRequest}
         />
       </div>
 
@@ -424,10 +469,28 @@
             onResendEmail={resendEmailChange}
             onCancelEmail={cancelEmailChange}
             onChangePassword={openPwPanel}
+            deletionScheduledAt={profile.deletionScheduledAt}
+            deletionDateLabel={deletionDateLabel}
+            onOpenDelete={openDeleteModal}
+            onCancelDeletion={cancelDeletionRequest}
             bare
           />
         </PMobileFold>
       </div>
     </div>
   </div>
+
+  <!--
+    Delete-account modal (Task 10) — single mount, ALWAYS in the DOM
+    (native <dialog>, gated by `open`), same convention as
+    KioskReportModal.svelte's callers. Lives outside the grid entirely: a
+    shown <dialog> renders in the browser's top layer regardless of DOM
+    position, so it needs no grid placement / `min-w-0`.
+  -->
+  <PDeleteAccountModal
+    open={deleteModalOpen}
+    handle={profile.handle}
+    onClose={closeDeleteModal}
+    onScheduled={handleDeletionScheduled}
+  />
 {/if}

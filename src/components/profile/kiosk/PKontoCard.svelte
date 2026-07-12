@@ -15,6 +15,16 @@
   // (desktop card + mobile fold) is safe because `pendingEmail` and the
   // resend/cancel handlers all live in ProfileInner; both mounts just
   // render off the same upstream state.
+  //
+  // Gefahrenzone / delete-account (Task 10): same stateless pattern —
+  // `deletionScheduledAt` + `deletionDateLabel` (pre-formatted dd.MM.yyyy,
+  // see ProfileInner's `deletionDateLabel` derived) live upstream, and
+  // `onOpenDelete`/`onCancelDeletion` are the same function references
+  // passed to both mounts (mirrors onResendEmail/onCancelEmail above — the
+  // §08-style banner here and PDeleteAccountModal, mounted once by
+  // ProfileInner, can never drift). Design source: kiosk-profile.jsx
+  // PKontoCard's Gefahrenzone box (dashed danger border, GEFAHRENZONE
+  // label, row + PBtn danger small "löschen …").
 
   import { signOut } from 'auth-astro/client';
   import { t, tStr } from '../../../lib/kiosk-i18n';
@@ -30,6 +40,10 @@
     onResendEmail,
     onCancelEmail,
     onChangePassword,
+    deletionScheduledAt = null,
+    deletionDateLabel = null,
+    onOpenDelete,
+    onCancelDeletion,
     bare = false,
   }: {
     email: string;
@@ -39,11 +53,23 @@
     onResendEmail?: () => Promise<void>;
     onCancelEmail?: () => Promise<void>;
     onChangePassword?: () => void;
+    deletionScheduledAt?: string | null;
+    deletionDateLabel?: string | null;
+    onOpenDelete?: () => void;
+    onCancelDeletion?: () => Promise<void>;
     bare?: boolean;
   } = $props();
 
   let resendLoading = $state(false);
   let cancelLoading = $state(false);
+  let cancelDelLoading = $state(false);
+
+  async function handleCancelDeletion() {
+    if (cancelDelLoading || !onCancelDeletion) return;
+    cancelDelLoading = true;
+    await onCancelDeletion();
+    cancelDelLoading = false;
+  }
 
   async function handleResend() {
     if (resendLoading || !onResendEmail) return;
@@ -126,6 +152,36 @@
   <div style="display: flex; gap: 8px; margin-top: 16px;">
     <PBtn small onclick={handleLogout}>{$t['profile.konto.logout']}</PBtn>
   </div>
+
+  {#if deletionScheduledAt}
+    <div
+      style="
+        margin-top: 16px; padding: 8px 11px; background: #f6e3e3;
+        border: 1.5px solid var(--k-danger); border-radius: var(--k-radius-sm);
+        font-family: var(--k-font-mono); font-size: 9.5px; color: var(--k-ink-soft); line-height: 1.55;
+      "
+    >
+      <b style="color: var(--k-danger);">✕</b>
+      {tStr($t['profile.del.pending'], { d: deletionDateLabel ?? '—' })} ·
+      <button
+        type="button"
+        onclick={handleCancelDeletion}
+        disabled={cancelDelLoading}
+        class="font-dmmono"
+        style="background: none; border: none; padding: 0; cursor: pointer; font-size: 9.5px; font-weight: 700; color: var(--k-danger); border-bottom: 1.5px solid var(--k-danger); opacity: {cancelDelLoading ? 0.5 : 1};"
+      >{$t['profile.del.widerrufen']}</button>
+    </div>
+  {:else if onOpenDelete}
+    <div style="margin-top: 16px; padding: 12px 14px; border: 1.5px dashed var(--k-danger); border-radius: var(--k-radius-md);">
+      <div class="font-dmmono" style="font-size: 9.5px; color: var(--k-danger); letter-spacing: 0.14em; margin-bottom: 6px;">
+        {$t['profile.del.zone.label']}
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+        <span class="font-bricolage" style="font-size: 12.5px; color: var(--k-ink-soft);">{$t['profile.del.zone.row']}</span>
+        <PBtn danger small onclick={onOpenDelete}>{$t['profile.del.zone.cta']}</PBtn>
+      </div>
+    </div>
+  {/if}
 {/snippet}
 
 {#if bare}

@@ -34,6 +34,12 @@ async function main() {
     { expiresAt: 1 }, { expireAfterSeconds: 0, name: 'ect_ttl' });
   await db.collection('emailChangeTokens').createIndex(
     { tokenHash: 1 }, { name: 'ect_tokenHash' });
+  // Task 10 note: this TTL deletes the undo token AT the deletion date —
+  // fine, since by then Task 11's day-7 pipeline has run and undo is moot.
+  await db.collection('accountDeletionTokens').createIndex(
+    { expiresAt: 1 }, { expireAfterSeconds: 0, name: 'adt_ttl' });
+  await db.collection('accountDeletionTokens').createIndex(
+    { tokenHash: 1 }, { name: 'adt_tokenHash' });
 
   // rateLimits: exact-key bucket lookup (unique — consume() handles the
   // E11000 upsert race), TTL cleanup, clear-by-baseKey.

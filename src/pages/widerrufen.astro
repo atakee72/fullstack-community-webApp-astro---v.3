@@ -1,0 +1,18 @@
+---
+// Sessionless undo page for the account-deletion flow (Plan B Task 10).
+// Mirrors confirm-email-change.astro's mechanism exactly: reads ?token=,
+// passes it into a Svelte island that POSTs to the cancel endpoint
+// client-side. No session check here — the link may be opened in a
+// different browser than the one that's logged in (mirrors
+// /api/auth/verify-email's design).
+import AuthLayout from '../layouts/AuthLayout.astro';
+import ConfirmDeletionInner from '../components/profile/kiosk/ConfirmDeletionInner.svelte';
+
+const token = new URL(Astro.request.url).searchParams.get('token') ?? '';
+
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
+---
+
+<AuthLayout title="Löschung widerrufen">
+  <ConfirmDeletionInner client:only="svelte" token={token} />
+</AuthLayout>

@@ -16,6 +16,7 @@ export interface ProfileMe {
   stats: { posts: number; listings: number; events: number; danke: number };
   motto: string | null; // Plan B Task 6 — optional Steckbrief line, own-view only (never on PublicProfile)
   pendingEmail: string | null; // Plan B Task 7 — email-change in flight, own-view only (never on PublicProfile)
+  deletionScheduledAt: string | null; // Plan B Task 10 — ISO date; account deletion pending a 7-day grace, own-view only (never on PublicProfile)
 }
 
 // Public-profile projection ("Nachbarn"-view) — Plan B Task 3. Trimmed
@@ -82,6 +83,21 @@ export function formatDdMm(iso: string, locale: 'de' | 'en'): string {
   const day = parts.find((p) => p.type === 'day')?.value ?? '';
   const month = parts.find((p) => p.type === 'month')?.value ?? '';
   return `${day}.${month}`;
+}
+
+// Sibling to formatDdMm, WITH the year — used by the delete-account pending
+// banner (Plan B Task 10). formatDdMm's day+month-only format doesn't
+// communicate which year, and a 7-day grace window can straddle new year's.
+export function formatDdMmYyyy(iso: string, locale: 'de' | 'en'): string {
+  const parts = new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).formatToParts(new Date(iso));
+  const day = parts.find((p) => p.type === 'day')?.value ?? '';
+  const month = parts.find((p) => p.type === 'month')?.value ?? '';
+  const year = parts.find((p) => p.type === 'year')?.value ?? '';
+  return `${day}.${month}.${year}`;
 }
 
 export const PROFILE_NAME_REGEX = /^[\p{L}\p{N} _-]{3,30}$/u;
