@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request, url }) => {
   }
 
   const limitParam = Number(url.searchParams.get('limit'));
-  const limit = Math.min(limitParam || ACTIVITY_PAGE_SIZE, 50);
+  const limit = Math.max(1, Math.min(limitParam || ACTIVITY_PAGE_SIZE, 50));
 
   const page = await fetchActivityPage(userId, filter, before, limit);
 

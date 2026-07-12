@@ -143,7 +143,8 @@ async function queryKalenderCreated(db: any, userId: string, before: Date | null
 
 async function queryKalenderZusagen(db: any, userId: string, before: Date | null, limit: number) {
   // `before` applies to startDate for this sub-query (Decision 6 in the brief).
-  const query: Record<string, unknown> = { 'rsvps.going': userId, author: { $ne: userId } };
+  const query: Record<string, unknown> = { 'rsvps.going': userId, author: { $ne: userId }, moderationStatus: { $ne: 'rejected' } };
+  // rejected events must not surface in others' feeds.
   if (before) query.startDate = { $lt: before };
   const docs = await db
     .collection('events')
