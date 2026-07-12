@@ -1,0 +1,17 @@
+---
+// Sessionless confirm page for the e-mail-change flow (Plan B Task 8).
+// Mirrors verify-email.astro's mechanism: reads ?token=, passes it into a
+// Svelte island that POSTs to the confirm endpoint client-side. No session
+// check here — the link may be opened in a different browser than the one
+// that's logged in (mirrors /api/auth/verify-email's design).
+import AuthLayout from '../layouts/AuthLayout.astro';
+import ConfirmEmailChangeInner from '../components/profile/kiosk/ConfirmEmailChangeInner.svelte';
+
+const token = new URL(Astro.request.url).searchParams.get('token') ?? '';
+
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
+---
+
+<AuthLayout title="E-Mail-Wechsel bestätigen">
+  <ConfirmEmailChangeInner client:only="svelte" token={token} />
+</AuthLayout>

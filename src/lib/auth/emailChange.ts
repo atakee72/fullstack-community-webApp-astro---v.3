@@ -63,9 +63,17 @@ export async function createEmailChangeToken(userId: string, newEmail: string): 
  *    left in place — the sessionless confirm endpoint must not distinguish
  *    this from 'invalid' externally (no oracle), but the caller's own
  *    profile view can still show the stuck pendingEmail so they can cancel.
+ *
+ * 'ok' carries the swapped-to `email` — the sessionless confirm page (Task 8)
+ * has no session and no other way to know which address just went live, and
+ * the design requires showing it ("Login now uses {addr}."). Not a new
+ * information leak: the caller already had to possess the correct 256-bit
+ * token (delivered only to the new address's inbox) to reach this branch.
  */
-export async function confirmEmailChange(rawToken: string): Promise<'ok' | 'invalid' | 'email_taken'> {
-  if (!rawToken) return 'invalid';
+export async function confirmEmailChange(
+  rawToken: string
+): Promise<{ status: 'ok'; email: string } | { status: 'invalid' } | { status: 'email_taken' }> {
+  if (!rawToken) return { status: 'invalid' };
   const db = await connectDB();
   const tokens = db.collection('emailChangeTokens');
 
@@ -74,7 +82,7 @@ export async function confirmEmailChange(rawToken: string): Promise<'ok' | 'inva
     { tokenHash: hashToken(rawToken), usedAt: null, expiresAt: { $gt: new Date() } },
     { $set: { usedAt: new Date() } }
   );
-  if (!claimed) return 'invalid';
+  if (!claimed) return { status: 'invalid' };
 
   const userId = claimed.userId as ObjectId;
   const newEmail = String(claimed.newEmail ?? '');
@@ -85,7 +93,7 @@ export async function confirmEmailChange(rawToken: string): Promise<'ok' | 'inva
     { email: newEmail, _id: { $ne: userId } },
     { collation: { locale: 'en', strength: 2 } }
   );
-  if (takenBySomeoneElse) return 'email_taken';
+  if (takenBySomeoneElse) return { status: 'email_taken' };
 
   try {
     await db.collection('users').updateOne(
@@ -103,7 +111,7 @@ export async function confirmEmailChange(rawToken: string): Promise<'ok' | 'inva
         console.error('confirmEmailChange: rollback ALSO failed — token may be permanently burnt:', rollbackErr);
       });
     console.error('confirmEmailChange: user write failed, rolled back claim:', err);
-    return 'invalid';
+    return { status: 'invalid' };
   }
 
   // Email is already swapped — clear any other unused tokens for this user.
@@ -112,7 +120,7 @@ export async function confirmEmailChange(rawToken: string): Promise<'ok' | 'inva
     .catch((cleanupErr) => {
       console.error('confirmEmailChange: sibling-token cleanup failed (change still succeeded):', cleanupErr);
     });
-  return 'ok';
+  return { status: 'ok', email: newEmail };
 }
 
 /** Cancel a pending email change: drop all tokens for the user + clear pendingEmail. Idempotent. */

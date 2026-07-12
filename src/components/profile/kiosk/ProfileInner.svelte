@@ -30,6 +30,7 @@
 
   import { formatDdMm, type ChronikData, type ProfileMe, type ProfileStanding } from '../../../lib/profile/profileShared';
   import { t, tStr, locale } from '../../../lib/kiosk-i18n';
+  import { showSuccess, showError } from '../../../utils/toast';
   import ProfileTitleBlock from './ProfileTitleBlock.svelte';
   import ProfileSkeleton from './states/ProfileSkeleton.svelte';
   import PCard from './atoms/PCard.svelte';
@@ -37,6 +38,7 @@
   import PIdentityCard from './PIdentityCard.svelte';
   import PModerationCard from './PModerationCard.svelte';
   import PKontoCard from './PKontoCard.svelte';
+  import PEmailChangePanel from './PEmailChangePanel.svelte';
   import PChronikStrip from './PChronikStrip.svelte';
   import PActivityLedger from './PActivityLedger.svelte';
   import PMobileFold from './atoms/PMobileFold.svelte';
@@ -116,6 +118,87 @@
     standingRequested = false;
     standingError = false;
   }
+
+  // ─── E-mail change (Task 8) ────────────────────────────────────────────
+  // PEmailChangePanel is mounted exactly ONCE here (see that file's header
+  // comment for why: PKontoCard is double-mounted — desktop card + mobile
+  // fold — and a stateful panel with local input fields would desync
+  // across two independent mounts). `emailPanelOpen` gates that single
+  // mount; PKontoCard (both mounts) only gets `pendingEmail` + the
+  // resend/cancel handlers as props so its §08 banner always reflects the
+  // same upstream state the panel would show.
+  let emailPanelOpen = $state(false);
+
+  function openEmailPanel() {
+    emailPanelOpen = true;
+  }
+  function closeEmailPanel() {
+    emailPanelOpen = false;
+  }
+  function handleEmailStarted(newEmail: string) {
+    if (!profile) return;
+    profile = { ...profile, pendingEmail: newEmail };
+  }
+  // Shared by both PKontoCard's §08 banner and PEmailChangePanel's stage-02
+  // links — same function reference in both places, so resend/cancel
+  // behavior can never drift between the two surfaces.
+  async function resendEmailChange() {
+    try {
+      const res = await fetch('/api/profile/email-change/resend', { method: 'POST' });
+      if (res.ok) {
+        showSuccess($t['profile.email.stage2.resendOk']);
+      } else if (res.status === 429) {
+        showError($t['profile.email.err.throttled']);
+      } else {
+        showError($t['profile.email.err.config']);
+      }
+    } catch {
+      showError($t['profile.email.err.config']);
+    }
+  }
+  async function cancelEmailChange() {
+    try {
+      await fetch('/api/profile/email-change/cancel', { method: 'POST' });
+    } catch {
+      // /cancel is idempotent + always-200 server-side; a dropped response
+      // here just means we didn't get the ack — clear local state anyway so
+      // the UI isn't stuck (a stale server-side pendingEmail is harmless:
+      // the banner would reappear on the next /me fetch and can be
+      // cancelled again).
+    }
+    if (!profile) return;
+    profile = { ...profile, pendingEmail: null };
+    emailPanelOpen = false;
+  }
+
+  // Reconciliation fallback: if this tab confirmed the change in a
+  // DIFFERENT tab/browser (e.g. the link was opened from a phone's mail
+  // app while this desktop tab still shows the pending banner), regaining
+  // focus re-checks /me so the banner doesn't linger indefinitely after an
+  // out-of-band confirm. Seq-guarded like every other fetch in this file.
+  let reconcileSeq = 0;
+  function handleVisibilityChange() {
+    if (document.visibilityState !== 'visible') return;
+    if (!profile?.pendingEmail) return;
+    const mySeq = ++reconcileSeq;
+    (async () => {
+      try {
+        const res = await fetch('/api/profile/me');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (mySeq !== reconcileSeq) return; // stale
+        if (!profile || !data?.profile) return;
+        profile = { ...profile, email: data.profile.email, pendingEmail: data.profile.pendingEmail ?? null };
+      } catch {
+        /* silent — banner just stays until the next successful reconcile */
+      }
+    })();
+  }
+  $effect(() => {
+    if (!loggedIn) return;
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  });
 
   const banned = $derived((standing?.isBanned ?? false) || (profile?.isBanned ?? false));
 
@@ -226,8 +309,37 @@
 
       <!-- Konto — desktop card (lg+ only) -->
       <div class="hidden min-w-0 lg:block lg:col-start-1 lg:row-start-3">
-        <PKontoCard email={profile.email} />
+        <PKontoCard
+          email={profile.email}
+          pendingEmail={profile.pendingEmail}
+          showBanner={!emailPanelOpen}
+          onChangeEmail={openEmailPanel}
+          onResendEmail={resendEmailChange}
+          onCancelEmail={cancelEmailChange}
+        />
       </div>
+
+      <!--
+        E-mail change panel (Task 8) — SINGLE mount, own grid slot directly
+        below the Konto card/fold on both breakpoints. See this file's
+        "E-mail change" comment block above + PEmailChangePanel.svelte's
+        header for why it can't be mounted inside PKontoCard itself (that
+        component is double-mounted; a stateful panel would desync).
+        `lg:row-start-4` sits under Konto's `lg:row-start-3` in the same
+        column — the right column's `lg:row-span-3` only reserves rows 1–3,
+        so this doesn't force Archiv taller.
+      -->
+      {#if emailPanelOpen}
+        <div class="order-5 min-w-0 lg:col-start-1 lg:row-start-4">
+          <PEmailChangePanel
+            pendingEmail={profile.pendingEmail}
+            onStarted={handleEmailStarted}
+            onResend={resendEmailChange}
+            onCancel={cancelEmailChange}
+            onClose={closeEmailPanel}
+          />
+        </div>
+      {/if}
 
       <!--
         Right column — single mount, spans the right column on desktop.
@@ -275,7 +387,15 @@
       <!-- Konto — mobile fold (below lg only) -->
       <div class="order-4 min-w-0 lg:hidden">
         <PMobileFold title={$t['profile.konto.title']} open>
-          <PKontoCard email={profile.email} bare />
+          <PKontoCard
+            email={profile.email}
+            pendingEmail={profile.pendingEmail}
+            showBanner={!emailPanelOpen}
+            onChangeEmail={openEmailPanel}
+            onResendEmail={resendEmailChange}
+            onCancelEmail={cancelEmailChange}
+            bare
+          />
         </PMobileFold>
       </div>
     </div>

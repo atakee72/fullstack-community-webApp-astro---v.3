@@ -8,10 +8,9 @@ touching those server-side pieces from outside this directory.
 
 **Scope**: Plan A = own profile only (`/profile`, logged-in user viewing/
 editing their own Meldebogen). Plan B (in progress, see bottom) = public
-profile, konto-change flows, account deletion. Plan B Task 1 (`getChronik()`)
-and Task 2 (`PChronikStrip`) are done — the Kiez-Chronik strip ships on the
-own profile now; see "Kiez-Chronik strip" below. The public-profile route
-itself is still deferred.
+profile, konto-change flows, account deletion. Plan B Task 1 (`getChronik()`),
+Task 2 (`PChronikStrip`), and Task 8 (e-mail change flow — see "E-mail
+change" below) are done. The public-profile route itself is still deferred.
 
 ## Architecture
 
@@ -32,7 +31,10 @@ ProfileTitleBlock        — §-eyebrow + h1 ("Dein Meldebogen")
 PIdentityCard            — avatar + name/handle/since + verified + stats +
                             hobbies + in-card edit (STATEFUL, single mount)
 PModerationCard          — §02 standing display (stateless, `bare` prop)
-PKontoCard                — §03 email/password rows + logout (stateless, `bare` prop)
+PKontoCard                — §03 email/password rows + logout + "ändern" action
+                            + §08 pending banner (stateless, `bare` prop)
+PEmailChangePanel         — e-mail change stages 01/02 (STATEFUL, single
+                            mount; see "E-mail change" below)
 PChronikStrip             — Kiez-Chronik tenure strip (stateless, SSR-only
                             data, single mount; see "Kiez-Chronik strip" below)
 PActivityLedger           — §01 Archiv cross-surface feed (STATEFUL, own
@@ -72,6 +74,11 @@ All under `src/pages/api/profile/*` (session-gated, `getSession(request)`,
   403 before the upload even starts. Uploads to Cloudinary folder
   `mahalle/profile`, `300x300 crop:fill gravity:face`, writes
   `users.userPicture`.
+- **`POST /api/profile/email-change/{start,resend,cancel}`** + **`POST
+  /api/profile/email-change/confirm`** (sessionless, no `getSession()` gate —
+  see "E-mail change" below for the full flow). `start`/`resend`/`cancel` are
+  session-gated like every other route in this list; `confirm` deliberately
+  is not.
 
 All shared types/constants (`ProfileMe`, `ProfileStanding`, `ActivityItem`,
 `ActivityFilter`, `PROFILE_NAME_REGEX`, `HOBBY_MAX_COUNT`, `AVATAR_MAX_BYTES`,
@@ -240,6 +247,74 @@ actual available width. If this profile page (or any other kiosk page that
 adopts an `order-*`-reordered single-column-below-`lg` grid) starts clipping
 content on mobile with no visible cause, check for missing `min-w-0` first.
 
+## E-mail change (Plan B, Task 8)
+
+Design source: `kiosk-profile-flows.jsx` §03 `EmailChangeFlow` (stages 01
+NEUE ADRESSE / 02 BESTÄTIGEN — stage 03 GEWECHSELT lives on the confirm
+PAGE, not in-card) + `kiosk-profile-states.jsx` §08 (pending banner).
+
+**Layout decision (load-bearing)**: `PEmailChangePanel` is mounted **ONCE**
+by `ProfileInner`, gated by a local `emailPanelOpen` boolean — it is
+deliberately NOT mounted inside `PKontoCard` even though the "ändern" action
+that opens it lives there. Reasoning: `PKontoCard` is double-mounted
+(desktop card + mobile fold, see "Mobile fold layout" above) because it's
+pure props-in/markup-out — both instances safely render off the same
+upstream `standing`/`profile` state. `PEmailChangePanel` is different: it
+holds real local state (the new-email/password input values, per-field
+focus/error state). Mounting a stateful form twice would let the two
+instances diverge (e.g. typing on the mobile fold's copy while the desktop
+copy — hidden via `hidden lg:block`, but still MOUNTED and holding its own
+independent Svelte state — sits with empty fields; whichever one becomes
+visible on a breakpoint change shows stale/wrong content). Single-mounting
+sidesteps this entirely, matching the same reasoning that already governs
+`PIdentityCard`/`PActivityLedger` vs `PModerationCard`/`PKontoCard`.
+
+The single mount is placed in its **own grid slot**, directly below the
+Konto card/fold on both breakpoints — `lg:col-start-1 lg:row-start-4` on
+desktop (row 4, under Konto's row 3; the right column's `lg:row-span-3` only
+reserves rows 1–3 so this never forces Archiv taller) and `order-5` on
+mobile (after Konto's `order-4` fold). This mirrors how the flows-JSX
+presents 01/02 as their own stage cards rather than content living inside
+the Konto card's body.
+
+**State flow**: `ProfileInner` owns `emailPanelOpen` (mount gate) plus three
+handlers passed down to BOTH `PKontoCard` (for the §08 banner's
+"erneut senden"/"abbrechen" links) and `PEmailChangePanel` (for stage 02's
+identical links) — `resendEmailChange()` and `cancelEmailChange()` are the
+literal same function references in both places, so the two surfaces can
+never drift in behavior. `cancelEmailChange()` also closes the panel
+(`emailPanelOpen = false`) since there's nothing left to show once
+`pendingEmail` is cleared. `handleEmailStarted(newEmail)` (start-success
+callback, panel-only) sets `profile.pendingEmail` immediately — no refetch
+needed, mirrors `PIdentityCard`'s `onSaved()` optimistic-echo pattern.
+`PEmailChangePanel`'s own stage (`'form' | 'sent'`) is seeded ONCE from the
+`pendingEmail` prop at mount time (`pendingEmail ? 'sent' : 'form'`) —
+opening the panel while a change is already pending jumps straight to stage
+02, per the brief.
+
+**Confirm page** (`src/pages/confirm-email-change.astro` +
+`ConfirmEmailChangeInner.svelte`) is sessionless, mirroring
+`verify-email.astro`/`AuthVerifyInner.svelte` exactly: reads `?token=`,
+POSTs to `/api/profile/email-change/confirm` on mount, shows a
+success/failure card. Two differences from the verify-email precedent: (1)
+no "sent" stage here — the panel already covers that, so the page only ever
+shows confirming → confirmed | invalid; (2) `confirmEmailChange()`
+(`src/lib/auth/emailChange.ts`) now returns `{ status: 'ok'; email: string
+}` instead of a bare `'ok'` string — the sessionless page has no other way
+to know which address just went live, and the design requires showing it
+("Login now uses {addr}."). Not a new information-disclosure surface: the
+caller already had to possess the correct 256-bit token (delivered only to
+the new address's inbox) to reach that branch. `confirm.ts`'s response body
+gained an `email` field on success accordingly (`{ ok: true, email }`).
+
+**Reconciliation fallback**: `ProfileInner` listens for `visibilitychange`
+and, if `profile.pendingEmail` is set when the tab regains focus,
+re-fetches `/api/profile/me` and merges `email`/`pendingEmail` back in
+(seq-guarded like every other fetch in this file). Covers the case where the
+confirm link was opened in a DIFFERENT tab/browser (e.g. a phone's mail app)
+while this tab still shows the pending banner — without it the banner would
+linger until the next full page load.
+
 ## Archiv feed (pointer)
 
 Full field-by-field notes (per-kind hrefs, `zusage` dated by event
@@ -302,13 +377,12 @@ Chronik carries no private data (see `chronik.ts`'s own comments).
   `PChronikStrip` (already built, see above) on this route once it ships.
 - `Steckbrief` + motto (the "Bearbeiten" sibling button in
   `ProfileOwnMobile`'s identity card footer).
-- Konto "ändern" action flows for email/password (Plan A's `PKontoCard`
-  rows are display-only — real change flows route through the existing
-  separate password-reset/email-verify system, not through this card).
+- Konto "ändern" action flow for PASSWORT (Task 9 — email's own flow shipped
+  in Task 8, see "E-mail change" above; the PASSWORT row stays display-only
+  until then).
 - Gefahrenzone / account deletion.
-- States §03 (loading→ready transition detail) and §08 (all sub-states)
-  from `kiosk-profile-states.jsx` beyond what §01/§02/§04–07/§09/§10
-  already cover.
+- States §03 (loading→ready transition detail) from `kiosk-profile-states.jsx`
+  beyond what §01/§02/§04–07/§09/§10 already cover. (§08 shipped in Task 8.)
 - `publicView` prop on `PActivityLedger`/`PActivityRowMobile` has no real
   consumer yet — it's plumbed through (`publicView={false}` default) for
   when the public profile route ships, so the ledger doesn't need

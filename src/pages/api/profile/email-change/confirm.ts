@@ -20,7 +20,12 @@ export const POST: APIRoute = async ({ request }) => {
     if (!token) return json({ error: 'invalid_or_expired' }, 400);
 
     const result = await confirmEmailChange(token);
-    return result === 'ok' ? json({ ok: true }, 200) : json({ error: 'invalid_or_expired' }, 400);
+    // `email` echoes the address that just went live — the sessionless
+    // confirm PAGE (Task 8) has no other way to know it (see
+    // emailChange.ts's confirmEmailChange doc comment for why this is safe).
+    return result.status === 'ok'
+      ? json({ ok: true, email: result.email }, 200)
+      : json({ error: 'invalid_or_expired' }, 400);
   } catch (err) {
     console.error('email-change/confirm error:', err);
     return json({ error: 'internal' }, 500);
