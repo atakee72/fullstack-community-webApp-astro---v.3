@@ -106,6 +106,12 @@ export default defineConfig({
                 // VerifyEmailBanner live-checks /api/auth/verification-status.
                 token.emailVerified = (user as any).emailVerified === true;
                 token.pwdCheckedAt = Date.now();
+                // Immutable login timestamp — set ONLY here, never touched again.
+                // Unlike jose's auto `iat` (which @auth/core re-stamps on every
+                // re-encode, including the session-cookie refresh on every GET
+                // /api/auth/session), this stays fixed for the token's whole
+                // lifetime, so it actually reflects "when this device logged in".
+                token.loginAt = Date.now();
                 return token;
             }
             // Other-device sign-out: invalidate tokens issued before passwordChangedAt.
@@ -119,9 +125,19 @@ export default defineConfig({
                         { _id: new ObjectId(String(token.id)) },
                         { projection: { passwordChangedAt: 1 } }
                     );
-                    if (u?.passwordChangedAt && typeof token.iat === 'number'
-                        && token.iat * 1000 < new Date(u.passwordChangedAt).getTime()) {
-                        return null; // token predates the change -> session invalidated
+                    if (u?.passwordChangedAt) {
+                        if (typeof token.loginAt === 'number') {
+                            if (token.loginAt < new Date(u.passwordChangedAt).getTime()) {
+                                return null; // token predates the change -> session invalidated
+                            }
+                        } else {
+                            // Legacy token minted before loginAt existed: it can
+                            // only predate this deploy, and passwordChangedAt is
+                            // only ever written by the new endpoint (which shipped
+                            // in the same deploy) — so any passwordChangedAt value
+                            // necessarily postdates this token's login. Invalidate.
+                            return null;
+                        }
                     }
                     token.pwdCheckedAt = Date.now();
                 } catch { /* DB hiccup: keep session, recheck next window */ }

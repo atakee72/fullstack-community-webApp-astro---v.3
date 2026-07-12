@@ -47,5 +47,11 @@ declare module '@auth/core/jwt' {
     // last passwordChangedAt DB recheck for this token — see auth.config.ts's
     // jwt callback. Absent on tokens minted before this shipped; treated as 0.
     pwdCheckedAt?: number;
+    // Immutable wall-clock ms of login, set once in the `if (user)` branch of
+    // the jwt callback and never rewritten. Used (instead of jose's
+    // auto-managed `iat`, which @auth/core re-stamps on every re-encode) to
+    // key other-device sign-out off actual login time. Absent on tokens
+    // minted before this shipped — treated as invalid/legacy (see auth.config.ts).
+    loginAt?: number;
   }
 }
