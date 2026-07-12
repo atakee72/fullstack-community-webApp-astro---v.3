@@ -57,6 +57,11 @@
   let saveState = $state<SaveState>('idle');
   let saveError = $state<string | null>(null);
   let savedTimer: ReturnType<typeof setTimeout> | undefined;
+  let nameFocused = $state(false);
+
+  // Sequence guard — a stale in-flight submit() must never clobber state
+  // written by a newer one. Mirrors ProfileInner.svelte's seq pattern.
+  let saveSeq = 0;
 
   onDestroy(() => clearTimeout(savedTimer));
 
@@ -103,7 +108,7 @@
     editHobbies = editHobbies.filter((x) => x !== h);
   }
 
-  async function submit(payload: Editable) {
+  async function submit(payload: Editable, mySeq: number) {
     saveState = 'saving';
     saveError = null;
     try {
@@ -120,6 +125,7 @@
         } catch {
           /* non-JSON error body — fall through to generic banner copy */
         }
+        if (mySeq !== saveSeq) return; // stale — a newer save superseded this one
         optimisticOverride = null;
         editing = true;
         saveState = 'failed';
@@ -131,13 +137,16 @@
         name: typeof json.name === 'string' ? json.name : payload.name,
         hobbies: Array.isArray(json.hobbies) ? json.hobbies : payload.hobbies,
       };
+      if (mySeq !== saveSeq) return; // stale
       onSaved(echo);
       optimisticOverride = null;
       saveState = 'saved';
+      clearTimeout(savedTimer);
       savedTimer = setTimeout(() => {
         if (saveState === 'saved') saveState = 'idle';
       }, 1500);
     } catch {
+      if (mySeq !== saveSeq) return; // stale
       optimisticOverride = null;
       editing = true;
       saveState = 'failed';
@@ -153,13 +162,14 @@
     }
     nameError = null;
     const payload: Editable = { name: trimmed, hobbies: [...editHobbies] };
+    const mySeq = ++saveSeq;
     optimisticOverride = payload;
     editing = false;
-    submit(payload);
+    submit(payload, mySeq);
   }
 
   const sinceLine = $derived(`@${profile.handle} · ${tStr($t['profile.since'], { y: profile.memberSince })}`);
-  const nameBorder = $derived(nameError ? 'var(--k-danger)' : 'var(--k-ink)');
+  const nameBorder = $derived(nameError ? 'var(--k-danger)' : nameFocused ? 'var(--k-ink)' : 'var(--k-rule)');
 </script>
 
 <PCard>
@@ -216,7 +226,7 @@
     </div>
 
     <div style="margin-top: 16px; display: flex; gap: 8px;">
-      <PBtn primary small disabled={banned} onclick={startEdit}>{$t['profile.action.edit']}</PBtn>
+      <PBtn primary small disabled={banned || saveState === 'saving'} onclick={startEdit}>{$t['profile.action.edit']}</PBtn>
     </div>
   {:else}
     <!-- ═══ Edit state ═══ -->
@@ -229,6 +239,8 @@
           type="text"
           bind:value={editName}
           oninput={() => (nameError = null)}
+          onfocus={() => (nameFocused = true)}
+          onblur={() => (nameFocused = false)}
           maxlength={30}
           style="width: 100%; box-sizing: border-box; padding: 10px 13px; background: var(--k-paper-soft); border: 1.5px solid {nameBorder}; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--k-ink); outline: none;"
         />

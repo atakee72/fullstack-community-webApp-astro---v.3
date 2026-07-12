@@ -5,6 +5,7 @@
   // Design source: kiosk-profile.jsx (PHobbyChip).
 
   import type { Snippet } from 'svelte';
+  import { t } from '../../../../lib/kiosk-i18n';
 
   let {
     removable = false,
@@ -32,7 +33,7 @@
     <button
       type="button"
       onclick={onRemove}
-      aria-label="entfernen"
+      aria-label={$t['profile.edit.hobbies.remove']}
       style="
         font-family: var(--k-font-mono); font-size: 11px; color: var(--k-ink-mute);
         background: none; border: none; padding: 0; margin: 0; line-height: 1; cursor: pointer;
