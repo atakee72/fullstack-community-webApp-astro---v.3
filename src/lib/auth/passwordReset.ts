@@ -81,8 +81,8 @@ export async function resetPasswordWithToken(rawToken: string, newPassword: stri
     const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
     await db.collection('users').updateOne(
       { _id: claimed.userId as ObjectId },
-      { $set: { password: hashed, updatedAt: new Date().toISOString() } }
-    );
+      { $set: { password: hashed, updatedAt: new Date().toISOString(), passwordChangedAt: new Date() } }
+    ); // passwordChangedAt invalidates other devices via JWT loginAt check
   } catch (err) {
     // The password write failed AFTER the token was claimed — roll the claim
     // back so the link stays usable and the user isn't locked out mid-flow.
