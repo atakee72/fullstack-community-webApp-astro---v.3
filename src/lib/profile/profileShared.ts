@@ -15,6 +15,7 @@ export interface ProfileMe {
   isBanned: boolean;
   stats: { posts: number; listings: number; events: number; danke: number };
   motto: string | null; // Plan B Task 6 — optional Steckbrief line, own-view only (never on PublicProfile)
+  pendingEmail: string | null; // Plan B Task 7 — email-change in flight, own-view only (never on PublicProfile)
 }
 
 // Public-profile projection ("Nachbarn"-view) — Plan B Task 3. Trimmed

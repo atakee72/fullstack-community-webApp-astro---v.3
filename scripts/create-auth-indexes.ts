@@ -30,6 +30,10 @@ async function main() {
     { expiresAt: 1 }, { expireAfterSeconds: 0, name: 'evt_ttl' });
   await db.collection('emailVerifyTokens').createIndex(
     { tokenHash: 1 }, { name: 'evt_tokenHash' });
+  await db.collection('emailChangeTokens').createIndex(
+    { expiresAt: 1 }, { expireAfterSeconds: 0, name: 'ect_ttl' });
+  await db.collection('emailChangeTokens').createIndex(
+    { tokenHash: 1 }, { name: 'ect_tokenHash' });
 
   // rateLimits: exact-key bucket lookup (unique — consume() handles the
   // E11000 upsert race), TTL cleanup, clear-by-baseKey.
