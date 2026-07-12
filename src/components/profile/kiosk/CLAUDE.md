@@ -6,11 +6,13 @@ relevant when working on `src/lib/profile/*` and `src/pages/api/profile/*` /
 `src/pages/api/users/{update,profiles}.ts` — read this file directly when
 touching those server-side pieces from outside this directory.
 
-**Scope**: Plan A = own profile only (`/profile`, logged-in user viewing/
-editing their own Meldebogen). Plan B (in progress, see bottom) = public
-profile, konto-change flows, account deletion. Plan B Task 1 (`getChronik()`),
-Task 2 (`PChronikStrip`), and Task 8 (e-mail change flow — see "E-mail
-change" below) are done. The public-profile route itself is still deferred.
+**Scope**: Plan A = own profile (`/profile`, logged-in user viewing/editing
+their own Meldebogen). Plan B = public profile (`/nachbarn/[handle]`),
+konto-change flows (e-mail, password), Steckbrief/motto, and account
+deletion (7-day grace + day-7 anonymization pipeline). Both plans are
+**complete** (Tasks 1–11) — see the dedicated sections below: "Public
+profile", "Kiez-Chronik strip" (resolver + cache), "Steckbrief + motto",
+"E-mail change", "Password change", "Account deletion".
 
 ## Architecture
 
@@ -315,6 +317,166 @@ confirm link was opened in a DIFFERENT tab/browser (e.g. a phone's mail app)
 while this tab still shows the pending banner — without it the banner would
 linger until the next full page load.
 
+## Password change (Plan B, Task 9)
+
+`POST /api/profile/change-password` (`src/pages/api/profile/change-password.ts`)
+— session-gated, ban-gated (`rejectIfBanned`), rate-limited
+(`pwch:${userId}`, 5/h). Generic `invalid_password` for both "no password on
+file" and an actual mismatch (no signal leaked). Rejects a same-as-current
+new password (compared against the pre-overwrite hash). On success: hashes
++ persists the new password AND stamps `users.passwordChangedAt = new
+Date()` — this stamp is the load-bearing bit, see below.
+
+**Other-device sign-out mechanism (root `CLAUDE.md` pointer, full story
+here)**: `auth.config.ts`'s `jwt` callback compares two DIFFERENT
+timestamps, and confusing them is the exact bug shape to watch for:
+
+- **`token.loginAt`** — stamped ONCE, only in the `user` branch (i.e. only
+  at actual login), and NEVER touched again for that token's lifetime. This
+  is deliberately NOT jose/`@auth/core`'s auto `iat` claim — `iat` gets
+  re-stamped on every JWT re-encode, including the session-cookie refresh
+  that happens on every `GET /api/auth/session` call, so it does NOT mean
+  "when did this device log in" by the time you'd want to compare it against
+  anything. `loginAt` is the one field this codebase controls end-to-end for
+  that purpose.
+- **`token.pwdCheckedAt`** — a throttle, not a security boundary: caps the
+  DB read that checks `passwordChangedAt` to once per 5 minutes per token
+  (`PWD_RECHECK_MS`), so a change on Device B takes up to 5 minutes to log
+  Device A out rather than being instant. Accepted lag, not a bug.
+- **The actual check**: on every non-login `jwt` callback invocation, once
+  the 5-min throttle allows a recheck, fetch `users.passwordChangedAt` and
+  compare it to `token.loginAt` (NOT to `pwdCheckedAt`, NOT to `iat`). If
+  `loginAt < passwordChangedAt`, this token predates the password change —
+  return `null` from the callback, which `@auth/core` treats as "no valid
+  session", forcing that device to re-authenticate. A token minted before
+  `loginAt` existed as a field (pre-this-feature) has no way to prove it
+  postdates a `passwordChangedAt` that could only ever have been written by
+  this same feature — so it's invalidated unconditionally (`else` branch,
+  legacy-token handling).
+- **Silent re-login on the ORIGINATING device**: the endpoint's response
+  echoes the session's own `email` so `PPasswordChangePanel.svelte` can
+  immediately call `signIn('credentials', { email, password: newPassword,
+  redirect: false })` — this mints a FRESH token with a fresh `loginAt`
+  (necessarily `>= passwordChangedAt`), so the device that just changed the
+  password keeps working without an explicit logout/login round-trip. If
+  that silent re-login unexpectedly fails (`auth-astro`'s `signIn()` never
+  exposes a `.error` field to distinguish causes), the panel hard-redirects
+  to `/login` rather than leave the user on a page that silently stops
+  working once the 5-min throttle next fires.
+- **Password reset also stamps `passwordChangedAt`**
+  (`resetPasswordWithToken()`, `src/lib/auth/passwordReset.ts`) — same
+  other-device invalidation applies to the forgot-password flow, not just
+  the in-profile change. There's no "silent re-login" step there (the
+  sessionless reset page has no session to preserve).
+
+## Account deletion (Plan B, Tasks 10–11)
+
+Two-phase: **scheduling** (Task 10, session-gated, reversible for 7 days)
+and the **day-7 anonymization pipeline** (Task 11, cron-driven,
+irreversible). Login is allowed during the entire grace period — deletion
+restricts nothing about the account until the pipeline actually runs.
+
+### Scheduling + undo (`src/lib/auth/accountDeletion.ts`)
+
+- `scheduleDeletion(userId)` — `$set users.deletionScheduledAt` to `now +
+  GRACE_MS` (7 days) + issues a fresh single-use undo token
+  (`accountDeletionTokens`, sha256-hashed, latest-wins `deleteMany` before
+  inserting — identical shape to `emailChange.ts`'s token lib).
+- `POST /api/profile/delete-account/schedule` — password + typed-handle
+  confirmation (`confirmHandle === user.handle`, server re-check; the modal's
+  client-side gate is UX only), rate-limited (`del:${userId}`, 3/h).
+  Deliberately NOT ban-gated — banning restricts posting, not account
+  ownership; a banned user must still be able to delete their own account.
+  Best-effort undo mail (fails closed on missing `NEXTAUTH_URL` in prod —
+  the schedule still stands, only the mail is skipped).
+- **In-app "Widerrufen"**: `POST /api/profile/delete-account/cancel`
+  (session-gated) → `cancelDeletion()` → `$unset deletionScheduledAt` +
+  drops every undo token. Idempotent.
+- **Mail undo link**: `/widerrufen?token=...` (sessionless, mirrors
+  `confirm-email-change.astro`) → `POST /api/auth/cancel-deletion` →
+  `cancelDeletionWithToken()` — atomic single-use claim
+  (`findOneAndUpdate`), then `cancelDeletion()`.
+
+### Day-7 pipeline (`runDeletionPipeline()`, Task 11)
+
+`GET /api/cron/process-deletions` (Vercel cron, `vercel.json`, `30 5 * * *`
+— auth pattern mirrors `src/pages/api/news/fetch-daily.ts`: `Authorization:
+Bearer ${CRON_SECRET}`, skip-if-unset) finds every user with
+`deletionScheduledAt <= now` and `anonymized !== true`, and runs
+`runDeletionPipeline(userId)` for each. **Naturally idempotent**: the
+tombstone step (6) `$unset`s `deletionScheduledAt` and sets `anonymized:
+true`, so a re-run's query no longer matches a user it already finished —
+no separate "already processed" guard needed.
+
+Ordered steps (each counted into `steps: Record<string, number>`;
+per-step try/catch — a failing step is recorded as `-1` and flips the
+overall `ok` to `false`, but does NOT stop the remaining steps):
+
+1. **Listings**: collect the user's listing ids, `deleteMany({ sellerId:
+   userId })`, delete their `listingAuditTrail` rows
+   (`{ listingId: { $in: ids } }`), and `$unset { authorName, authorEmail }`
+   on their `flaggedContent` rows (`{ contentType: 'marketplace', contentId:
+   { $in: ids } }`) — rows are KEPT, never deleted (Nachweispflicht: the
+   moderation record must survive the author).
+2. **Saved footprints**: `savedPosts`/`savedNews`/`savedEvents.deleteMany({
+   userId })` (this user's own bookmarks) + `listings.updateMany({ savedBy:
+   userId }, { $pull: { savedBy: userId } })` (this user removed from
+   OTHER people's saved-listing arrays).
+3. **RSVPs — „Zusagen entfernt" interpretation (load-bearing)**:
+   `events.updateMany({ $or: [{'rsvps.going': userId}, {'rsvps.maybe':
+   userId}] }, { $pull: { 'rsvps.going': userId, 'rsvps.maybe': userId } })`
+   pulls ONLY the deleted user's OWN RSVPs, from every event (including
+   events other people authored). It does **NOT** touch other users' RSVPs
+   on events THIS user authored — those events stay (step 4), and other
+   attendees' going/maybe entries are their own data, unrelated to this
+   user's deletion. Verified E2E: user B's RSVP on user A's event survived
+   A's deletion untouched; A's RSVP on B's event was pulled.
+4. **Authored content stays**: topics/comments/announcements/
+   recommendations/events/news are NEVER deleted or altered — they render
+   as „Ehemaliges Mitglied" because `populateAuthors()`
+   (`src/lib/topicsQuery.ts`) does a live `users` lookup by author id on
+   every render, and the tombstoned doc's `name` field IS "Ehemaliges
+   Mitglied" (step 6) — no special-casing needed anywhere in the render
+   path. The byline link still resolves (`/nachbarn/id/<id>` → the
+   id-redirect route → `getHandleForPublic()` → `anonymized: true` → `null`
+   → not-found card). `flaggedContent` by `authorId: userId` (covering
+   every OTHER content type, not just marketplace):
+   `$unset { authorName, authorEmail }`, rows kept.
+5. **Tokens + rate limits + Chronik cache**: `emailVerifyTokens`/
+   `passwordResetTokens`/`emailChangeTokens`/`accountDeletionTokens`
+   `.deleteMany({ userId: ObjectId })`; `rateLimits.deleteMany({ baseKey: {
+   $regex: userId } })` (best-effort — `baseKey` values like `del:<uid>`/
+   `pwch:<uid>` contain the raw id string); `chronikCache.deleteOne({
+   userId: ObjectId })`.
+6. **Tombstone** (`users` doc, Decision 6 verbatim): `$set { name:
+   'Ehemaliges Mitglied', anonymized: true, deletedAt: new Date(), updatedAt
+   }` + `$unset { email, password, image, userPicture, hobbies, handle,
+   verified, emailVerified, roleBadge, role, motto, pendingEmail,
+   dankeCrossedAt, deletionScheduledAt }`. KEEPS `moderationStrikes`/
+   `strikeHistory`/`isBanned`/`bannedAt`/`bannedReason`/`createdAt`/
+   `passwordChangedAt` (the last one is harmless to leave — `password` is
+   gone, so login is impossible regardless; not worth a special-case
+   `$unset`). `password` being unset means `login-status`/`authorize()`
+   naturally fail the tombstoned account (no explicit "is this user
+   anonymized" login check needed — it falls out of the missing password).
+   `userPicture` is captured BEFORE this step runs (read once at the top of
+   `runDeletionPipeline`), since step 7 needs it after this `$unset`s it.
+7. **Cloudinary avatar destroy** (best-effort, try/catch): derives the
+   `public_id` from the captured `userPicture` URL via a regex anchored to
+   `mahalle/profile/` — only ever destroys an asset under that exact folder,
+   never anything a URL string could otherwise point at. No-op (not an
+   error) if there was no avatar or the URL doesn't match the expected
+   shape.
+
+**E2E-verified** (Task 11, tmp fixture users, cron called directly with the
+real `CRON_SECRET`): listing gone + its `flaggedContent` row kept with
+name/email unset; `savedPosts` row gone; the deleted user's RSVP pulled from
+another user's event while that other user's RSVP on the deleted user's OWN
+event survived; topic + comment remained and rendered "Ehemaliges Mitglied"
+in the forum UI; `/nachbarn/id/<id>` → not-found card; login with the old
+credentials failed (`CredentialsSignin`); tokens/rate-limit/Chronik-cache
+rows gone; a second cron call returned `processed: 0` (idempotent).
+
 ## Archiv feed (pointer)
 
 Full field-by-field notes (per-kind hrefs, `zusage` dated by event
@@ -369,21 +531,115 @@ Chronik carries no private data (see `chronik.ts`'s own comments).
   `profile.chronik.stop.<kind>` — kept as i18n keys rather than resolver
   output so the derived-data layer (`chronik.ts`) stays copy-free.
 
-## Plan B — deferred (out of scope for Plan A, do not build without a new brief)
+### Chronik resolver + cache (backend, Plan B Task 1)
 
-- Public profile route `/nachbarn/[handle]` (neighbor view — trimmed
-  Meldebogen: no email, no saved items, no moderation, no settings; entry
-  point is clicking an author name in Forum/Market/Calendar). Task 4 mounts
-  `PChronikStrip` (already built, see above) on this route once it ships.
-- `Steckbrief` + motto (the "Bearbeiten" sibling button in
-  `ProfileOwnMobile`'s identity card footer).
-- Konto "ändern" action flow for PASSWORT (Task 9 — email's own flow shipped
-  in Task 8, see "E-mail change" above; the PASSWORT row stays display-only
-  until then).
-- Gefahrenzone / account deletion.
-- States §03 (loading→ready transition detail) from `kiosk-profile-states.jsx`
-  beyond what §01/§02/§04–07/§09/§10 already cover. (§08 shipped in Task 8.)
-- `publicView` prop on `PActivityLedger`/`PActivityRowMobile` has no real
-  consumer yet — it's plumbed through (`publicView={false}` default) for
-  when the public profile route ships, so the ledger doesn't need
-  retrofitting then.
+`getChronik(userId)` (`src/lib/profile/chronik.ts`, SERVER-ONLY) is the sole
+producer of `ChronikData`. Consumed by BOTH `profile.astro` (own view) and
+`nachbarn/[handle].astro` (public view, same shape, no gating needed — the
+Chronik carries no private data by construction: only dates + an `active`
+boolean, never counts/content).
+
+- **Cache**: `chronikCache` collection, one row per user
+  (`{ userId: ObjectId, payload: ChronikData, computedAt, expiresAt }`).
+  24h TTL checked in-code (`Date.now() - computedAt < CACHE_TTL_MS`), not a
+  Mongo TTL index — `expiresAt` is written for potential future TTL-index
+  hygiene but isn't relied on for the freshness check itself.
+- **Milestone gate**: `firstTopic`/`firstListing`/`firstEvent` exclude only
+  `moderationStatus: 'rejected'` (`$ne`, deliberately includes `pending` —
+  a milestone is just "when did this exist", not a moderation verdict).
+- **`dankeCrossedAt`** (Decision 2, stamp-on-first-observation): once a
+  user's summed `likes` across topics/announcements/recommendations/events
+  crosses 100, `chronik.ts` stamps `users.dankeCrossedAt` ONCE via a guarded
+  `updateOne({ _id, dankeCrossedAt: { $exists: false } })` — a concurrent
+  computation can't double-stamp. The stamp date is "first time this was
+  *observed* crossing 100" (i.e. whenever some request happened to compute
+  a fresh Chronik after the threshold was crossed), not the literal moment
+  the 100th danke landed — acceptable per Decision 2, a milestone dot on a
+  derived timeline doesn't need to-the-second precision.
+- **`active` (the `heute` stop's pulse)**: latest of
+  `topics`/`listings`/`events`/`news` `createdAt` across ALL those
+  collections (author-authored, any moderation status) within the last 7
+  days (`ACTIVE_WINDOW_MS`). Drives `.prof-chronik-now`'s pulse animation
+  (see the dot-color-rule note above) — purely cosmetic, never gates access.
+- **Deletion-pipeline interaction (Task 11)**: `runDeletionPipeline()`
+  deletes the user's `chronikCache` row outright (no tombstone-shaped
+  Chronik is ever computed for an anonymized user — `/nachbarn/<handle>`
+  and `/nachbarn/id/<id>` both 404 before `getChronik()` would even run,
+  see "Account deletion" below).
+
+## Public profile (`/nachbarn/[handle]`, Plan B Task 3/4)
+
+Trimmed neighbor-facing view of a user's Meldebogen. Session is NOT
+required — entry point is clicking an author name/byline anywhere content
+is attributed (Forum/Market/Calendar). A logged-in visitor viewing their OWN
+handle here still sees the trimmed public view (honest "this is what
+neighbors see" preview, not a bug).
+
+- **Route + gate**: `src/pages/nachbarn/[handle].astro`. Strips one leading
+  `@` (and its encoded form `%40`) before validating against `HANDLE_REGEX`;
+  an invalid handle shape short-circuits to the not-found card without a DB
+  round-trip. `getPublicProfile(handle)` (`src/lib/profile/publicProfile.ts`,
+  SERVER-ONLY) returns `null` for both "no such handle" AND
+  `anonymized: true` (tombstoned accounts) — the page can't distinguish
+  the two cases and doesn't need to (`PublicNotFound.astro`, static DE-only
+  copy, same precedent as `ListingUnavailable.astro`).
+  `Cache-Control: no-store` — stats/activity are per-visitor-irrelevant but
+  per-author-live, never cached.
+- **Id-redirect**: `src/pages/nachbarn/id/[userId].astro` canonicalizes any
+  `/nachbarn/id/<userId>`-shaped link (legacy `/profile/<id>` references,
+  and the tombstone's own byline link — see "Account deletion" below) to
+  `/nachbarn/<handle>`. Uses `getHandleForPublic(userId)`
+  (`publicProfile.ts`) — NOT a raw `ensureHandle()` — because it already
+  covers invalid-ObjectId-shape, missing-user, AND anonymized-tombstone in
+  one gate (all → `null` → not-found card), while a legit user missing a
+  handle still self-heals one via the same lazy-assignment path as
+  `getProfileMe()`.
+- **`PublicProfile` type contract** (`profileShared.ts`) — NEVER
+  select/return `email`, `isBanned`, `pendingEmail`, `strikes`, or `motto`
+  from `publicProfile.ts`. `stats` mirrors `/me`'s shape (`posts, listings,
+  events, danke`) but listings are visibility-filtered (same public `$or`
+  as `listingsQuery.ts`'s public branch: `status in [available, reserved]`
+  AND freshness clock within 21 days) while events are an all-time count
+  (Decision 11 — a stat is a count, not a listing).
+- **UI**: `PublicProfileInner.svelte` + `PPublicIdentityCard.svelte` reuse
+  `PChronikStrip` (identical component, no modification) and
+  `PActivityLedger` (`publicView={true}`, gated to approved-only content, no
+  "gespeichert" filter — a stranger's bookmarks are never public). No
+  moderation card, no Konto card, no settings.
+- **Public activity feed**: `GET /api/profile/public-activity` +
+  `src/lib/profile/activityFeed.ts`'s `PUBLIC_MODERATION_OR` gate (approved-
+  or-moderation-absent) — same gate duplicated (not imported, no shared
+  export needed) in `publicProfile.ts`'s `publicModerationOr()` helper; keep
+  both in sync if Decision 11 ever changes.
+
+## Steckbrief + motto (Plan B Task 6)
+
+`src/pages/steckbrief.astro` — printable A6-landscape (148×105mm) neighbor
+card, own-view only (session-gated, redirects to `/login` if absent, to
+`/profile` if the session's user record vanished). Prints straight out of
+the browser (`window.print()`, no PDF backend/canvas) via a `@media print`
+block that hides everything except the card
+(`body * { visibility: hidden }` + `.steckbrief-card, .steckbrief-card* {
+visibility: visible }`, `position: fixed` pulled to the page origin,
+`!important` needed throughout to out-rank Astro's scoped-style attribute
+selectors — see the file's own inline comments for the full specificity
+story). Encodes `{base}/nachbarn/{handle}` into a server-generated QR (the
+`qrcode` package, SVG, injected via `set:html` — safe because the input
+string is built entirely from OUR trusted base + the session's own handle,
+never from request/body input). v1 is DE-only for the card content itself
+(deliberate — a German print artifact), same precedent as
+`PublicNotFound.astro`.
+
+**Motto**: a free-text Steckbrief line (`users.motto`, optional,
+`MOTTO_MAX_LEN`), edited through the SAME endpoint as name/hobbies
+(`POST /api/users/update` — not a dedicated `/profile/motto` route). Empty
+string `''` is a deliberate "clear the motto" signal (`$unset`), distinct
+from `undefined` ("field not present in this request, leave alone") — the
+Zod schema intentionally has no `.min(1)` on the field so a clear-request
+still validates. `motto` is own-view/Steckbrief-only: `ProfileMe` carries it,
+`PublicProfile` never does (not shown on `/nachbarn/[handle]`, only printed
+on the Steckbrief card and the private `/profile` page). Checked for
+profanity via `checkMottoProfanity()` before persisting, same moderation
+posture as the display-name check at registration.
+
+## E-mail change (Plan B, Task 8)

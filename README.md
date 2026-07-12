@@ -69,7 +69,7 @@ The app is mid-migration from a **dark-glass** aesthetic (deep indigo `#0e1033` 
 | Auth (`/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`) | ✅ Kiosk (Svelte, own `AuthLayout`) |
 | Admin moderation (`/admin/moderation`) | ✅ Kiosk (Svelte, own `AdminLayout`) |
 | Admin announcements (`/admin/announcements`) | 🚧 Legacy dark-glass |
-| Profile (`/profile`) | ✅ Kiosk (Svelte) — Plan A: own profile; public profile + konto-change flows in Plan B |
+| Profile (`/profile`, `/nachbarn/[handle]`, `/steckbrief`) | ✅ Kiosk (Svelte) — complete (Plan A: own profile; Plan B: public neighbor profiles, e-mail/password change, account deletion) |
 | Blog | 🚧 Legacy dark-glass |
 
 ### Page-accent rule (kiosk)
@@ -187,6 +187,7 @@ Vercel will automatically:
 - **Official admin announcements**: 7-day pinned slot at the top of the forum feed, server-enforced single-pin invariant via atomic displacement, admin dashboard at `/admin/announcements` for create/edit/pin/unpin/delete. Admin role bypasses AI moderation.
 - **Moderation visibility (forum + calendar)**: Author-only banners (`OwnStatusBanner` for pending / reported / rejected, with rejection-reason blockquote), author-only ghosting (dashed `border-warn`/`border-plum`/`border-danger` + body opacity), non-author "⚑ GEMELDET" chip for community-reported pending (no banner, no ghost — anti-stigma). Rejected items sort to the top of the author's view. Edit lockout (`403 'edit_blocked_by_moderation'`) on any non-approved status — UI mirrors with visibly disabled edit buttons.
 - **Calendar (kiosk)**: Live `now` ticker store (60s aligned to wall-clock minute) drives "is this event live right now?" reactivity across detail modal, agenda, sidebar, month grid, and mobile day view. Saved events with optimistic mutations. Public attendee-profile lookup endpoint for the going-list stack. Dedicated edit page at `/events/edit/[id]` with flash-redirect cache-bust.
+- **Profile (kiosk) & account lifecycle**: own-profile Meldebogen with a derived Kiez-Chronik tenure timeline, cross-surface Archiv activity feed, printable A6 Steckbrief card (QR-coded), and public neighbor profiles at `/nachbarn/[handle]` (trimmed view, no e-mail/moderation/settings) reached by clicking any author byline. Self-service e-mail change (double-confirm, old session stays valid) and password change (other-device sign-out via a `passwordChangedAt`-vs-`loginAt` JWT check, silent same-device re-login). Account deletion with a 7-day undo grace period (in-app "Widerrufen" + mailed token) followed by an automated day-7 anonymization pipeline (Vercel cron): the account is tombstoned as "Ehemaliges Mitglied" while authored content is kept intact (Nachweispflicht) and the user's own RSVPs/bookmarks/listings are cleaned up.
 - **Forum post images**: Up to 5 images per post (topics, announcements, recommendations) with Cloudinary upload, GPT-4o vision moderation, and scroll-snap carousel with arrow nav in the detail modal.
 - **Forum bookmarks**: Save/bookmark posts with server-side persistence (`savedPosts` collection) and optimistic UI updates. Same pattern for saved events (`savedEvents`).
 - **Forum search & tag filtering**: Client-side filtering by title, body, author name, and tags. Clickable tag pills set the search value.
