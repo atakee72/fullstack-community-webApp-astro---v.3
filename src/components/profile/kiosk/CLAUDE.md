@@ -400,13 +400,26 @@ restricts nothing about the account until the pipeline actually runs.
 ### Day-7 pipeline (`runDeletionPipeline()`, Task 11)
 
 `GET /api/cron/process-deletions` (Vercel cron, `vercel.json`, `30 5 * * *`
-— auth pattern mirrors `src/pages/api/news/fetch-daily.ts`: `Authorization:
-Bearer ${CRON_SECRET}`, skip-if-unset) finds every user with
+— **fail-closed** auth, unlike `fetch-daily.ts`'s skip-if-unset: a missing
+`CRON_SECRET` returns 503 `cron_disabled` rather than opening this
+destructive endpoint to any caller; otherwise `Authorization: Bearer
+${CRON_SECRET}` required, else 401) finds every user with
 `deletionScheduledAt <= now` and `anonymized !== true`, and runs
 `runDeletionPipeline(userId)` for each. **Naturally idempotent**: the
 tombstone step (6) `$unset`s `deletionScheduledAt` and sets `anonymized:
 true`, so a re-run's query no longer matches a user it already finished —
 no separate "already processed" guard needed.
+
+**Atomic claim (TOCTOU fix, fix round 1)**: the cron's `find()` snapshot
+and the sequential per-user loop leave a window where a Widerrufen can
+land after a user is captured as due but before their turn arrives.
+`runDeletionPipeline()`'s first operation is an atomic `findOneAndUpdate`
+re-verifying `deletionScheduledAt <= now` and `anonymized !== true` at
+claim time, stamping `deletionClaimedAt`; a non-match returns `{ ok: true,
+skipped: true, steps: {} }` before any destructive step runs.
+`deletionClaimedAt` is kept on the tombstone as a forensic breadcrumb but
+`$unset` by `cancelDeletion()` so a cancelled account carries no stale
+claim marker.
 
 Ordered steps (each counted into `steps: Record<string, number>`;
 per-step try/catch — a failing step is recorded as `-1` and flips the

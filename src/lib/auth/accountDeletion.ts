@@ -84,7 +84,14 @@ export async function cancelDeletion(userId: string): Promise<void> {
   const uid = new ObjectId(userId);
   await db.collection('users').updateOne(
     { _id: uid },
-    { $unset: { deletionScheduledAt: '' }, $set: { updatedAt: new Date().toISOString() } }
+    {
+      // deletionClaimedAt is only ever set by runDeletionPipeline's atomic
+      // claim (see below) — a cancel landing after a claim was taken but
+      // before the pipeline finished must still clear the marker so the
+      // account doesn't carry a stale "claimed" breadcrumb.
+      $unset: { deletionScheduledAt: '', deletionClaimedAt: '' },
+      $set: { updatedAt: new Date().toISOString() },
+    }
   );
   await db.collection('accountDeletionTokens').deleteMany({ userId: uid });
 }
@@ -133,12 +140,22 @@ function extractProfileAvatarPublicId(url: string): string | null {
  * anything a prior partial run missed, since the tombstone step is last and
  * `deletionScheduledAt` only clears once it succeeds).
  *
- * `userPicture` is captured BEFORE the tombstone step (which `$unset`s it)
- * so step 7 can still derive the Cloudinary public_id afterwards.
+ * ATOMIC CLAIM (first operation, before any destructive step): the cron's
+ * `find()` takes a snapshot of due users, then loops sequentially — a user
+ * who cancels (Widerrufen) between that snapshot and their turn arriving
+ * would otherwise still be destroyed (TOCTOU). `findOneAndUpdate` here
+ * re-verifies `deletionScheduledAt` is still due and the user isn't already
+ * anonymized AT THE MOMENT of the claim, atomically stamping
+ * `deletionClaimedAt`. If the claim doesn't match (cancelled, or already
+ * processed), the pipeline returns `{ ok: true, skipped: true, steps: {} }`
+ * without touching anything else. This shrinks the race window from
+ * "however long the cron takes to reach this user" down to milliseconds.
+ * `userPicture` is read off the claimed doc — needed by step 7, AFTER step
+ * 6's tombstone `$unset`s it.
  */
 export async function runDeletionPipeline(
   userId: string
-): Promise<{ ok: boolean; steps: Record<string, number> }> {
+): Promise<{ ok: boolean; steps: Record<string, number>; skipped?: boolean }> {
   const db = await connectDB();
   const uid = new ObjectId(userId);
   const steps: Record<string, number> = {};
@@ -150,16 +167,17 @@ export async function runDeletionPipeline(
     ok = false;
   };
 
-  // Capture userPicture up front — needed by step 7, AFTER step 6 unsets it.
-  let userPicture: string | null = null;
-  try {
-    const userDoc = await db
-      .collection('users')
-      .findOne({ _id: uid }, { projection: { userPicture: 1 } });
-    userPicture = typeof userDoc?.userPicture === 'string' ? userDoc.userPicture : null;
-  } catch (err) {
-    fail('fetchUser', err);
+  const claimed = await db.collection('users').findOneAndUpdate(
+    { _id: uid, deletionScheduledAt: { $lte: new Date() }, anonymized: { $ne: true } },
+    { $set: { deletionClaimedAt: new Date() } },
+    { returnDocument: 'after', projection: { userPicture: 1 } }
+  );
+  if (!claimed) {
+    return { ok: true, skipped: true, steps: {} };
   }
+
+  const userPicture: string | null =
+    typeof (claimed as any).userPicture === 'string' ? (claimed as any).userPicture : null;
 
   // Step 1: listings (collect ids first) + their audit-trail rows +
   // $unset authorName/authorEmail on their flaggedContent rows (rows kept
@@ -250,6 +268,8 @@ export async function runDeletionPipeline(
   }
 
   try {
+    // Safety assumption: userId is a 24-char hex ObjectId string (no regex
+    // metacharacters) — safe to use unescaped as a $regex operand here.
     const delRateLimits = await db
       .collection('rateLimits')
       .deleteMany({ baseKey: { $regex: userId } });
