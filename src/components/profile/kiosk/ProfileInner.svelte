@@ -37,6 +37,7 @@
   import PIdentityCard from './PIdentityCard.svelte';
   import PModerationCard from './PModerationCard.svelte';
   import PKontoCard from './PKontoCard.svelte';
+  import PActivityLedger from './PActivityLedger.svelte';
 
   let { initialProfile = null, loggedIn = false }: {
     initialProfile?: ProfileMe | null;
@@ -176,7 +177,7 @@
       </div>
       <!-- Right column: archiv -->
       <div class="flex flex-col gap-5">
-        <!-- @slot archiv — Task 9 mounts PActivityLedger here -->
+        <PActivityLedger />
       </div>
     </div>
   </div>
