@@ -1,0 +1,42 @@
+---
+// Public "Nachbarn" profile — Plan B Task 4. Entry point is clicking an
+// author name in Forum / Market / Calendar (route: /nachbarn/@handle, per
+// the design's KioskAnnotate note). Session is NOT required — a logged-in
+// visitor viewing their OWN handle here still sees the trimmed public view;
+// that's a deliberate, honest "this is what neighbors see" preview, not a
+// bug (see task-4-brief.md Step 3).
+import KioskLayout from '../../layouts/KioskLayout.astro';
+import PublicProfileInner from '../../components/profile/kiosk/PublicProfileInner.svelte';
+import PublicNotFound from '../../components/profile/kiosk/states/PublicNotFound.astro';
+import { HANDLE_REGEX } from '../../lib/profile/handle';
+import { getPublicProfile } from '../../lib/profile/publicProfile';
+import { getChronik } from '../../lib/profile/chronik';
+
+// Per-visitor-irrelevant but per-author-live data (stats, activity feed) —
+// never cache, mirrors profile.astro / marketplace detail.
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
+
+// The design writes the route as /nachbarn/@handle and users will type the
+// `@` too — strip exactly one leading `@` (or its encoded form `%40`,
+// belt-and-braces in case a client sends it un-decoded) before validating.
+let rawHandle = Astro.params.handle ?? '';
+if (rawHandle.startsWith('%40')) rawHandle = rawHandle.slice(3);
+else if (rawHandle.startsWith('@')) rawHandle = rawHandle.slice(1);
+const handle = rawHandle.toLowerCase();
+
+const validHandle = HANDLE_REGEX.test(handle);
+const profile = validHandle ? await getPublicProfile(handle) : null;
+const chronik = profile ? await getChronik(profile.id) : null;
+
+const title = profile ? `@${profile.handle} — Mahalle` : 'Nachbarschaft — Mahalle';
+---
+
+{profile ? (
+  <KioskLayout title={title} page="profile">
+    <PublicProfileInner client:load profile={profile} chronik={chronik} />
+  </KioskLayout>
+) : (
+  <KioskLayout title={title} page="profile">
+    <PublicNotFound />
+  </KioskLayout>
+)}

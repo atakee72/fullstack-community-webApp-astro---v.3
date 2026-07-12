@@ -1313,6 +1313,14 @@ const de = {
   'profile.eyebrow.own': 'PROFIL · @{h} · IM KIEZ SEIT {y}',
   'profile.heading.own': 'Dein <em>Meldebogen</em>',
 
+  // Public "Nachbarn" profile (Plan B, Task 4).
+  'profile.eyebrow.public': 'NACHBARSCHAFT · @{h} · IM KIEZ SEIT {y}',
+  'profile.heading.public': 'Aus der <em>Nachbarschaft</em>',
+  'profile.public.contact':
+    'Kontakt läuft über Inhalte: Anzeige anfragen oder im Forum antworten. E-Mail, Gespeichertes und Moderation bleiben privat.',
+  'profile.public.contact.mobile': 'Kontakt über Anzeige oder Forum — E-Mail bleibt privat.',
+  'profile.public.ledger': 'Im Kiez unterwegs',
+
   'profile.since': 'im Kiez seit {y}',
   'profile.verified': 'Verifiziert im Kiez',
   'profile.stats.posts': 'Beiträge',
@@ -2588,6 +2596,14 @@ const en: Dict = {
   // ── Profile (Task 5 scaffold) — "Meldebogen" ────────────────────────────
   'profile.eyebrow.own': 'PROFILE · @{h} · IN THE KIEZ SINCE {y}',
   'profile.heading.own': 'Your <em>Meldebogen</em>',
+
+  // Public "Nachbarn" profile (Plan B, Task 4).
+  'profile.eyebrow.public': 'NEIGHBORHOOD · @{h} · IN THE KIEZ SINCE {y}',
+  'profile.heading.public': 'From the <em>neighborhood</em>',
+  'profile.public.contact':
+    'Contact happens through content: inquire on a listing or reply in the forum. Email, saved items and moderation stay private.',
+  'profile.public.contact.mobile': 'Contact via listing or forum — email stays private.',
+  'profile.public.ledger': 'Around the kiez',
 
   'profile.since': 'in the kiez since {y}',
   'profile.verified': 'Verified in the kiez',

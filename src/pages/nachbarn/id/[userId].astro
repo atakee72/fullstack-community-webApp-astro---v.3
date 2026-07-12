@@ -1,0 +1,25 @@
+---
+// Id → handle resolver — canonicalizes any `/nachbarn/id/<userId>`-shaped
+// link (e.g. legacy `/profile/<id>` references) to `/nachbarn/<handle>`.
+// Uses getHandleForPublic() (src/lib/profile/publicProfile.ts), NOT a raw
+// ensureHandle() call — it already covers everything this route needs in
+// one gate: invalid ObjectId shape, missing user, AND anonymized tombstones
+// all resolve to `null` (never mint a fresh handle for a tombstoned
+// account), while a legit user missing a handle still self-heals one.
+import KioskLayout from '../../../layouts/KioskLayout.astro';
+import PublicNotFound from '../../../components/profile/kiosk/states/PublicNotFound.astro';
+import { getHandleForPublic } from '../../../lib/profile/publicProfile';
+
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
+
+const { userId } = Astro.params;
+const handle = userId ? await getHandleForPublic(userId) : null;
+
+if (handle) {
+  return Astro.redirect(`/nachbarn/${handle}`, 302);
+}
+---
+
+<KioskLayout title="Nachbarschaft — Mahalle" page="profile">
+  <PublicNotFound />
+</KioskLayout>

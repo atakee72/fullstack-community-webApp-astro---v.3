@@ -6,6 +6,16 @@
   // ProfileInner's right column.
   // Design source: kiosk-profile.jsx (PActivityLedger, PFilterChip) +
   // kiosk-profile-states.jsx (§02 empty).
+  //
+  // Public reuse (Plan B, Task 4): `publicHandle` (set by PublicProfileInner)
+  // swaps the fetch target to GET /api/profile/public-activity?handle=...
+  // instead of /api/profile/activity, implies `publicView` (no need to pass
+  // both — the caller only ever sets one), and hides the empty-state's
+  // own-authoring CTAs (they'd deep-link the VISITOR into "post a first
+  // topic" flows, which makes no sense on someone else's card). `headingKey`
+  // lets the mobile public layout swap the §01 title to
+  // `profile.public.ledger` ("Im Kiez unterwegs") without a second card
+  // fork — desktop public reuses the default `profile.archiv.title`.
 
   import { t } from '../../../lib/kiosk-i18n';
   import { scrollFade } from '../../../lib/scrollFade';
@@ -17,7 +27,17 @@
   import PFilterChip from './atoms/PFilterChip.svelte';
   import PActivityRow from './PActivityRow.svelte';
 
-  let { publicView = false }: { publicView?: boolean } = $props();
+  let {
+    publicView = false,
+    publicHandle = null,
+    headingKey = null,
+  }: {
+    publicView?: boolean;
+    publicHandle?: string | null;
+    headingKey?: string | null;
+  } = $props();
+
+  const isPublic = $derived(publicView || !!publicHandle);
 
   let filter = $state<ActivityFilter>('alle');
   let items = $state<ActivityItem[]>([]);
@@ -36,7 +56,9 @@
     try {
       const params = new URLSearchParams({ filter, limit: String(ACTIVITY_PAGE_SIZE) });
       if (before) params.set('before', before);
-      const res = await fetch(`/api/profile/activity?${params.toString()}`);
+      const endpoint = publicHandle ? '/api/profile/public-activity' : '/api/profile/activity';
+      if (publicHandle) params.set('handle', publicHandle);
+      const res = await fetch(`${endpoint}?${params.toString()}`);
       if (!res.ok) throw new Error('activity fetch failed');
       const data: ActivityPage = await res.json();
       if (mySeq !== seq) return; // stale response
@@ -88,12 +110,24 @@
 
   const showSaved = $derived(filter === 'gespeichert');
   const isEmpty = $derived(status === 'ready' && items.length === 0);
-  const showEmptyCtas = $derived(isEmpty && filter === 'alle');
+  const showEmptyCtas = $derived(isEmpty && filter === 'alle' && !isPublic);
+  // Desktop always keeps the default "Archiv" title (matches
+  // kiosk-profile-public.jsx's PublicProfileDesktop, which doesn't override
+  // it) — only the mobile heading swaps to `headingKey` when set. Both CSS
+  // variants render the same text when `headingKey` is null (own profile),
+  // so this is a no-op there.
+  const headingDesktop = $derived($t['profile.archiv.title']);
+  const headingMobile = $derived($t[(headingKey ?? 'profile.archiv.title') as keyof typeof $t]);
 </script>
 
 <PCard pad={24}>
   <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; gap: 10px; flex-wrap: wrap;">
-    <PCardHead n="01" title={$t['profile.archiv.title']} />
+    <div class="hidden lg:block">
+      <PCardHead n="01" title={headingDesktop} />
+    </div>
+    <div class="lg:hidden">
+      <PCardHead n="01" title={headingMobile} />
+    </div>
     <span style="font-family: var(--k-font-mono); font-size: 9.5px; color: var(--k-ink-mute); letter-spacing: 0.1em;">{$t['profile.archiv.note']}</span>
   </div>
 
@@ -106,7 +140,7 @@
         onclick={() => selectFilter(f.key)}
       />
     {/each}
-    {#if !publicView}
+    {#if !isPublic}
       <span style="width: 1px; height: 20px; background: var(--k-rule); margin: 2px 4px 0; flex-shrink: 0;"></span>
       <PFilterChip
         label={`◈ ${$t['profile.filter.gespeichert']}`}

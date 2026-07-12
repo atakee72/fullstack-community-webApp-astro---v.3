@@ -1,0 +1,82 @@
+---
+// Rendered by src/pages/nachbarn/[handle].astro (bad handle shape, or
+// getPublicProfile() returns null — unknown handle or an anonymized
+// tombstone) and src/pages/nachbarn/id/[userId].astro (invalid ObjectId, or
+// getHandleForPublic() returns null). HTTP 200 keeps the URL stable +
+// indexable-but-empty rather than a raw 404 — same pattern as the
+// marketplace's ListingUnavailable.astro (src/components/marketplace/kiosk/
+// states/ListingUnavailable.astro).
+//
+// v1 DE only — the kiosk i18n store lives in client-side localStorage and
+// isn't reachable from an .astro file (SSR). Flip to a client-rendered
+// Svelte island if multi-locale matters later.
+//
+// Design source: design/handoffs/design_handoff_profile/jsx/
+// kiosk-profile-states.jsx (§03 "Profil nicht gefunden").
+---
+
+<div class="profile-notfound">
+  <div class="profile-notfound__panel">
+    <p class="profile-notfound__kicker">Nachbarschaft · Schillerkiez</p>
+    <h1 class="profile-notfound__title">Diese Nachbarin ist nicht (mehr) hier.</h1>
+    <a href="/" class="profile-notfound__cta">← zurück zum Forum</a>
+  </div>
+</div>
+
+<style>
+  .profile-notfound {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 16px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .profile-notfound__panel {
+    background: var(--k-paper-warm, #f7f0de);
+    border: 1.5px dashed var(--k-rule, #c9c0a8);
+    border-radius: var(--k-radius-md, 8px);
+    padding: 36px 28px;
+    text-align: center;
+    max-width: 480px;
+    width: 100%;
+  }
+
+  .profile-notfound__kicker {
+    font-family: var(--k-font-mono, monospace);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--k-ochre, #e8a53a);
+    font-weight: 600;
+    margin: 0 0 18px;
+    text-transform: uppercase;
+  }
+
+  .profile-notfound__title {
+    font-family: var(--k-font-display, sans-serif);
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    color: var(--k-ink, #1b1a17);
+    line-height: 1.2;
+    margin: 0 0 22px;
+  }
+
+  .profile-notfound__cta {
+    display: inline-block;
+    font-family: var(--k-font-mono, monospace);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--k-ink, #1b1a17);
+    text-decoration: underline;
+    text-decoration-style: dashed;
+    text-decoration-color: var(--k-rule, #c9c0a8);
+    text-underline-offset: 4px;
+    padding: 4px 8px;
+    transition: color 150ms ease;
+  }
+
+  .profile-notfound__cta:hover {
+    color: var(--k-ochre, #e8a53a);
+  }
+</style>
