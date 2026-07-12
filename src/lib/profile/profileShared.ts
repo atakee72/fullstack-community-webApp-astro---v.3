@@ -14,6 +14,7 @@ export interface ProfileMe {
   memberSince: number; // year, from users.createdAt (ISO string OR Date — handle both)
   isBanned: boolean;
   stats: { posts: number; listings: number; events: number; danke: number };
+  motto: string | null; // Plan B Task 6 — optional Steckbrief line, own-view only (never on PublicProfile)
 }
 
 // Public-profile projection ("Nachbarn"-view) — Plan B Task 3. Trimmed
@@ -85,6 +86,7 @@ export function formatDdMm(iso: string, locale: 'de' | 'en'): string {
 export const PROFILE_NAME_REGEX = /^[\p{L}\p{N} _-]{3,30}$/u;
 export const HOBBY_MAX_COUNT = 10;
 export const HOBBY_MAX_LEN = 50;
+export const MOTTO_MAX_LEN = 80;
 export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 export const AVATAR_ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 

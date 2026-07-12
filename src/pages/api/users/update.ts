@@ -4,13 +4,16 @@ import { z } from 'zod';
 import clientPromise from '../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { rejectIfBanned } from '../../../lib/auth/banGuard';
-import { checkNameProfanity } from '../../../lib/moderation';
-import { PROFILE_NAME_REGEX, HOBBY_MAX_COUNT, HOBBY_MAX_LEN } from '../../../lib/profile/profileShared';
+import { checkNameProfanity, checkMottoProfanity } from '../../../lib/moderation';
+import { PROFILE_NAME_REGEX, HOBBY_MAX_COUNT, HOBBY_MAX_LEN, MOTTO_MAX_LEN } from '../../../lib/profile/profileShared';
 
 const BodySchema = z.object({
   name: z.string().regex(PROFILE_NAME_REGEX, 'Invalid display name').optional(),
   hobbies: z.array(z.string().trim().min(1).max(HOBBY_MAX_LEN)).max(HOBBY_MAX_COUNT).optional(),
-}).refine((d) => d.name !== undefined || d.hobbies !== undefined, { message: 'Nothing to update' });
+  // '' is a valid, meaningful value here (explicit clear -> $unset below) —
+  // do NOT add .min(1), that would reject the clear-motto request with a 400.
+  motto: z.string().trim().max(MOTTO_MAX_LEN).optional(),
+}).refine((d) => d.name !== undefined || d.hobbies !== undefined || d.motto !== undefined, { message: 'Nothing to update' });
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -34,7 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    const { name, hobbies } = parsed.data;
+    const { name, hobbies, motto } = parsed.data;
 
     if (name !== undefined) {
       const nameCheck = await checkNameProfanity(name);
@@ -46,20 +49,37 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
+    // Motto is printed on the Steckbrief + is public data — same profanity
+    // gate as name. Empty string means "clear it" (checked below via $unset),
+    // so only run the check when there's actual text to vet.
+    if (motto !== undefined && motto !== '') {
+      const mottoCheck = await checkMottoProfanity(motto);
+      if (!mottoCheck.clean) {
+        return new Response(JSON.stringify({ error: mottoCheck.reason || 'Invalid motto' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     const client = await clientPromise;
     const db = client.db();
     const users = db.collection('users');
 
+    const setFields: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+    if (name !== undefined) setFields.name = name;
+    if (hobbies !== undefined) setFields.hobbies = hobbies;
+    if (motto !== undefined && motto !== '') setFields.motto = motto;
+    const unsetFields: Record<string, ''> = {};
+    if (motto === '') unsetFields.motto = '';
+
     const result = await users.findOneAndUpdate(
       { _id: new ObjectId(session.user.id) },
       {
-        $set: {
-          ...(name !== undefined && { name }),
-          ...(hobbies !== undefined && { hobbies }),
-          updatedAt: new Date().toISOString(),
-        },
+        $set: setFields,
+        ...(Object.keys(unsetFields).length > 0 && { $unset: unsetFields }),
       },
-      { returnDocument: 'after', projection: { name: 1, hobbies: 1 } }
+      { returnDocument: 'after', projection: { name: 1, hobbies: 1, motto: 1 } }
     );
 
     if (!result) {
@@ -73,6 +93,7 @@ export const POST: APIRoute = async ({ request }) => {
       success: true,
       name: result.name,
       hobbies: Array.isArray(result.hobbies) ? result.hobbies : [],
+      motto: typeof result.motto === 'string' ? result.motto : null,
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

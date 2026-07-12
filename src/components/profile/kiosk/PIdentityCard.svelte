@@ -26,6 +26,7 @@
     PROFILE_NAME_REGEX,
     HOBBY_MAX_COUNT,
     HOBBY_MAX_LEN,
+    MOTTO_MAX_LEN,
     AVATAR_MAX_BYTES,
     AVATAR_ACCEPTED_TYPES,
   } from '../../../lib/profile/profileShared';
@@ -43,18 +44,20 @@
   }: {
     profile: ProfileMe;
     banned: boolean;
-    onSaved: (p: { name: string; hobbies: string[] }) => void;
+    onSaved: (p: { name: string; hobbies: string[]; motto: string | null }) => void;
   } = $props();
 
   // ─── Read-state display value (real profile, unless a save is in flight) ──
-  type Editable = { name: string; hobbies: string[] };
+  type Editable = { name: string; hobbies: string[]; motto: string | null };
   let optimisticOverride = $state<Editable | null>(null);
   const displayName = $derived(optimisticOverride?.name ?? profile.name);
   const displayHobbies = $derived(optimisticOverride?.hobbies ?? profile.hobbies);
+  const displayMotto = $derived(optimisticOverride ? optimisticOverride.motto : profile.motto);
 
   // ─── Edit state ────────────────────────────────────────────────────────
   let editing = $state(false);
   let editName = $state('');
+  let editMotto = $state('');
   let editHobbies = $state<string[]>([]);
   let newHobby = $state('');
   let newlyAdded = $state<string[]>([]); // hobbies added THIS edit session — chip-pop-in once
@@ -65,6 +68,7 @@
   let saveError = $state<string | null>(null);
   let savedTimer: ReturnType<typeof setTimeout> | undefined;
   let nameFocused = $state(false);
+  let mottoFocused = $state(false);
 
   // Sequence guard — a stale in-flight submit() must never clobber state
   // written by a newer one. Mirrors ProfileInner.svelte's seq pattern.
@@ -200,6 +204,7 @@
   function startEdit() {
     if (banned) return;
     editName = displayName;
+    editMotto = displayMotto ?? '';
     editHobbies = [...displayHobbies];
     newHobby = '';
     newlyAdded = [];
@@ -268,6 +273,7 @@
       const echo: Editable = {
         name: typeof json.name === 'string' ? json.name : payload.name,
         hobbies: Array.isArray(json.hobbies) ? json.hobbies : payload.hobbies,
+        motto: typeof json.motto === 'string' ? json.motto : null,
       };
       if (mySeq !== saveSeq) return; // stale
       onSaved(echo);
@@ -293,9 +299,12 @@
       return;
     }
     nameError = null;
-    const payload: Editable = { name: trimmed, hobbies: [...editHobbies] };
+    // Empty trimmed motto is sent as '' (not omitted) — the server treats an
+    // explicit '' as "clear it" ($unset) vs. an absent field ("leave as is").
+    const trimmedMotto = editMotto.trim().slice(0, MOTTO_MAX_LEN);
+    const payload: Editable = { name: trimmed, hobbies: [...editHobbies], motto: trimmedMotto || '' };
     const mySeq = ++saveSeq;
-    optimisticOverride = payload;
+    optimisticOverride = { ...payload, motto: trimmedMotto || null };
     editing = false;
     submit(payload, mySeq);
   }
@@ -329,6 +338,9 @@
           {/if}
         </div>
         <div class="font-dmmono" style="font-size: 11px; color: var(--k-ink-mute); margin-top: 4px;">{sinceLine}</div>
+        {#if displayMotto}
+          <div class="font-instrument" style="font-style: italic; font-size: 13px; color: var(--k-ink-soft); margin-top: 6px;">{displayMotto}</div>
+        {/if}
         {#if profile.verified}
           <div style="margin-top: 8px;">
             <span
@@ -377,6 +389,7 @@
 
     <div style="margin-top: 16px; display: flex; gap: 8px;">
       <PBtn primary small disabled={banned || saveState === 'saving'} onclick={startEdit}>{$t['profile.action.edit']}</PBtn>
+      <PBtn small href="/steckbrief" disabled={banned}>{$t['profile.action.steckbrief']}</PBtn>
     </div>
   {:else}
     <!-- ═══ Edit state ═══ -->
@@ -405,6 +418,18 @@
         {:else}
           <div class="font-dmmono" style="font-size: 10px; color: var(--k-ink-mute); margin-top: 4px;">{$t['profile.edit.name.hint']}</div>
         {/if}
+
+        <div class="font-dmmono" style="font-size: 9.5px; letter-spacing: 0.14em; color: var(--k-ink-mute); margin-top: 12px; margin-bottom: 5px;">{$t['profile.edit.motto.label']}</div>
+        <input
+          class="font-instrument"
+          type="text"
+          bind:value={editMotto}
+          onfocus={() => (mottoFocused = true)}
+          onblur={() => (mottoFocused = false)}
+          maxlength={MOTTO_MAX_LEN}
+          style="width: 100%; box-sizing: border-box; padding: 10px 13px; background: var(--k-paper-soft); border: 1.5px solid {mottoFocused ? 'var(--k-ink)' : 'var(--k-rule)'}; border-radius: 8px; font-size: 14px; font-style: italic; color: var(--k-ink); outline: none;"
+        />
+        <div class="font-dmmono" style="font-size: 10px; color: var(--k-ink-mute); margin-top: 4px;">{$t['profile.edit.motto.hint']}</div>
       </div>
     </div>
 

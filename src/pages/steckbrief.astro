@@ -1,0 +1,427 @@
+---
+// Printable Steckbrief (neighbor card) — Plan B Task 6. Own-view only:
+// session-gated, no public equivalent. A6-landscape (148×105mm) card that
+// prints straight out of this route via native browser print, no PDF
+// backend / canvas. Design source: design/handoffs/design_handoff_profile/
+// jsx/kiosk-profile-novel.jsx (SteckbriefCard + ProfileNovelSteckbrief).
+//
+// v1 DE only for the CARD content itself (a deliberately German print
+// artifact per the design brief) — same precedent as PublicNotFound.astro /
+// ListingUnavailable.astro: the kiosk i18n store is client-side
+// (localStorage), unreachable from a plain SSR .astro file. The page CHROME
+// (intro copy, print button) is likewise static DE here rather than pulled
+// through the Svelte i18n store.
+import KioskLayout from '../layouts/KioskLayout.astro';
+import QRCode from 'qrcode';
+import { getSession } from 'auth-astro/server';
+import { getProfileMe } from '../lib/profile/profileQuery';
+import { getTrustedBaseUrl } from '../lib/auth/baseUrl';
+
+// Per-user private route (session-gated) — never cache.
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
+
+const session = await getSession(Astro.request);
+const userId = (session?.user as any)?.id ?? null;
+if (!userId) return Astro.redirect('/login');
+
+const profile = await getProfileMe(userId);
+// Edge case: session outlived its user record (mirrors ProfileInner's
+// !profile handling) — nothing to print, bounce to /profile rather than
+// crash on `profile.handle` below.
+if (!profile) return Astro.redirect('/profile');
+
+const base = getTrustedBaseUrl(Astro.request);
+// getTrustedBaseUrl() fails closed to '' in prod when NEXTAUTH_URL is unset
+// (see src/lib/auth/baseUrl.ts) — that fail-closed exists to protect EMAILED
+// links from host-header injection. This route only DISPLAYS a public URL
+// and encodes it into a QR code; nothing is sent anywhere, so a blank/
+// relative URL would just be a broken printed card, not a security issue.
+// Fall back to the canonical production domain so the card always has a
+// working URL.
+const publicBase = base || 'https://mahalle.berlin';
+const publicUrl = `${publicBase}/nachbarn/${profile.handle}`;
+// Footer shows the human-readable form (no protocol); the QR encodes the
+// full publicUrl.
+const publicUrlDisplay = publicUrl.replace(/^https?:\/\//, '');
+
+// SAFE to set:html below: qrSvg is generated server-side by the `qrcode`
+// library from `publicUrl`, a string WE built from our own trusted base +
+// this user's own handle — never from user-supplied input. Never reuse this
+// pattern with anything that echoes request/body input.
+const qrSvg = await QRCode.toString(publicUrl, {
+  type: 'svg',
+  margin: 0,
+  color: { dark: '#1b1a17', light: '#0000' },
+});
+
+// Same rule as PAvatar.svelte / KioskNav.svelte: first letters of the first
+// two whitespace-split name words, uppercased, '·' fallback.
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).slice(0, 2);
+  return parts.map((p) => p[0]?.toUpperCase() ?? '').join('') || '·';
+}
+const initials = initialsOf(profile.name);
+
+// "gedruckt {MMM yyyy}" — static German per the design (this card is a
+// German print artifact, see file header). Intl's German short-month form
+// sometimes trails a period (e.g. "Jul."); the design mock shows no period
+// ("gedruckt Jul 2026"), so strip a trailing one for visual parity.
+const printedLabel = new Intl.DateTimeFormat('de-DE', { month: 'short', year: 'numeric' })
+  .format(new Date())
+  .replace(/\.(?=\s)/, '');
+
+const title = 'Steckbrief — Mahalle';
+---
+
+<KioskLayout {title} page="profile">
+  <div class="steckbrief-page">
+    <div class="steckbrief-intro">
+      <p class="steckbrief-kicker">MAHALLE · STECKBRIEF</p>
+      <h1 class="steckbrief-heading">Ein Profil zum <em>Anfassen</em></h1>
+      <p class="steckbrief-sub">
+        A6 quer, druckt sich direkt aus diesem Bildschirm — fürs Schwarze Brett, den Hausflur, das Kiezfest.
+      </p>
+      <div class="steckbrief-actions">
+        <button type="button" class="steckbrief-print-btn" onclick="window.print()">Drucken</button>
+        <a href="/profile" class="steckbrief-back-link">← zurück zum Profil</a>
+      </div>
+    </div>
+
+    <div class="steckbrief-frame">
+      <div class="steckbrief-cutmarks" aria-hidden="true"></div>
+      <div class="steckbrief-card" id="steckbrief-card">
+        <p class="steckbrief-card__kicker">MAHALLE · STECKBRIEF · SCHILLERKIEZ</p>
+        <div class="steckbrief-card__stamp" aria-hidden="true"></div>
+
+        <div class="steckbrief-card__head">
+          <div class="steckbrief-card__monogram" aria-hidden="true">{initials}</div>
+          <div class="steckbrief-card__id">
+            <div class="steckbrief-card__name">{profile.name}</div>
+            <div class="steckbrief-card__handle">@{profile.handle} · im Kiez seit {profile.memberSince}</div>
+            {profile.motto && <div class="steckbrief-card__motto">{profile.motto}</div>}
+          </div>
+        </div>
+
+        {profile.hobbies.length > 0 && (
+          <div class="steckbrief-card__pills">
+            {profile.hobbies.map((h) => (
+              <span class="steckbrief-card__pill">{h}</span>
+            ))}
+          </div>
+        )}
+
+        <div class="steckbrief-card__footer">
+          <div class="steckbrief-card__footer-text">
+            mahalle.berlin/nachbarn/{profile.handle}<br />gedruckt {printedLabel} · 2-farb-riso
+          </div>
+          <div class="steckbrief-card__qr" aria-hidden="true">
+            <Fragment set:html={qrSvg} />
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="steckbrief-caption">SCHNITTMARKEN · A6 QUER · 148 × 105 MM</p>
+  </div>
+</KioskLayout>
+
+<style>
+  /* ─── Screen layout (print-preview shell) ─────────────────────────── */
+  .steckbrief-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 16px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .steckbrief-intro {
+    text-align: center;
+    max-width: 520px;
+    margin-bottom: 40px;
+  }
+
+  .steckbrief-kicker {
+    font-family: var(--k-font-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--k-ochre);
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+
+  .steckbrief-heading {
+    font-family: var(--k-font-display);
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 10px;
+    color: var(--k-ink);
+  }
+
+  .steckbrief-heading em {
+    font-family: var(--k-font-serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--k-ochre);
+  }
+
+  .steckbrief-sub {
+    font-family: var(--k-font-serif);
+    font-style: italic;
+    font-size: 14.5px;
+    color: var(--k-ink-soft);
+    line-height: 1.5;
+    margin: 0 0 22px;
+  }
+
+  .steckbrief-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .steckbrief-print-btn {
+    padding: 10px 22px;
+    background: var(--k-ink);
+    color: var(--k-paper);
+    border: 1.5px solid var(--k-ink);
+    border-radius: 999px;
+    font-family: var(--k-font-display);
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 2px 2px 0 var(--k-ochre);
+    cursor: pointer;
+  }
+
+  .steckbrief-back-link {
+    font-family: var(--k-font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--k-ink-mute);
+    text-decoration: underline;
+    text-decoration-style: dashed;
+    text-underline-offset: 4px;
+  }
+
+  .steckbrief-frame {
+    position: relative;
+  }
+
+  .steckbrief-cutmarks {
+    position: absolute;
+    inset: -12px;
+    border: 1px dashed var(--k-ink-mute);
+    border-radius: 8px;
+    pointer-events: none;
+  }
+
+  .steckbrief-caption {
+    font-family: var(--k-font-mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--k-ink-mute);
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  /* ─── The card — 420×297px = A6 landscape (148×105mm) ─────────────── */
+  .steckbrief-card {
+    width: 420px;
+    height: 297px;
+    box-sizing: border-box;
+    background: #f9f3e4;
+    border: 2px solid var(--k-ink);
+    border-radius: 6px;
+    box-shadow: 3px 3px 0 var(--k-ochre);
+    position: relative;
+    overflow: hidden;
+    padding: 20px 22px;
+  }
+
+  .steckbrief-card__kicker {
+    font-family: var(--k-font-mono);
+    font-size: 8.5px;
+    letter-spacing: 0.2em;
+    color: var(--k-wine);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .steckbrief-card__stamp {
+    position: absolute;
+    top: -22px;
+    right: -22px;
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: var(--k-ochre);
+    opacity: 0.85;
+    border: 2px solid var(--k-ink);
+  }
+
+  .steckbrief-card__head {
+    display: flex;
+    gap: 14px;
+    margin-top: 12px;
+    align-items: flex-start;
+  }
+
+  .steckbrief-card__monogram {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--k-wine);
+    border: 2px solid var(--k-ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--k-paper);
+    font-family: var(--k-font-serif);
+    font-style: italic;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .steckbrief-card__id {
+    min-width: 0;
+  }
+
+  .steckbrief-card__name {
+    font-family: var(--k-font-display);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .steckbrief-card__handle {
+    font-family: var(--k-font-mono);
+    font-size: 9.5px;
+    color: var(--k-ink-mute);
+    margin-top: 4px;
+  }
+
+  .steckbrief-card__motto {
+    font-family: var(--k-font-serif);
+    font-style: italic;
+    font-size: 12.5px;
+    color: var(--k-ink-soft);
+    margin-top: 6px;
+  }
+
+  .steckbrief-card__pills {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .steckbrief-card__pill {
+    padding: 3px 9px;
+    border: 1.5px solid var(--k-ink);
+    border-radius: 999px;
+    font-family: var(--k-font-display);
+    font-size: 10.5px;
+    font-weight: 700;
+  }
+
+  .steckbrief-card__footer {
+    position: absolute;
+    bottom: 16px;
+    left: 22px;
+    right: 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-top: 1.5px dashed var(--k-rule);
+    padding-top: 10px;
+  }
+
+  .steckbrief-card__footer-text {
+    font-family: var(--k-font-mono);
+    font-size: 8.5px;
+    color: var(--k-ink-mute);
+    line-height: 1.6;
+  }
+
+  .steckbrief-card__qr {
+    width: 44px;
+    height: 44px;
+    border: 2px solid var(--k-ink);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--k-paper-soft);
+    overflow: hidden;
+  }
+</style>
+
+<style is:global>
+  /* `qrSvg` is raw HTML injected via `set:html` — it never receives Astro's
+     scoped-style hash attribute, so a normal scoped `.steckbrief-card__qr
+     svg { ... }` rule (which Astro rewrites to require the hash on the
+     final matched element) would never match it. Needs a global rule. */
+  .steckbrief-card__qr svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Print isolation: hide everything on the page except the card itself.
+     `visibility` (not `display`) is deliberate — hidden ancestors keep their
+     layout box, so `.steckbrief-frame`'s `position: fixed` still works to
+     pull the (visible) card out to the page origin regardless of how much
+     invisible content (nav, intro, cut marks) sits above it in flow.
+     `body *` must live in a GLOBAL style block: `<body>` is rendered by
+     KioskLayout.astro, not this page, so Astro's scoped-style hash on a
+     plain (non is:global) `<style>` here would never match it. */
+  @media print {
+    @page {
+      /* Two explicit lengths, no `landscape` keyword — that combination is
+         invalid CSS (`size: 148mm 105mm landscape` fails to parse). */
+      size: 148mm 105mm;
+      margin: 0;
+    }
+
+    body * {
+      visibility: hidden;
+    }
+
+    .steckbrief-card,
+    .steckbrief-card * {
+      visibility: visible;
+    }
+
+    /* !important is load-bearing here, not decorative: Astro's scoped CSS
+       (the plain, non-global <style> block above) rewrites its own
+       `.steckbrief-frame { position: relative }` to
+       `.steckbrief-frame[data-astro-cid-xxxxx] { position: relative }` — an
+       attribute selector that outranks this plain class selector even
+       though it's declared later and only inside @media print. Without
+       !important the fixed positioning silently loses and the card prints
+       wherever it naturally sits in the (still space-occupying, just
+       invisible) document flow instead of pinned to the page origin. */
+    .steckbrief-frame {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+    }
+
+    .steckbrief-card {
+      /* The design canvas is 420×297px; scale it up so the printed box is
+         physically 148×105mm (148mm ≈ 559.37px at the CSS-standard
+         96px/inch reference pixel -> 559.37 / 420 ≈ 1.3318). Aspect ratio
+         is a near-exact match (420:297 vs 148:105, ~0.3% off) — imperceptible,
+         and the card already clips via `overflow: hidden`. */
+      transform: scale(1.3318);
+      transform-origin: top left;
+      /* Same scoped-selector specificity issue as `.steckbrief-frame`
+         above (the screen rule sets `box-shadow: 3px 3px 0 var(--k-ochre)`
+         on the astro-cid-qualified selector) — !important needed to win. */
+      box-shadow: none !important;
+    }
+  }
+</style>

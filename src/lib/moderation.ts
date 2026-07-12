@@ -299,35 +299,40 @@ function checkBlocklist(text: string, blocklist: string[]): string[] {
 }
 
 /**
- * Check username/display name for profanity across all languages.
- * Also checks for profanity embedded without word boundaries (e.g. "PenisPenisPenis").
- * Returns { clean: true } or { clean: false, reason: string }
+ * Shared core for short public-text fields (display name, profile motto,
+ * ...): blocklist word-boundary check, concatenated-profanity substring
+ * check, then the OpenAI moderation + GPT spam/hate-speech safety net.
+ * Deliberately has NO length gate — that's field-specific (name: 2-30 via
+ * checkNameProfanity below; motto: 1-80 via MOTTO_MAX_LEN + zod in
+ * src/pages/api/users/update.ts) and callers validate it before calling in.
+ * `label` feeds both the returned `reason` string (capitalized noun, e.g.
+ * "Name"/"Motto") and, as free text, the GPT context prompt.
  */
-export async function checkNameProfanity(name: string): Promise<{ clean: boolean; reason?: string }> {
-  if (!name || name.trim().length < 2 || name.trim().length > 30) {
-    return { clean: false, reason: 'Name must be between 2 and 30 characters' };
-  }
-
+async function checkShortTextProfanity(
+  text: string,
+  label: string,
+  gptContext: string
+): Promise<{ clean: boolean; reason?: string }> {
   const allBlocklists = [...TURKISH_BLOCKLIST, ...ENGLISH_BLOCKLIST, ...GERMAN_BLOCKLIST];
 
   // Standard word-boundary check
-  const wordBoundaryHits = checkBlocklist(name, allBlocklists);
+  const wordBoundaryHits = checkBlocklist(text, allBlocklists);
   if (wordBoundaryHits.length > 0) {
-    return { clean: false, reason: 'Name contains inappropriate language' };
+    return { clean: false, reason: `${label} contains inappropriate language` };
   }
 
   // Substring check for concatenated profanity (e.g. "PenisPenisPenis", "m0therfu5ker5")
-  const nameVariants = [
-    normalizeUnicode(normalizeLeetspeak(name)).replace(/[^a-z]/g, ''),
-    normalizeUnicode(normalizeLeetspeak(name.replace(/5/g, 'c'))).replace(/[^a-z]/g, ''),
+  const textVariants = [
+    normalizeUnicode(normalizeLeetspeak(text)).replace(/[^a-z]/g, ''),
+    normalizeUnicode(normalizeLeetspeak(text.replace(/5/g, 'c'))).replace(/[^a-z]/g, ''),
   ];
 
   for (const word of allBlocklists) {
     const normalizedWord = normalizeUnicode(word);
     if (normalizedWord.length >= 4) {
-      for (const variant of nameVariants) {
+      for (const variant of textVariants) {
         if (variant.includes(normalizedWord)) {
-          return { clean: false, reason: 'Name contains inappropriate language' };
+          return { clean: false, reason: `${label} contains inappropriate language` };
         }
       }
     }
@@ -338,14 +343,14 @@ export async function checkNameProfanity(name: string): Promise<{ clean: boolean
     const apiKey = import.meta.env.OPENAI_API_KEY;
     if (apiKey) {
       const [moderationResult, gptResult] = await Promise.all([
-        moderateText(name),
-        checkSpamWithGPT(name, 'user display name')
+        moderateText(text),
+        checkSpamWithGPT(text, gptContext)
       ]);
       if (moderationResult.decision !== 'approved') {
-        return { clean: false, reason: 'Name contains inappropriate content' };
+        return { clean: false, reason: `${label} contains inappropriate content` };
       }
       if (gptResult.decision !== 'approved') {
-        return { clean: false, reason: 'Name contains inappropriate content' };
+        return { clean: false, reason: `${label} contains inappropriate content` };
       }
     }
   } catch {
@@ -353,6 +358,29 @@ export async function checkNameProfanity(name: string): Promise<{ clean: boolean
   }
 
   return { clean: true };
+}
+
+/**
+ * Check username/display name for profanity across all languages.
+ * Also checks for profanity embedded without word boundaries (e.g. "PenisPenisPenis").
+ * Returns { clean: true } or { clean: false, reason: string }
+ */
+export async function checkNameProfanity(name: string): Promise<{ clean: boolean; reason?: string }> {
+  if (!name || name.trim().length < 2 || name.trim().length > 30) {
+    return { clean: false, reason: 'Name must be between 2 and 30 characters' };
+  }
+  return checkShortTextProfanity(name, 'Name', 'user display name');
+}
+
+/**
+ * Check a profile motto (Steckbrief line, ≤80 chars, printed + public) for
+ * profanity. Same blocklist + OpenAI safety net as checkNameProfanity, but
+ * without its 2-30 char gate — length is validated separately (zod
+ * MOTTO_MAX_LEN) since mottos are optional and can legitimately run past 30
+ * chars. Returns { clean: true } or { clean: false, reason: string }.
+ */
+export async function checkMottoProfanity(motto: string): Promise<{ clean: boolean; reason?: string }> {
+  return checkShortTextProfanity(motto, 'Motto', 'profile motto, printed on a public neighbor card');
 }
 
 // ============================================================================
