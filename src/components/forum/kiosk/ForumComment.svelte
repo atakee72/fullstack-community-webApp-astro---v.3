@@ -16,7 +16,7 @@
   // Trash is visible whenever the viewer is the author (no time window).
 
   import KioskAvatar from './KioskAvatar.svelte';
-  import { t } from '../../../lib/kiosk-i18n';
+  import { t, tStr } from '../../../lib/kiosk-i18n';
 
   let {
     comment,
@@ -77,6 +77,13 @@
 
   const isAuthor = $derived(
     !!currentUserId && authorIdOf(comment.author) === currentUserId
+  );
+  const commentAuthorId = $derived(authorIdOf(comment.author));
+  const commentAuthorName = $derived(
+    typeof comment.author === 'object' ? (comment.author?.name ?? 'anonym') : 'anonym'
+  );
+  const viewProfileLabel = $derived(
+    tStr($t['profile.public.viewprofile'], { name: commentAuthorName })
   );
   const inTimeWindow = $derived(
     Date.now() - commentDateMs(comment.date) < EDIT_WINDOW_MS
@@ -185,9 +192,19 @@
   <!-- Body column -->
   <div class="flex-1 min-w-0">
     <header class="flex items-center flex-wrap gap-2 mb-1">
-      <span class="font-bricolage font-bold text-sm text-ink">
-        {typeof comment.author === 'object' ? (comment.author?.name ?? 'anonym') : 'anonym'}
-      </span>
+      {#if commentAuthorId}
+        <a
+          href={`/nachbarn/id/${commentAuthorId}`}
+          class="font-bricolage font-bold text-sm text-ink hover:underline underline-offset-2"
+          aria-label={viewProfileLabel}
+        >
+          {commentAuthorName}
+        </a>
+      {:else}
+        <span class="font-bricolage font-bold text-sm text-ink">
+          {commentAuthorName}
+        </span>
+      {/if}
       {#if isOP}
         <span class="inline-flex items-center px-1.5 py-0.5 rounded font-dmmono text-[9px] uppercase tracking-[0.1em] bg-wine text-paper font-medium">
           OP

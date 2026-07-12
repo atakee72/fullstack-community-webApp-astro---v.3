@@ -13,7 +13,7 @@
   // discarding unsaved changes — same pattern as the React legacy
   // forum, no new dialog.
 
-  import { t, locale } from '../../../lib/kiosk-i18n';
+  import { t, tStr, locale } from '../../../lib/kiosk-i18n';
   import KioskAvatar from './KioskAvatar.svelte';
   import KioskBtn from './KioskBtn.svelte';
   import PostTypeChip from './PostTypeChip.svelte';
@@ -64,6 +64,10 @@
   const isAuthor = $derived(
     !!currentUserId && authorIdOf(topic.author) === currentUserId
   );
+
+  const authorId = $derived(authorIdOf(topic.author));
+  const authorName = $derived(topic.author?.name ?? 'anonym');
+  const viewProfileLabel = $derived(tStr($t['profile.public.viewprofile'], { name: authorName }));
 
   // Map plural collectionType → singular API contentType for /api/reports/submit.
   const reportContentType = $derived(
@@ -559,9 +563,19 @@
           size="md"
         />
         <div class="flex flex-col leading-tight">
-          <span class="font-bricolage font-bold text-[13px] text-ink">
-            {topic.author?.name ?? 'anonym'}
-          </span>
+          {#if authorId}
+            <a
+              href={`/nachbarn/id/${authorId}`}
+              class="font-bricolage font-bold text-[13px] text-ink hover:underline underline-offset-2"
+              aria-label={viewProfileLabel}
+            >
+              {authorName}
+            </a>
+          {:else}
+            <span class="font-bricolage font-bold text-[13px] text-ink">
+              {authorName}
+            </span>
+          {/if}
           {#if memberSince}
             <span class="font-dmmono text-[10px] uppercase tracking-[0.05em] text-ink-mute">
               {memberSince}

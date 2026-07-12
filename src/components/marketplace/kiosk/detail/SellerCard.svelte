@@ -36,6 +36,10 @@
   const metaLine = $derived(
     [sinceLabel, listingsLabel].filter(Boolean).join(' · ') || null
   );
+
+  const viewProfileLabel = $derived(
+    tStr($t['profile.public.viewprofile'], { name: sellerName ?? '' })
+  );
 </script>
 
 <div
@@ -65,13 +69,27 @@
       />
     </div>
     <div style="flex: 1; min-width: 0;">
-      <div
-        style="
-          font-family: var(--k-font-display); font-size: 16px; font-weight: 700;
-          letter-spacing: -0.01em; color: var(--k-ink);
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        "
-      >{sellerName ?? '—'}</div>
+      {#if sellerId}
+        <a
+          href={`/nachbarn/id/${sellerId}`}
+          aria-label={viewProfileLabel}
+          class="hover:underline underline-offset-2"
+          style="
+            display: block;
+            font-family: var(--k-font-display); font-size: 16px; font-weight: 700;
+            letter-spacing: -0.01em; color: var(--k-ink);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          "
+        >{sellerName ?? '—'}</a>
+      {:else}
+        <div
+          style="
+            font-family: var(--k-font-display); font-size: 16px; font-weight: 700;
+            letter-spacing: -0.01em; color: var(--k-ink);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          "
+        >{sellerName ?? '—'}</div>
+      {/if}
       {#if metaLine}
         <div
           style="

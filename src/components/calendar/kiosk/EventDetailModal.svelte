@@ -26,7 +26,7 @@
   import { CATEGORIES } from '../../../lib/calendar/categories';
   import { isLiveNow } from '../../../lib/calendar/eventTime';
   import { now } from '../../../lib/calendar/nowTicker';
-  import { t, locale } from '../../../lib/kiosk-i18n';
+  import { t, tStr, locale } from '../../../lib/kiosk-i18n';
   import { createUserProfilesQuery } from '../../../lib/userProfilesQueries';
   import type { Event as EventDoc, EventCategory } from '../../../types';
 
@@ -167,6 +167,13 @@
   // events render the badge before any admin-create endpoint exists.
   const isOfficial = $derived(
     !!event?.isOfficial || /mahalle.?team/i.test(authorName)
+  );
+
+  // BY-slab profile link — only when we have an id AND the event isn't
+  // attributed to Mahalle-Team (official events have no neighbor profile).
+  const showAuthorLink = $derived(!!authorId && !isOfficial);
+  const viewProfileLabel = $derived(
+    tStr($t['profile.public.viewprofile'], { name: authorName })
   );
 
   // Title carved-italic split — when the title is exactly two
@@ -326,7 +333,15 @@
             <div class="flex items-center gap-2">
               <KioskAvatar name={authorName} image={null} size="sm" />
               <div>
-                <div class="font-bricolage font-semibold text-[13px]">{authorName}</div>
+                {#if showAuthorLink}
+                  <a
+                    href={`/nachbarn/id/${authorId}`}
+                    class="font-bricolage font-semibold text-[13px] hover:underline underline-offset-2"
+                    aria-label={viewProfileLabel}
+                  >{authorName}</a>
+                {:else}
+                  <div class="font-bricolage font-semibold text-[13px]">{authorName}</div>
+                {/if}
                 <div class="font-dmmono text-[10px] text-ink-mute">
                   {$t['cal.detail.verifiziert']}
                 </div>

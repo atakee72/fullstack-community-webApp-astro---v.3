@@ -1320,6 +1320,7 @@ const de = {
     'Kontakt läuft über Inhalte: Anzeige anfragen oder im Forum antworten. E-Mail, Gespeichertes und Moderation bleiben privat.',
   'profile.public.contact.mobile': 'Kontakt über Anzeige oder Forum — E-Mail bleibt privat.',
   'profile.public.ledger': 'Im Kiez unterwegs',
+  'profile.public.viewprofile': 'Profil von {name} ansehen',
 
   'profile.since': 'im Kiez seit {y}',
   'profile.verified': 'Verifiziert im Kiez',
@@ -2604,6 +2605,7 @@ const en: Dict = {
     'Contact happens through content: inquire on a listing or reply in the forum. Email, saved items and moderation stay private.',
   'profile.public.contact.mobile': 'Contact via listing or forum — email stays private.',
   'profile.public.ledger': 'Around the kiez',
+  'profile.public.viewprofile': 'View {name}’s profile',
 
   'profile.since': 'in the kiez since {y}',
   'profile.verified': 'Verified in the kiez',

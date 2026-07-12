@@ -29,7 +29,7 @@
   import KioskAvatar from './KioskAvatar.svelte';
   import StatusBadge from './StatusBadge.svelte';
   import PostTypeChip from './PostTypeChip.svelte';
-  import { t } from '../../../lib/kiosk-i18n';
+  import { t, tStr } from '../../../lib/kiosk-i18n';
   import { optimizeCloudinary } from '../../../utils/cloudinary';
 
   let {
@@ -49,7 +49,7 @@
       title: string;
       body?: string;
       description?: string;
-      author?: { name?: string; image?: string | null; createdAt?: string } | null;
+      author?: { _id?: string; name?: string; image?: string | null; createdAt?: string } | null;
       tags?: string[];
       images?: { url: string }[];
       comments?: any[];
@@ -76,6 +76,35 @@
      *  ignore this prop. */
     isOfficial?: boolean;
   }>();
+
+  // Same tiny helper as ForumPostDetail.svelte / ForumComment.svelte —
+  // author may be a populated object, a bare id string, or null.
+  function authorIdOf(v: any): string | null {
+    if (!v) return null;
+    if (typeof v === 'string') return v;
+    if (typeof v === 'object' && v._id) return String(v._id);
+    return null;
+  }
+  const authorId = $derived(authorIdOf(topic.author));
+  const authorName = $derived(topic.author?.name ?? 'anonym');
+  const viewProfileLabel = $derived(tStr($t['profile.public.viewprofile'], { name: authorName }));
+
+  // The whole card is wrapped in an outer <a href={detailHref}> by
+  // ForumIndexInner (see CLAUDE.md forum notes) — nesting another <a>
+  // here would be invalid HTML and the browser would mangle/hoist it.
+  // Use a keyboard-accessible click target instead: stop the click from
+  // bubbling to the outer anchor (which would navigate to the post) and
+  // navigate to the profile ourselves.
+  function goToProfile(e: MouseEvent | KeyboardEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (authorId) window.location.href = `/nachbarn/id/${authorId}`;
+  }
+  function onNameKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      goToProfile(e);
+    }
+  }
 
   const isAnnouncement = $derived(kind === 'announcement');
   const isRecommendation = $derived(kind === 'recommendation');
@@ -221,7 +250,18 @@
         />
         <div class="min-w-0 leading-tight">
           <div class={`flex items-center gap-1.5 text-[12.5px] font-bold ${authorColor}`}>
-            <span class="truncate">{topic.author?.name ?? 'anonym'}</span>
+            {#if authorId}
+              <span
+                class="truncate hover:underline underline-offset-2 cursor-pointer"
+                role="link"
+                tabindex="0"
+                aria-label={viewProfileLabel}
+                onclick={goToProfile}
+                onkeydown={onNameKeydown}
+              >{authorName}</span>
+            {:else}
+              <span class="truncate">{authorName}</span>
+            {/if}
             {#if team}
               <span
                 class={`shrink-0 font-dmmono text-[8.5px] font-semibold uppercase tracking-[0.08em] px-1.5 py-px rounded-sm border ${
