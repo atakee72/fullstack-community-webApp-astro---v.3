@@ -50,6 +50,22 @@
     const parts = name.trim().split(/\s+/).slice(0, 2);
     return parts.map((p) => p[0]?.toUpperCase() ?? '').join('') || '·';
   }
+
+  // Live avatar update — the nav's `user` prop is a session snapshot (only
+  // refreshed on next login/SSR). The profile page's avatar-upload flow
+  // (PIdentityCard) dispatches this event on a successful save so the nav
+  // reflects the new photo immediately, without a reload. Residual: other
+  // tabs/windows stay stale until they revisit a page that re-derives
+  // `user` — acceptable, documented in the Task 7 brief (Decision 7).
+  let liveImage = $state<string | null>(null);
+  $effect(() => {
+    function handleAvatarUpdate(e: Event) {
+      const url = (e as CustomEvent<{ url: string }>).detail?.url;
+      if (url) liveImage = url;
+    }
+    window.addEventListener('profile:avatar-updated', handleAvatarUpdate);
+    return () => window.removeEventListener('profile:avatar-updated', handleAvatarUpdate);
+  });
 </script>
 
 <!-- ─── Top bar (sticky, all viewports) ───────────────────────────────── -->
@@ -120,8 +136,8 @@
           aria-label={user.name}
           class="w-9 h-9 rounded-full border-2 border-ink overflow-hidden flex items-center justify-center font-dmmono font-bold text-[11px] uppercase tracking-wider bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
         >
-          {#if user.image}
-            <img src={user.image} alt="" class="w-full h-full object-cover" />
+          {#if liveImage ?? user.image}
+            <img src={liveImage ?? user.image} alt="" class="w-full h-full object-cover" />
           {:else}
             {initialsOf(user.name)}
           {/if}

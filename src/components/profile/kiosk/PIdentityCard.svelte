@@ -22,12 +22,19 @@
 
   import { onDestroy } from 'svelte';
   import type { ProfileMe } from '../../../lib/profile/profileShared';
-  import { PROFILE_NAME_REGEX, HOBBY_MAX_COUNT, HOBBY_MAX_LEN } from '../../../lib/profile/profileShared';
+  import {
+    PROFILE_NAME_REGEX,
+    HOBBY_MAX_COUNT,
+    HOBBY_MAX_LEN,
+    AVATAR_MAX_BYTES,
+    AVATAR_ACCEPTED_TYPES,
+  } from '../../../lib/profile/profileShared';
   import { t, tStr } from '../../../lib/kiosk-i18n';
   import PCard from './atoms/PCard.svelte';
   import PBtn from './atoms/PBtn.svelte';
   import PAvatar from './atoms/PAvatar.svelte';
   import PHobbyChip from './atoms/PHobbyChip.svelte';
+  import PAvatarUploadPanel from './atoms/PAvatarUploadPanel.svelte';
 
   let {
     profile,
@@ -64,6 +71,131 @@
   let saveSeq = 0;
 
   onDestroy(() => clearTimeout(savedTimer));
+
+  // ─── Avatar upload (5 states) ──────────────────────────────────────────
+  // idle (no panel — header ÄNDERN chip only) → picking (dropzone) →
+  // uploading (XHR + real progress) → error (concrete reason, old image
+  // untouched) → saved (✓ badge, then back to idle with the new image).
+  // Independent of the name/hobbies edit flow above — the panel renders
+  // under whichever header (read or edit state) is currently showing, so
+  // the rest of the card stays usable while an upload is in flight.
+  type AvatarState = 'idle' | 'picking' | 'uploading' | 'error' | 'saved';
+  let avatarState = $state<AvatarState>('idle');
+  // Once a fresh URL comes back from the server it beats profile.image —
+  // the server session snapshot (and initialProfile from this page load)
+  // is otherwise stale until next login/SSR.
+  let avatarUrl = $state<string | null>(null);
+  let avatarPercent = $state<number | null>(null);
+  let avatarErrorKey = $state<'size' | 'format' | 'network' | null>(null);
+  let selectedAvatarFile: File | null = null; // remembered for network-error retry
+  let avatarXhr: XMLHttpRequest | null = null;
+  let avatarSavedTimer: ReturnType<typeof setTimeout> | undefined;
+
+  onDestroy(() => {
+    clearTimeout(avatarSavedTimer);
+    avatarXhr?.abort();
+  });
+
+  const displayImage = $derived(avatarUrl ?? profile.image);
+
+  function openAvatarPicker() {
+    if (banned) return;
+    // Reopening the picker (e.g. re-clicking ÄNDERN) while an upload is in
+    // flight must actually abort it — otherwise the old XHR keeps running
+    // in the background and can silently flip the state to "saved" later,
+    // out of step with whatever the user is doing by then.
+    if (avatarState === 'uploading') {
+      avatarXhr?.abort();
+      avatarXhr = null;
+    }
+    avatarState = 'picking';
+    avatarPercent = null;
+    avatarErrorKey = null;
+  }
+
+  function validateAndUploadAvatar(file: File) {
+    if (file.size > AVATAR_MAX_BYTES) {
+      avatarState = 'error';
+      avatarErrorKey = 'size';
+      return;
+    }
+    if (!AVATAR_ACCEPTED_TYPES.includes(file.type as (typeof AVATAR_ACCEPTED_TYPES)[number])) {
+      avatarState = 'error';
+      avatarErrorKey = 'format';
+      return;
+    }
+    selectedAvatarFile = file;
+    uploadAvatar(file);
+  }
+
+  function uploadAvatar(file: File) {
+    avatarState = 'uploading';
+    avatarPercent = null;
+    avatarErrorKey = null;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const xhr = new XMLHttpRequest();
+    avatarXhr = xhr;
+    xhr.open('POST', '/api/profile/avatar');
+
+    xhr.upload.onprogress = (e) => {
+      if (avatarXhr !== xhr) return;
+      if (e.lengthComputable) avatarPercent = Math.round((e.loaded / e.total) * 100);
+    };
+
+    xhr.onload = () => {
+      if (avatarXhr !== xhr) return; // superseded/cancelled
+      avatarXhr = null;
+      let json: any = null;
+      try {
+        json = JSON.parse(xhr.responseText);
+      } catch {
+        /* non-JSON body — falls through to the generic network error */
+      }
+      if (xhr.status === 200 && typeof json?.url === 'string') {
+        avatarUrl = json.url;
+        avatarPercent = null;
+        avatarState = 'saved';
+        window.dispatchEvent(new CustomEvent('profile:avatar-updated', { detail: { url: json.url } }));
+        clearTimeout(avatarSavedTimer);
+        avatarSavedTimer = setTimeout(() => {
+          if (avatarState === 'saved') avatarState = 'idle';
+        }, 1500);
+        return;
+      }
+      const code = typeof json?.error === 'string' ? json.error : null;
+      avatarState = 'error';
+      avatarErrorKey = code === 'file_too_large' ? 'size' : code === 'bad_type' ? 'format' : 'network';
+    };
+
+    xhr.onerror = () => {
+      if (avatarXhr !== xhr) return;
+      avatarXhr = null;
+      avatarState = 'error';
+      avatarErrorKey = 'network';
+    };
+
+    xhr.send(formData);
+  }
+
+  function cancelAvatarUpload() {
+    avatarXhr?.abort();
+    avatarXhr = null;
+    avatarPercent = null;
+    avatarErrorKey = null;
+    avatarState = 'picking'; // silent — no error banner
+  }
+
+  function retryAvatarUpload() {
+    if (selectedAvatarFile) uploadAvatar(selectedAvatarFile);
+  }
+
+  function pickOtherAvatar() {
+    avatarState = 'picking';
+    avatarErrorKey = null;
+  }
 
   function startEdit() {
     if (banned) return;
@@ -176,7 +308,13 @@
   {#if !editing}
     <!-- ═══ Read state ═══ -->
     <div style="display: flex; gap: 16px; align-items: flex-start;">
-      <PAvatar name={displayName} image={profile.image} editable />
+      <PAvatar
+        name={displayName}
+        image={displayImage}
+        editable
+        onOpenUpload={openAvatarPicker}
+        showSavedBadge={avatarState === 'saved'}
+      />
       <div style="min-width: 0;">
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <h2
@@ -201,6 +339,18 @@
         {/if}
       </div>
     </div>
+
+    {#if avatarState !== 'idle'}
+      <PAvatarUploadPanel
+        panelState={avatarState}
+        percent={avatarPercent}
+        errorKey={avatarErrorKey}
+        onPickFile={validateAndUploadAvatar}
+        onCancelUpload={cancelAvatarUpload}
+        onRetry={retryAvatarUpload}
+        onPickOther={pickOtherAvatar}
+      />
+    {/if}
 
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 18px; border-top: 1.5px dashed var(--k-rule); padding-top: 12px;">
       {#each [
@@ -231,7 +381,13 @@
   {:else}
     <!-- ═══ Edit state ═══ -->
     <div style="display: flex; gap: 16px; align-items: flex-start; margin-bottom: 18px;">
-      <PAvatar name={editName} image={profile.image} editable />
+      <PAvatar
+        name={editName}
+        image={displayImage}
+        editable
+        onOpenUpload={openAvatarPicker}
+        showSavedBadge={avatarState === 'saved'}
+      />
       <div style="flex: 1; min-width: 0;">
         <div class="font-dmmono" style="font-size: 9.5px; letter-spacing: 0.14em; color: var(--k-ink-mute); margin-bottom: 5px;">{$t['profile.edit.name.label']}</div>
         <input
@@ -251,6 +407,20 @@
         {/if}
       </div>
     </div>
+
+    {#if avatarState !== 'idle'}
+      <div style="margin-bottom: 18px;">
+        <PAvatarUploadPanel
+          panelState={avatarState}
+          percent={avatarPercent}
+          errorKey={avatarErrorKey}
+          onPickFile={validateAndUploadAvatar}
+          onCancelUpload={cancelAvatarUpload}
+          onRetry={retryAvatarUpload}
+          onPickOther={pickOtherAvatar}
+        />
+      </div>
+    {/if}
 
     <div class="font-dmmono" style="font-size: 9.5px; letter-spacing: 0.14em; color: var(--k-ink-mute); margin-bottom: 8px;">{$t['profile.edit.hobbies.label']}</div>
     <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px;">

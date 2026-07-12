@@ -14,12 +14,14 @@
     size = 92,
     editable = false,
     onOpenUpload,
+    showSavedBadge = false,
   }: {
     name: string;
     image: string | null;
     size?: number;
     editable?: boolean;
     onOpenUpload?: () => void;
+    showSavedBadge?: boolean;
   } = $props();
 
   // Same logic as initialsOf() in KioskNav.svelte:48 — first letters of the
@@ -62,5 +64,17 @@
         box-shadow: 2px 2px 0 var(--k-ink); cursor: pointer;
       "
     >{$t['profile.avatar.change']}</button>
+  {/if}
+  {#if showSavedBadge}
+    <span
+      class="prof-chip-in"
+      aria-hidden="true"
+      style="
+        position: absolute; top: -6px; right: -8px; width: 24px; height: 24px;
+        border-radius: 50%; background: var(--k-success); color: var(--k-paper);
+        border: 2px solid var(--k-ink); display: flex; align-items: center;
+        justify-content: center; font-size: 12px; line-height: 1;
+      "
+    >✓</span>
   {/if}
 </div>
