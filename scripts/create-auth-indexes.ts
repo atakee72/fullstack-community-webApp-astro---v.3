@@ -40,6 +40,12 @@ async function main() {
   await db.collection('rateLimits').createIndex(
     { baseKey: 1 }, { name: 'rl_baseKey' });
 
+  // chronikCache: 24h-cached Kiez-Chronik payload per user (src/lib/profile/chronik.ts).
+  await db.collection('chronikCache').createIndex(
+    { userId: 1 }, { unique: true, name: 'chronik_user' });
+  await db.collection('chronikCache').createIndex(
+    { expiresAt: 1 }, { expireAfterSeconds: 0, name: 'chronik_ttl' });
+
   console.log('Auth indexes ensured on', dbName);
   await client.close();
 }

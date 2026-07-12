@@ -95,3 +95,11 @@ export interface ActivityItem {
 }
 export interface ActivityPage { items: ActivityItem[]; nextBefore: string | null; }
 export const ACTIVITY_PAGE_SIZE = 20;
+
+// ─── Kiez-Chronik (Plan B, Task 1) ─────────────────────────────────────
+// Derived tenure timeline. Labels/sublabels are i18n keys on the client
+// (`profile.chronik.stop.<kind>` / `.sub.<kind>`), NOT resolver output.
+
+export type ChronikStopKind = 'dabei' | 'erstesThema' | 'ersteAnzeige' | 'ersterTermin' | 'danke100' | 'heute';
+export interface ChronikStop { kind: ChronikStopKind; date: string | null; /* ISO; null only for 'heute' */ active?: boolean; }
+export interface ChronikData { stops: ChronikStop[]; } // ordered, max 5, 'heute' always last
