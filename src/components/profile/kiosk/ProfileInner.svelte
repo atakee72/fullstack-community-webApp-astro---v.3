@@ -68,7 +68,11 @@
   // ─── Moderation standing (Task 8) ──────────────────────────────────────
   let standing = $state<ProfileStanding | null>(null);
   let standingSeq = 0;
-  let standingRequested = false;
+  // $state, NOT a plain let — the $effect below reads it as its re-arm guard,
+  // so retryStanding()'s reset must be reactive for the effect to re-fire.
+  // (The effect setting it back to true triggers one extra effect run, which
+  // terminates immediately via the same guard.)
+  let standingRequested = $state(false);
   let standingError = $state(false);
   $effect(() => {
     if (!profile || standingRequested) return;
