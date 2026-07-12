@@ -40,7 +40,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // Protected routes configuration
-  const protectedRoutes = ["/profile", "/dashboard", "/settings"];
+  // "/profile" is deliberately NOT here — logged-out /profile renders its own
+  // in-page state (§10 "sign in" card) instead of a hard redirect.
+  const protectedRoutes = ["/dashboard", "/settings"];
   const authRoutes = ["/login", "/register"];
 
   // Check if current path is protected

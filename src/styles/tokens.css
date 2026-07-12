@@ -105,6 +105,8 @@
 [data-page="schillerkiez"] { --k-accent: var(--k-moss); }
 [data-page="auth"]         { --k-accent: var(--k-ochre); }
 [data-page="admin"]        { --k-accent: var(--k-plum); }
+/* profile — ochre, deliberately shared with auth ("your door" pair) */
+[data-page="profile"]      { --k-accent: var(--k-ochre); }
 
 /* --k-accent-italic is scoped to italicized verb emphasis in marketplace
    headlines. Do NOT use for buttons, borders, fills, or any other accent

@@ -1,0 +1,95 @@
+/* ════════════════════════════════════════════════════════════
+   MAHALLE · PROFILE MOTION + LOCAL TOKENS
+   Ported from design/handoffs/design_handoff_profile/{motion-profile.css,
+   tokens-profile.css}. Values verbatim; token names swapped to the
+   project's --k-* custom properties. Profile motion is quiet
+   bookkeeping — the only thing that pulses is „heute“ on the
+   Kiez-Chronik (Plan B — profPulse intentionally NOT ported here).
+   ════════════════════════════════════════════════════════════ */
+
+/* ── 01 · Skeleton sweep ───────────────────────────────────────
+   Loading state §01. Skeleton mirrors the real layout (identity
+   card + ledger rows) — replaces the legacy ⏳ emoji spinner.
+   Same sweep vocabulary as Newsboard + Admin.                    */
+@keyframes profSweep {
+  0%   { background-position: -200px 0; }
+  100% { background-position: 400px 0; }
+}
+.prof-skeleton-bar {
+  background: linear-gradient(90deg,
+    var(--k-paper-soft) 25%, #e2d7bd 50%, var(--k-paper-soft) 75%);
+  background-size: 400px 100%;
+  animation: profSweep 1.4s linear infinite;
+}
+
+/* ── 02 · Save tick (optimistic edit) ──────────────────────────
+   On save the card returns to read state IMMEDIATELY; a chip
+   slides in („speichert …“ → „gespeichert ✓“), holds 1.5s,
+   then fades. Failure path: card returns to edit state with
+   inputs intact + danger banner.                                 */
+@keyframes profSaveTick {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.prof-save-chip { animation: profSaveTick 250ms ease-out both; }
+
+/* ── 03 · Chip pop ─────────────────────────────────────────────
+   Success check on the avatar after upload persists and newly
+   added hobby chips in edit mode. Slight overshoot — the one
+   playful beat of the surface.                                   */
+@keyframes profChipIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.prof-chip-in { animation: profChipIn 300ms cubic-bezier(0.2, 0.8, 0.2, 1.2) both; }
+
+/* ── 04 · Upload progress bar ──────────────────────────────────
+   Avatar upload: a bar, not a spinner — honest progress with a
+   visible cancel. Bar element width is driven by real progress
+   in production; this keyframe is the idle loop and the
+   indeterminate fallback (no Content-Length).                    */
+@keyframes profUploadBar {
+  0%   { width: 8%; }
+  60%  { width: 74%; }
+  100% { width: 92%; }
+}
+.prof-upload-indeterminate { animation: profUploadBar 2.8s ease-out infinite; }
+
+/* ── Carved-title accent ────────────────────────────────────────
+   The global `.kiosk-headline em` rule (global.css) reads
+   var(--k-accent-italic), which is unset outside marketplace —
+   an invalid var falls back to inherited color, not ochre. Profile
+   needs its own explicit override so the carved <em> in the h1
+   ("Dein <em>Meldebogen</em>") renders ochre + italic. Font-family +
+   weight added here too (font-instrument, font-normal) since the
+   <em> comes from a plain i18n string via {@html} — no Tailwind
+   classes available to attach inline. */
+[data-page="profile"] .kiosk-headline em {
+  color: var(--k-ochre);
+  font-style: italic;
+  font-family: var(--k-font-serif);
+  font-weight: 400;
+}
+
+/* ── Nav avatar ring while /profil is active ─────────────────────
+   Profile is NOT a nav tab — while it's the active route, the
+   KioskNav avatar disc carries an ochre ring instead. Consumed by
+   a later task (KioskNav wiring). */
+.prof-nav-avatar-active {
+  box-shadow: 0 0 0 2px var(--k-paper), 0 0 0 4px var(--k-ochre);
+}
+
+/* ── Reduced motion ────────────────────────────────────────────
+   Skeletons go static paperSoft. Chips + ticks appear instantly
+   at their end state.                                            */
+@media (prefers-reduced-motion: reduce) {
+  .prof-skeleton-bar,
+  .prof-save-chip,
+  .prof-chip-in,
+  .prof-upload-indeterminate {
+    animation: none;
+  }
+  .prof-skeleton-bar { background: var(--k-paper-soft); }
+  .prof-save-chip,
+  .prof-chip-in { opacity: 1; transform: none; }
+}

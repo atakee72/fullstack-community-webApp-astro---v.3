@@ -1,17 +1,19 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import PageHeader from '../components/ui/PageHeader.astro';
-import UserProfileWrapper from '../components/UserProfileWrapper';
+import KioskLayout from '../layouts/KioskLayout.astro';
+import ProfileInner from '../components/profile/kiosk/ProfileInner.svelte';
 import { getSession } from 'auth-astro/server';
+import { getProfileMe } from '../lib/profile/profileQuery';
+
+// Per-user data (stats, moderation standing) makes caching unsafe — mirrors
+// newsboard/marketplace.
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
 
 const session = await getSession(Astro.request);
+const userId = (session?.user as any)?.id ?? null;
+const initialProfile = userId ? await getProfileMe(userId) : null;
 ---
 
-<BaseLayout title="User Profile">
-  <main class="min-h-[calc(100vh-80px)] bg-gradient-to-br from-[#eccc6e] to-[#dabb5d] py-8">
-    <div class="max-w-7xl mx-auto px-4 md:px-8">
-      <PageHeader title="Your Profile" />
-    </div>
-    <UserProfileWrapper client:load user={session?.user} />
-  </main>
-</BaseLayout>
+<KioskLayout title="Profil — Mahalle" page="profile">
+  <ProfileInner client:load initialProfile={initialProfile} loggedIn={!!userId} />
+</KioskLayout>
+<style is:global>@import '../styles/profile.css';</style>
