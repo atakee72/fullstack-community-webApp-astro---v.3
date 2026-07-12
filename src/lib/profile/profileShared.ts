@@ -35,3 +35,27 @@ export const HOBBY_MAX_COUNT = 10;
 export const HOBBY_MAX_LEN = 50;
 export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 export const AVATAR_ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+
+// ─── Cross-surface activity feed ("Archiv") ────────────────────────────
+
+export type ActivityFilter = 'alle' | 'forum' | 'markt' | 'kalender' | 'kurier' | 'gespeichert';
+export type ActivitySurface = 'forum' | 'markt' | 'kalender' | 'kurier';
+export type ActivityKind =
+  | 'diskussion' | 'empfehlung' | 'ankuendigung'   // forum
+  | 'anzeige'                                      // markt
+  | 'termin' | 'zusage'                            // kalender
+  | 'news'                                         // kurier
+  | 'artikel';                                     // kurier (saved news by others)
+export interface ActivityItem {
+  id: string; surface: ActivitySurface; kind: ActivityKind;
+  title: string;
+  date: string;                    // ISO — sort key (createdAt; zusage -> event startDate; saved -> savedAt)
+  strap: 'pruefung' | 'reserviert' | 'abgelehnt' | null;
+  saved: boolean;                  // true in the gespeichert view
+  by: string | null;               // author display name (gespeichert view) or source name (kurier)
+  href: string | null;             // detail link ('/topics/{id}', '/marketplace/{id}', '/calendar', '/newsboard/{id}')
+  meta: { likes?: number; comments?: number; price?: number | null;
+          listingType?: 'sell' | 'exchange' | 'gift'; eventDate?: string; going?: number };
+}
+export interface ActivityPage { items: ActivityItem[]; nextBefore: string | null; }
+export const ACTIVITY_PAGE_SIZE = 20;
