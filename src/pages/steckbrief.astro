@@ -112,7 +112,7 @@ const title = 'Steckbrief — Mahalle';
 
         <div class="steckbrief-card__footer">
           <div class="steckbrief-card__footer-text">
-            mahalle.berlin/nachbarn/{profile.handle}<br />gedruckt {printedLabel} · 2-farb-riso
+            {publicUrlDisplay}<br />gedruckt {printedLabel} · 2-farb-riso
           </div>
           <div class="steckbrief-card__qr" aria-hidden="true">
             <Fragment set:html={qrSvg} />
@@ -258,7 +258,7 @@ const title = 'Steckbrief — Mahalle';
     border-radius: 50%;
     background: var(--k-ochre);
     opacity: 0.85;
-    border: 2px solid var(--k-ink);
+    border: 1.5px solid var(--k-ink);
   }
 
   .steckbrief-card__head {
@@ -349,7 +349,7 @@ const title = 'Steckbrief — Mahalle';
   .steckbrief-card__qr {
     width: 44px;
     height: 44px;
-    border: 2px solid var(--k-ink);
+    border: 1.5px solid var(--k-ink);
     border-radius: 4px;
     display: flex;
     align-items: center;
