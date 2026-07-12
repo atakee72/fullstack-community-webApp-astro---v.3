@@ -87,9 +87,19 @@ export async function populateAuthors<T extends { author?: any }>(docs: T[]): Pr
 
   if (idSet.size === 0) return docs;
 
+  // SECURITY (Plan B Task 3, Decision 10): narrowed from `{ password: 0 }`
+  // (which returned every field except password — email, isBanned,
+  // pendingEmail, strikes, etc.) to an explicit allowlist. This data is
+  // serialized into client-visible payloads (SSR props for client:only
+  // islands, JSON API responses) — see /topics/[id].astro's initialTopic.
+  // Only widen this list after auditing every `.author?.<field>` /
+  // `.author.<field>` access across forum + calendar consumers.
   const objectIds = Array.from(idSet).map((id) => new ObjectId(id));
   const users = await usersCollection
-    .find({ _id: { $in: objectIds } }, { projection: { password: 0 } })
+    .find(
+      { _id: { $in: objectIds } },
+      { projection: { name: 1, image: 1, userPicture: 1, createdAt: 1, verified: 1 } }
+    )
     .toArray();
 
   const userMap = new Map<string, any>();

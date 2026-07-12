@@ -16,6 +16,22 @@ export interface ProfileMe {
   stats: { posts: number; listings: number; events: number; danke: number };
 }
 
+// Public-profile projection ("Nachbarn"-view) — Plan B Task 3. Trimmed
+// sibling of ProfileMe: no email, no isBanned. NEVER add
+// email/isBanned/pendingEmail/strikes to this type — getPublicProfile()
+// (src/lib/profile/publicProfile.ts) is the only producer and must never
+// select those fields off the users doc.
+export interface PublicProfile {
+  id: string;
+  name: string;
+  handle: string;
+  image: string | null; // userPicture || image || null — the public avatar
+  hobbies: string[];
+  verified: boolean;
+  memberSince: number; // year, from users.createdAt (ISO string OR Date — handle both)
+  stats: { posts: number; listings: number; events: number; danke: number };
+}
+
 export interface StandingRejectedItem {
   date: string; // ISO (flaggedContent.reviewedAt ?? updatedAt)
   contentType: 'topic' | 'announcement' | 'recommendation' | 'comment' | 'event' | 'marketplace' | 'news';

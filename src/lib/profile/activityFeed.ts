@@ -36,7 +36,19 @@ const FORUM_COLLECTIONS: { name: string; kind: ActivityKind; hrefPrefix: string 
   { name: 'recommendations', kind: 'empfehlung', hrefPrefix: '/recommendations/' },
 ];
 
-async function queryForum(db: any, userId: string, before: Date | null, limit: number) {
+// Public-visibility moderation gate — approved OR the field is absent
+// (legacy docs predating moderation). Verbatim per task-3-brief.md Decision
+// 11: shared by the public forum + kurier sub-queries.
+const PUBLIC_MODERATION_OR = [{ moderationStatus: 'approved' }, { moderationStatus: { $exists: false } }];
+
+interface SurfaceOpts {
+  /** When true, ANDs in the public-visibility gate (Decision 11) instead of
+   *  showing everything regardless of moderation status. Used only by
+   *  fetchPublicActivityPage — the private /me feed always passes none. */
+  public?: boolean;
+}
+
+async function queryForum(db: any, userId: string, before: Date | null, limit: number, opts: SurfaceOpts = {}) {
   const out: WorkingItem[] = [];
   let anyFull = false;
 
@@ -44,6 +56,7 @@ async function queryForum(db: any, userId: string, before: Date | null, limit: n
     FORUM_COLLECTIONS.map(async ({ name, kind, hrefPrefix }) => {
       const query: Record<string, unknown> = { author: userId };
       if (before) query.createdAt = { $lt: before };
+      if (opts.public) query.$or = PUBLIC_MODERATION_OR;
       const docs = await db
         .collection(name)
         .find(query, { projection: { title: 1, createdAt: 1, moderationStatus: 1, likes: 1, comments: 1 } })
@@ -78,9 +91,22 @@ async function queryForum(db: any, userId: string, before: Date | null, limit: n
 
 // ─── Markt surface: listings authored by the user ──────────────────────
 
-async function queryMarkt(db: any, userId: string, before: Date | null, limit: number) {
-  const query: Record<string, unknown> = { sellerId: userId, status: { $ne: 'draft' } };
+async function queryMarkt(db: any, userId: string, before: Date | null, limit: number, opts: SurfaceOpts = {}) {
+  const query: Record<string, unknown> = { sellerId: userId };
   if (before) query.createdAt = { $lt: before };
+  if (opts.public) {
+    // Public visibility gate = buildListingsFilter's public $or branch
+    // (src/lib/listingsQuery.ts:73-79): status in [available, reserved] AND
+    // the freshness clock (max of lastBumpedAt/createdAt) within 21 days.
+    // No moderation gate here — markt's public gate is availability-based,
+    // not moderation-based (Decision 11).
+    const TWENTY_ONE_DAYS_MS = 21 * 24 * 60 * 60 * 1000;
+    const twentyOneDaysAgo = new Date(Date.now() - TWENTY_ONE_DAYS_MS);
+    query.status = { $in: ['available', 'reserved'] };
+    query.$expr = { $gte: [{ $ifNull: ['$lastBumpedAt', '$createdAt'] }, twentyOneDaysAgo] };
+  } else {
+    query.status = { $ne: 'draft' };
+  }
   const docs = await db
     .collection('listings')
     .find(query, { projection: { title: 1, createdAt: 1, price: 1, listingType: 1, status: 1, moderationStatus: 1 } })
@@ -113,9 +139,16 @@ async function queryMarkt(db: any, userId: string, before: Date | null, limit: n
 
 // ─── Kalender surface: events created + RSVP'd (zusage) ────────────────
 
-async function queryKalenderCreated(db: any, userId: string, before: Date | null, limit: number) {
+async function queryKalenderCreated(db: any, userId: string, before: Date | null, limit: number, opts: SurfaceOpts = {}) {
   const query: Record<string, unknown> = { author: userId };
   if (before) query.createdAt = { $lt: before };
+  if (opts.public) {
+    // Public gate = approved-or-absent + upcoming only (Decision 11). NO
+    // zusage sub-query is ever run for the public feed (see
+    // fetchPublicActivityPage below).
+    query.$or = PUBLIC_MODERATION_OR;
+    query.startDate = { $gte: new Date() };
+  }
   const docs = await db
     .collection('events')
     .find(query, { projection: { title: 1, createdAt: 1, startDate: 1, moderationStatus: 1, rsvps: 1 } })
@@ -173,9 +206,10 @@ async function queryKalenderZusagen(db: any, userId: string, before: Date | null
 
 // ─── Kurier surface: user-submitted news ────────────────────────────────
 
-async function queryKurier(db: any, userId: string, before: Date | null, limit: number) {
+async function queryKurier(db: any, userId: string, before: Date | null, limit: number, opts: SurfaceOpts = {}) {
   const query: Record<string, unknown> = { submittedBy: userId, source: 'user_submitted' };
   if (before) query.createdAt = { $lt: before };
+  if (opts.public) query.$or = PUBLIC_MODERATION_OR;
   const docs = await db
     .collection('news')
     .find(query, { projection: { title: 1, createdAt: 1, moderationStatus: 1, sourceName: 1 } })
@@ -441,6 +475,50 @@ export async function fetchActivityPage(
       working.push(...r.items);
       if (r.anyFull) anyFull = true;
     }
+  }
+
+  working.sort((a, b) => (a.item.date < b.item.date ? 1 : a.item.date > b.item.date ? -1 : 0));
+
+  const overflow = working.length > limit;
+  const page = working.slice(0, limit).map((w) => w.item);
+  const nextBefore = overflow || anyFull ? page[page.length - 1]?.date ?? null : null;
+
+  return { items: page, nextBefore };
+}
+
+// ─── Public entry point (Plan B Task 3) ────────────────────────────────
+//
+// Same merge/cursor shape as fetchActivityPage, but every sub-query runs
+// with the public-visibility gate ANDed in (Decision 11):
+//   - forum + kurier: approved-or-absent moderation
+//   - markt: available/reserved + 21-day freshness clock (no moderation gate)
+//   - kalender: created events only, approved-or-absent + upcoming
+//     (startDate >= now). NO zusage sub-query — a stranger's RSVP list is
+//     never exposed. NO 'gespeichert' branch — the endpoint rejects that
+//     filter with 400 before this function is ever called.
+
+export async function fetchPublicActivityPage(
+  userId: string,
+  filter: Exclude<ActivityFilter, 'gespeichert'>,
+  before: Date | null,
+  limit: number
+): Promise<ActivityPage> {
+  const db = await connectDB();
+
+  const runners: Promise<{ items: WorkingItem[]; anyFull: boolean }>[] = [];
+  if (filter === 'alle' || filter === 'forum') runners.push(queryForum(db, userId, before, limit, { public: true }));
+  if (filter === 'alle' || filter === 'markt') runners.push(queryMarkt(db, userId, before, limit, { public: true }));
+  if (filter === 'alle' || filter === 'kalender') {
+    runners.push(queryKalenderCreated(db, userId, before, limit, { public: true }));
+  }
+  if (filter === 'alle' || filter === 'kurier') runners.push(queryKurier(db, userId, before, limit, { public: true }));
+
+  const results = await Promise.all(runners);
+  let working: WorkingItem[] = [];
+  let anyFull = false;
+  for (const r of results) {
+    working.push(...r.items);
+    if (r.anyFull) anyFull = true;
   }
 
   working.sort((a, b) => (a.item.date < b.item.date ? 1 : a.item.date > b.item.date ? -1 : 0));
