@@ -1,0 +1,81 @@
+/* ════════════════════════════════════════════════════════════
+   MAHALLE · PROFILE MOTION
+   Extends the base Kiosk motion language. Profile motion is
+   quiet bookkeeping — the only thing that pulses is „heute“
+   on the Kiez-Chronik. Everything else confirms and gets out
+   of the way.
+   ════════════════════════════════════════════════════════════ */
+
+/* ── 01 · Chronik „heute“ pulse ────────────────────────────────
+   The now-dot on the Kiez-Chronik (strip + full anatomy).
+   Opacity + gentle scale, 2.4s — a heartbeat, not an alert.
+   Runs on own AND public profiles.                               */
+@keyframes profPulse {
+  0%, 100% { opacity: 1;    transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(0.82); }
+}
+.prof-chronik-now { animation: profPulse 2.4s ease-in-out infinite; }
+
+/* ── 02 · Skeleton sweep ───────────────────────────────────────
+   Loading state §01. Skeleton mirrors the real layout (identity
+   card + ledger rows) — replaces the legacy ⏳ emoji spinner.
+   Same sweep vocabulary as Newsboard + Admin.                    */
+@keyframes profSweep {
+  0%   { background-position: -200px 0; }
+  100% { background-position: 400px 0; }
+}
+.prof-skeleton-bar {
+  background: linear-gradient(90deg,
+    var(--paper-soft, #ebe1c7) 25%, #e2d7bd 50%, var(--paper-soft, #ebe1c7) 75%);
+  background-size: 400px 100%;
+  animation: profSweep 1.4s linear infinite;
+}
+
+/* ── 03 · Save tick (optimistic edit) ──────────────────────────
+   On save the card returns to read state IMMEDIATELY; a chip
+   slides in („speichert …“ → „gespeichert ✓“), holds 1.5s,
+   then fades. Failure path: card returns to edit state with
+   inputs intact + danger banner (state §05).                     */
+@keyframes profSaveTick {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.prof-save-chip { animation: profSaveTick 250ms ease-out both; }
+
+/* ── 04 · Chip pop ─────────────────────────────────────────────
+   Success check on the avatar after upload persists (§02 state
+   05) and newly added hobby chips in edit mode. Slight
+   overshoot — the one playful beat of the surface.               */
+@keyframes profChipIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.prof-chip-in { animation: profChipIn 300ms cubic-bezier(0.2, 0.8, 0.2, 1.2) both; }
+
+/* ── 05 · Upload progress bar ──────────────────────────────────
+   Avatar upload: a bar, not a spinner — honest progress with a
+   visible cancel. Bar element width is driven by real progress
+   in production; this keyframe is the mock's idle loop and the
+   indeterminate fallback (no Content-Length).                    */
+@keyframes profUploadBar {
+  0%   { width: 8%; }
+  60%  { width: 74%; }
+  100% { width: 92%; }
+}
+.prof-upload-indeterminate { animation: profUploadBar 2.8s ease-out infinite; }
+
+/* ── Reduced motion ────────────────────────────────────────────
+   The Chronik now-dot stays solid ochre (color already carries
+   „active“). Skeletons go static paperSoft. Chips + ticks
+   appear instantly at their end state.                           */
+@media (prefers-reduced-motion: reduce) {
+  .prof-chronik-now,
+  .prof-skeleton-bar,
+  .prof-save-chip,
+  .prof-chip-in,
+  .prof-upload-indeterminate {
+    animation: none;
+  }
+  .prof-save-chip,
+  .prof-chip-in { opacity: 1; transform: none; }
+}

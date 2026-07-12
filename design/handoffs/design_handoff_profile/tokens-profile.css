@@ -1,0 +1,99 @@
+/* ════════════════════════════════════════════════════════════
+   MAHALLE · PROFILE TOKEN EXTENSION
+   Batch 3 · surface 3 (Meldebogen · Archiv · Konto · public
+   neighbor profile · Kiez-Chronik · Steckbrief)
+
+   Profile shares its carved accent with Auth: OCHRE (#e8a53a).
+   Deliberate pairing — profile and auth are both „your door“
+   surfaces. Every other primary is taken:
+     Forum = wine · Calendar = teal · Marketplace = wine ·
+     Newsboard = ink · Admin = plum · Auth = ochre.
+
+   These tokens EXTEND the base Kiosk system. Nothing here is
+   duplicated from base — only profile-specific additions.
+   Values mirror window.kiosk + PROFILE_* in
+   directions/kiosk-profile*.jsx so design + code stay in
+   lockstep.
+   ════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Profile carved accent ──────────────────────────────── */
+  --profile-accent: #e8a53a;           /* = kiosk.color.ochre · shared with Auth */
+
+  /* ── Cross-surface tags in the Archiv ledger ────────────── */
+  /* Dot + mono label per surface. Kurier is INK, not a hue.  */
+  --prof-surface-forum:    #b23a5b;    /* = kiosk.color.wine  */
+  --prof-surface-markt:    #b23a5b;    /* = kiosk.color.wine  */
+  --prof-surface-kalender: #3f8f9f;    /* = kiosk.color.teal  */
+  --prof-surface-kurier:   #1b1a17;    /* = kiosk.color.ink   */
+
+  /* ── Identity card (Meldebogen) anatomy ─────────────────── */
+  /* PCard = paperWarm, ink border, 4px accent top-rule,      */
+  /* print shadow — same anatomy as AuthCard.                 */
+  --prof-card-toprule: 4px solid var(--profile-accent);
+  --prof-avatar-size: 92px;            /* desktop · mobile 68px */
+  --prof-avatar-bg: #b23a5b;           /* wine monogram — replaces ui-avatars */
+
+  /* ── ProfileUpdateSchema constraints (render-side) ──────── */
+  --prof-name-min: 3;                  /* chars                */
+  --prof-name-max: 30;
+  --prof-hobby-max-count: 10;
+  --prof-hobby-max-len: 50;            /* chars per chip       */
+
+  /* ── Avatar upload ──────────────────────────────────────── */
+  --prof-avatar-max-mb: 5;             /* JPG / PNG / WebP     */
+  /* progress = bar, not spinner; cancel always available     */
+
+  /* ── Moderation standing („Leumund“) ────────────────────── */
+  /* Accent flips with standing: warn when strikes > 0,       */
+  /* success when clean.                                       */
+  --prof-standing-warn:    #c8881e;    /* = kiosk.color.warn    */
+  --prof-standing-clean:   #5a8a3a;    /* = kiosk.color.success */
+  --prof-strike-max: 3;                /* shared w/ admin pass  */
+  --prof-strike-dot: 11px;             /* profile size · admin card 8px */
+  --prof-strike-fill:  #a83245;        /* = kiosk.color.danger  */
+
+  /* ── Ledger straps (reuses marketplace strap system) ────── */
+  --prof-strap-pruefung:   #e8a53a;    /* IN PRÜFUNG — ink text   */
+  --prof-strap-reserviert: #6f2f59;    /* RESERVIERT — paper text */
+  --prof-strap-abgelehnt:  #a83245;    /* ABGELEHNT — paper text  */
+
+  /* ── Saved marker ───────────────────────────────────────── */
+  --prof-saved-glyph: "◈";             /* ochre, marks others' content */
+
+  /* ── E-mail change flow ─────────────────────────────────── */
+  --prof-email-link-ttl: 30;           /* minutes · single-use  */
+  /* Old address stays active until confirm. Old address gets */
+  /* a notice mail. Taken address ⇒ neutral error — no        */
+  /* account enumeration.                                      */
+
+  /* ── Delete account ───────────────────────────────── */
+  --prof-delete-grace-days: 7;         /* DECIDED Jul 10 2026 · „vorgemerkt“ banner + undo
+                                          link by mail; pipeline runs at day 7             */
+
+  /* ── Kiez-Chronik (NOVEL §01) ───────────────────────────── */
+  --prof-chronik-cache-h: 24;          /* derived at read time  */
+  --prof-chronik-max-stops: 5;         /* joined · first topic · first listing · first event · 100th danke */
+  --prof-chronik-pulse: 2.4s;          /* „heute“ dot            */
+
+  /* ── Steckbrief (NOVEL §02) ─────────────────────────────── */
+  --prof-steckbrief-w: 148mm;          /* A6 landscape           */
+  --prof-steckbrief-h: 105mm;
+  --prof-motto-maxlen: 80;             /* the pass's ONLY new schema datum — CONFIRMED keep (Jul 10 2026) */
+  /* 2-color riso: ink + ochre. Avatar prints as monogram.    */
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Per-page scope. KioskLayout emits data-page="profile" on
+   /profil and /nachbarn/* so the ochre accent is contained
+   (mirrors data-page="marketplace" / "auth" / "admin").
+   ────────────────────────────────────────────────────────────── */
+[data-page="profile"] {
+  --carved-accent: var(--profile-accent);
+}
+
+/* Nav treatment: profile is NOT a nav tab. While /profil is
+   active, the nav avatar carries an ochre ring instead.        */
+.prof-nav-avatar-active {
+  box-shadow: 0 0 0 2px var(--profile-accent);
+}

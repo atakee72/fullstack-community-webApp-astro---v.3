@@ -1,0 +1,93 @@
+/* ════════════════════════════════════════════════════════════
+   MAHALLE · ADMIN MODERATION TOKEN EXTENSION
+   Batch 3 · surface 2 (queue · history · flows · ban enforcement)
+
+   Admin moderation gets its OWN carved accent: PLUM (#6f2f59) —
+   the judicial back-office. Every other primary is taken:
+     Forum = wine · Calendar = teal · Marketplace = wine ·
+     Newsboard = ink · Auth = ochre.
+
+   These tokens EXTEND the base Kiosk system. Nothing here is
+   duplicated from base — only admin-specific additions. Values
+   mirror window.kiosk + ADM_* in directions/kiosk-admin*.jsx so
+   design + code stay in lockstep.
+   ════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Admin carved accent ────────────────────────────────── */
+  --admin-accent: #6f2f59;             /* = kiosk.color.plum   */
+
+  /* ── Severity ramp (flaggedCategories → chip color) ─────── */
+  /* critical: hate, hate/threatening, violence,
+               harassment/threatening                           */
+  --adm-sev-critical: #a83245;         /* = kiosk.color.danger */
+  /* high:     harassment, turkish_profanity, spam_check:scam  */
+  --adm-sev-high:     #a05a28;         /* admin-only aux tone  */
+  /* mid:      spam_check:spam, spam_check:ad_promotional,
+               image_safety:other_violation                     */
+  --adm-sev-mid:      #c8881e;         /* = kiosk.color.warn   */
+  /* info:     relevance (user-submitted news score)           */
+  --adm-sev-info:     #3a7282;         /* = kiosk.color.info   */
+
+  /* ── Source straps ──────────────────────────────────────── */
+  --adm-strap-ai:       var(--admin-accent);  /* KI-GEPRÜFT — paper text  */
+  --adm-strap-urgent:   #a83245;              /* DRINGEND — pulses        */
+  --adm-strap-report:   #e8a53a;              /* ⚑ GEMELDET — ink text    */
+  --adm-strap-news:     #6b8a4a;              /* EINGEREICHT — paper text */
+
+  /* ── Urgent card anatomy ────────────────────────────────── */
+  /* score ≥ 0.85 in a critical category ⇒ urgent               */
+  --adm-urgent-threshold: 0.85;
+  --adm-urgent-border: 2px solid var(--adm-sev-critical);
+  --adm-urgent-print:  3px 3px 0 var(--adm-sev-critical);
+
+  /* ── Strike system (3-strike ban) ───────────────────────── */
+  --adm-strike-max: 3;
+  --adm-strike-dot: 8px;               /* card size · ledger 10px · mobile 6px */
+  --adm-strike-fill:  var(--adm-sev-critical);
+  --adm-strike-empty: #c9bea3;         /* = rule · outline only */
+
+  /* ── Stat row (Setzkasten) top-rules, in order ──────────── */
+  --adm-stat-urgent:   #a83245;
+  --adm-stat-pending:  #e8a53a;
+  --adm-stat-approved: #5a8a3a;
+  --adm-stat-warning:  #c8881e;
+  --adm-stat-rejected: #7a7264;        /* = ink-mute */
+
+  /* ── Bulk bar ───────────────────────────────────────────── */
+  --adm-bulk-bg:     rgba(111, 47, 89, 0.08);  /* accent @ 8%  */
+  --adm-bulk-border: 1.5px solid var(--admin-accent);
+  --adm-bulk-max: 50;                  /* API cap per bulk call */
+
+  /* ── Warning label on content („HINWEIS DER MODERATION“) ── */
+  --adm-hinweis-bg: #e8a53a;           /* ochre strap, ink text */
+  --adm-hinweis-maxlen: 200;           /* chars                 */
+
+  /* ── History (Protokoll) ────────────────────────────────── */
+  --adm-history-pagesizes: 10, 25, 50;
+  /* „Grund / Hinweis“ column hidden by default (column menu)  */
+
+  /* ── Mobile triage ──────────────────────────────────────── */
+  --adm-triage-action-h: 48px;         /* thumb-sized action row */
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Per-page scope. KioskLayout should emit data-page="admin" on
+   the moderation route so the plum accent is contained (mirrors
+   data-page="marketplace" / data-page="auth").
+   ────────────────────────────────────────────────────────────── */
+[data-page="admin"] {
+  --carved-accent: var(--admin-accent);
+}
+
+/* Internal-area ribbon — sits above the masthead on every admin view */
+.adm-ribbon {
+  background: var(--admin-accent);
+  color: var(--paper);
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  padding: 6px 36px;
+  display: flex;
+  justify-content: space-between;
+}

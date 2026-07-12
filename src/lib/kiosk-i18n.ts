@@ -1425,7 +1425,7 @@ const de = {
   'profile.del.modal.headline.post': ', kein Umzug',
   'profile.del.modal.subhead': 'Was mit deinen Spuren im Kiez passiert:',
   'profile.del.ledger.1.what': 'Beiträge & Kommentare',
-  'profile.del.ledger.1.fate': 'bleiben, anonymisiert („Ehemaliges Mitglied")',
+  'profile.del.ledger.1.fate': 'bleiben, anonymisiert („Ehemaliges Mitglied“)',
   'profile.del.ledger.2.what': 'Anzeigen',
   'profile.del.ledger.2.fate': 'werden gelöscht',
   'profile.del.ledger.3.what': 'Erstellte Termine',

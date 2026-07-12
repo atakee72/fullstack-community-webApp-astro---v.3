@@ -21,7 +21,7 @@ export interface ProfileMe {
 
 // Public-profile projection ("Nachbarn"-view) — Plan B Task 3. Trimmed
 // sibling of ProfileMe: no email, no isBanned. NEVER add
-// email/isBanned/pendingEmail/strikes to this type — getPublicProfile()
+// email/isBanned/pendingEmail/strikes/deletionScheduledAt to this type — getPublicProfile()
 // (src/lib/profile/publicProfile.ts) is the only producer and must never
 // select those fields off the users doc.
 export interface PublicProfile {
