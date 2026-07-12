@@ -39,6 +39,7 @@
   import PModerationCard from './PModerationCard.svelte';
   import PKontoCard from './PKontoCard.svelte';
   import PEmailChangePanel from './PEmailChangePanel.svelte';
+  import PPasswordChangePanel from './PPasswordChangePanel.svelte';
   import PChronikStrip from './PChronikStrip.svelte';
   import PActivityLedger from './PActivityLedger.svelte';
   import PMobileFold from './atoms/PMobileFold.svelte';
@@ -200,6 +201,20 @@
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   });
 
+  // ─── Password change (Task 9) ──────────────────────────────────────────
+  // Same single-mount reasoning as the e-mail panel above (PKontoCard is
+  // double-mounted; a stateful form would desync). Own gate, own grid slot
+  // — the two panels are independent and mutually openable (no design
+  // reason to force one closed when the other opens), so this doesn't
+  // reuse `emailPanelOpen`.
+  let pwPanelOpen = $state(false);
+  function openPwPanel() {
+    pwPanelOpen = true;
+  }
+  function closePwPanel() {
+    pwPanelOpen = false;
+  }
+
   const banned = $derived((standing?.isBanned ?? false) || (profile?.isBanned ?? false));
 
   const bannedAtLabel = $derived(standing?.bannedAt ? formatDdMm(standing.bannedAt, $locale) : null);
@@ -316,6 +331,7 @@
           onChangeEmail={openEmailPanel}
           onResendEmail={resendEmailChange}
           onCancelEmail={cancelEmailChange}
+          onChangePassword={openPwPanel}
         />
       </div>
 
@@ -338,6 +354,19 @@
             onCancel={cancelEmailChange}
             onClose={closeEmailPanel}
           />
+        </div>
+      {/if}
+
+      <!--
+        Password change panel (Task 9) — same single-mount reasoning as the
+        e-mail panel above. Own grid slot one row further down
+        (`lg:row-start-5` / `order-6`) so it never collides with the e-mail
+        panel's slot when both happen to be open at once; still inside the
+        left column, still below the right column's `lg:row-span-3` reserve.
+      -->
+      {#if pwPanelOpen}
+        <div class="order-6 min-w-0 lg:col-start-1 lg:row-start-5">
+          <PPasswordChangePanel email={profile.email} onClose={closePwPanel} />
         </div>
       {/if}
 
@@ -394,6 +423,7 @@
             onChangeEmail={openEmailPanel}
             onResendEmail={resendEmailChange}
             onCancelEmail={cancelEmailChange}
+            onChangePassword={openPwPanel}
             bare
           />
         </PMobileFold>

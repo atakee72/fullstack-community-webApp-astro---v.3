@@ -1,8 +1,9 @@
 <script lang="ts">
-  // Konto (account) card — §03. E-MAIL row now carries the "ändern" action
-  // (Plan B Task 8) opening PEmailChangePanel (mounted once by ProfileInner,
-  // see that file's layout comment + src/components/profile/kiosk/CLAUDE.md).
-  // PASSWORT stays display-only (Task 9 adds its own action). + Abmelden.
+  // Konto (account) card — §03. E-MAIL row carries the "ändern" action
+  // (Plan B Task 8) opening PEmailChangePanel; PASSWORT row carries its own
+  // "ändern" action (Task 9) opening PPasswordChangePanel — both mounted
+  // once by ProfileInner, see that file's layout comment +
+  // src/components/profile/kiosk/CLAUDE.md. + Abmelden.
   // Design source: kiosk-profile.jsx (PKontoCard, PKontoRow) for the row
   // anatomy + kiosk-profile-states.jsx §08 (PMiniBanner) for the pending
   // banner rendered here whenever a change is awaiting confirmation and the
@@ -28,6 +29,7 @@
     onChangeEmail,
     onResendEmail,
     onCancelEmail,
+    onChangePassword,
     bare = false,
   }: {
     email: string;
@@ -36,6 +38,7 @@
     onChangeEmail?: () => void;
     onResendEmail?: () => Promise<void>;
     onCancelEmail?: () => Promise<void>;
+    onChangePassword?: () => void;
     bare?: boolean;
   } = $props();
 
@@ -110,6 +113,14 @@
       <div style="font-family: var(--k-font-mono); font-size: 9.5px; color: var(--k-ink-mute); letter-spacing: 0.14em;">{$t['profile.konto.password']}</div>
       <div style="font-family: var(--k-font-display); font-size: 13.5px; font-weight: 600; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">••••••••••</div>
     </div>
+    {#if onChangePassword}
+      <button
+        type="button"
+        onclick={onChangePassword}
+        class="font-bricolage"
+        style="flex-shrink: 0; background: none; border: none; padding: 0 0 1px; cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--k-ink); border-bottom: 2px solid var(--k-ochre);"
+      >{$t['profile.konto.change']}</button>
+    {/if}
   </div>
 
   <div style="display: flex; gap: 8px; margin-top: 16px;">

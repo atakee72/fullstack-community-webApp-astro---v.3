@@ -43,5 +43,9 @@ declare module '@auth/core/jwt' {
     id?: string;
     role?: 'user' | 'admin';
     emailVerified?: boolean;
+    // Task 9 (password change / other-device sign-out): wall-clock ms of the
+    // last passwordChangedAt DB recheck for this token — see auth.config.ts's
+    // jwt callback. Absent on tokens minted before this shipped; treated as 0.
+    pwdCheckedAt?: number;
   }
 }

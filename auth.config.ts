@@ -2,6 +2,7 @@ import { defineConfig } from 'auth-astro';
 import Credentials from "@auth/core/providers/credentials";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "./src/lib/mongodb";
+import { ObjectId } from "mongodb";
 import bcrypt from "bcrypt";
 import { peekRateLimit, consumeRateLimit, clearRateLimit, LOGIN_MAX_FAILS, LOGIN_WINDOW_MS, BAN_FLAG_WINDOW_MS } from "./src/lib/auth/rateLimit";
 
@@ -104,6 +105,26 @@ export default defineConfig({
                 // Snapshot at login — goes stale if the user verifies mid-session;
                 // VerifyEmailBanner live-checks /api/auth/verification-status.
                 token.emailVerified = (user as any).emailVerified === true;
+                token.pwdCheckedAt = Date.now();
+                return token;
+            }
+            // Other-device sign-out: invalidate tokens issued before passwordChangedAt.
+            // DB read at most every 5 min per token (accepted ≤5-min lag, see profile CLAUDE.md).
+            const PWD_RECHECK_MS = 5 * 60 * 1000;
+            const last = typeof token.pwdCheckedAt === 'number' ? token.pwdCheckedAt : 0;
+            if (Date.now() - last > PWD_RECHECK_MS && token.id) {
+                try {
+                    const client = await clientPromise;
+                    const u = await client.db().collection('users').findOne(
+                        { _id: new ObjectId(String(token.id)) },
+                        { projection: { passwordChangedAt: 1 } }
+                    );
+                    if (u?.passwordChangedAt && typeof token.iat === 'number'
+                        && token.iat * 1000 < new Date(u.passwordChangedAt).getTime()) {
+                        return null; // token predates the change -> session invalidated
+                    }
+                    token.pwdCheckedAt = Date.now();
+                } catch { /* DB hiccup: keep session, recheck next window */ }
             }
             return token;
         },
