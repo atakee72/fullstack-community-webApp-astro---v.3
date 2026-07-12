@@ -94,11 +94,13 @@ export async function populateAuthors<T extends { author?: any }>(docs: T[]): Pr
   // islands, JSON API responses) — see /topics/[id].astro's initialTopic.
   // Only widen this list after auditing every `.author?.<field>` /
   // `.author.<field>` access across forum + calendar consumers.
+  // `role` is included: ForumIndexInner displays public "Mahalle-Team" admin
+  // badge from it — public-by-display data, unlike email.
   const objectIds = Array.from(idSet).map((id) => new ObjectId(id));
   const users = await usersCollection
     .find(
       { _id: { $in: objectIds } },
-      { projection: { name: 1, image: 1, userPicture: 1, createdAt: 1, verified: 1 } }
+      { projection: { name: 1, image: 1, userPicture: 1, createdAt: 1, verified: 1, role: 1 } }
     )
     .toArray();
 
