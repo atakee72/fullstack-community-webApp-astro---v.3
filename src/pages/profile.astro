@@ -3,6 +3,7 @@ import KioskLayout from '../layouts/KioskLayout.astro';
 import ProfileInner from '../components/profile/kiosk/ProfileInner.svelte';
 import { getSession } from 'auth-astro/server';
 import { getProfileMe } from '../lib/profile/profileQuery';
+import { getChronik } from '../lib/profile/chronik';
 
 // Per-user data (stats, moderation standing) makes caching unsafe — mirrors
 // newsboard/marketplace.
@@ -11,9 +12,10 @@ Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
 const session = await getSession(Astro.request);
 const userId = (session?.user as any)?.id ?? null;
 const initialProfile = userId ? await getProfileMe(userId) : null;
+const initialChronik = userId ? await getChronik(userId) : null;
 ---
 
 <KioskLayout title="Profil — Mahalle" page="profile">
-  <ProfileInner client:load initialProfile={initialProfile} loggedIn={!!userId} />
+  <ProfileInner client:load initialProfile={initialProfile} initialChronik={initialChronik} loggedIn={!!userId} />
 </KioskLayout>
 <style is:global>@import '../styles/profile.css';</style>

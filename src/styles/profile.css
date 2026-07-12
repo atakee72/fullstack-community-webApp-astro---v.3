@@ -4,8 +4,17 @@
    tokens-profile.css}. Values verbatim; token names swapped to the
    project's --k-* custom properties. Profile motion is quiet
    bookkeeping — the only thing that pulses is „heute“ on the
-   Kiez-Chronik (Plan B — profPulse intentionally NOT ported here).
+   Kiez-Chronik (Plan B, Task 2 — PChronikStrip).
    ════════════════════════════════════════════════════════════ */
+
+/* ── 00 · Chronik „heute“ pulse ────────────────────────────────
+   The now-dot on the Kiez-Chronik strip (own + public profile).
+   Opacity + gentle scale, 2.4s — a heartbeat, not an alert.       */
+@keyframes profPulse {
+  0%, 100% { opacity: 1;    transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(0.82); }
+}
+.prof-chronik-now { animation: profPulse 2.4s ease-in-out infinite; }
 
 /* ── 01 · Skeleton sweep ───────────────────────────────────────
    Loading state §01. Skeleton mirrors the real layout (identity
@@ -80,9 +89,11 @@
 }
 
 /* ── Reduced motion ────────────────────────────────────────────
-   Skeletons go static paperSoft. Chips + ticks appear instantly
-   at their end state.                                            */
+   The Chronik now-dot stays solid ochre (color already carries
+   „active“). Skeletons go static paperSoft. Chips + ticks
+   appear instantly at their end state.                           */
 @media (prefers-reduced-motion: reduce) {
+  .prof-chronik-now,
   .prof-skeleton-bar,
   .prof-save-chip,
   .prof-chip-in,

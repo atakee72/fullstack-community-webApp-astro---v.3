@@ -1397,6 +1397,15 @@ const de = {
   'profile.meta.antworten': '{n} antworten',
   'profile.meta.zusagen': '{n} zusagen',
 
+  'profile.chronik.label': 'KIEZ-CHRONIK',
+  'profile.chronik.stop.dabei': 'dabei seit',
+  'profile.chronik.stop.erstesThema': 'erstes Thema',
+  'profile.chronik.stop.ersteAnzeige': 'erste Anzeige',
+  'profile.chronik.stop.ersterTermin': 'erster Termin',
+  'profile.chronik.stop.danke100': '100. danke',
+  'profile.chronik.stop.heute': 'aktiv',
+  'profile.chronik.heute': 'heute',
+
   'profile.state.banned': 'Konto gesperrt seit {d} — kein Posten mehr. Details im Moderations-Block.',
   'profile.state.loggedout': 'Der Meldebogen braucht einen Schlüssel.',
   'profile.state.login': 'anmelden',
@@ -2663,6 +2672,15 @@ const en: Dict = {
   'profile.meta.danke': '{n} danke',
   'profile.meta.antworten': '{n} replies',
   'profile.meta.zusagen': '{n} going',
+
+  'profile.chronik.label': 'KIEZ CHRONICLE',
+  'profile.chronik.stop.dabei': 'joined',
+  'profile.chronik.stop.erstesThema': 'first topic',
+  'profile.chronik.stop.ersteAnzeige': 'first listing',
+  'profile.chronik.stop.ersterTermin': 'first event',
+  'profile.chronik.stop.danke100': '100th danke',
+  'profile.chronik.stop.heute': 'active',
+  'profile.chronik.heute': 'today',
 
   'profile.state.banned': 'Account suspended since {d} — no more posting. Details in the moderation block.',
   'profile.state.loggedout': 'The Meldebogen needs a key.',

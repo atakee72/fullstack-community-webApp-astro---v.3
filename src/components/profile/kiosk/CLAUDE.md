@@ -7,15 +7,19 @@ relevant when working on `src/lib/profile/*` and `src/pages/api/profile/*` /
 touching those server-side pieces from outside this directory.
 
 **Scope**: Plan A = own profile only (`/profile`, logged-in user viewing/
-editing their own Meldebogen). Plan B (deferred, see bottom) = public
-profile, Chronik, konto-change flows, account deletion.
+editing their own Meldebogen). Plan B (in progress, see bottom) = public
+profile, konto-change flows, account deletion. Plan B Task 1 (`getChronik()`)
+and Task 2 (`PChronikStrip`) are done — the Kiez-Chronik strip ships on the
+own profile now; see "Kiez-Chronik strip" below. The public-profile route
+itself is still deferred.
 
 ## Architecture
 
-`src/pages/profile.astro` — thin shell: SSR session + `getProfileMe()` (fast
-path, avoids a client round-trip on first paint), passes `initialProfile` +
-`loggedIn` into `ProfileInner.svelte` (`client:load` — SSR renders the shell,
-then hydrates; no SEO stakes on this private, logged-in-only page).
+`src/pages/profile.astro` — thin shell: SSR session + `getProfileMe()` +
+`getChronik()` (both fast paths, avoid a client round-trip on first paint),
+passes `initialProfile` + `initialChronik` + `loggedIn` into
+`ProfileInner.svelte` (`client:load` — SSR renders the shell, then hydrates;
+no SEO stakes on this private, logged-in-only page).
 
 `ProfileInner.svelte` is the **single orchestrator** — it owns every piece of
 fetch/mutation state (`profile`, `standing`, `standingError`, `banned`) and
@@ -29,6 +33,8 @@ PIdentityCard            — avatar + name/handle/since + verified + stats +
                             hobbies + in-card edit (STATEFUL, single mount)
 PModerationCard          — §02 standing display (stateless, `bare` prop)
 PKontoCard                — §03 email/password rows + logout (stateless, `bare` prop)
+PChronikStrip             — Kiez-Chronik tenure strip (stateless, SSR-only
+                            data, single mount; see "Kiez-Chronik strip" below)
 PActivityLedger           — §01 Archiv cross-surface feed (STATEFUL, own
                             fetch, single mount)
 PMobileFold (atoms/)       — accordion wrapper, mobile-only
@@ -242,16 +248,58 @@ approximation, `gespeichert` filter excluded from `alle`) live inline in
 `PActivityLedger.svelte` and `src/lib/profile/profileShared.ts` — not
 duplicated here to avoid drift between two copies.
 
+## Kiez-Chronik strip (Plan B, Task 2)
+
+`PChronikStrip.svelte` — compact derived tenure timeline. Pure
+props-in/markup-out (`{ chronik: ChronikData }`), no fetch of its own — data
+comes from `getChronik(userId)` (`src/lib/profile/chronik.ts`, Task 1,
+SERVER-ONLY — cached 24h in `chronikCache`) via `profile.astro`'s
+`initialChronik` prop. Same component/contract is meant to be reused
+unmodified by the public-profile route once that ships (Task 4) — the
+Chronik carries no private data (see `chronik.ts`'s own comments).
+
+- **Mount gate**: `ProfileInner`'s `showChronik = initialChronik.stops.length
+  > 0` — belt-and-braces; `chronik.ts`'s contract always returns at least
+  `dabei` + `heute`, but the strip renders nothing rather than an empty
+  shell if that ever changes.
+- **Layout**: nested inside the SAME single-mount right-column div as
+  `PActivityLedger` (`display: flex; flex-direction: column`), not given its
+  own grid row-line placement. Placing it in its own `lg:row-start-1` cell
+  next to the left column's identity-card row would make that shared grid
+  row as tall as the (much taller) identity card, leaving a dead gap between
+  the short Chronik strip and Archiv below it — the nested-flex wrapper
+  sidesteps that entirely and lets the two cards sit flush, matching
+  `kiosk-profile.jsx`'s `ProfileOwnDesktop` (which nests both cards in the
+  same right-hand flex column in the design mock). On mobile the single
+  `order-2` slot this wrapper occupies already lands directly after the
+  identity card (`order-1`) and before the moderation/konto folds
+  (`order-3`/`order-4`) — Chronik-then-Archiv inside it satisfies "Chronik
+  before Archiv" for free, no extra `order-*` needed.
+- **Dot color rule** (`kiosk-profile-novel.jsx`'s `ChronikMilestone`, NOT the
+  simplified strip-level JSX which predates it): stop index 0 (always
+  `dabei` per `chronik.ts`'s ordering) = wine; `kind === 'heute'` = ochre;
+  every stop in between = ink.
+  `.prof-chronik-now` (→ `profPulse` keyframe, `src/styles/profile.css`) is
+  applied ONLY when the `heute` stop's `active` flag is true (real content in
+  the last 7 days) — an inactive `heute` dot is still ochre, just static.
+  Reduced motion (`@media (prefers-reduced-motion: reduce)`) drops the
+  animation globally regardless of `active`.
+- **Date rendering**: the `dabei` stop shows the YEAR ONLY
+  (`new Date(iso).getFullYear()`); middle stops (`erstesThema`,
+  `ersteAnzeige`, `ersterTermin`, `danke100`) show `MMM yyyy` via
+  `Intl.DateTimeFormat($locale === 'de' ? 'de-DE' : 'en-GB', { month:
+  'short', year: 'numeric' })`; the `heute` stop's year-slot shows the
+  literal i18n string (`profile.chronik.heute`: DE „heute" / EN "today"),
+  not a date. Labels underneath each dot are resolved from
+  `profile.chronik.stop.<kind>` — kept as i18n keys rather than resolver
+  output so the derived-data layer (`chronik.ts`) stays copy-free.
+
 ## Plan B — deferred (out of scope for Plan A, do not build without a new brief)
 
 - Public profile route `/nachbarn/[handle]` (neighbor view — trimmed
   Meldebogen: no email, no saved items, no moderation, no settings; entry
-  point is clicking an author name in Forum/Market/Calendar).
-- `PChronikStrip` ("Kiez-Chronik") — the pulsing "heute" timeline strip
-  shown in the design mocks between identity and Archiv on both own and
-  public profiles. `profPulse` keyframe intentionally NOT ported to
-  `profile.css` — Plan A's only motion is the quiet skeleton sweep / save
-  chip / avatar upload bar.
+  point is clicking an author name in Forum/Market/Calendar). Task 4 mounts
+  `PChronikStrip` (already built, see above) on this route once it ships.
 - `Steckbrief` + motto (the "Bearbeiten" sibling button in
   `ProfileOwnMobile`'s identity card footer).
 - Konto "ändern" action flows for email/password (Plan A's `PKontoCard`

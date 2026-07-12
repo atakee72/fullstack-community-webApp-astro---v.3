@@ -28,7 +28,7 @@
   // Design source: design/handoffs/design_handoff_profile/jsx/kiosk-profile.jsx
   // (ProfileOwnDesktop grid) + kiosk-profile-states.jsx (§09, §10).
 
-  import { formatDdMm, type ProfileMe, type ProfileStanding } from '../../../lib/profile/profileShared';
+  import { formatDdMm, type ChronikData, type ProfileMe, type ProfileStanding } from '../../../lib/profile/profileShared';
   import { t, tStr, locale } from '../../../lib/kiosk-i18n';
   import ProfileTitleBlock from './ProfileTitleBlock.svelte';
   import ProfileSkeleton from './states/ProfileSkeleton.svelte';
@@ -37,14 +37,23 @@
   import PIdentityCard from './PIdentityCard.svelte';
   import PModerationCard from './PModerationCard.svelte';
   import PKontoCard from './PKontoCard.svelte';
+  import PChronikStrip from './PChronikStrip.svelte';
   import PActivityLedger from './PActivityLedger.svelte';
   import PMobileFold from './atoms/PMobileFold.svelte';
   import PStrikeDots from './atoms/PStrikeDots.svelte';
 
-  let { initialProfile = null, loggedIn = false }: {
+  let { initialProfile = null, initialChronik = null, loggedIn = false }: {
     initialProfile?: ProfileMe | null;
+    initialChronik?: ChronikData | null;
     loggedIn?: boolean;
   } = $props();
+
+  // Chronik is SSR-only (Task 1's getChronik(), cached 24h server-side) — no
+  // client refetch/loading state needed, unlike `profile`/`standing` below.
+  // Gate on stops.length too: a corrupt/edge-case empty payload (shouldn't
+  // happen per chronik.ts's contract — `dabei` + `heute` are always present
+  // — but cheap to guard) renders nothing rather than an empty strip shell.
+  const showChronik = $derived(!!initialChronik && initialChronik.stops.length > 0);
 
   let profile = $state<ProfileMe | null>(initialProfile);
 
@@ -220,8 +229,23 @@
         <PKontoCard email={profile.email} />
       </div>
 
-      <!-- Archiv — single mount, spans the right column on desktop -->
-      <div class="order-2 min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-3">
+      <!--
+        Right column — single mount, spans the right column on desktop.
+        Nested flex column (not a second row-line placement) so Chronik +
+        Archiv stack tightly regardless of the left column's row heights —
+        mirrors kiosk-profile.jsx's ProfileOwnDesktop right-column div
+        directly (its own `flexDirection: column, gap: 20`), rather than
+        trying to align Chronik/Archiv to the left column's per-card grid
+        rows (identity/moderation/konto), which would leave a dead gap
+        under a short Chronik strip whenever the identity card's row is
+        taller than it. On mobile this single order-2 slot still lands
+        directly after the identity card and before Archiv, since Chronik
+        is nested ahead of Archiv inside it.
+      -->
+      <div class="order-2 min-w-0 flex flex-col gap-5 lg:col-start-2 lg:row-start-1 lg:row-span-3">
+        {#if showChronik && initialChronik}
+          <PChronikStrip chronik={initialChronik} />
+        {/if}
         <PActivityLedger />
       </div>
 
