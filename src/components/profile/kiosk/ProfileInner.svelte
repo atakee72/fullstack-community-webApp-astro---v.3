@@ -21,6 +21,7 @@
   import ProfileSkeleton from './states/ProfileSkeleton.svelte';
   import PCard from './atoms/PCard.svelte';
   import PBtn from './atoms/PBtn.svelte';
+  import PIdentityCard from './PIdentityCard.svelte';
 
   let { initialProfile = null, loggedIn = false }: {
     initialProfile?: ProfileMe | null;
@@ -73,7 +74,15 @@
     <div class="grid gap-[26px] items-start lg:grid-cols-[384px_1fr]">
       <!-- Left column: identity, moderation, konto -->
       <div class="flex flex-col gap-5">
-        <!-- @slot identity — Task 6 mounts PIdentityCard here -->
+        <!-- @slot identity -->
+        <PIdentityCard
+          profile={profile}
+          banned={profile.isBanned}
+          onSaved={(p) => {
+            if (!profile) return;
+            profile = { ...profile, name: p.name, hobbies: p.hobbies };
+          }}
+        />
         <!-- @slot moderation — Task 7 mounts PModerationCard here -->
         <!-- @slot konto — Task 8 mounts PKontoCard here -->
       </div>
