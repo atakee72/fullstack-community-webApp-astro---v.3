@@ -69,7 +69,7 @@ The app is mid-migration from a **dark-glass** aesthetic (deep indigo `#0e1033` 
 | Auth (`/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`) | ✅ Kiosk (Svelte, own `AuthLayout`) |
 | Admin moderation (`/admin/moderation`) | ✅ Kiosk (Svelte, own `AdminLayout`) |
 | Admin announcements (`/admin/announcements`) | 🚧 Legacy dark-glass |
-| Profile | 🚧 Legacy dark-glass |
+| Profile (`/profile`) | ✅ Kiosk (Svelte) — Plan A: own profile; public profile + konto-change flows in Plan B |
 | Blog | 🚧 Legacy dark-glass |
 
 ### Page-accent rule (kiosk)
@@ -83,7 +83,8 @@ Each migrated page has its own accent color used for kickers (mono-uppercase eye
 | Marketplace | Wine `#b23a5b` (kickers) + Ochre `#eccc6e` (italic headline accents only) |
 | Auth | Ochre `#e8a53a` |
 | Admin | Plum `#6f2f59` |
-| Profile / Blog | TBD |
+| Profile | Ochre `#e8a53a` (shared with Auth) |
+| Blog | TBD |
 
 Semantic accents stay constant across all kiosk surfaces (never swapped per page): live-now indicator (ochre dot), today indicator, weekend-day labels, required-field asterisks, compose step numbers (`01`, `02`, …), CTA wine-shadows, modal wine-shadows, the mobile wine FAB.
 

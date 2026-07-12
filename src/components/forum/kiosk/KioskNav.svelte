@@ -44,6 +44,12 @@
     return matches.some((m) => currentPath === m || (m !== '/' && currentPath.startsWith(m + '/')));
   }
 
+  // Profile isn't a nav tab — while it's the active route, the avatar disc
+  // itself carries an ochre ring instead (`.prof-nav-avatar-active` in
+  // src/styles/profile.css, which only loads on /profile — harmless no-op
+  // class reference on other pages since profileActive is false there).
+  const profileActive = $derived(currentPath === '/profile' || currentPath.startsWith('/profile/'));
+
   // Avatar initials: take first letter of first two name parts.
   function initialsOf(name?: string): string {
     if (!name) return '·';
@@ -134,6 +140,8 @@
         <a
           href="/profile"
           aria-label={user.name}
+          aria-current={profileActive ? 'page' : undefined}
+          class:prof-nav-avatar-active={profileActive}
           class="w-9 h-9 rounded-full border-2 border-ink overflow-hidden flex items-center justify-center font-dmmono font-bold text-[11px] uppercase tracking-wider bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
         >
           {#if liveImage ?? user.image}

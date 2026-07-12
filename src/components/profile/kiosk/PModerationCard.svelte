@@ -8,6 +8,12 @@
   // Design source: kiosk-profile.jsx (PModerationCard, PStrikeDots, PStrap,
   // PSurfaceTag) + kiosk-profile-states.jsx §09 (banned accounts show ●●●
   // via strikes=3, handled naturally since the API reports real strikes).
+  //
+  // `bare` (Task 10): mobile fold usage. Skips the outer PCard + §02
+  // PCardHead — PMobileFold already supplies the card chrome + a "Moderation"
+  // title, and the strike dots move into the fold's header badge instead of
+  // repeating inline. See kiosk-profile-public.jsx (PMobileFold usage in
+  // ProfileOwnMobile) + src/components/profile/kiosk/CLAUDE.md.
 
   import { t, locale } from '../../../lib/kiosk-i18n';
   import { contentTypeToSurface, formatDdMm, type ProfileStanding } from '../../../lib/profile/profileShared';
@@ -17,21 +23,13 @@
   import PSurfaceTag from './atoms/PSurfaceTag.svelte';
   import PStrap from './atoms/PStrap.svelte';
 
-  let { standing }: { standing: ProfileStanding } = $props();
+  let { standing, bare = false }: { standing: ProfileStanding; bare?: boolean } = $props();
 
   const clean = $derived(standing.strikes === 0 && standing.rejected.length === 0);
   const accent = $derived(clean ? 'var(--k-success)' : 'var(--k-warn)');
 </script>
 
-<PCard {accent}>
-  <PCardHead n="02" title={$t['profile.mod.title']} {accent} />
-  <div style="display: flex; align-items: center; justify-content: space-between;">
-    <span style="font-family: var(--k-font-display); font-size: 13.5px; font-weight: 600;">
-      {$t['profile.mod.warnings']} <b>{standing.strikes} / 3</b>
-    </span>
-    <PStrikeDots strikes={standing.strikes} />
-  </div>
-
+{#snippet body()}
   {#if clean}
     <div style="margin-top: 10px; font-family: var(--k-font-serif); font-style: italic; font-size: 14px; color: var(--k-ink-soft);">
       {$t['profile.mod.clean']}
@@ -66,4 +64,22 @@
       </div>
     </div>
   {/if}
-</PCard>
+{/snippet}
+
+{#if bare}
+  <div style="font-family: var(--k-font-display); font-size: 12.5px; font-weight: 600;">
+    {$t['profile.mod.warnings']} <b>{standing.strikes} / 3</b>
+  </div>
+  {@render body()}
+{:else}
+  <PCard {accent}>
+    <PCardHead n="02" title={$t['profile.mod.title']} {accent} />
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <span style="font-family: var(--k-font-display); font-size: 13.5px; font-weight: 600;">
+        {$t['profile.mod.warnings']} <b>{standing.strikes} / 3</b>
+      </span>
+      <PStrikeDots strikes={standing.strikes} />
+    </div>
+    {@render body()}
+  </PCard>
+{/if}
