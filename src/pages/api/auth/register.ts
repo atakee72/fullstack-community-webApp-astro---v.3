@@ -6,6 +6,7 @@ import { createEmailVerifyToken } from "../../../lib/auth/emailVerify";
 import { sendVerifyEmail } from "../../../lib/auth/sendVerifyEmail";
 import { getTrustedBaseUrl } from "../../../lib/auth/baseUrl";
 import { consumeRateLimit, hashIp, clientIpFrom } from "../../../lib/auth/rateLimit";
+import { slugifyHandle } from "../../../lib/profile/handle";
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
     try {
@@ -72,17 +73,37 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
         // Create user
-        const result = await db.collection('users').insertOne({
-            name,
-            email: emailNorm,
-            password: hashedPassword,
-            image: '',
-            emailVerified: false,
-            roleBadge: 'resident',
-            hobbies: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        });
+        // Handle collisions: users_handle_unique is the ONLY unique index on users
+        // (email uniqueness is the findOne+409 check above), so code 11000 here can
+        // only mean a handle collision — safe to retry with a suffix.
+        const baseHandle = slugifyHandle(name);
+        let result: { insertedId: any } | null = null;
+        for (let attempt = 0; attempt < 6 && !result; attempt++) {
+            const suffix = attempt === 0 ? '' : String(attempt + 1);
+            const handle = baseHandle.slice(0, 20 - suffix.length) + suffix;
+            try {
+                result = await db.collection('users').insertOne({
+                    name,
+                    email: emailNorm,
+                    password: hashedPassword,
+                    image: '',
+                    emailVerified: false,
+                    roleBadge: 'resident',
+                    hobbies: [],
+                    handle,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                });
+            } catch (e: any) {
+                if (e?.code !== 11000) throw e;
+            }
+        }
+        if (!result) {
+            return new Response(
+                JSON.stringify({ error: 'Registration failed' }),
+                { status: 500, headers: { 'Content-Type': 'application/json' } }
+            );
+        }
 
         // Send the verification email (best-effort — registration must succeed
         // even if this fails; the user can resend from /verify-email).
