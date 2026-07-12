@@ -10,7 +10,7 @@
   // via strikes=3, handled naturally since the API reports real strikes).
 
   import { t, locale } from '../../../lib/kiosk-i18n';
-  import { contentTypeToSurface, type ProfileStanding } from '../../../lib/profile/profileShared';
+  import { contentTypeToSurface, formatDdMm, type ProfileStanding } from '../../../lib/profile/profileShared';
   import PCard from './atoms/PCard.svelte';
   import PCardHead from './atoms/PCardHead.svelte';
   import PStrikeDots from './atoms/PStrikeDots.svelte';
@@ -21,16 +21,6 @@
 
   const clean = $derived(standing.strikes === 0 && standing.rejected.length === 0);
   const accent = $derived(clean ? 'var(--k-success)' : 'var(--k-warn)');
-
-  function formatDdMm(iso: string, loc: 'de' | 'en'): string {
-    const parts = new Intl.DateTimeFormat(loc === 'de' ? 'de-DE' : 'en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-    }).formatToParts(new Date(iso));
-    const day = parts.find((p) => p.type === 'day')?.value ?? '';
-    const month = parts.find((p) => p.type === 'month')?.value ?? '';
-    return `${day}.${month}`;
-  }
 </script>
 
 <PCard {accent}>

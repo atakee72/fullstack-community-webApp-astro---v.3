@@ -1353,6 +1353,7 @@ const de = {
   'profile.mod.rejected.label': 'ABGELEHNTE INHALTE',
   'profile.mod.reason': 'Grund: ',
   'profile.mod.footer': 'Abgelehnte Inhalte sieht nur, wem sie gehören. 3 Verwarnungen führen zur Sperre.',
+  'profile.mod.loadfailed': 'Moderations-Stand konnte nicht geladen werden.',
 
   'profile.konto.title': 'Konto',
   'profile.konto.email': 'E-MAIL',
@@ -2618,6 +2619,7 @@ const en: Dict = {
   'profile.mod.rejected.label': 'REJECTED CONTENT',
   'profile.mod.reason': 'Reason: ',
   'profile.mod.footer': 'Rejected content is visible only to you. 3 warnings lead to a suspension.',
+  'profile.mod.loadfailed': 'Moderation standing could not be loaded.',
 
   'profile.konto.title': 'Account',
   'profile.konto.email': 'E-MAIL',

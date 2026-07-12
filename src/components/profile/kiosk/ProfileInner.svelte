@@ -11,18 +11,24 @@
   //      Task 9 (archiv) mounts its card into the slot marked below —
   //      HTML comments only, no placeholder copy.
   //
-  // Moderation standing: fetched once (seq-guarded) whenever a logged-in
-  // profile is present. Drives both PModerationCard (§02) and the
-  // `banned` gate: `banned = standing?.isBanned || profile?.isBanned` — the
-  // profile snapshot (SSR-fast, from the session) flips `banned` on
-  // immediately so PIdentityCard's edit action disables right away; the
-  // §09 danger banner itself waits on `standing.bannedAt` (client fetch,
-  // arrives moments later) since that's the only source with the actual date.
+  // Moderation standing: fetched (seq-guarded) whenever a logged-in profile
+  // is present, with a manual retry path on failure. Drives both
+  // PModerationCard (§02) and the `banned` gate:
+  // `banned = standing?.isBanned || profile?.isBanned` — the profile
+  // snapshot (SSR-fast, from the session) flips `banned` on immediately so
+  // PIdentityCard's edit action disables right away; the §09 danger banner
+  // renders as soon as `banned` is true regardless of whether the standing
+  // fetch has resolved — it prefers `standing.bannedAt` for the exact date
+  // but falls back to an em-dash if that fetch is still pending or failed,
+  // so a banned user is never left with a disabled edit button and no
+  // explanation. If the standing fetch itself fails, `standingError` swaps
+  // the §02 moderation slot for a fallback line with a retry link instead
+  // of silently vanishing.
   //
   // Design source: design/handoffs/design_handoff_profile/jsx/kiosk-profile.jsx
   // (ProfileOwnDesktop grid) + kiosk-profile-states.jsx (§09, §10).
 
-  import type { ProfileMe, ProfileStanding } from '../../../lib/profile/profileShared';
+  import { formatDdMm, type ProfileMe, type ProfileStanding } from '../../../lib/profile/profileShared';
   import { t, tStr, locale } from '../../../lib/kiosk-i18n';
   import ProfileTitleBlock from './ProfileTitleBlock.svelte';
   import ProfileSkeleton from './states/ProfileSkeleton.svelte';
@@ -63,34 +69,39 @@
   let standing = $state<ProfileStanding | null>(null);
   let standingSeq = 0;
   let standingRequested = false;
+  let standingError = $state(false);
   $effect(() => {
     if (!profile || standingRequested) return;
     standingRequested = true;
+    standingError = false;
     const mySeq = ++standingSeq;
     (async () => {
       try {
         const res = await fetch('/api/profile/standing');
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (mySeq !== standingSeq) return; // stale
+          standingError = true;
+          return;
+        }
         const data: ProfileStanding = await res.json();
         if (mySeq !== standingSeq) return; // stale
         standing = data;
       } catch {
-        /* moderation card stays unmounted; not critical to first paint */
+        if (mySeq !== standingSeq) return; // stale
+        standingError = true;
       }
     })();
   });
 
-  const banned = $derived((standing?.isBanned ?? false) || (profile?.isBanned ?? false));
-
-  function formatDdMm(iso: string, loc: 'de' | 'en'): string {
-    const parts = new Intl.DateTimeFormat(loc === 'de' ? 'de-DE' : 'en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-    }).formatToParts(new Date(iso));
-    const day = parts.find((p) => p.type === 'day')?.value ?? '';
-    const month = parts.find((p) => p.type === 'month')?.value ?? '';
-    return `${day}.${month}`;
+  // Retry after a failed standing fetch — resets the request guards so the
+  // $effect above fires again; the effect's own seq increment guarantees a
+  // stale in-flight response from the prior attempt can't clobber this one.
+  function retryStanding() {
+    standingRequested = false;
+    standingError = false;
   }
+
+  const banned = $derived((standing?.isBanned ?? false) || (profile?.isBanned ?? false));
 
   const bannedAtLabel = $derived(standing?.bannedAt ? formatDdMm(standing.bannedAt, $locale) : null);
 </script>
@@ -115,9 +126,11 @@
 {:else}
   <ProfileTitleBlock handle={profile.handle} since={profile.memberSince} />
   <div class="px-4 lg:px-9 py-6">
-    {#if banned && bannedAtLabel}
+    {#if banned}
       <!-- State §09 — gesperrt. Profile stays fully readable; write actions
-           (edit) are disabled via the `banned` prop threaded into PIdentityCard. -->
+           (edit) are disabled via the `banned` prop threaded into PIdentityCard.
+           bannedAtLabel may be null (standing fetch failed or still pending) —
+           fall back to an em-dash rather than hiding the banner entirely. -->
       <div
         class="mb-5"
         style="
@@ -127,7 +140,7 @@
         "
       >
         <b style="color: var(--k-danger); font-weight: 700;">✕</b>
-        {tStr($t['profile.state.banned'], { d: bannedAtLabel })}
+        {tStr($t['profile.state.banned'], { d: bannedAtLabel ?? '—' })}
       </div>
     {/if}
     <div class="grid gap-[26px] items-start lg:grid-cols-[384px_1fr]">
@@ -143,6 +156,17 @@
         />
         {#if standing}
           <PModerationCard standing={standing} />
+        {:else if standingError}
+          <PCard accent="var(--k-warn)">
+            <div class="font-dmmono" style="font-size: 10.5px; color: var(--k-ink-mute); line-height: 1.55;">
+              {$t['profile.mod.loadfailed']}
+              <button
+                type="button"
+                onclick={retryStanding}
+                style="font-family: var(--k-font-mono); font-size: 10.5px; font-weight: 700; color: var(--k-ink-mute); background: none; border: none; border-bottom: 1.5px solid var(--k-ink-mute); padding: 0; cursor: pointer;"
+              >{$t['profile.save.retry']}</button>
+            </div>
+          </PCard>
         {/if}
         <PKontoCard email={profile.email} />
       </div>

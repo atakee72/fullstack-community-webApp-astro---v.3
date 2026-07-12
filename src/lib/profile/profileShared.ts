@@ -53,6 +53,19 @@ export function contentTypeToSurface(
   }
 }
 
+// Shared dd.MM date formatter — used by PModerationCard's rejected rows and
+// ProfileInner's banned-banner date. Pure Intl usage; keep this module
+// import-free (see file header).
+export function formatDdMm(iso: string, locale: 'de' | 'en'): string {
+  const parts = new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+  }).formatToParts(new Date(iso));
+  const day = parts.find((p) => p.type === 'day')?.value ?? '';
+  const month = parts.find((p) => p.type === 'month')?.value ?? '';
+  return `${day}.${month}`;
+}
+
 export const PROFILE_NAME_REGEX = /^[\p{L}\p{N} _-]{3,30}$/u;
 export const HOBBY_MAX_COUNT = 10;
 export const HOBBY_MAX_LEN = 50;
