@@ -135,6 +135,20 @@ export interface KiezStatsResponse {
     childPovertyRate: number;
     transferBenefitRate: number;
   }>;
+  /** Berlin/Neukölln yardstick for the SAME period as `social` (novel §02). Omitted when absent — the Berlin-Vergleich module is then quietly absent, like air. */
+  reference?: {
+    period: string;
+    berlin: {
+      unemploymentRate: number;
+      childPovertyRate: number;
+      transferBenefitRate: number;
+    } | null;
+    neukoelln: {
+      unemploymentRate: number;
+      childPovertyRate: number;
+      transferBenefitRate: number;
+    } | null;
+  };
 }
 
 /** BLUME air quality — single pollutant grade */

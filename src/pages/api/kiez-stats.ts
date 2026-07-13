@@ -231,6 +231,35 @@ export const GET: APIRoute = async () => {
       transferBenefitRate: d.transfer_benefit_rate,
     }));
 
+    // Reference figures (Berlin + Neukölln) for the SAME period as the
+    // displayed social data — strictly 1:1, never back-filled from another
+    // period. Absent ⇒ `reference` stays undefined ⇒ JSON.stringify omits it
+    // ⇒ the Berlin-Vergleich module is quietly absent (same contract as air).
+    let reference: KiezStatsResponse['reference'];
+    if (latestSocial) {
+      const refDocs = await db
+        .collection('schillerkiez_reference')
+        .find({ period: latestSocial.period })
+        .toArray();
+      if (refDocs.length > 0) {
+        const pick = (scope: string) => {
+          const d = refDocs.find((r) => r.scope === scope);
+          return d
+            ? {
+                unemploymentRate: d.unemployment_rate,
+                childPovertyRate: d.child_poverty_rate,
+                transferBenefitRate: d.transfer_benefit_rate,
+              }
+            : null;
+        };
+        reference = {
+          period: latestSocial.period,
+          berlin: pick('berlin'),
+          neukoelln: pick('neukoelln'),
+        };
+      }
+    }
+
     const response: KiezStatsResponse = {
       lastUpdated,
       source: 'Amt für Statistik Berlin-Brandenburg / Monitoring Soziale Stadtentwicklung',
@@ -248,6 +277,7 @@ export const GET: APIRoute = async () => {
       plrTrend,
       socialTrend,
       plrSocialTrend,
+      reference,
     };
 
     return new Response(JSON.stringify(response), {
