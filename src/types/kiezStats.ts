@@ -40,6 +40,18 @@ export interface KiezSocialDoc {
   dynamik_index: number;
 }
 
+/** MongoDB doc in `schillerkiez_reference` — Berlin/Neukölln yardstick figures for the Berlin-Vergleich module (novel §02). Imported per MSS period from the Bezirke-level share table; strictly 1:1 per period, never back-filled. */
+export interface KiezReferenceDoc {
+  scope: 'berlin' | 'neukoelln';
+  period: string; // MSS period, e.g. "2023"
+  date: string;   // `${period}-12-31`
+  unemployment_rate: number;
+  child_poverty_rate: number;
+  transfer_benefit_rate: number;
+  /** 'bezirk_row' (Neukölln, read directly) | 'ew_weighted_mean_of_bezirke' (Berlin — the file has no Berlin row; weighted by residents, an approximation of the true city rate) */
+  derivation: string;
+}
+
 /** Age distribution entry in API response */
 export interface AgeDistributionEntry {
   group: string;

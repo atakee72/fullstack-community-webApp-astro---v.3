@@ -12,6 +12,7 @@
  *   MSS_XLSX_URL     — MSS social index XLSX URL (optional)
  *   MSS_PERIOD       — e.g. "2023" (optional, required if MSS_XLSX_URL set)
  *   MSS_SDI_URL      — MSS SDI XLSX URL (optional, for Status/Dynamik index)
+ *   MSS_BEZIRKE_XLSX_URL — MSS Bezirke-level share table URL (optional, for Berlin/Neukölln reference)
  */
 import 'dotenv/config';
 import { MongoClient } from 'mongodb';
@@ -439,6 +440,123 @@ async function syncMSS(db: any) {
   console.log(`  ✓ Upserted ${upserted} documents into schillerkiez_social`);
 }
 
+// ─── MSS Reference Sync (Berlin + Neukölln — Kiez-Daten §02 Berlin-Vergleich) ──
+// Reads the MSS BEZIRKE-level share table (a separate XLSX from the PLR file,
+// e.g. 23indexind_anteile_bezirke_mss2023_kor.xlsx). Verified layout: data
+// rows have [1] 2-digit Bezirk code, [2] name, [3] EW (residents),
+// [4..7] S1..S4 shares — same period-aware S-column semantics as syncMSS.
+// Neukölln = row "08". The file has NO Berlin-total row: Berlin is derived as
+// the EW-weighted mean of the 12 Bezirk rows (approximation — weights are
+// total residents, not each indicator's denominator; recorded in `derivation`).
+
+async function syncReference(db: any) {
+  const url = process.env.MSS_BEZIRKE_XLSX_URL;
+  const period = process.env.MSS_PERIOD;
+  if (!url || !period) {
+    console.log('\n⚠ Reference sync skipped: MSS_BEZIRKE_XLSX_URL or MSS_PERIOD not set');
+    return;
+  }
+
+  const periodNum = parseInt(period);
+  const COL_UNEMPLOYMENT = 4;
+  const COL_CHILD_POVERTY = periodNum < 2023 ? 7 : 5;
+  const COL_TRANSFER = periodNum < 2023 ? 6 : 7;
+
+  console.log('\n═══ MSS Reference Sync (Bezirke) ═══');
+  const workbook = await downloadXlsx(url);
+
+  // Data sheet = first sheet containing a row with a 2-digit code in col 1 and a name in col 2
+  let ws: ExcelJS.Worksheet | null = null;
+  let dataStart = -1;
+  outer: for (const sheet of workbook.worksheets) {
+    for (let r = 1; r <= Math.min(sheet.rowCount, 30); r++) {
+      const code = String(cellValue(sheet.getRow(r), 1) ?? '').trim();
+      const name = String(cellValue(sheet.getRow(r), 2) ?? '').trim();
+      if (/^\d{2}$/.test(code) && name) {
+        ws = sheet;
+        dataStart = r;
+        break outer;
+      }
+    }
+  }
+  if (!ws || dataStart < 0) {
+    console.error('  ✗ Could not find Bezirk data rows — reference sync skipped');
+    return;
+  }
+  console.log(`  Sheet "${ws.name}", data starts at row ${dataStart}`);
+
+  interface BezirkRow { code: string; name: string; ew: number; alq: number; kap: number; tr: number }
+  const rows: BezirkRow[] = [];
+  for (let r = dataStart; r <= ws.rowCount; r++) {
+    const row = ws.getRow(r);
+    const code = String(cellValue(row, 1) ?? '').trim();
+    if (!/^\d{2}$/.test(code)) continue;
+    rows.push({
+      code,
+      name: String(cellValue(row, 2) ?? code).trim(),
+      ew: toNumber(cellValue(row, 3)),
+      alq: toNumber(cellValue(row, COL_UNEMPLOYMENT)),
+      kap: toNumber(cellValue(row, COL_CHILD_POVERTY)),
+      tr: toNumber(cellValue(row, COL_TRANSFER)),
+    });
+  }
+  console.log(`  Parsed ${rows.length} Bezirk rows`);
+  if (rows.length !== 12) console.log('  ⚠ Expected 12 Bezirke — check the file layout');
+
+  const nk = rows.find((r) => r.code === '08');
+  if (!nk) {
+    console.error('  ✗ Neukölln (code 08) not found — reference sync skipped');
+    return;
+  }
+
+  const totalEw = rows.reduce((s, r) => s + r.ew, 0);
+  if (totalEw <= 0) {
+    console.error('  ✗ Resident counts are zero — reference sync skipped');
+    return;
+  }
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+  const weighted = (pick: (r: BezirkRow) => number) =>
+    round2(rows.reduce((s, r) => s + pick(r) * r.ew, 0) / totalEw);
+
+  const docs = [
+    {
+      scope: 'neukoelln' as const,
+      period,
+      date: `${period}-12-31`,
+      unemployment_rate: round2(nk.alq),
+      child_poverty_rate: round2(nk.kap),
+      transfer_benefit_rate: round2(nk.tr),
+      derivation: 'bezirk_row',
+    },
+    {
+      scope: 'berlin' as const,
+      period,
+      date: `${period}-12-31`,
+      unemployment_rate: weighted((r) => r.alq),
+      child_poverty_rate: weighted((r) => r.kap),
+      transfer_benefit_rate: weighted((r) => r.tr),
+      derivation: 'ew_weighted_mean_of_bezirke',
+    },
+  ];
+  for (const doc of docs) {
+    console.log(
+      `    ${doc.scope}: unemployment ${doc.unemployment_rate}% · child poverty ${doc.child_poverty_rate}% · transfer ${doc.transfer_benefit_rate}%`
+    );
+  }
+
+  if (isDryRun) {
+    console.log('  [DRY RUN] No database writes');
+    return;
+  }
+
+  const collection = db.collection('schillerkiez_reference');
+  await collection.createIndex({ scope: 1, period: 1 }, { unique: true });
+  for (const doc of docs) {
+    await collection.updateOne({ scope: doc.scope, period }, { $set: doc }, { upsert: true });
+  }
+  console.log('  ✓ Upserted 2 documents into schillerkiez_reference');
+}
+
 // ─── Main ───────────────────────────────────────────────────────────
 
 async function main() {
@@ -461,6 +579,7 @@ async function main() {
     const db = isDryRun ? null : client.db();
     await syncAfS(db);
     await syncMSS(db);
+    await syncReference(db);
 
     console.log('\n✓ Sync complete');
   } catch (err) {

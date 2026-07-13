@@ -20,6 +20,9 @@ on:
       mss_sdi_url:
         description: 'MSS SDI XLSX URL (leave empty for secret)'
         required: false
+      mss_bezirke_xlsx_url:
+        description: 'MSS Bezirke XLSX URL (leave empty for secret)'
+        required: false
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -39,3 +42,4 @@ jobs:
           MSS_XLSX_URL: ${{ inputs.mss_xlsx_url || secrets.MSS_XLSX_URL }}
           MSS_PERIOD: ${{ inputs.mss_period || secrets.MSS_PERIOD }}
           MSS_SDI_URL: ${{ inputs.mss_sdi_url || secrets.MSS_SDI_URL }}
+          MSS_BEZIRKE_XLSX_URL: ${{ inputs.mss_bezirke_xlsx_url || secrets.MSS_BEZIRKE_XLSX_URL }}
