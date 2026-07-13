@@ -150,6 +150,9 @@ See `src/components/kiez/CLAUDE.md` — full notes (data pipeline, LOR codes, MS
 - `listingAuditTrail` - Pre-edit snapshots of marketplace listings whose moderation state is about to be cleared by an author edit (warning labels OR rejections). One record per warning-clearing or rejection-clearing edit. Write-once, never reviewed by admin. Event discriminator: `'edit_warning_cleared'` or `'edit_rejection_cleared'`. See `src/components/marketplace/kiosk/CLAUDE.md`.
 - `schillerkiez_demographics` - AfS demographic data per PLR area per period (unique: `plr_code + period`)
 - `schillerkiez_social` - MSS social index data per PLR area per report period (unique: `plr_code + period`)
+- `schillerkiez_air_log` - BLUME air readings for station mc042, appended every 30 min by the GitHub-Actions-triggered `GET /api/cron/log-air` (Bearer `CRON_SECRET`, fail-closed 503 when unset). One doc per BLUME measurement `ts` (unique index; duplicates dropped), with Europe/Berlin `day` key and LQI + pollutant grades. Hourly rows pruned after 90 days.
+- `schillerkiez_air_daily` - Per-Berlin-day LQI rollups (`lqiMax`, `lqiMean`, `readings`), kept forever. Written only for days WITH readings — measurement gaps stay absent and render as dashed bars (never interpolated). Served with a last-reading lookup by public `GET /api/kiez-air-history`.
+- `schillerkiez_reference` - Berlin + Neukölln yardstick figures (unemployment/child-poverty/transfer rates) per MSS period, imported by `scripts/sync-stats.ts` from the MSS Bezirke-level XLSX (`MSS_BEZIRKE_XLSX_URL`). Berlin is the residents-weighted mean of the 12 Bezirke (the file has no Berlin row; see `derivation`). Exposed additively as `reference?` on `/api/kiez-stats`, strictly 1:1 with the displayed social period.
 
 ## Environment Variables
 
@@ -174,6 +177,7 @@ STATS_PERIOD=           # AfS period, e.g. "2025h2" (sync script + GitHub Action
 MSS_XLSX_URL=           # MSS social index XLSX URL (optional, sync script)
 MSS_PERIOD=             # MSS report period, e.g. "2023" (optional, sync script)
 MSS_SDI_URL=            # MSS SDI XLSX URL (optional, for Status/Dynamik index)
+MSS_BEZIRKE_XLSX_URL=   # MSS Bezirke-level shares XLSX (optional, reference import for Berlin-Vergleich)
 ```
 
 ## Component Patterns
