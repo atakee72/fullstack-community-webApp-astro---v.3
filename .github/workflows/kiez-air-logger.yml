@@ -1,0 +1,30 @@
+name: Kiez Air Logger
+# Rings /api/cron/log-air every 30 min (Kiez-Daten Messwert-Logger, novel §00).
+# GitHub Actions instead of vercel.json: Vercel crons here are daily-only and
+# both slots are taken. Actions schedule jitter (minutes) and occasional
+# skipped runs are harmless — BLUME publishes hourly and gaps render honestly
+# as dashed bars. Requires repo secret CRON_SECRET (same value as Vercel env).
+# NOTE: takes effect only once this file is on the default branch AND the
+# prod deploy serves /api/cron/log-air — red runs before that are expected.
+on:
+  schedule:
+    - cron: '7,37 * * * *' # offset from :00/:30 to dodge top-of-hour Actions congestion
+  workflow_dispatch:
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger logger tick
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_ORIGIN: https://mahalle-das-kiezgesichterbuch.vercel.app
+        run: |
+          code=$(curl -s -o /tmp/resp.json -w '%{http_code}' \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_ORIGIN/api/cron/log-air")
+          cat /tmp/resp.json; echo
+          if [ "$code" != "200" ]; then
+            echo "logger tick failed with HTTP $code"
+            exit 1
+          fi
