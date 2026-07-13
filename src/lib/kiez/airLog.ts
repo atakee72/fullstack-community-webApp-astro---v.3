@@ -2,7 +2,7 @@
 // This module is server-only once Task 2 adds the Mongo/BLUME functions;
 // never import it from client islands (they fetch the APIs instead).
 import type { Db } from 'mongodb';
-import type { AirDailyDoc, AirLogDoc } from '../../types/kiezStats';
+import type { AirDailyDoc, AirLogDoc, AirHistoryDay, AirHistoryResponse } from '../../types/kiezStats';
 import { fetchMc042 } from './blume';
 
 export const AIR_LOG_COLLECTION = 'schillerkiez_air_log';
@@ -130,4 +130,35 @@ export async function runAirLogger(db: Db, now: Date = new Date()): Promise<LogR
   const pruneRes = await db.collection(AIR_LOG_COLLECTION).deleteMany({ ts: { $lt: cutoff } });
 
   return { logged: true, duplicate, ts: ts.toISOString(), day, pruned: pruneRes.deletedCount };
+}
+
+/** 7-day strip + last logged reading — Mongo only, never calls BLUME (stays available when the station is silent; feeds state §04). */
+export async function getAirHistory(db: Db, now: Date = new Date()): Promise<AirHistoryResponse> {
+  const days = lastBerlinDays(7, now);
+  const rollups = await db
+    .collection(AIR_DAILY_COLLECTION)
+    .find({ day: { $in: days } })
+    .toArray();
+  const byDay = new Map(rollups.map((r) => [r.day as string, r]));
+
+  const out: AirHistoryDay[] = days.map((day) => {
+    const r = byDay.get(day);
+    return r
+      ? { day, lqiMax: r.lqiMax as number, lqiMean: r.lqiMean as number, readings: r.readings as number }
+      : { day, lqiMax: null, lqiMean: null, readings: 0 }; // gap — dashed bar, never interpolated
+  });
+
+  const last = await db
+    .collection(AIR_LOG_COLLECTION)
+    .find({}, { projection: { ts: 1, lqi: 1 } })
+    .sort({ ts: -1 })
+    .limit(1)
+    .toArray();
+
+  return {
+    days: out,
+    lastReading: last[0]
+      ? { ts: (last[0].ts as Date).toISOString(), lqi: last[0].lqi as number }
+      : null,
+  };
 }
