@@ -1,8 +1,6 @@
 import type { APIRoute } from 'astro';
 import type { AirQualityResponse } from '../../types/kiezStats';
-
-const BLUME_LQI_URL = 'https://luftdaten.berlin.de/api/lqis/data';
-const STATION_ID = 'mc042';
+import { fetchMc042, BLUME_STATION_ID } from '../../lib/kiez/blume';
 
 const POLLUTANT_NAMES: Record<string, string> = {
   pm10: 'PM10',
@@ -15,20 +13,9 @@ const GRADE_LABELS = ['', 'sehr gut', 'gut', 'mäßig', 'schlecht', 'sehr schlec
 
 export const GET: APIRoute = async () => {
   try {
-    const res = await fetch(BLUME_LQI_URL, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) throw new Error(`BLUME API returned ${res.status}`);
+    const data = await fetchMc042();
 
-    const stations: Array<{ station: string; data: Array<{ datetime: string; component: string; value: number | null; grade: number | null }> }> = await res.json();
-
-    const mc042 = stations.find((s) => s.station === STATION_ID);
-    if (!mc042) {
-      return new Response(JSON.stringify({ error: 'Station mc042 not found' }), {
-        status: 502,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const lqi = mc042.data.find((d) => d.component === 'lqi');
+    const lqi = data.find((d) => d.component === 'lqi');
     if (!lqi || lqi.grade == null) {
       return new Response(JSON.stringify({ error: 'No LQI data for mc042' }), {
         status: 502,
@@ -36,7 +23,7 @@ export const GET: APIRoute = async () => {
       });
     }
 
-    const pollutants = mc042.data
+    const pollutants = data
       .filter((d) => d.component !== 'lqi' && d.component in POLLUTANT_NAMES)
       .map((d) => ({
         name: POLLUTANT_NAMES[d.component] ?? d.component.toUpperCase(),
@@ -46,7 +33,7 @@ export const GET: APIRoute = async () => {
       }));
 
     const response: AirQualityResponse = {
-      station: STATION_ID,
+      station: BLUME_STATION_ID,
       stationName: 'Nansenstraße',
       datetime: lqi.datetime,
       overallGrade: lqi.grade,
