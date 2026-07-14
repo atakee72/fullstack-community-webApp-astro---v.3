@@ -9,6 +9,8 @@
   import KzSelector from './KzSelector.svelte';
   import KzKanalPop from './KzKanalPop.svelte';
   import KzKanalAge from './KzKanalAge.svelte';
+  import KzKanalMig from './KzKanalMig.svelte';
+  import KzKanalSocial from './KzKanalSocial.svelte';
 
   let stats = $state<KiezStatsResponse | null>(null);
   let statsStatus = $state<'loading' | 'ready' | 'error'>('loading');
@@ -104,9 +106,10 @@
       <div class="kz-swap-in">
         <KzKanalPop area={selectedArea} {vm} />
         <KzKanalAge area={selectedArea} {vm} />
+        <KzKanalMig area={selectedArea} {vm} />
+        <KzKanalSocial area={selectedArea} {vm} {plr} kontext={null} />
       </div>
     {/key}
-    <!-- TASK 7: Kanal 03 + Kanal 04 -->
     <!-- TASK 8: {#if plr === 'all'} Kanal 05 {/if} -->
   {/if}
 

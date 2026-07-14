@@ -1552,7 +1552,23 @@ const de = {
   'kiez.k01.residents': 'EINWOHNER',
   'kiez.k01.course': 'ENTWICKLUNG {range}',
   'kiez.k01.byArea': 'NACH PLANUNGSRAUM',
-  'kiez.k01.singleHH': 'Einpersonen-Haushalte'
+  'kiez.k01.singleHH': 'Einpersonen-Haushalte',
+  'kiez.k03.title': 'Vielfalt',
+  'kiez.k03.foreign': 'Ausländische Nachbar:innen',
+  'kiez.k03.germanMig': 'Deutsche mit Migrationsgeschichte',
+  'kiez.k03.noMig': 'Ohne Migrationsgeschichte',
+  'kiez.k03.caption': 'MH schließt Ausländer:innen NICHT ein — Segmente überlappen nicht.',
+  'kiez.k03.overTime': 'IM ZEITVERLAUF · GESAMT',
+  'kiez.k04.title': 'Soziale Lage',
+  'kiez.k04.noData': 'Für diesen Planungsraum liegen keine Sozialdaten vor.',
+  'kiez.k04.alq': 'Arbeitslosenquote',
+  'kiez.k04.ka': 'Kinderarmut (U15)',
+  'kiez.k04.tr': 'Transferleistungen',
+  'kiez.k04.threads.one': 'Gespräch im Forum',
+  'kiez.k04.threads.many': 'Gespräche im Forum',
+  'kiez.k04.status': 'Status-Index',
+  'kiez.k04.dyn': 'Dynamik',
+  'kiez.k04.mss': '(*) MSS-Systematik, s. Quellen'
 } as const;
 
 // Key parity between de/en stays type-enforced; literal-VALUE parity does
@@ -2971,7 +2987,23 @@ const en: Dict = {
   'kiez.k01.residents': 'RESIDENTS',
   'kiez.k01.course': 'COURSE {range}',
   'kiez.k01.byArea': 'BY PLANNING AREA',
-  'kiez.k01.singleHH': 'single-person households'
+  'kiez.k01.singleHH': 'single-person households',
+  'kiez.k03.title': 'Diversity',
+  'kiez.k03.foreign': 'Foreign nationals',
+  'kiez.k03.germanMig': 'Germans with migration background',
+  'kiez.k03.noMig': 'No migration background',
+  'kiez.k03.caption': 'Segments are non-overlapping.',
+  'kiez.k03.overTime': 'OVER TIME · TOTAL',
+  'kiez.k04.title': 'Social situation',
+  'kiez.k04.noData': 'No social data available for this planning area.',
+  'kiez.k04.alq': 'Unemployment rate',
+  'kiez.k04.ka': 'Child poverty (U15)',
+  'kiez.k04.tr': 'Transfer benefits',
+  'kiez.k04.threads.one': 'forum thread',
+  'kiez.k04.threads.many': 'forum threads',
+  'kiez.k04.status': 'Status index',
+  'kiez.k04.dyn': 'Dynamics',
+  'kiez.k04.mss': '(*) MSS methodology, see sources'
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };
