@@ -1568,7 +1568,18 @@ const de = {
   'kiez.k04.threads.many': 'Gespräche im Forum',
   'kiez.k04.status': 'Status-Index',
   'kiez.k04.dyn': 'Dynamik',
-  'kiez.k04.mss': '(*) MSS-Systematik, s. Quellen'
+  'kiez.k04.mss': '(*) MSS-Systematik, s. Quellen',
+  'kiez.k05.title': 'Soziale Entwicklung',
+  'kiez.k05.left': 'DREI INDIKATOREN · GESAMT',
+  'kiez.k05.right': 'ARBEITSLOSIGKEIT NACH GEBIET',
+  'kiez.k05.alq': 'Arbeitslosigkeit',
+  'kiez.k05.ka': 'Kinderarmut',
+  'kiez.k05.tr': 'Transfer',
+  'kiez.k05.reform':
+    'Gebietsreform 2021: vor 2021 zwei Planungsräume, seither vier. Alte Gebiete werden mit den neuen zusammengeführt (Mittelwert der Nachfolger) — durchgängige Linien, ehrlicher Bruchvermerk.',
+  'kiez.k05.reformShort': 'Gebietsreform 2021 — Linien amtlich zusammengeführt.',
+  'kiez.bv.title': 'BERLIN-VERGLEICH · MSS {period}',
+  'kiez.bv.note': 'Berlin = gewichtetes Mittel der zwölf Bezirke.'
 } as const;
 
 // Key parity between de/en stays type-enforced; literal-VALUE parity does
@@ -3003,7 +3014,18 @@ const en: Dict = {
   'kiez.k04.threads.many': 'forum threads',
   'kiez.k04.status': 'Status index',
   'kiez.k04.dyn': 'Dynamics',
-  'kiez.k04.mss': '(*) MSS methodology, see sources'
+  'kiez.k04.mss': '(*) MSS methodology, see sources',
+  'kiez.k05.title': 'Social development',
+  'kiez.k05.left': 'THREE INDICATORS · TOTAL',
+  'kiez.k05.right': 'UNEMPLOYMENT BY AREA',
+  'kiez.k05.alq': 'Unemployment',
+  'kiez.k05.ka': 'Child poverty',
+  'kiez.k05.tr': 'Transfer',
+  'kiez.k05.reform':
+    '2021 boundary reform: two planning areas before 2021, four since. Old areas are merged with their successors (average) — continuous lines, honest break marker.',
+  'kiez.k05.reformShort': '2021 boundary reform — series merged, break marked.',
+  'kiez.bv.title': 'BERLIN COMPARISON · MSS {period}',
+  'kiez.bv.note': 'Berlin = weighted mean of the twelve districts.'
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };

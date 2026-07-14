@@ -11,6 +11,8 @@
   import KzKanalAge from './KzKanalAge.svelte';
   import KzKanalMig from './KzKanalMig.svelte';
   import KzKanalSocial from './KzKanalSocial.svelte';
+  import KzKanalSocTrend from './KzKanalSocTrend.svelte';
+  import KzBerlinVergleich from './KzBerlinVergleich.svelte';
 
   let stats = $state<KiezStatsResponse | null>(null);
   let statsStatus = $state<'loading' | 'ready' | 'error'>('loading');
@@ -107,10 +109,23 @@
         <KzKanalPop area={selectedArea} {vm} />
         <KzKanalAge area={selectedArea} {vm} />
         <KzKanalMig area={selectedArea} {vm} />
-        <KzKanalSocial area={selectedArea} {vm} {plr} kontext={null} />
+        <KzKanalSocial area={selectedArea} {vm} {plr} kontext={null}>
+          <!-- Berlin-Vergleich (novel §02) — Gesamt only, and only when a
+               reference row exists for the latest MSS period with at least
+               one non-null scope. Otherwise quietly absent, like the air
+               strip. KzKanalSocial only renders `children` inside its own
+               has-social-data branch, so `selectedArea.social` is also
+               guaranteed non-null there — the extra check below narrows the
+               type for `kiezSocial`. -->
+          {#if plr === 'all' && stats?.reference && (stats.reference.berlin || stats.reference.neukoelln) && selectedArea.social}
+            <KzBerlinVergleich reference={stats.reference} kiezSocial={selectedArea.social} />
+          {/if}
+        </KzKanalSocial>
+        {#if plr === 'all' && vm.socTrend}
+          <KzKanalSocTrend {vm} />
+        {/if}
       </div>
     {/key}
-    <!-- TASK 8: {#if plr === 'all'} Kanal 05 {/if} -->
   {/if}
 
   <KzFooter />
