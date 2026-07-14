@@ -9,11 +9,10 @@
   import { t, locale, tStr } from '../../../lib/kiosk-i18n';
   import type { AirQualityResponse, AirHistoryResponse } from '../../../types/kiezStats';
 
-  let { air, airStatus, history, compact = false } = $props<{
+  let { air, airStatus, history } = $props<{
     air: AirQualityResponse | null;
     airStatus: 'loading' | 'ready' | 'off';
     history: AirHistoryResponse | null;
-    compact?: boolean;
   }>();
 
   const intlLocale = $derived($locale === 'de' ? 'de-DE' : 'en-GB');
@@ -56,21 +55,18 @@
   const GAP_H = 22;
   const GAP_Y = 40 - GAP_H;
 
-  const wrapClass = $derived(
-    compact ? 'flex flex-wrap items-center gap-3.5' : 'flex flex-wrap items-center gap-3.5 lg:flex-nowrap lg:gap-6'
-  );
-  const padClass = compact ? 'px-[18px] py-3' : 'px-[18px] py-3 lg:px-9 lg:py-3.5';
-  const leftClass = compact ? 'w-full' : 'w-full lg:w-auto lg:min-w-[300px]';
-  const rightClass = compact ? 'w-full text-right' : 'text-right lg:ml-auto';
-  const tileClass = compact
-    ? 'min-w-[58px] rounded-[var(--k-radius-md)] px-[9px] py-[5px] text-center'
-    : 'min-w-[58px] rounded-[var(--k-radius-md)] px-[9px] py-[5px] text-center lg:min-w-[74px] lg:px-[13px] lg:py-[7px]';
-  const gradeTextClass = compact ? 'font-dmmono text-[16px] font-medium' : 'font-dmmono text-[16px] font-medium lg:text-[20px]';
-  const headlineLiveClass = compact ? 'mt-0.5 text-[18px] font-extrabold' : 'mt-0.5 text-[18px] font-extrabold lg:text-[24px]';
-  const headlineOffClass = compact ? 'mt-0.5 text-[17px] font-extrabold opacity-75' : 'mt-0.5 text-[17px] font-extrabold opacity-75 lg:text-[22px]';
+  const wrapClass = 'flex flex-wrap items-center gap-3.5 lg:flex-nowrap lg:gap-6';
+  const padClass = 'px-[18px] py-3 lg:px-9 lg:py-3.5';
+  const leftClass = 'w-full lg:w-auto lg:min-w-[300px]';
+  const rightClass = 'text-right lg:ml-auto';
+  const tileClass =
+    'min-w-[58px] rounded-[var(--k-radius-md)] px-[9px] py-[5px] text-center lg:min-w-[74px] lg:px-[13px] lg:py-[7px]';
+  const gradeTextClass = 'font-dmmono text-[16px] font-medium lg:text-[20px]';
+  const headlineLiveClass = 'mt-0.5 text-[18px] font-extrabold lg:text-[24px]';
+  const headlineOffClass = 'mt-0.5 text-[17px] font-extrabold opacity-75 lg:text-[22px]';
   // viewBox is 170×52: top 40px is the bar field (spec geometry, untouched),
   // bottom 12px carries the weekday letters (brief addition, not in the seed jsx).
-  const svgClass = compact ? 'h-10 w-[130px]' : 'h-10 w-[130px] lg:h-[52px] lg:w-[170px]';
+  const svgClass = 'h-10 w-[130px] lg:h-[52px] lg:w-[170px]';
 </script>
 
 <div class="bg-[var(--k-ink)] text-[var(--k-paper)]">
@@ -120,9 +116,7 @@
           <div class="{tileClass} border-[1.5px] border-[rgba(243,234,216,0.3)]" class:opacity-55={p.grade === null}>
             <div class="font-dmmono text-[9.5px] opacity-65">{p.name}</div>
             <div class="{gradeTextClass}" style={`color:${gradeColor(p.grade)}`}>{p.grade ?? '–'}</div>
-            {#if !compact}
-              <div class="hidden font-dmmono text-[8.5px] opacity-70 lg:block">{p.gradeLabel}</div>
-            {/if}
+            <div class="hidden font-dmmono text-[8.5px] opacity-70 lg:block">{p.gradeLabel}</div>
           </div>
         {/each}
       </div>
@@ -133,11 +127,17 @@
             {#each history.days as day, i (day.day)}
               {@const isToday = i === history.days.length - 1}
               {#if day.lqiMax !== null}
+                <!-- Bar height scales to the 40px field as lqiMax/5, not the JSX's
+                     raw grade*11 — that formula overflows the field at grades 4–5
+                     (44px/55px), clipping the two worst air readings identically.
+                     The JSX's seed data never exceeded grade 3 so it never surfaced
+                     there; scaling to the field is the honest fix here. -->
+                {@const h = (day.lqiMax / 5) * 40}
                 <rect
                   x={i * 24}
-                  y={40 - day.lqiMax * 11}
+                  y={40 - h}
                   width="16"
-                  height={day.lqiMax * 11}
+                  height={h}
                   rx="2"
                   fill={gradeColor(day.lqiMax)}
                   opacity={isToday ? 1 : 0.55}
