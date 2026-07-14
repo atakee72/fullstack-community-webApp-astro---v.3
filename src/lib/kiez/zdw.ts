@@ -41,10 +41,13 @@ function deriveFigure(
       return { value: `${deStr(sum)} %`, varsForText: {} };
     }
     case 'singleHouseholds': {
-      // Honest-data rule: singlePerson is 0 in the DB today — never fake a share.
-      // Self-enables the moment AfS ships the column with real counts.
+      // Honest-data rule: singlePerson is 0 in the DB today (AfS's E_E column is
+      // an absolute count, not a share — see KiezDemographicsDoc.households) —
+      // never fake a percentage. Self-enables once AfS ships the column; the
+      // value format here will likely need revisiting once a real total-
+      // households denominator is available to turn this into a share.
       if (!(area.singlePerson > 0)) return null;
-      return { value: `${deStr(area.singlePerson)} %`, varsForText: {} };
+      return { value: deStr(area.singlePerson, 0), varsForText: {} };
     }
     case 'airWeekMean': {
       if (!history) return null;
