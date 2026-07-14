@@ -42,6 +42,7 @@
           class:bg-ink={a.code === plr}
           class:text-paper={a.code === plr}
           class:text-ink={a.code !== plr}
+          aria-pressed={a.code === plr}
           onclick={() => (plr = a.code)}
         >
           <span
