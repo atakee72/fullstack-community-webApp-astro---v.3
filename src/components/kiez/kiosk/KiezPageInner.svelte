@@ -1,9 +1,11 @@
 <script lang="ts">
   import { t } from '../../../lib/kiosk-i18n';
   import type { KiezStatsResponse, AirQualityResponse, AirHistoryResponse } from '../../../types/kiezStats';
+  import { buildKiezViewModel } from '../../../lib/kiez/kiezViewModel';
   import KzSkeleton from './KzSkeleton.svelte';
   import KzFooter from './KzFooter.svelte';
   import KzInstrumentStrip from './KzInstrumentStrip.svelte';
+  import KzTitleBlock from './KzTitleBlock.svelte';
 
   let stats = $state<KiezStatsResponse | null>(null);
   let statsStatus = $state<'loading' | 'ready' | 'error'>('loading');
@@ -56,7 +58,8 @@
     fetchHistory();
   });
 
-  const isEmpty = $derived(statsStatus === 'ready' && !stats?.demographics && !stats?.social);
+  const vm = $derived(stats?.demographics ? buildKiezViewModel(stats) : null);
+  const isEmpty = $derived(statsStatus === 'ready' && !stats?.demographics);
   const isStale = $derived.by(() => {
     const d = stats?.lastUpdated;
     if (!d) return false;
@@ -87,8 +90,8 @@
         <p class="mt-2 text-[12.5px] leading-relaxed text-[var(--k-ink-mute)]">{$t['kiez.state.empty.body']}</p>
       </div>
     </section>
-  {:else if stats}
-    <!-- TASK 5: <KzTitleBlock {vm} {history} {isStale} /> (carries the §07 warn line; `vm` derivation lands in Task 5) -->
+  {:else if vm}
+    <KzTitleBlock {vm} {history} {isStale} />
     <!-- TASK 6: <KzSelector {stats} bind:plr /> + Kanal 01 + Kanal 02 -->
     <!-- TASK 7: Kanal 03 + Kanal 04 -->
     <!-- TASK 8: {#if plr === 'all'} Kanal 05 {/if} -->

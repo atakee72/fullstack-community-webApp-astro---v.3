@@ -1533,7 +1533,17 @@ const de = {
   'kiez.strip.today': 'heute',
   'kiez.footer.sources': 'QUELLEN',
   'kiez.footer.loggerNote': '7-Tage-Luftverlauf: Messwert-Logger — BLUME liefert nur den Augenblick.',
-  'kiez.footer.print': '⎙ Kiez in Zahlen · A4 drucken'
+  'kiez.footer.print': '⎙ Kiez in Zahlen · A4 drucken',
+  'kiez.zdw.label': 'ZAHL DER WOCHE',
+  'kiez.zdw.kw': 'KW {kw}',
+  'kiez.zdw.read.ageShare': 'der Nachbarschaft ist zwischen 27 und 44 — der Kiez bleibt jung.',
+  'kiez.zdw.read.populationDelta': 'Nachbarinnen und Nachbarn mehr als {vs} — der Kiez wächst.',
+  'kiez.zdw.read.diversity': 'der Nachbarschaft haben eine internationale Geschichte.',
+  'kiez.zdw.read.singleHouseholds': 'aller Haushalte im Kiez sind Einpersonen-Haushalte.',
+  'kiez.zdw.read.airWeekMean': 'war die mittlere Luftgüte der letzten Woche — gemessen an der Nansenstraße.',
+  'kiez.zdw.share': 'im Forum diskutieren →',
+  'kiez.zdw.shareTitle': 'Zahl der Woche (KW {kw}): {value}',
+  'kiez.zdw.shareBody': 'Quelle: Kiez-Daten · Stand {stand} · {url} — Was bedeutet das für uns?'
 } as const;
 
 // Key parity between de/en stays type-enforced; literal-VALUE parity does
@@ -2933,7 +2943,17 @@ const en: Dict = {
   'kiez.strip.today': 'today',
   'kiez.footer.sources': 'SOURCES',
   'kiez.footer.loggerNote': '7-day air course: reading logger — BLUME serves the moment only.',
-  'kiez.footer.print': '⎙ Kiez in figures · print A4'
+  'kiez.footer.print': '⎙ Kiez in figures · print A4',
+  'kiez.zdw.label': 'FIGURE OF THE WEEK',
+  'kiez.zdw.kw': 'wk {kw}',
+  'kiez.zdw.read.ageShare': 'of the neighbourhood is between 27 and 44 — the Kiez stays young.',
+  'kiez.zdw.read.populationDelta': 'more neighbours than {vs} — the Kiez is growing.',
+  'kiez.zdw.read.diversity': 'of the neighbourhood have an international story.',
+  'kiez.zdw.read.singleHouseholds': 'of all households in the Kiez are single-person households.',
+  'kiez.zdw.read.airWeekMean': 'was last week’s mean air quality — measured at Nansenstraße.',
+  'kiez.zdw.share': 'discuss in the forum →',
+  'kiez.zdw.shareTitle': 'Figure of the week (wk {kw}): {value}',
+  'kiez.zdw.shareBody': 'Source: Kiez data · as of {stand} · {url} — what does it mean for us?'
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };
