@@ -1503,7 +1503,26 @@ const de = {
   'profile.state.banned': 'Konto gesperrt seit {d} — kein Posten mehr. Details im Moderations-Block.',
   'profile.state.loggedout': 'Der Meldebogen braucht einen Schlüssel.',
   'profile.state.login': 'anmelden',
-  'profile.mobile.title': 'Profil'
+  'profile.mobile.title': 'Profil',
+
+  // ── Kiez-Daten ──────────────────────────────────────────────
+  'kiez.kicker': 'KIEZ-DATEN · SCHILLERKIEZ · STAND {stand}',
+  'kiez.title.pre': 'Der Kiez, ',
+  'kiez.title.italic': 'gemessen',
+  'kiez.dek': 'Vier Planungsräume, {pop} Nachbarinnen und Nachbarn, eine Messstation — alle Kanäle auf einer Seite.',
+  'kiez.fact.residents': 'Einwohner',
+  'kiez.fact.areas': 'Planungsräume',
+  'kiez.fact.sync': 'AfS-Sync',
+  'kiez.fact.syncRate': '2×/Jahr',
+  'kiez.state.error.title': 'Die Zahlen lassen sich gerade nicht abholen.',
+  'kiez.state.error.retry': 'erneut versuchen',
+  'kiez.state.empty.title': 'Das Archiv ist noch leer.',
+  'kiez.state.empty.body': 'Der AfS-Import läuft zweimal im Jahr (März + September). Danach stehen hier die ersten Zahlen.',
+  'kiez.state.stale.title': 'Stand {date} — der nächste Halbjahres-Import fehlt.',
+  'kiez.state.stale.hint': 'Erwartet: Sync im März/September. Admin sieht Details im Aktions-Log.',
+  'kiez.footer.sources': 'QUELLEN',
+  'kiez.footer.loggerNote': '7-Tage-Luftverlauf: Messwert-Logger — BLUME liefert nur den Augenblick.',
+  'kiez.footer.print': '⎙ Kiez in Zahlen · A4 drucken'
 } as const;
 
 // Key parity between de/en stays type-enforced; literal-VALUE parity does
@@ -2873,7 +2892,26 @@ const en: Dict = {
   'profile.state.banned': 'Account suspended since {d} — no more posting. Details in the moderation block.',
   'profile.state.loggedout': 'The Meldebogen needs a key.',
   'profile.state.login': 'sign in',
-  'profile.mobile.title': 'Profile'
+  'profile.mobile.title': 'Profile',
+
+  // ── Kiez-Daten ──────────────────────────────────────────────
+  'kiez.kicker': 'KIEZ-DATEN · SCHILLERKIEZ · AS OF {stand}',
+  'kiez.title.pre': 'The Kiez, ',
+  'kiez.title.italic': 'measured',
+  'kiez.dek': 'Four planning areas, {pop} neighbours, one measuring station — every channel on a single page.',
+  'kiez.fact.residents': 'residents',
+  'kiez.fact.areas': 'planning areas',
+  'kiez.fact.sync': 'AfS sync',
+  'kiez.fact.syncRate': '2×/yr',
+  'kiez.state.error.title': 'The figures can’t be fetched right now.',
+  'kiez.state.error.retry': 'try again',
+  'kiez.state.empty.title': 'The archive is still empty.',
+  'kiez.state.empty.body': 'The AfS import runs twice a year (March + September). The first figures appear after that.',
+  'kiez.state.stale.title': 'As of {date} — the next half-yearly import is missing.',
+  'kiez.state.stale.hint': 'Expected: sync in March/September. Admin sees details in the action log.',
+  'kiez.footer.sources': 'SOURCES',
+  'kiez.footer.loggerNote': '7-day air course: reading logger — BLUME serves the moment only.',
+  'kiez.footer.print': '⎙ Kiez in figures · print A4'
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };

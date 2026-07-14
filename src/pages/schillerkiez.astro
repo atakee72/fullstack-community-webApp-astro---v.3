@@ -1,27 +1,18 @@
 ---
-export const prerender = true;
+import KioskLayout from '../layouts/KioskLayout.astro';
+import KiezPageInner from '../components/kiez/kiosk/KiezPageInner.svelte';
 
-import BaseLayout from '../layouts/BaseLayout.astro';
-import PageHeader from '../components/ui/PageHeader.astro';
-import KiezDashboard from '../components/kiez/KiezDashboard.svelte';
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
 ---
 
-<BaseLayout
-  title="Schillerkiez in Zahlen - Mahalle"
-  description="Demografische und soziale Daten aus dem Schillerkiez in Berlin-Neukölln"
+<KioskLayout
+  title="Kiez-Daten — Mahalle"
+  description="Der Schillerkiez, gemessen: Luftgüte, Bevölkerung, Alter, Vielfalt und soziale Lage — alle Kanäle auf einer Seite."
+  page="schillerkiez"
 >
-  <div class="dark-glass-bg" aria-hidden="true"></div>
-  <div class="dark-glass-gradient-drift" aria-hidden="true"></div>
+  <KiezPageInner client:load />
+</KioskLayout>
 
-  <div class="relative z-10 min-h-[calc(100vh-60px)] py-2 md:py-3 font-inter carved-title" style="--carved-accent: #5cb87a">
-    <div class="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
-      <PageHeader
-        title="Schillerkiez in Zahlen"
-        subtitle="Demografie, Soziales & Umwelt aus dem Herzen Neuköllns"
-        color="#5cb87a"
-        subtitleClass="text-white/70"
-      />
-      <KiezDashboard client:load />
-    </div>
-  </div>
-</BaseLayout>
+<style is:global>
+  @import '../styles/kiez.css';
+</style>

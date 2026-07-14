@@ -1,0 +1,30 @@
+/* Kiez-Daten (kiosk) — page tokens + motion. Spec: design/handoffs/design_handoff_kiezdaten/{tokens,motion}-kiezdaten.css */
+[data-page="schillerkiez"] {
+  --kz-series-gesamt: #6b8a4a;
+  --kz-series-08100102: #3f8f9f;
+  --kz-series-08100103: #b23a5b;
+  --kz-series-08100104: #e8a53a;
+  --kz-series-08100105: #6f2f59;
+  --kz-grade-good: #5a8a3a;
+  --kz-grade-mid: #c8881e;
+  --kz-grade-bad: #a83245;
+  --kz-grade-good-on-ink: #9fd08a;
+  --kz-grade-mid-on-ink: #ecc76e;
+  --kz-grade-bad-on-ink: #e08a8a;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .kz-skel { background: linear-gradient(90deg, #ebe1c7 25%, #e2d7bd 50%, #ebe1c7 75%); background-size: 400px 100%; animation: kzSweep 1.4s linear infinite; }
+  @keyframes kzSweep { 0% { background-position: -200px 0; } 100% { background-position: 400px 0; } }
+  .kz-live-dot { animation: kzPulse 1.8s ease-in-out infinite; }
+  @keyframes kzPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .kz-bar-in { transform-origin: left center; animation: kzBarIn 480ms cubic-bezier(.2,.7,.3,1) both; }
+  @keyframes kzBarIn { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .kz-swap-in { animation: kzSwapIn 220ms cubic-bezier(.2,.7,.3,1) both; }
+  @keyframes kzSwapIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .kz-zdw-in { animation: kzStampIn 380ms cubic-bezier(.2,.8,.2,1.2) 200ms both; }
+  @keyframes kzStampIn { from { opacity: 0; transform: rotate(2.2deg) scale(0.96); } to { opacity: 1; transform: rotate(0.6deg) scale(1); } }
+  .kz-kontext-chip-in { animation: kzChipIn 220ms cubic-bezier(.2,.8,.2,1.2) both; }
+  @keyframes kzChipIn { from { opacity: 0; transform: translateY(4px) scale(0.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+}
+/* .kz-skel static fallback (outside the media query): */
+.kz-skel { background: var(--k-paper-soft, #ebe1c7); }
