@@ -6,6 +6,9 @@
   import KzFooter from './KzFooter.svelte';
   import KzInstrumentStrip from './KzInstrumentStrip.svelte';
   import KzTitleBlock from './KzTitleBlock.svelte';
+  import KzSelector from './KzSelector.svelte';
+  import KzKanalPop from './KzKanalPop.svelte';
+  import KzKanalAge from './KzKanalAge.svelte';
 
   let stats = $state<KiezStatsResponse | null>(null);
   let statsStatus = $state<'loading' | 'ready' | 'error'>('loading');
@@ -92,7 +95,17 @@
     </section>
   {:else if vm}
     <KzTitleBlock {vm} {history} {isStale} />
-    <!-- TASK 6: <KzSelector {stats} bind:plr /> + Kanal 01 + Kanal 02 -->
+    <!-- Selector stays mounted across selection changes (its own map/chips
+         are already reactive on `plr`) — only the Kanäle below re-key so
+         their draw-in animations replay per the motion spec. -->
+    <KzSelector areas={vm.areas} bind:plr />
+    {@const selectedArea = vm.areas.find((a) => a.code === plr) ?? vm.areas[0]}
+    {#key plr}
+      <div class="kz-swap-in">
+        <KzKanalPop area={selectedArea} {vm} />
+        <KzKanalAge area={selectedArea} {vm} />
+      </div>
+    {/key}
     <!-- TASK 7: Kanal 03 + Kanal 04 -->
     <!-- TASK 8: {#if plr === 'all'} Kanal 05 {/if} -->
   {/if}

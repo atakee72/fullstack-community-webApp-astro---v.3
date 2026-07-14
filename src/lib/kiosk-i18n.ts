@@ -1543,7 +1543,16 @@ const de = {
   'kiez.zdw.read.airWeekMean': 'war die mittlere Luftgüte der letzten Woche — gemessen an der Nansenstraße.',
   'kiez.zdw.share': 'im Forum diskutieren →',
   'kiez.zdw.shareTitle': 'Zahl der Woche (KW {kw}): {value}',
-  'kiez.zdw.shareBody': 'Quelle: Kiez-Daten · Stand {stand} · {url} — Was bedeutet das für uns?'
+  'kiez.zdw.shareBody': 'Quelle: Kiez-Daten · Stand {stand} · {url} — Was bedeutet das für uns?',
+  'kiez.selector.hint': 'PLANUNGSRAUM WÄHLEN — ALLE KANÄLE FOLGEN DER AUSWAHL',
+  'kiez.selector.total': 'Gesamt',
+  'kiez.kanal.label': 'KANAL',
+  'kiez.k01.title': 'Bevölkerung',
+  'kiez.k02.title': 'Alter',
+  'kiez.k01.residents': 'EINWOHNER',
+  'kiez.k01.course': 'ENTWICKLUNG {range}',
+  'kiez.k01.byArea': 'NACH PLANUNGSRAUM',
+  'kiez.k01.singleHH': 'Einpersonen-Haushalte'
 } as const;
 
 // Key parity between de/en stays type-enforced; literal-VALUE parity does
@@ -2953,7 +2962,16 @@ const en: Dict = {
   'kiez.zdw.read.airWeekMean': 'was last week’s mean air quality — measured at Nansenstraße.',
   'kiez.zdw.share': 'discuss in the forum →',
   'kiez.zdw.shareTitle': 'Figure of the week (wk {kw}): {value}',
-  'kiez.zdw.shareBody': 'Source: Kiez data · as of {stand} · {url} — what does it mean for us?'
+  'kiez.zdw.shareBody': 'Source: Kiez data · as of {stand} · {url} — what does it mean for us?',
+  'kiez.selector.hint': 'PICK A PLANNING AREA — EVERY CHANNEL FOLLOWS',
+  'kiez.selector.total': 'Total',
+  'kiez.kanal.label': 'CHANNEL',
+  'kiez.k01.title': 'Population',
+  'kiez.k02.title': 'Age',
+  'kiez.k01.residents': 'RESIDENTS',
+  'kiez.k01.course': 'COURSE {range}',
+  'kiez.k01.byArea': 'BY PLANNING AREA',
+  'kiez.k01.singleHH': 'single-person households'
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };
