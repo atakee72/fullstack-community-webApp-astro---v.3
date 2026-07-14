@@ -1,6 +1,7 @@
 <script lang="ts">
   import { t } from '../../../lib/kiosk-i18n';
   import type { KiezStatsResponse, AirQualityResponse, AirHistoryResponse } from '../../../types/kiezStats';
+  import type { KiezKontext } from '../../../lib/kiez/kontextTypes';
   import { buildKiezViewModel } from '../../../lib/kiez/kiezViewModel';
   import KzSkeleton from './KzSkeleton.svelte';
   import KzFooter from './KzFooter.svelte';
@@ -19,6 +20,7 @@
   let air = $state<AirQualityResponse | null>(null);
   let airStatus = $state<'loading' | 'ready' | 'off'>('loading');
   let history = $state<AirHistoryResponse | null>(null);
+  let kontext = $state<KiezKontext | null>(null);
   let plr = $state('all');
 
   let seq = 0;
@@ -55,6 +57,12 @@
       if (res.ok) history = await res.json();
     } catch { /* sparkline simply absent */ }
   }
+  async function fetchKontext() {
+    try {
+      const res = await fetch('/api/kiez-kontext');
+      if (res.ok) kontext = await res.json();
+    } catch { /* chips simply absent */ }
+  }
 
   let started = $state(false);
   $effect(() => {
@@ -63,6 +71,7 @@
     refetchStats();
     fetchAir();
     fetchHistory();
+    fetchKontext();
   });
 
   const vm = $derived(stats?.demographics ? buildKiezViewModel(stats) : null);
@@ -109,7 +118,7 @@
         <KzKanalPop area={selectedArea} {vm} />
         <KzKanalAge area={selectedArea} {vm} />
         <KzKanalMig area={selectedArea} {vm} />
-        <KzKanalSocial area={selectedArea} {vm} {plr} kontext={null}>
+        <KzKanalSocial area={selectedArea} {vm} {plr} {kontext}>
           <!-- Berlin-Vergleich (novel §02) — Gesamt only, and only when a
                reference row exists for the latest MSS period with at least
                one non-null scope. Otherwise quietly absent, like the air

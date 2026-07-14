@@ -83,7 +83,7 @@
               ♨ {chips.length} {chips.length === 1 ? $t['kiez.k04.threads.one'] : $t['kiez.k04.threads.many']} →
             </span>
             {#each chips as chip (chip.id)}
-              <a href={chip.href} class="underline decoration-dotted underline-offset-2 hover:text-ink">{chip.title}</a>
+              <a href={chip.href} class="kz-kontext-chip-in underline decoration-dotted underline-offset-2 hover:text-ink">{chip.title}</a>
             {/each}
           </div>
         {/if}
