@@ -325,13 +325,17 @@ async function syncMSS(db: any) {
   const isOldLOR = periodNum < 2021;
   const matchCodes = isOldLOR ? OLD_PLR_CODES : PLR_CODES;
 
-  // Column mapping changed between reports:
-  // Pre-2023: S1=unemployment(4), S2=long-term-unemp(5), S3=transfer(6), S4=child-poverty(7)
-  // 2023+:    S1=unemployment(4), S2=child-poverty(5), S3=youth-unemp(6), S4=transfer(7)
+  // MSS S-column semantics — verified against the 2023 files' Erläuterungen
+  // sheets (PLR + Bezirke level, 2026-07-14): S1=Arbeitslosigkeit(4),
+  // S2(5)=pre-2023 Langzeitarbeitslose / 2023+ Kinder in alleinerziehenden
+  // Haushalten, S3=Transferbezug(6), S4=Kinderarmut(7) — SAME column order in
+  // all report years. The former "2023+ layout" branch (CP=5, TR=7) was a
+  // misreading and stored single-parent share as Kinderarmut and Kinderarmut
+  // as Transfer for period 2023.
   const COL_UNEMPLOYMENT = 4;
-  const COL_CHILD_POVERTY = periodNum < 2023 ? 7 : 5;
-  const COL_TRANSFER = periodNum < 2023 ? 6 : 7;
-  const COL_YOUTH = periodNum < 2023 ? 5 : 6;
+  const COL_CHILD_POVERTY = 7;
+  const COL_TRANSFER = 6;
+  const COL_S2 = 5; // stored as single_parent_children_rate for 2023+ only
 
   console.log('\n═══ MSS Social Index Sync ═══');
   if (isOldLOR) console.log(`  Using pre-2021 LOR codes: ${OLD_PLR_CODES.join(', ')}`);
@@ -388,10 +392,10 @@ async function syncMSS(db: any) {
     plr_name: string;
     unemployment_rate: number;
     child_poverty_rate: number;
-    youth_unemployment_rate: number;
     transfer_benefit_rate: number;
     status_index: number;
     dynamik_index: number;
+    single_parent_children_rate?: number;
   }
 
   const rows: SocialRow[] = [];
@@ -403,16 +407,19 @@ async function syncMSS(db: any) {
     // For pre-2021 data, store under old PLR code (aggregated differently)
     // but keep the original code so we can identify it
     const sdi = sdiMap.get(plr);
-    rows.push({
+    const socialRow: SocialRow = {
       plr_code: plr,
       plr_name: String(cellValue(row, 2) ?? plr),
       unemployment_rate: Math.round(toNumber(cellValue(row, COL_UNEMPLOYMENT)) * 100) / 100,
       child_poverty_rate: Math.round(toNumber(cellValue(row, COL_CHILD_POVERTY)) * 100) / 100,
-      youth_unemployment_rate: Math.round(toNumber(cellValue(row, COL_YOUTH)) * 100) / 100,
       transfer_benefit_rate: Math.round(toNumber(cellValue(row, COL_TRANSFER)) * 100) / 100,
       status_index: sdi?.status ?? 0,
       dynamik_index: sdi?.dynamik ?? 0,
-    });
+    };
+    if (periodNum >= 2023) {
+      socialRow.single_parent_children_rate = Math.round(toNumber(cellValue(row, COL_S2)) * 100) / 100;
+    }
+    rows.push(socialRow);
   }
 
   console.log(`  Matched ${rows.length} of ${matchCodes.length} PLR areas`);
@@ -432,7 +439,7 @@ async function syncMSS(db: any) {
   for (const row of rows) {
     await collection.updateOne(
       { plr_code: row.plr_code, period },
-      { $set: { ...row, period, date: `${period}-12-31` } },
+      { $set: { ...row, period, date: `${period}-12-31` }, $unset: { youth_unemployment_rate: '' } },
       { upsert: true }
     );
     upserted++;
@@ -457,10 +464,9 @@ async function syncReference(db: any) {
     return;
   }
 
-  const periodNum = parseInt(period);
   const COL_UNEMPLOYMENT = 4;
-  const COL_CHILD_POVERTY = periodNum < 2023 ? 7 : 5;
-  const COL_TRANSFER = periodNum < 2023 ? 6 : 7;
+  const COL_CHILD_POVERTY = 7; // S4 Kinderarmut — same order in all report years
+  const COL_TRANSFER = 6;      // S3 Transferbezug
 
   console.log('\n═══ MSS Reference Sync (Bezirke) ═══');
   const workbook = await downloadXlsx(url);

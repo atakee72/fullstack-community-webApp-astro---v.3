@@ -34,10 +34,11 @@ export interface KiezSocialDoc {
   period: string; // e.g. "2023"
   unemployment_rate: number;
   child_poverty_rate: number;
-  youth_unemployment_rate: number;
   transfer_benefit_rate: number;
   status_index: number;
   dynamik_index: number;
+  /** 2023+ only: S2 — share of children in single-parent households (NOT poverty). Pre-2023 S2 (Langzeitarbeitslose) is not stored. */
+  single_parent_children_rate?: number;
 }
 
 /** MongoDB doc in `schillerkiez_reference` — Berlin/Neukölln yardstick figures for the Berlin-Vergleich module (novel §02). Imported per MSS period from the Bezirke-level share table; strictly 1:1 per period, never back-filled. */
