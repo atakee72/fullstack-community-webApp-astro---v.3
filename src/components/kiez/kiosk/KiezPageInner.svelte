@@ -92,7 +92,7 @@
     <section class="px-5 py-12 lg:px-9">
       <div class="rounded-lg border-[1.5px] border-dashed border-[var(--k-danger)] px-5 py-6 text-center">
         <p class="font-serif italic text-[17px] text-[var(--k-ink-soft)]">{$t['kiez.state.error.title']}</p>
-        <p class="mt-1.5 font-mono text-[10px] text-[var(--k-ink-mute)]">{errorDetail || $t['kiez.state.error.network']} · /api/kiez-stats</p>
+        <p class="mt-1.5 font-dmmono text-[10px] text-[var(--k-ink-mute)]">{errorDetail || $t['kiez.state.error.network']} · /api/kiez-stats</p>
         <button
           class="mt-3 min-h-[44px] rounded-full bg-[var(--k-ink)] px-5 py-2 text-[13px] font-bold text-[var(--k-paper)]"
           onclick={refetchStats}

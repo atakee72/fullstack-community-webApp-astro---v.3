@@ -18,7 +18,7 @@
   // (year spacing + LOR-2021 boundary position) still ports the design's
   // exact fixed-step pixel math, since that's purely a layout constant tied
   // to the current 6-period (2013–2023) sync cadence, not a data range.
-  import { t, locale } from '../../../lib/kiosk-i18n';
+  import { t } from '../../../lib/kiosk-i18n';
   import type { KiezVM } from '../../../lib/kiez/kiezViewModel';
   import KzKanal from './KzKanal.svelte';
   import KzGrid from './primitives/KzGrid.svelte';
