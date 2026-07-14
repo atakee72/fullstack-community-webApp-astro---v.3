@@ -3,6 +3,7 @@
   import type { KiezStatsResponse, AirQualityResponse, AirHistoryResponse } from '../../../types/kiezStats';
   import KzSkeleton from './KzSkeleton.svelte';
   import KzFooter from './KzFooter.svelte';
+  import KzInstrumentStrip from './KzInstrumentStrip.svelte';
 
   let stats = $state<KiezStatsResponse | null>(null);
   let statsStatus = $state<'loading' | 'ready' | 'error'>('loading');
@@ -64,7 +65,7 @@
 </script>
 
 <div class="mx-auto w-full max-w-[1280px]">
-  <!-- TASK 4: <KzInstrumentStrip {air} {airStatus} {history} /> — renders in ALL stats states (independent sources) -->
+  <KzInstrumentStrip {air} {airStatus} {history} />
 
   {#if statsStatus === 'loading'}
     <KzSkeleton />
