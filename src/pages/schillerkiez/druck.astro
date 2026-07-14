@@ -1,0 +1,563 @@
+---
+// Printable Datenarchiv "Kiez in Zahlen" — Kiez-Daten Plan B Task 10. Public,
+// unauthenticated A4 riso one-pager: hallway pinboard, Kiezfest table, office
+// visit. Same print-CSS mechanics as steckbrief.astro (Plan B Task 6, the A6
+// Steckbrief card) — a plain print-CSS route, no PDF backend, native browser
+// print. Design source: design/handoffs/design_handoff_kiezdaten/jsx/
+// kiosk-kiezdaten-novel.jsx:191-243 (§03 Datenarchiv A4 preview).
+//
+// v1 DE only for the SHEET content itself (a deliberately German print
+// artifact, same call as steckbrief.astro) — the kiosk i18n store is
+// client-side (localStorage), unreachable from a plain SSR .astro file. The
+// page CHROME (intro copy, print button, back link) is likewise static DE
+// here rather than pulled through the Svelte i18n store, mirroring
+// steckbrief.astro exactly.
+import KioskLayout from '../../layouts/KioskLayout.astro';
+import QRCode from 'qrcode';
+import { getTrustedBaseUrl } from '../../lib/auth/baseUrl';
+import { fetchMc042 } from '../../lib/kiez/blume';
+import { kzWobRect } from '../../lib/kiez/kzWobble';
+import type { KiezStatsResponse } from '../../types/kiezStats';
+
+// This route's entire purpose is a dated snapshot ("Stand-Datum ist Pflicht
+// auf dem Blatt — Papier altert") — same no-store call as schillerkiez.astro
+// (its client-side sibling), so the printed Stand is never served stale from
+// an intermediate cache.
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
+
+// Server-side self-fetch of the same public API the live dashboard uses.
+// Same-origin, constant path — no request input threaded into the URL.
+let stats: KiezStatsResponse | null = null;
+try {
+  const statsRes = await fetch(new URL('/api/kiez-stats', Astro.url.origin));
+  stats = statsRes.ok ? await statsRes.json() : null;
+} catch {
+  stats = null;
+}
+// Demographics is the load-bearing half of the sheet (tiles + age bars) — no
+// demographics doc yet (fresh DB) is functionally the same "nothing to
+// print" state as the fetch failing outright.
+const hasStats = !!stats?.demographics;
+
+// Air — independent source, same try/catch-to-null contract as the live
+// KzInstrumentStrip/§04 (a silent BLUME never takes the rest of the sheet
+// down with it). Grade labels mirror /api/kiez-air.ts's GRADE_LABELS
+// (duplicated here rather than imported — that file is a route handler
+// module, not a shared lib).
+const GRADE_LABELS = ['', 'sehr gut', 'gut', 'mäßig', 'schlecht', 'sehr schlecht'];
+let lqi: number | null = null;
+let lqiLabel = '';
+try {
+  const data = await fetchMc042();
+  const lqiComponent = data.find((d) => d.component === 'lqi');
+  if (lqiComponent?.grade != null) {
+    lqi = lqiComponent.grade;
+    lqiLabel = GRADE_LABELS[lqiComponent.grade] ?? '';
+  }
+} catch {
+  lqi = null;
+}
+
+// getTrustedBaseUrl() fails closed to '' in prod when NEXTAUTH_URL is unset
+// (see src/lib/auth/baseUrl.ts) — that fail-closed exists to protect EMAILED
+// links from host-header injection. This route only DISPLAYS a public URL
+// and encodes it into a QR code; nothing is sent anywhere, so a blank/
+// relative URL would just be a broken printed sheet, not a security issue.
+// `||`, not `??`: getTrustedBaseUrl's fail-closed value is '' (falsy, not
+// null/undefined) — matches steckbrief.astro's own fallback pattern.
+const base = getTrustedBaseUrl(Astro.request) || 'https://mahalle-das-kiezgesichterbuch.vercel.app';
+const publicUrl = `${base}/schillerkiez`;
+const publicUrlDisplay = publicUrl.replace(/^https?:\/\//, '');
+
+// SAFE to set:html below: qrSvg is generated server-side by the `qrcode`
+// library from `publicUrl`, a string WE built from our own trusted base +
+// a constant path — never from user-supplied input. Never reuse this
+// pattern with anything that echoes request/body input.
+const qrSvg = await QRCode.toString(publicUrl, {
+  type: 'svg',
+  margin: 0,
+  color: { dark: '#1b1a17', light: '#0000' },
+});
+
+// "STAND 31.12.2025" — static German per the design (this sheet is a German
+// print artifact, see file header). `lastUpdated` is an ISO calendar date
+// ("2025-12-31") with no time component, so parse/format at UTC noon-free —
+// straight day/month/year, no timezone conversion risk.
+function formatStand(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  return new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(d);
+}
+const stand = hasStats && stats!.lastUpdated ? formatStand(stats!.lastUpdated) : null;
+
+const fmtPct = (n: number) => `${String(n).replace('.', ',')} %`;
+
+// ── 2×2 headline tiles ──────────────────────────────────────────────────
+// JSX source pairs each tile as [big value, small category label]. The
+// air tile REPLACES the JSX's 1-Pers.-HH tile (singlePerson is always 0 in
+// our current data) — same [value, label] shape: value = "{lqi} · {label}"
+// (or "k.A." when BLUME is silent), category label = "Luftgüte".
+const populationLabel = hasStats ? stats!.demographics!.population.total.toLocaleString('de-DE') : '–';
+const planningAreas = hasStats ? stats!.plrAreas.length : 4;
+const ageU45 = hasStats ? stats!.demographics!.ageDistribution.find((e) => e.key === 'u45') : undefined;
+const ageShareValue = ageU45 ? fmtPct(ageU45.percentage) : '–';
+const airTileValue = lqi != null ? `${lqi} · ${lqiLabel}` : 'k.A.';
+
+const tiles = [
+  { value: populationLabel, label: 'Einwohner' },
+  { value: String(planningAreas), label: 'Planungsräume' },
+  { value: ageShareValue, label: '27–44 Jahre' },
+  { value: airTileValue, label: 'Luftgüte' },
+];
+
+// ── Age-distribution wobble bars (7 rows) ───────────────────────────────
+// `kzWobRect` (src/lib/kiez/kzWobble.ts) is a pure deterministic function —
+// same seed always yields the same hand-drawn path, so it renders fine
+// server-side with no client JS (bars survive print, unlike a canvas/DOM
+// chart). Riso ghost-fill + ink-outline pair, same two-pass technique as the
+// live dashboard's KzBar.svelte primitive, moss instead of that primitive's
+// per-series color (2-riso-color rule: ink + moss only on this sheet).
+const AGE_ROW_H = 17;
+const AGE_LABEL_W = 58;
+const AGE_BAR_MAX_W = 330;
+type AgeBarRow = { label: string; valueLabel: string; y: number; barW: number; barH: number; ghostPath: string; outlinePath: string };
+let ageBars: AgeBarRow[] = [];
+if (hasStats) {
+  const dist = stats!.demographics!.ageDistribution;
+  const maxPct = Math.max(...dist.map((e) => e.percentage), 1);
+  const barH = AGE_ROW_H - 6;
+  ageBars = dist.map((entry, i) => {
+    const w = (entry.percentage / (maxPct * 1.08)) * AGE_BAR_MAX_W;
+    const y = i * AGE_ROW_H + 3;
+    return {
+      label: entry.group,
+      valueLabel: fmtPct(entry.percentage),
+      y,
+      barW: w,
+      barH,
+      ghostPath: kzWobRect(AGE_LABEL_W + 1.4, y + 1, w, barH, i + 3),
+      outlinePath: kzWobRect(AGE_LABEL_W, y, w, barH, i + 10),
+    };
+  });
+}
+const ageSvgH = ageBars.length * AGE_ROW_H + 6;
+
+// ── Social indicator lines ──────────────────────────────────────────────
+const socialLines = hasStats && stats!.social
+  ? [
+      { label: 'Arbeitslosenquote', value: fmtPct(stats!.social.unemploymentRate) },
+      { label: 'Kinderarmut (U15)', value: fmtPct(stats!.social.childPovertyRate) },
+      { label: 'Transferleistungen', value: fmtPct(stats!.social.transferBenefitRate) },
+    ]
+  : [];
+
+const title = 'Kiez in Zahlen — Mahalle';
+---
+
+<KioskLayout
+  {title}
+  description="Datenarchiv Schillerkiez: A4-Riso-Einseiter zum Ausdrucken — Einwohner, Alter, soziale Lage, Luftgüte."
+  page="schillerkiez"
+>
+  <div class="kiez-druck-page">
+    <div class="kiez-druck-intro">
+      <p class="kiez-druck-kicker">MAHALLE · KIEZ-DATEN</p>
+      <h1 class="kiez-druck-heading">Ein Kiez zum <em>Anfassen</em></h1>
+      <p class="kiez-druck-sub">
+        A4, druckt sich direkt aus diesem Bildschirm — fürs Schwarze Brett, den Kiezfest-Tisch, den Amtstermin.
+      </p>
+      <div class="kiez-druck-actions">
+        <button type="button" class="kiez-druck-print-btn" onclick="window.print()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 9V2h12v7" />
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" />
+          </svg>
+          Drucken
+        </button>
+        <a href="/schillerkiez" class="kiez-druck-back-link">← zurück zu den Kiez-Daten</a>
+      </div>
+    </div>
+
+    <div class="kiez-sheet-frame">
+      <div class="kiez-sheet" id="kiez-sheet">
+        <div class="kiez-sheet__head">
+          <div class="kiez-sheet__kicker">KIEZ IN ZAHLEN{stand && ` · STAND ${stand}`}</div>
+          <h2 class="kiez-sheet__title">Schillerkiez<span class="kiez-sheet__title-em">, gemessen</span></h2>
+        </div>
+
+        {hasStats ? (
+          <>
+            <div class="kiez-sheet__tiles">
+              {tiles.map((tile) => (
+                <div class="kiez-sheet__tile">
+                  <div class="kiez-sheet__tile-value">{tile.value}</div>
+                  <div class="kiez-sheet__tile-label">{tile.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div class="kiez-sheet__section-label">Altersverteilung</div>
+            <svg viewBox={`0 0 ${AGE_LABEL_W + AGE_BAR_MAX_W + 60} ${ageSvgH}`} class="kiez-sheet__age-svg">
+              {ageBars.map((row) => (
+                <g>
+                  <text
+                    x={AGE_LABEL_W - 6}
+                    y={row.y + row.barH / 2 + 4}
+                    text-anchor="end"
+                    font-family="var(--k-font-mono)"
+                    font-size="9.5"
+                    fill="#1b1a17"
+                  >{row.label}</text>
+                  <path d={row.ghostPath} fill="#6b8a4a" opacity="0.5" />
+                  <path d={row.outlinePath} fill="none" stroke="#1b1a17" stroke-width="1.3" />
+                  <text
+                    x={AGE_LABEL_W + row.barW + 8}
+                    y={row.y + row.barH / 2 + 4}
+                    font-family="var(--k-font-mono)"
+                    font-size="9"
+                    fill="#1b1a17"
+                  >{row.valueLabel}</text>
+                </g>
+              ))}
+            </svg>
+
+            <div class="kiez-sheet__section-label">Soziale Lage</div>
+            <div class="kiez-sheet__social">
+              {socialLines.map((line) => (
+                <div class="kiez-sheet__social-row">
+                  <span class="kiez-sheet__social-label">{line.label}</span>
+                  <span class="kiez-sheet__social-value">{line.value}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p class="kiez-sheet__error">Zahlen derzeit nicht verfügbar.</p>
+        )}
+
+        <div class="kiez-sheet__footer">
+          <div class="kiez-sheet__footer-text">
+            AfS · MSS · BLUME<br />{publicUrlDisplay}
+          </div>
+          <div class="kiez-sheet__qr" aria-hidden="true">
+            <Fragment set:html={qrSvg} />
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="kiez-druck-caption">A4 · HOCHFORMAT · 210 × 297 MM</p>
+  </div>
+</KioskLayout>
+
+<style>
+  /* ─── Screen layout (print-preview shell) ─────────────────────────── */
+  .kiez-druck-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 16px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .kiez-druck-intro {
+    text-align: center;
+    max-width: 560px;
+    margin-bottom: 40px;
+  }
+
+  .kiez-druck-kicker {
+    font-family: var(--k-font-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--k-moss);
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+
+  .kiez-druck-heading {
+    font-family: var(--k-font-display);
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 10px;
+    color: var(--k-ink);
+  }
+
+  .kiez-druck-heading em {
+    font-family: var(--k-font-serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--k-moss);
+  }
+
+  .kiez-druck-sub {
+    font-family: var(--k-font-serif);
+    font-style: italic;
+    font-size: 14.5px;
+    color: var(--k-ink-soft);
+    line-height: 1.5;
+    margin: 0 0 22px;
+  }
+
+  .kiez-druck-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .kiez-druck-print-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: var(--k-ink);
+    color: var(--k-paper);
+    border: 1.5px solid var(--k-ink);
+    border-radius: 999px;
+    font-family: var(--k-font-display);
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 2px 2px 0 var(--k-moss);
+    cursor: pointer;
+  }
+
+  .kiez-druck-back-link {
+    font-family: var(--k-font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--k-ink-mute);
+    text-decoration: underline;
+    text-decoration-style: dashed;
+    text-underline-offset: 4px;
+  }
+
+  .kiez-sheet-frame {
+    position: relative;
+  }
+
+  .kiez-druck-caption {
+    font-family: var(--k-font-mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--k-ink-mute);
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  /* ─── The sheet — 210×297mm A4, physical print units ───────────────── */
+  .kiez-sheet {
+    width: 210mm;
+    min-height: 297mm;
+    box-sizing: border-box;
+    background: #f9f4e6;
+    border: 2px solid var(--k-ink);
+    box-shadow: 3px 3px 0 var(--k-moss);
+    padding: 16mm 16mm 14mm;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kiez-sheet__head {
+    border-bottom: 2px solid var(--k-ink);
+    padding-bottom: 10px;
+  }
+
+  .kiez-sheet__kicker {
+    font-family: var(--k-font-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--k-moss);
+    font-weight: 500;
+  }
+
+  .kiez-sheet__title {
+    font-family: var(--k-font-display);
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 4px 0 0;
+    color: var(--k-ink);
+  }
+
+  .kiez-sheet__title-em {
+    font-family: var(--k-font-serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--k-moss);
+  }
+
+  .kiez-sheet__tiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .kiez-sheet__tile {
+    border: 1.5px solid var(--k-ink);
+    border-radius: 4px;
+    padding: 10px 14px;
+  }
+
+  .kiez-sheet__tile-value {
+    font-family: var(--k-font-mono);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--k-ink);
+  }
+
+  .kiez-sheet__tile-label {
+    font-family: var(--k-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--k-ink-mute);
+    margin-top: 2px;
+  }
+
+  .kiez-sheet__section-label {
+    font-family: var(--k-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--k-ink-mute);
+    margin-top: 22px;
+    margin-bottom: 6px;
+  }
+
+  .kiez-sheet__age-svg {
+    width: 100%;
+    display: block;
+  }
+
+  .kiez-sheet__social {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .kiez-sheet__social-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1.5px dashed var(--k-rule);
+    padding-bottom: 6px;
+  }
+
+  .kiez-sheet__social-label {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--k-ink);
+  }
+
+  .kiez-sheet__social-value {
+    font-family: var(--k-font-mono);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--k-ink);
+  }
+
+  .kiez-sheet__error {
+    font-family: var(--k-font-serif);
+    font-style: italic;
+    font-size: 15px;
+    color: var(--k-ink-soft);
+    margin-top: 24px;
+  }
+
+  .kiez-sheet__footer {
+    position: absolute;
+    bottom: 12mm;
+    left: 16mm;
+    right: 16mm;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-top: 1.5px dashed var(--k-rule);
+    padding-top: 10px;
+  }
+
+  .kiez-sheet__footer-text {
+    font-family: var(--k-font-mono);
+    font-size: 9.5px;
+    color: var(--k-ink-mute);
+    line-height: 1.6;
+  }
+
+  .kiez-sheet__qr {
+    width: 64px;
+    height: 64px;
+    border: 1.5px solid var(--k-ink);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--k-paper-soft);
+    overflow: hidden;
+  }
+</style>
+
+<style is:global>
+  /* `qrSvg` is raw HTML injected via `set:html` — it never receives Astro's
+     scoped-style hash attribute, so a normal scoped `.kiez-sheet__qr svg
+     { ... }` rule (which Astro rewrites to require the hash on the final
+     matched element) would never match it. Needs a global rule. Same
+     precedent as steckbrief.astro:362-371. */
+  .kiez-sheet__qr svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Print isolation: hide everything on the page except the sheet itself.
+     `visibility` (not `display`) is deliberate — hidden ancestors keep their
+     layout box, so `.kiez-sheet-frame`'s `position: fixed` still works to
+     pull the (visible) sheet out to the page origin regardless of how much
+     invisible content (nav, intro, caption) sits above it in flow.
+     `body *` must live in a GLOBAL style block: `<body>` is rendered by
+     KioskLayout.astro, not this page, so Astro's scoped-style hash on a
+     plain (non is:global) `<style>` here would never match it. Same
+     precedent as steckbrief.astro:373-426. */
+  @media print {
+    @page {
+      /* A4, no `landscape` keyword — combining a size keyword with
+         `landscape` is invalid CSS and fails to parse. */
+      size: A4;
+      margin: 0;
+    }
+
+    body * {
+      visibility: hidden !important;
+    }
+
+    .kiez-sheet,
+    .kiez-sheet * {
+      visibility: visible !important;
+    }
+
+    /* !important is load-bearing here, not decorative: Astro's scoped CSS
+       (the plain, non-global <style> block above) rewrites its own
+       `.kiez-sheet-frame { position: relative }` to
+       `.kiez-sheet-frame[data-astro-cid-xxxxx] { position: relative }` — an
+       attribute selector that outranks this plain class selector even
+       though it's declared later and only inside @media print. Without
+       !important the fixed positioning silently loses and the sheet prints
+       wherever it naturally sits in the (still space-occupying, just
+       invisible) document flow instead of pinned to the page origin. */
+    .kiez-sheet-frame {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+    }
+
+    .kiez-sheet {
+      /* Same scoped-selector specificity issue as `.kiez-sheet-frame`
+         above (the screen rule sets `box-shadow: 3px 3px 0 var(--k-moss)`
+         on the astro-cid-qualified selector) — !important needed to win. */
+      box-shadow: none !important;
+      border-color: #1b1a17 !important;
+    }
+  }
+</style>
