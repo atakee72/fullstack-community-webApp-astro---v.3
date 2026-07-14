@@ -268,7 +268,7 @@ See `src/components/blog/CLAUDE.md` — full notes load when working in that sub
 - **Component**: `src/components/ui/PageHeader.astro` — animated title with fade-in + sweeping status bars
 - **Props**: `title`, `subtitle?`, `color?` (hex, defaults to wine `#814256`), `subtitleClass?` (defaults to `text-gray-600`)
 - **Animation**: `is:inline data-astro-rerun` script — re-triggers on every ViewTransitions navigation. Title fades in + slides up, then 3 decorative bars sweep in with staggered delays. Respects `prefers-reduced-motion`.
-- **Used on**: All main pages (`/`, `/calendar`, `/newsboard`, `/marketplace`, `/blog`, `/profile`, `/schillerkiez`). Blog uses `color="#ffffff" subtitleClass="text-white/80"` for dark background. Marketplace uses `color="#4b9aaa"` (teal). Schillerkiez uses `color="#6aab8e"` (green).
+- **Used on**: Remaining legacy main pages (`/`, `/calendar`, `/newsboard`, `/marketplace`, `/blog`, `/profile`). Blog uses `color="#ffffff" subtitleClass="text-white/80"` for dark background. Marketplace uses `color="#4b9aaa"` (teal). (`/schillerkiez` no longer uses PageHeader — it's on the kiosk system.)
 
 ### Glass Utility System
 Five opt-in CSS utilities in `global.css` layer the dark-glass look. Pair them as needed with standard Tailwind dark-glass classes (`bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] ...`).
