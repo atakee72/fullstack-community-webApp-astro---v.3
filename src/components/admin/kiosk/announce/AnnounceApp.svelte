@@ -2,15 +2,19 @@
   // Admin · Amtliche Mitteilungen — kiosk orchestrator.
   // Design: design/handoffs/design_handoff_announce/jsx/kiosk-admin-announce.jsx
   //
-  // Task 3 (this pass): read side — kicker/H1/counter, board + archive
-  // AnnCard lists, skeleton (state 01) + empty (state 02). The composer
-  // (left 460px column) and all write actions (edit/unpin/repin/delete)
-  // land in Task 4 — buttons/CTA render now, wired to no-ops.
-  import { onMount } from 'svelte';
+  // Task 3: read side — kicker/H1/counter, board + archive AnnCard
+  // lists, skeleton (state 01) + empty (state 02).
+  // Task 4 (this pass): composer (create + edit), optimistic pin
+  // displacement + undo, unpin/re-pin, delete confirm modal (state 05),
+  // and the board↔archive View Transition (`withMove`).
+  import { onMount, tick } from 'svelte';
   import { t, tStr, locale } from '../../../../lib/kiosk-i18n';
-  import { showError } from '../../../../utils/toast';
-  import { isPinned, fmtKickerDate, type AnnLang } from './annFormat';
+  import { showToast, showError } from '../../../../utils/toast';
+  import { isPinned, fmtKickerDate, truncate, type AnnLang } from './annFormat';
   import AnnCard from './AnnCard.svelte';
+  import AnnComposer from './AnnComposer.svelte';
+  import AdmModalShell from '../AdmModalShell.svelte';
+  import AdmActionBtn from '../AdmActionBtn.svelte';
 
   let { initialItems = [], adminName = '' }: { initialItems?: any[]; adminName?: string } = $props();
 
@@ -18,18 +22,52 @@
   let status = $state<'loading' | 'ready'>(initialItems.length > 0 ? 'ready' : 'loading');
   let items = $state<any[]>(initialItems);
 
+  let editing = $state<any | null>(null); // item loaded into composer
+  let saving = $state(false);
+  let composeError = $state(false);
+  let confirmDelete = $state<any | null>(null); // item pending delete modal
+  let composerTitle = $state('');
+  let composerBody = $state('');
+  let pendingTempId = $state<string | null>(null);
+  // Bumped after every successful create so the composer remounts blank
+  // even though `editing` stays null across repeated creates.
+  let composerResetKey = $state(0);
+
+  // seq-guard for GET fetches (initial load + post-mutation reconcile) —
+  // same pattern as NewsboardIndexInner.
+  let seq = 0;
+
   async function loadItems(): Promise<void> {
     status = 'loading';
+    const mySeq = ++seq;
     try {
       const res = await fetch('/api/admin/announcements', { credentials: 'include' });
       if (!res.ok) throw new Error(`status ${res.status}`);
       const json = await res.json();
+      if (mySeq !== seq) return;
       items = Array.isArray(json.items) ? json.items : [];
     } catch {
+      if (mySeq !== seq) return;
       items = [];
       showError($t['admin.ann.toast.loadError']);
     } finally {
-      status = 'ready';
+      if (mySeq === seq) status = 'ready';
+    }
+  }
+
+  // Background reconciliation after a successful mutation — reconciles
+  // author population / server-side displacement side-effects without
+  // flipping `status` (the optimistic state already looks right).
+  async function refetch(): Promise<void> {
+    const mySeq = ++seq;
+    try {
+      const res = await fetch('/api/admin/announcements', { credentials: 'include' });
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const json = await res.json();
+      if (mySeq !== seq) return;
+      items = Array.isArray(json.items) ? json.items : [];
+    } catch {
+      // silent — the optimistic state stands, next successful reconcile wins
     }
   }
 
@@ -70,11 +108,249 @@
     return () => mq.removeEventListener('change', update);
   });
 
-  // Write actions land in Task 4.
-  function noop(_item: any) {}
+  // ── Board↔archive displacement motion ───────────────────────────────────
+  // A CSS transition class can't animate a card crossing between the board
+  // and archive DOM subtrees — same-document View Transitions API instead.
+  // Every AnnCard wrapper below carries a stable view-transition-name so
+  // the browser can match old/new position across the mutation.
+  async function withMove(apply: () => void) {
+    const reduced =
+      typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // @ts-ignore — startViewTransition typing may lag
+    if (reduced || typeof document === 'undefined' || !document.startViewTransition) {
+      apply();
+      return;
+    }
+    // @ts-ignore — startViewTransition typing may lag
+    document.startViewTransition(async () => {
+      apply();
+      await tick();
+    });
+  }
 
-  // Task 4: scrolls to + focuses the composer's title field once it mounts.
-  function focusComposer() {}
+  // Scrolls the composer into view + focuses the title field. Used by the
+  // empty-state CTA and by "✎ bearbeiten" (edit prefill).
+  async function focusComposer() {
+    await tick();
+    const reduced =
+      typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const wrap = document.getElementById('ann-composer');
+    wrap?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    (document.getElementById('ann-composer-title') as HTMLInputElement | null)?.focus();
+  }
+
+  // ── Create (optimistic, state 03) ───────────────────────────────────────
+  async function handleCreateSubmit(title: string, body: string) {
+    composeError = false;
+    const prevItems = [...items];
+    const displaced = pinnedItem;
+    const displacedUntilISO = displaced ? new Date(displaced.pinnedUntil).toISOString() : null;
+    const tempId = 'tmp-' + crypto.randomUUID();
+    pendingTempId = tempId;
+
+    await withMove(() => {
+      if (displaced) {
+        items = items.map((it) => (it._id === displaced._id ? { ...it, pinnedUntil: null } : it));
+      }
+      items = [
+        {
+          _id: tempId,
+          title,
+          body,
+          pinnedUntil: new Date(Date.now() + 7 * 864e5).toISOString(),
+          createdAt: new Date().toISOString(),
+          editCount: 0,
+          _pending: true,
+        },
+        ...items,
+      ];
+    });
+
+    saving = true;
+
+    async function undoDisplacement() {
+      if (!displaced || !displacedUntilISO) return;
+      try {
+        const res = await fetch(`/api/admin/announcements/${displaced._id}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pinnedUntil: displacedUntilISO }),
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        await refetch();
+        showToast($t['admin.ann.toast.undone'], { type: 'success' });
+      } catch {
+        showError($t['admin.ann.toast.actionError']);
+      }
+    }
+
+    try {
+      const res = await fetch('/api/admin/announcements/create', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body, tags: [], images: [] }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const json = await res.json();
+
+      items = items.map((it) => (it._id === tempId ? json.announcement : it));
+      pendingTempId = null;
+      composerTitle = '';
+      composerBody = '';
+      composerResetKey += 1;
+      saving = false;
+
+      const canUndo = !!(displaced && displacedUntilISO && new Date(displacedUntilISO).getTime() > Date.now());
+      showToast(
+        displaced
+          ? tStr($t['admin.ann.toast.posted.replaced'], { title: truncate(displaced.title, 28) })
+          : $t['admin.ann.toast.posted'],
+        {
+          type: 'success',
+          ...(canUndo
+            ? { action: { label: $t['admin.ann.toast.undo'], onClick: undoDisplacement }, duration: 8000 }
+            : {}),
+        }
+      );
+
+      void refetch();
+    } catch {
+      await withMove(() => {
+        items = prevItems;
+      });
+      pendingTempId = null;
+      saving = false;
+      composeError = true;
+    }
+  }
+
+  // ── Unpin ────────────────────────────────────────────────────────────────
+  async function handleUnpin(item: any) {
+    const prevItems = [...items];
+    await withMove(() => {
+      items = items.map((it) => (it._id === item._id ? { ...it, pinnedUntil: null } : it));
+    });
+    try {
+      const res = await fetch(`/api/admin/announcements/${item._id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinnedUntil: null }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      showToast($t['admin.ann.toast.unpinned'], { type: 'info' });
+      void refetch();
+    } catch {
+      await withMove(() => {
+        items = prevItems;
+      });
+      showError($t['admin.ann.toast.actionError']);
+    }
+  }
+
+  // ── Re-pin ───────────────────────────────────────────────────────────────
+  async function handleRepin(item: any) {
+    const prevItems = [...items];
+    const other = pinnedItem;
+    const thatISO = new Date(Date.now() + 7 * 864e5).toISOString();
+    await withMove(() => {
+      if (other && other._id !== item._id) {
+        items = items.map((it) => (it._id === other._id ? { ...it, pinnedUntil: null } : it));
+      }
+      items = items.map((it) => (it._id === item._id ? { ...it, pinnedUntil: thatISO } : it));
+    });
+    try {
+      const res = await fetch(`/api/admin/announcements/${item._id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinnedUntil: thatISO }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      showToast($t['admin.ann.toast.repinned'], { type: 'success' });
+      void refetch();
+    } catch {
+      await withMove(() => {
+        items = prevItems;
+      });
+      showError($t['admin.ann.toast.actionError']);
+    }
+  }
+
+  // ── Edit ─────────────────────────────────────────────────────────────────
+  function handleEditClick(item: any) {
+    editing = item;
+    composerTitle = item.title;
+    composerBody = item.body;
+    composeError = false;
+    void focusComposer();
+  }
+
+  function handleCancelEdit() {
+    editing = null;
+    composerTitle = '';
+    composerBody = '';
+    composeError = false;
+  }
+
+  async function handleEditSubmit(title: string, body: string) {
+    if (!editing) return;
+    const targetId = editing._id;
+    composeError = false;
+    saving = true;
+    try {
+      const res = await fetch(`/api/admin/announcements/${targetId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const json = await res.json();
+      items = items.map((it) => (it._id === targetId ? json.announcement : it));
+      editing = null;
+      composerTitle = '';
+      composerBody = '';
+      saving = false;
+      showToast($t['admin.ann.toast.saved'], { type: 'success' });
+      void refetch();
+    } catch {
+      saving = false;
+      composeError = true;
+    }
+  }
+
+  function handleRetry() {
+    composeError = false;
+  }
+
+  // ── Delete (state 05) ────────────────────────────────────────────────────
+  function handleDeleteClick(item: any) {
+    confirmDelete = item;
+  }
+
+  function handleDeleteCancel() {
+    confirmDelete = null;
+  }
+
+  async function handleDeleteConfirm() {
+    if (!confirmDelete) return;
+    const target = confirmDelete;
+    confirmDelete = null;
+    try {
+      const res = await fetch(`/api/admin/announcements/${target._id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      items = items.filter((it) => it._id !== target._id);
+      showToast($t['admin.ann.toast.deleted'], { type: 'success' });
+    } catch {
+      showError($t['admin.ann.toast.actionError']);
+    }
+  }
 </script>
 
 <div class="mx-auto" style="max-width:1280px;">
@@ -96,11 +372,23 @@
   </section>
 
   <section class="px-4 pt-5 pb-8 md:px-9 md:pt-[22px] md:pb-8 grid grid-cols-1 md:[grid-template-columns:460px_1fr] gap-6 items-start">
-    <div class="relative">
+    <div class="relative" id="ann-composer">
       {#if status === 'loading'}
         <div class="ann-skel" style="width: 100%; height: 230px; border-radius: var(--k-radius-lg);"></div>
       {:else}
-        <!-- composer: Task 4 -->
+        {#key (editing?._id ?? 'new') + ':' + composerResetKey}
+          <AnnComposer
+            mode={editing ? 'edit' : 'create'}
+            initialTitle={editing ? composerTitle : ''}
+            initialBody={editing ? composerBody : ''}
+            currentPinTitle={pinnedItem?.title ?? null}
+            {saving}
+            errorState={composeError}
+            onSubmit={editing ? handleEditSubmit : handleCreateSubmit}
+            onCancel={editing ? handleCancelEdit : undefined}
+            onRetry={handleRetry}
+          />
+        {/key}
       {/if}
     </div>
 
@@ -127,17 +415,51 @@
       {:else}
         {#if pinnedItem}
           <div class="font-dmmono text-[10px] text-ink-mute tracking-[0.12em]">{$t['admin.ann.section.board']}</div>
-          <AnnCard item={pinnedItem} compact={compactCards} onEdit={noop} onUnpin={noop} onRepin={noop} onDelete={noop} />
+          <div style:view-transition-name={'ann-' + pinnedItem._id}>
+            <AnnCard
+              item={pinnedItem}
+              compact={compactCards}
+              pending={!!pinnedItem._pending}
+              onEdit={handleEditClick}
+              onUnpin={handleUnpin}
+              onRepin={handleRepin}
+              onDelete={handleDeleteClick}
+            />
+          </div>
         {/if}
         {#if archiveItems.length > 0}
           <div class="font-dmmono text-[10px] text-ink-mute tracking-[0.12em]" style="margin-top: {pinnedItem ? '10px' : '0'};">
             {$t['admin.ann.section.archive']}
           </div>
           {#each archiveItems as item (item._id)}
-            <AnnCard {item} compact={compactCards} onEdit={noop} onUnpin={noop} onRepin={noop} onDelete={noop} />
+            <div style:view-transition-name={'ann-' + item._id}>
+              <AnnCard
+                {item}
+                compact={compactCards}
+                onEdit={handleEditClick}
+                onUnpin={handleUnpin}
+                onRepin={handleRepin}
+                onDelete={handleDeleteClick}
+              />
+            </div>
           {/each}
         {/if}
       {/if}
     </div>
   </section>
 </div>
+
+{#if confirmDelete}
+  <AdmModalShell accent="var(--k-danger)" width={560} onClose={handleDeleteCancel}>
+    <h2 class="font-bricolage" style="margin: 0 0 8px; font-size: 22px; font-weight: 800; letter-spacing: -0.02em;">
+      {$t['admin.ann.modal.delete.title']}
+    </h2>
+    <p style="font-size: 13px; color: var(--k-ink-soft); line-height: 1.55; margin: 0 0 18px;">
+      {tStr($t['admin.ann.modal.delete.body'], { title: truncate(confirmDelete.title, 40) })}
+    </p>
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+      <AdmActionBtn variant="outline" onclick={handleDeleteCancel}>{$t['admin.ann.cta.cancel']}</AdmActionBtn>
+      <AdmActionBtn variant="danger" onclick={handleDeleteConfirm}>{$t['admin.ann.modal.delete.confirm']}</AdmActionBtn>
+    </div>
+  </AdmModalShell>
+{/if}

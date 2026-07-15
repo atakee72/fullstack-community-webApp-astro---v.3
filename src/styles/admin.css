@@ -97,6 +97,29 @@
   animation: annSweep 1.4s linear infinite;
 }
 
+/* ── 09 · Pending pin chip (announce composer, state 03) ─────────
+   Optimistic "📌 WIRD ANGEPINNT…" chip on a freshly-created,
+   not-yet-confirmed card — pulses until the POST resolves and the
+   temp item is swapped for the server-returned one.               */
+@keyframes annPending {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+.ann-pending-chip { animation: annPending 1.2s ease-in-out infinite; }
+
+/* ── 10 · Board ↔ archive displacement (view transition) ─────────
+   Task 4: pin/unpin/re-pin/undo move a card between the board and
+   archive sections — different DOM subtrees, so a CSS transition
+   class can't animate it. AnnounceApp wraps each mutation in the
+   View Transitions API (`withMove()`) and every AnnCard wrapper
+   carries a stable `view-transition-name` (`ann-<id>`); this rule
+   just sets the crossing's timing. No-op elsewhere until other
+   pages adopt view-transition-names of their own.                 */
+::view-transition-group(*) {
+  animation-duration: 220ms;
+  animation-timing-function: cubic-bezier(.2, .7, .3, 1);
+}
+
 /* ── Reduced motion ────────────────────────────────────────────
    Urgency must survive without animation: the urgent strap stays
    solid danger (color + border already carry it). Skeletons go
@@ -109,7 +132,8 @@
   .adm-modal-card,
   .adm-strike-new,
   .adm-toast,
-  .ann-skel {
+  .ann-skel,
+  .ann-pending-chip {
     animation: none;
   }
   .adm-card-settle { opacity: 0; }

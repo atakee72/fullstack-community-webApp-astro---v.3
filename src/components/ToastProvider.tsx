@@ -5,8 +5,8 @@ import ConfirmDialog from './ConfirmDialog';
 export default function ToastProvider() {
   useEffect(() => {
     const handler = (e: Event) => {
-      const { type, message, description, duration } = (e as CustomEvent).detail;
-      const opts = { description, duration };
+      const { type, message, description, duration, action } = (e as CustomEvent).detail;
+      const opts = { description, duration, action };
       switch (type) {
         case 'success': toast.success(message, opts); break;
         case 'error':   toast.error(message, opts); break;
@@ -40,7 +40,8 @@ export default function ToastProvider() {
             error: 'kiosk-toast--error',
             warning: 'kiosk-toast--warning',
             info: 'kiosk-toast--info',
-            closeButton: 'kiosk-toast__close'
+            closeButton: 'kiosk-toast__close',
+            actionButton: 'kiosk-toast__action'
           }
         }}
       />

@@ -5,6 +5,7 @@ interface ToastDetail {
   message: string;
   description?: string;
   duration?: number;
+  action?: { label: string; onClick: () => void };
 }
 
 export function showToast(message: string, options?: Partial<Omit<ToastDetail, 'message'>>) {

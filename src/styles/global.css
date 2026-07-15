@@ -781,6 +781,21 @@ option:disabled {
   line-height: 1;
   cursor: pointer;
 }
+/* Optional action button (e.g. announce "undo" toast) — ink-bordered
+   paper pill, mono, underlined-label feel per the announce JSX
+   (kiosk-admin-announce.jsx:298, "✓ angeschlagen … · rückgängig"). */
+.kiosk-toast__action {
+  margin-left: 8px;
+  background: var(--k-paper);
+  border: 1.5px solid var(--k-ink);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
 
 /* Italic-verb emphasis pattern — marketplace only.
    Markup writes <em>wechselt</em> or <span class="accent-italic">…</span>. */
