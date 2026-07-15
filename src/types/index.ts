@@ -119,6 +119,7 @@ export interface Announcement {
   // /api/announcements/create endpoint (Zod strips unknown keys).
   isOfficial?: boolean;
   pinnedUntil?: Date | null;
+  editCount?: number; // incremented by admin PATCH when title/body change
   // Timestamps
   createdAt?: Date;
   updatedAt?: Date;

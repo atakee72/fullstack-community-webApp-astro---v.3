@@ -71,7 +71,15 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       update.pinnedUntil = data.pinnedUntil === null ? null : new Date(data.pinnedUntil);
     }
 
-    await collection.updateOne({ _id: new ObjectId(id) }, { $set: update });
+    // Content edit (title/body) bumps the visible edit counter; pin/unpin
+    // and tag/image-only PATCHes don't count as "edited".
+    const contentEdited = data.title !== undefined || data.body !== undefined;
+    await collection.updateOne(
+      { _id: new ObjectId(id) },
+      contentEdited
+        ? { $set: update, $inc: { editCount: 1 } }
+        : { $set: update }
+    );
 
     const updated = await collection.findOne({ _id: new ObjectId(id) });
     const [populated] = await populateAuthors([updated as any]);
