@@ -12,9 +12,20 @@ import { ViewTransitions } from 'astro:transitions';
 export interface Props {
   title: string;
   adminName?: string;
+  wordmark?: string;   // masthead italic word — 'moderation' | 'amtliches' | …
+  backHref?: string;   // desktop back-link target
+  backLabel?: string;  // desktop back-link label
+  ribbonEcho?: string; // mono echo on the right of the internal-area ribbon
 }
 
-const { title, adminName = '' } = Astro.props;
+const {
+  title,
+  adminName = '',
+  wordmark = 'moderation',
+  backHref = '/',
+  backLabel = '← zurück zum Forum',
+  ribbonEcho = 'user.role === "admin"',
+} = Astro.props;
 
 const trimmedAdminName = adminName.trim();
 const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
@@ -45,7 +56,7 @@ const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
         style="background:var(--k-accent); color:var(--k-paper); padding:6px 36px; font-size:10px; letter-spacing:0.14em;"
       >
         <span>INTERNER BEREICH — NUR FÜR ADMINS SICHTBAR</span>
-        <span>user.role === "admin"</span>
+        <span>{ribbonEcho}</span>
       </div>
 
       <header
@@ -59,14 +70,14 @@ const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
           >m</div>
           <div>
             <div class="font-bricolage" style="font-size:22px; font-weight:800; letter-spacing:-0.03em; line-height:1;">
-              mahalle <span class="font-instrument" style="font-style:italic; font-weight:400; color:var(--k-accent);">moderation</span>
+              mahalle <span class="font-instrument" style="font-style:italic; font-weight:400; color:var(--k-accent);">{wordmark}</span>
             </div>
             <div class="font-dmmono" style="font-size:9px; color:var(--k-ink-mute); letter-spacing:0.1em; margin-top:2px;">SCHILLERKIEZ · NEUKÖLLN · ADMIN</div>
           </div>
         </div>
 
         <div class="flex items-center" style="gap:14px;">
-          <a href="/" class="font-dmmono no-underline" style="font-size:11px; color:var(--k-ink-mute);">← zurück zum Forum</a>
+          <a href={backHref} class="font-dmmono no-underline" style="font-size:11px; color:var(--k-ink-mute);">{backLabel}</a>
           <AuthLangToggle client:load />
           <div
             class="font-bricolage"
@@ -96,7 +107,7 @@ const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
             class="font-instrument"
             style="width:32px; height:32px; background:var(--k-accent); border-radius:50%; border:2px solid var(--k-ink); display:flex; align-items:center; justify-content:center; font-style:italic; font-size:19px; color:var(--k-paper);"
           >m</div>
-          <div class="font-bricolage" style="font-size:17px; font-weight:800; letter-spacing:-0.02em;">moderation</div>
+          <div class="font-bricolage" style="font-size:17px; font-weight:800; letter-spacing:-0.02em;">{wordmark}</div>
         </div>
 
         <AuthLangToggle client:load />
