@@ -114,9 +114,13 @@ scrolling.
 
 ## Druckbogen (print) — visibility-isolation recipe, with one deviation
 
-`src/styles/blog.css`'s `@media print` block follows the same
+`src/styles/blog-print.css`'s `@media print` block follows the same
 visibility-isolation pattern as `steckbrief.astro`/`druck.astro`: `body *` is
-hidden, `.bl-sheet` (and its subtree) stays visible. **Deliberate deviation**
+hidden, `.bl-sheet` (and its subtree) stays visible. That file is imported
+ONLY by `ArticleShell.astro` — never by the index/tag pages: only article
+routes have a `.bl-sheet`, so on any other page the isolation would hide
+everything and reveal nothing (printing `/blog` produced a blank sheet until
+this was scoped, July 2026). **Deliberate deviation**
 from those precedents: they pin their print sheet with `position: fixed`,
 which clips content past the first page — fine for their single-sheet cards,
 wrong for a multi-page article. The blog's `.bl-sheet` uses `position:
