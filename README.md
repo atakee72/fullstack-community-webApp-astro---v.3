@@ -71,7 +71,7 @@ The app is mid-migration from a **dark-glass** aesthetic (deep indigo `#0e1033` 
 | Admin announcements (`/admin/announcements`) | ✅ Kiosk (Svelte, own `AdminLayout`) |
 | Profile (`/profile`, `/nachbarn/[handle]`, `/steckbrief`) | ✅ Kiosk (Svelte) — complete (Plan A: own profile; Plan B: public neighbor profiles, e-mail/password change, account deletion) |
 | Kiez Data (`/schillerkiez`, `/schillerkiez/druck`) | ✅ Kiosk (Svelte) — legacy carousel dashboard removed |
-| Blog | 🚧 Legacy dark-glass |
+| Blog (`/blog`, `/blog/[slug]`, `/blog/tag/[tag]`) | ✅ Kiosk (Svelte, own `StandardLayout`/`HeroLayout`/`GalleryLayout`) — "Die Beilage", SSR on every route, legacy dark-glass blog removed |
 
 ### Page-accent rule (kiosk)
 Each migrated page has its own accent color used for kickers (mono-uppercase eyebrows) and carved-italic title accents:
@@ -86,7 +86,7 @@ Each migrated page has its own accent color used for kickers (mono-uppercase eye
 | Admin | Plum `#6f2f59` |
 | Profile | Ochre `#e8a53a` (shared with Auth) |
 | Kiez Data | Moss `#6b8a4a` |
-| Blog | TBD |
+| Blog | Rust `#a3552e` |
 
 Semantic accents stay constant across all kiosk surfaces (never swapped per page): live-now indicator (ochre dot), today indicator, weekend-day labels, required-field asterisks, compose step numbers (`01`, `02`, …), CTA wine-shadows, modal wine-shadows, the mobile wine FAB.
 
@@ -98,7 +98,7 @@ Semantic accents stay constant across all kiosk surfaces (never swapped per page
 - `GlassFilters.astro` — shared SVG `feTurbulence` filters for liquid-glass refraction (used by legacy `.glass-luxe*` utilities on unmigrated pages)
 
 ### Legacy dark-glass utilities (still in use on unmigrated pages)
-Utilities in `global.css`: `.dark-glass-bg`, `.dark-glass-gradient` (fixed background divs), `.carved-title` (beveled text with `--carved-accent` CSS var), `.glass-luxe`, `.glass-luxe-edge`, `.glass-smooth`, `.glass-smooth-edge`, `.glass-inner-glow`. Legacy per-page carved-title accents (unmigrated pages only): Blog=White-on-dark.
+Utilities in `global.css`: `.dark-glass-bg`, `.dark-glass-gradient` (fixed background divs), `.carved-title` (beveled text with `--carved-accent` CSS var), `.glass-luxe`, `.glass-luxe-edge`, `.glass-smooth`, `.glass-smooth-edge`, `.glass-inner-glow`. Blog is fully migrated as of July 2026 and no longer uses these.
 
 ### Original palette (used across both systems)
 - Teal: `#4b9aaa`

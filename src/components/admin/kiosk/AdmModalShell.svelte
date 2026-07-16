@@ -11,8 +11,7 @@
    * src/components/forum/kiosk/KioskReportModal.svelte conceptually — this
    * shell renders as a plain `fixed inset-0` div (not a native <dialog>,
    * per the brief) so scroll-lock is done manually via
-   * `document.body.style.overflow`, same technique as
-   * src/components/blog/ImageGallery.svelte's lightbox.
+   * `document.body.style.overflow`.
    *
    * Mount-lifetime = open-state: the parent conditionally renders this
    * component (`{#if item}`) rather than passing an `open` boolean, so

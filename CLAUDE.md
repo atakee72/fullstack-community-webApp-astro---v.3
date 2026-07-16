@@ -129,6 +129,9 @@ See `src/pages/api/news/CLAUDE.md` — full notes load when working in that subt
 ### Kiez Data Dashboard
 **Kiosk rebuild complete** (Tasks 1–11, July 2026): `/schillerkiez` moved from the legacy carousel dashboard to the kiosk design system — `src/pages/schillerkiez.astro` + `src/components/kiez/kiosk/` (Svelte islands, moss accent), plus a print route at `/schillerkiez/druck`. Full notes: `src/components/kiez/CLAUDE.md` (data pipeline, LOR codes, MSS column layout, air quality, trend backfills, kiosk architecture — orchestrator/states, view-model lib, Anwohner-Kontext, Berlin-Vergleich, druck route) load when working in that subtree.
 
+### Blog ("Die Beilage")
+**Kiosk migration complete** (July 2026): `/blog` moved from the legacy dark-glass blog (`BlogBaseLayout.astro` + `BlogSearch`/`ImageGallery`/`TagCloud`/`TagBarMobile`/`BlogCard` — all deleted, no trace remains) to the kiosk design system — `src/pages/blog/*` + `src/layouts/blog/*` (`StandardLayout`/`HeroLayout`/`GalleryLayout`) + `src/components/blog/kiosk/` (Svelte islands, rust accent), SSR on every route (no prerendering — see the area file for why). Full notes: `src/components/blog/CLAUDE.md` (architecture, island split, `beilage.ts` helpers, Druckbogen print recipe, draft gating, states matrix) load when working in that subtree.
+
 ## Database Collections
 - `users` - User accounts (includes `moderationStrikes`, `strikeHistory` (per-strike ledger: date/reason/contentType/contentId/reviewedBy), `isBanned` — ENFORCED: banned accounts cannot log in and all content-write APIs return 403 `account_banned` (see `src/lib/auth/banGuard.ts`); plus `role?: 'user' | 'admin'` — admin role unlocks `/admin/announcements`, the moderation queue, and the `isOfficial`-true admin-create endpoint; defaults to `'user'`; plus `handle?: string` — unique per-user slug (`[a-z0-9_]{3,20}`, see `src/lib/profile/handle.ts`), enforced by a **partial** unique index `users_handle_unique` (a full unique index would collide every handle-less user on the same implicit null key and break registration) — set at registration going forward, batch-backfilled for older accounts via `scripts/backfill-user-handles.ts`, and lazily self-healed on first profile load by `ensureHandle()` for any stragglers; plus `verified?: boolean` — interim rule, absent/undefined is treated as verified (mirrors the equivalent forum author-verification default), no real verification pipeline yet; plus `motto?: string` — optional Steckbrief line, own-view/print-only, never on the public profile; `pendingEmail?: string` — set mid e-mail-change, cleared on confirm/cancel; `passwordChangedAt?: Date` — stamped on password change/reset, invalidates JWTs whose `loginAt` predates it (other-device sign-out, see `auth.config.ts`'s `jwt` callback); `deletionScheduledAt?: Date` — 7-day account-deletion grace timestamp (`src/lib/auth/accountDeletion.ts`), cleared on undo; `dankeCrossedAt?: Date` — stamp-on-first-observation date the user's summed likes crossed 100 (Kiez-Chronik milestone, `src/lib/profile/chronik.ts`); `anonymized?: boolean` + `deletedAt?: Date` — set together by the day-7 deletion pipeline's tombstone step, replacing `name` with "Ehemaliges Mitglied" and unsetting email/password/image/userPicture/hobbies/handle/verified/emailVerified/roleBadge/role/motto/pendingEmail/dankeCrossedAt/deletionScheduledAt while KEEPING moderationStrikes/strikeHistory/isBanned/bannedAt/bannedReason/createdAt/passwordChangedAt — see `src/components/profile/kiosk/CLAUDE.md`'s "Account deletion" section for the full ordered pipeline)
 - `topics` - Forum posts (includes `moderationStatus`, `isUserReported`, `rejectionReason`, `images` fields)
@@ -240,9 +243,9 @@ See `src/components/blog/CLAUDE.md` — full notes load when working in that sub
 
 ### Splash Screen
 - `SplashScreen.astro` — plays logo video with fade-out and 3D CSS effect
-- **Page allowlist**: Only shows on main nav pages (`/`, `/blog`, `/newsboard`, `/calendar`, `/marketplace`, `/profile`, `/schillerkiez`). Sub-pages (e.g. `/blog/my-post`, `/login`) skip it entirely via pathname check.
+- **Page allowlist**: Only shows on main nav pages (`/`, `/newsboard`, `/calendar`, `/marketplace`, `/profile`, `/schillerkiez`). `/blog` was dropped from the allowlist when it migrated to the kiosk system (kiosk pages don't use `SplashScreen` — see `KioskLayout.astro`). Sub-pages (e.g. `/login`) skip it entirely via pathname check.
 - **Session-gated**: `sessionStorage['mahalle-splash-shown']` — shows once per session, skipped on subsequent main-page visits/reloads. Also skipped if `prefers-reduced-motion: reduce`.
-- Included in both `BaseLayout.astro` and `BlogBaseLayout.astro`
+- Included in `BaseLayout.astro`
 - Uses `<script is:inline data-astro-rerun>` for synchronous execution and ViewTransitions compatibility
 - Hidden by default (`display: none` in CSS) — JS shows it only on allowed pages to prevent flash-of-overlay
 - Dual-gate dismiss: waits for both video end AND `window.load` before fading out. Safety timeout bumped to 4s.
@@ -270,7 +273,7 @@ See `src/components/blog/CLAUDE.md` — full notes load when working in that sub
 - **Component**: `src/components/ui/PageHeader.astro` — animated title with fade-in + sweeping status bars
 - **Props**: `title`, `subtitle?`, `color?` (hex, defaults to wine `#814256`), `subtitleClass?` (defaults to `text-gray-600`)
 - **Animation**: `is:inline data-astro-rerun` script — re-triggers on every ViewTransitions navigation. Title fades in + slides up, then 3 decorative bars sweep in with staggered delays. Respects `prefers-reduced-motion`.
-- **Used on**: Remaining legacy main pages (`/`, `/calendar`, `/newsboard`, `/marketplace`, `/blog`, `/profile`). Blog uses `color="#ffffff" subtitleClass="text-white/80"` for dark background. Marketplace uses `color="#4b9aaa"` (teal). (`/schillerkiez` no longer uses PageHeader — it's on the kiosk system.)
+- **Used on**: Remaining legacy main pages (`/`, `/calendar`, `/newsboard`, `/marketplace`, `/profile`). Marketplace uses `color="#4b9aaa"` (teal). (`/schillerkiez` and `/blog` no longer use PageHeader — both are on the kiosk system.)
 
 ### Glass Utility System
 Five opt-in CSS utilities in `global.css` layer the dark-glass look. Pair them as needed with standard Tailwind dark-glass classes (`bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] ...`).
@@ -281,14 +284,14 @@ Five opt-in CSS utilities in `global.css` layer the dark-glass look. Pair them a
 - **`.glass-smooth`** — same shape as `glass-luxe` but **no SVG filter**: flat blur + tint, no wobble. Use when the wobble looks too fragmented or the surface doesn't need refraction.
 - **`.glass-smooth-edge`** — flat blur + tint masked to an edge frame. Use when you want a glass frame without the SVG cost.
 
-**Required helper component:** `GlassFilters.astro` (injected once in `BaseLayout` and `BlogBaseLayout`) defines three SVG filters — `#glass-distortion` (default, scale 60), `#glass-distortion-strong` (scale 110, for hover), `#glass-distortion-subtle` (low-frequency, heavy blur, scale 85 for organic curl without chunkiness). Without this component mounted, `.glass-luxe*` classes render as flat glass (SVG url() refs silently no-op).
+**Required helper component:** `GlassFilters.astro` (injected once in `BaseLayout`) defines three SVG filters — `#glass-distortion` (default, scale 60), `#glass-distortion-strong` (scale 110, for hover), `#glass-distortion-subtle` (low-frequency, heavy blur, scale 85 for organic curl without chunkiness). Without this component mounted, `.glass-luxe*` classes render as flat glass (SVG url() refs silently no-op).
 
 **Why `::after` instead of filtering the host:** `backdrop-filter` and `filter` create a containing block for `position: fixed` descendants (see Common Errors). Putting the filter on `::after` keeps the host a normal element, so modals inside still escape to the viewport. Also isolates `z-index` via `isolation: isolate`.
 
 **Reduced motion:** all `.glass-luxe*` variants drop the SVG filter under `prefers-reduced-motion: reduce` (flat glass fallback). Effect gracefully degrades — nothing disappears.
 
 ### Low-perf Device Detector
-Inline script in `<head>` of both `BaseLayout.astro` and `BlogBaseLayout.astro`. Runs before first paint, tags underpowered devices so heavy SVG filters degrade to flat glass.
+Inline script in `<head>` of `BaseLayout.astro`. Runs before first paint, tags underpowered devices so heavy SVG filters degrade to flat glass.
 
 ```js
 if ((navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) ||
@@ -347,7 +350,8 @@ Each main page has its own accent color used for **kickers** (mono-uppercase eye
 | Calendar | teal | `text-teal` (`#3f8f9f`) |
 | Admin | plum | `text-[#6f2f59]` via `--k-plum` |
 | Kiez-Daten | moss | `#6b8a4a` via `--k-moss` |
-| Newsboard / Marketplace / Profile / Blog | TBD | — |
+| Blog | rust | `#a3552e` via `--k-rust` |
+| Newsboard / Marketplace / Profile | TBD | — |
 
 When migrating a surface into kiosk, swap kicker + italic-accent text to the page's color. **Don't touch:** live-now indicators, today indicator, weekend day labels, required-field asterisks, compose step numbers (`01`, `02`, …), CTA wine-shadows, modal wine-shadows, or wine-filled FABs — those are semantic/sticker accents, not brand accent, and stay wine across all surfaces.
 
@@ -355,7 +359,7 @@ When migrating a surface into kiosk, swap kicker + italic-accent text to the pag
 
 ### SSR Compatibility
 - `typewriter-editor` requires dynamic import inside `onMount()` to avoid SSR errors - it accesses browser globals (KeyboardEvent) at module load time
-- **Prerendered pages + auth**: Middleware uses `context.isPrerendered` to skip `getSession()` on prerendered routes (avoids `Astro.request.headers` warning). `BlogBaseLayout` reads session from `Astro.locals.session` (populated by middleware) instead of calling `getSession` directly.
+- **Prerendered pages + auth**: Middleware uses `context.isPrerendered` to skip `getSession()` on prerendered routes (avoids `Astro.request.headers` warning). The legacy `BlogBaseLayout` (deleted in the kiosk blog migration, July 2026) used to read session from `Astro.locals.session` because `/blog` was prerendered; the kiosk `/blog` routes are SSR (no `prerender` export anywhere under `src/pages/blog`) and go through `KioskLayout`, which calls `getSession(Astro.request)` directly like every other kiosk page — see `src/components/blog/CLAUDE.md`'s "Decision 1" for why SSR was required.
 - **Navbar on prerendered pages**: `BaseLayout` calls `getSession(Astro.request)` which returns `null` at build time, so `user={undefined}` is baked into static HTML. `Navbar.tsx` compensates by fetching `/api/auth/session` client-side in `useEffect` when `initialUser` is undefined — ensures login state reflects reality on prerendered routes (e.g. `/schillerkiez`).
 - **QueryProvider hydration**: `src/providers/QueryProvider.tsx` renders the same JSX tree on SSR and client (`<QueryClientProvider>` only). The cache persister attaches imperatively via `persistQueryClient` in a client-only `useEffect` — if you wrap with `<PersistQueryClientProvider>` instead, the SSR/client trees differ and React hydration crashes, which cascades to Svelte `effect_orphan` errors on any `client:only="svelte"` island.
 
