@@ -72,7 +72,7 @@
   <button
     type="button"
     {onclick}
-    class="font-bricolage"
+    class="font-bricolage ann-card-action"
     style="
       background: transparent; color: {s.fg}; border: 1.5px solid {s.border};
       border-radius: var(--k-radius-pill); padding: 6px 13px;

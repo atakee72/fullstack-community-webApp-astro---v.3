@@ -1362,6 +1362,10 @@ const de = {
   'admin.ann.modal.delete.title': 'Mitteilung löschen?',
   'admin.ann.modal.delete.body': '„{title}“ verschwindet vom Brett und aus dem Forum. Das lässt sich nicht rückgängig machen.',
   'admin.ann.modal.delete.confirm': '✕ endgültig löschen',
+  'admin.ann.mobile.cta': '📌 neue Mitteilung anschlagen',
+  'admin.ann.mobile.hint': 'wird 7 Tage angepinnt · ersetzt die aktuelle Anheftung',
+  'admin.ann.mobile.board': 'AM BRETT',
+  'admin.ann.mobile.archive': 'ARCHIV',
 
   // ── Profile (Task 5 scaffold) — "Meldebogen" ────────────────────────────
   'profile.eyebrow.own': 'PROFIL · @{h} · IM KIEZ SEIT {y}',
@@ -2862,6 +2866,10 @@ const en: Dict = {
   'admin.ann.modal.delete.title': 'Delete announcement?',
   'admin.ann.modal.delete.body': '“{title}” disappears from the board and from the forum. This cannot be undone.',
   'admin.ann.modal.delete.confirm': '✕ delete permanently',
+  'admin.ann.mobile.cta': '📌 post a new announcement',
+  'admin.ann.mobile.hint': 'pinned for 7 days · replaces the current pin',
+  'admin.ann.mobile.board': 'ON THE BOARD',
+  'admin.ann.mobile.archive': 'ARCHIVE',
 
   // ── Profile (Task 5 scaffold) — "Meldebogen" ────────────────────────────
   'profile.eyebrow.own': 'PROFILE · @{h} · IN THE KIEZ SINCE {y}',

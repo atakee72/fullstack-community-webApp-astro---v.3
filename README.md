@@ -68,7 +68,7 @@ The app is mid-migration from a **dark-glass** aesthetic (deep indigo `#0e1033` 
 | Marketplace (`/marketplace`, `/marketplace/[id]`, `/marketplace/create`, `/marketplace/edit/[id]`) | ✅ Kiosk (Svelte) |
 | Auth (`/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`) | ✅ Kiosk (Svelte, own `AuthLayout`) |
 | Admin moderation (`/admin/moderation`) | ✅ Kiosk (Svelte, own `AdminLayout`) |
-| Admin announcements (`/admin/announcements`) | 🚧 Legacy dark-glass |
+| Admin announcements (`/admin/announcements`) | ✅ Kiosk (Svelte, own `AdminLayout`) |
 | Profile (`/profile`, `/nachbarn/[handle]`, `/steckbrief`) | ✅ Kiosk (Svelte) — complete (Plan A: own profile; Plan B: public neighbor profiles, e-mail/password change, account deletion) |
 | Kiez Data (`/schillerkiez`, `/schillerkiez/druck`) | ✅ Kiosk (Svelte) — legacy carousel dashboard removed |
 | Blog | 🚧 Legacy dark-glass |

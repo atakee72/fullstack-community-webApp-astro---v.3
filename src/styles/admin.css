@@ -107,6 +107,19 @@
 }
 .ann-pending-chip { animation: annPending 1.2s ease-in-out infinite; }
 
+/* ── 09b · Announce card footer actions — mobile tap target ──────
+   Task 5: AnnCard's ghost-button footer actions are visually tight
+   (padding: 6px 13px) on desktop, which is fine with a mouse but
+   under the 44px minimum tap target below `md`. Widen the box only
+   below the breakpoint — desktop chip sizing stays untouched.       */
+@media (max-width: 767px) {
+  .ann-card-action {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
 /* ── 10 · Board ↔ archive displacement (view transition) ─────────
    Task 4: pin/unpin/re-pin/undo move a card between the board and
    archive sections — different DOM subtrees, so a CSS transition

@@ -113,6 +113,20 @@
     return () => mq.removeEventListener('change', update);
   });
 
+  // Task 5 — mobile stack: below `md` the composer column collapses
+  // behind a full-width CTA. Same `AnnComposer` instance throughout —
+  // this just toggles whether its wrapper carries `hidden` on mobile.
+  // Desktop ignores this entirely (composer wrapper is `md:block` always).
+  let showMobileComposer = $state(false);
+
+  function handleMobileCtaClick() {
+    if (showMobileComposer) {
+      showMobileComposer = false;
+    } else {
+      void focusComposer();
+    }
+  }
+
   // ── Board↔archive displacement motion ───────────────────────────────────
   // A CSS transition class can't animate a card crossing between the board
   // and archive DOM subtrees — same-document View Transitions API instead.
@@ -136,6 +150,7 @@
   // Scrolls the composer into view + focuses the title field. Used by the
   // empty-state CTA and by "✎ bearbeiten" (edit prefill).
   async function focusComposer() {
+    showMobileComposer = true;
     await tick();
     const reduced =
       typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -358,13 +373,13 @@
 
 <div class="mx-auto" style="max-width:1280px;">
   <section class="px-4 pt-5 md:px-9 md:pt-[22px]">
-    <div class="font-dmmono text-[11px] tracking-[0.12em]" style="color: var(--k-accent);">{kicker}</div>
+    <div class="font-dmmono text-[10px] md:text-[11px] tracking-[0.12em]" style="color: var(--k-accent);">{kicker}</div>
     <h1
-      class="font-bricolage font-extrabold text-ink leading-[0.95] mt-1.5 text-[32px] md:text-[48px]"
+      class="font-bricolage font-extrabold text-ink leading-[0.95] mt-1.5 text-[28px] md:text-[48px]"
       style="letter-spacing: -0.035em;"
     >{$t['admin.ann.title.a']}<span class="font-instrument italic font-normal" style="color: var(--k-accent);">{$t['admin.ann.title.accent']}</span>{$t['admin.ann.title.b']}</h1>
     {#if status === 'ready'}
-      <div class="font-dmmono text-[11px] text-ink-mute mt-2.5 pb-3.5" style="border-bottom: 1px dashed var(--k-rule);">
+      <div class="font-dmmono text-[10px] md:text-[11px] text-ink-mute mt-2.5 pb-3.5" style="border-bottom: 1px dashed var(--k-rule);">
         {counter}
       </div>
     {:else}
@@ -376,23 +391,41 @@
 
   <section class="px-4 pt-5 pb-8 md:px-9 md:pt-[22px] md:pb-8 grid grid-cols-1 md:[grid-template-columns:460px_1fr] gap-6 items-start">
     <div class="relative" id="ann-composer">
-      {#if status === 'loading'}
-        <div class="ann-skel" style="width: 100%; height: 230px; border-radius: var(--k-radius-lg);"></div>
-      {:else}
-        {#key (editing?._id ?? 'new') + ':' + composerResetKey}
-          <AnnComposer
-            mode={editing ? 'edit' : 'create'}
-            initialTitle={editing ? composerTitle : ''}
-            initialBody={editing ? composerBody : ''}
-            currentPinTitle={pinnedItem?.title ?? null}
-            {saving}
-            errorState={composeError}
-            onSubmit={editing ? handleEditSubmit : handleCreateSubmit}
-            onCancel={editing ? handleCancelEdit : undefined}
-            onRetry={handleRetry}
-          />
-        {/key}
-      {/if}
+      <div class="md:hidden mb-3.5">
+        <button
+          type="button"
+          onclick={handleMobileCtaClick}
+          class="font-bricolage w-full"
+          style="
+            min-height: 48px; background: var(--k-ink); color: var(--k-paper);
+            border: var(--k-border-ink); border-radius: var(--k-radius-pill);
+            font-size: 14.5px; font-weight: 700; box-shadow: 2px 2px 0 var(--k-teal);
+            cursor: pointer;
+          "
+        >{$t['admin.ann.mobile.cta']}</button>
+        <div class="font-dmmono text-[9.5px] text-ink-mute text-center" style="margin-top: 6px;">
+          {$t['admin.ann.mobile.hint']}
+        </div>
+      </div>
+      <div class="{showMobileComposer ? '' : 'hidden'} md:block">
+        {#if status === 'loading'}
+          <div class="ann-skel" style="width: 100%; height: 230px; border-radius: var(--k-radius-lg);"></div>
+        {:else}
+          {#key (editing?._id ?? 'new') + ':' + composerResetKey}
+            <AnnComposer
+              mode={editing ? 'edit' : 'create'}
+              initialTitle={editing ? composerTitle : ''}
+              initialBody={editing ? composerBody : ''}
+              currentPinTitle={pinnedItem?.title ?? null}
+              {saving}
+              errorState={composeError}
+              onSubmit={editing ? handleEditSubmit : handleCreateSubmit}
+              onCancel={editing ? handleCancelEdit : undefined}
+              onRetry={handleRetry}
+            />
+          {/key}
+        {/if}
+      </div>
     </div>
 
     <div class="flex flex-col gap-3.5">
@@ -417,7 +450,8 @@
         </div>
       {:else}
         {#if pinnedItem}
-          <div class="font-dmmono text-[10px] text-ink-mute tracking-[0.12em]">{$t['admin.ann.section.board']}</div>
+          <div class="font-dmmono text-[10px] text-ink-mute tracking-[0.12em] md:hidden">{$t['admin.ann.mobile.board']}</div>
+          <div class="font-dmmono text-[10px] text-ink-mute tracking-[0.12em] hidden md:block">{$t['admin.ann.section.board']}</div>
           <div style:view-transition-name={'ann-' + pinnedItem._id}>
             <AnnCard
               item={pinnedItem}
@@ -431,7 +465,10 @@
           </div>
         {/if}
         {#if archiveItems.length > 0}
-          <div class="font-dmmono text-[10px] text-ink-mute tracking-[0.12em]" style="margin-top: {pinnedItem ? '10px' : '0'};">
+          <div class="font-dmmono text-[10px] text-ink-mute tracking-[0.12em] md:hidden" style="margin-top: {pinnedItem ? '10px' : '0'};">
+            {$t['admin.ann.mobile.archive']}
+          </div>
+          <div class="font-dmmono text-[10px] text-ink-mute tracking-[0.12em] hidden md:block" style="margin-top: {pinnedItem ? '10px' : '0'};">
             {$t['admin.ann.section.archive']}
           </div>
           {#each archiveItems as item (item._id)}
