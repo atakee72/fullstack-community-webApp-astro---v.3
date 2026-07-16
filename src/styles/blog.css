@@ -39,6 +39,14 @@
   font-size: 16px;
   color: var(--k-ink);
 }
+/* Hero (Aufmacherseite): calmer single-column read, larger leading */
+[data-page="blog"] .bl-prose--hero {
+  font-size: 15.5px;
+  line-height: 1.68;
+}
+[data-page="blog"] .bl-prose--hero > p:first-child {
+  font-size: 17px;
+}
 [data-page="blog"] .bl-prose p { margin: 0 0 14px; }
 [data-page="blog"] .bl-prose h2,
 [data-page="blog"] .bl-prose h3 {

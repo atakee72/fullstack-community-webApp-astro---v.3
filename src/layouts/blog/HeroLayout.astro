@@ -1,93 +1,25 @@
 ---
-import BlogBaseLayout from '../BlogBaseLayout.astro';
-import { Image } from 'astro:assets';
+// postLayout „hero" = Aufmacherseite: Vollbild-Cover, Ink-Titelband
+// mit Rost-Druckschatten, einspaltiger ruhiger Lesefluss.
 import type { CollectionEntry } from 'astro:content';
+import ArticleShell from '../../components/blog/kiosk/ArticleShell.astro';
+import BlogArticleHeader from '../../components/blog/kiosk/BlogArticleHeader.svelte';
+import type { BeilagePost, RelatedItem } from '../../lib/blog/beilage';
 
 interface Props {
-  post: CollectionEntry<'blog'>;
+  post: CollectionEntry<'blog'>;      // kept for compatibility; unused directly
+  meta: BeilagePost;
+  related: RelatedItem[];
+  rank: { no: number; of: number };
 }
-
-const { post } = Astro.props;
-const { title, description, pubDate, author, tags, cover, coverAlt } = post.data;
-
-const formattedDate = pubDate.toLocaleDateString('en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric'
-});
+const { meta, related, rank } = Astro.props;
 ---
 
-<BlogBaseLayout title={title} description={description}>
-  <!-- Hero section with cover image -->
-  {cover && (
-    <div class="relative h-[50vh] md:h-[60vh] w-full overflow-hidden">
-      <Image
-        src={cover}
-        alt={coverAlt || title}
-        class="w-full h-full object-cover"
-        widths={[640, 1024, 1536, 2048]}
-        sizes="100vw"
-      />
-      <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-      <div class="absolute bottom-0 left-0 right-0 p-6 md:p-12">
-        <div class="max-w-4xl mx-auto">
-          <div class="flex flex-wrap gap-2 mb-4">
-            {tags && tags.map((tag) => (
-              <a
-                href={`/blog/tag/${tag}`}
-                class="px-3 py-1 bg-white/20 backdrop-blur text-white rounded-full text-sm font-medium hover:bg-white/30 transition-colors"
-              >
-                {tag}
-              </a>
-            ))}
-          </div>
-          <h1 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg font-['Space_Grotesk',sans-serif]">{title}</h1>
-          <p class="text-lg md:text-xl text-white/90 mb-4">{description}</p>
-          <div class="flex items-center gap-4 text-white/80 text-sm">
-            <span>{author}</span>
-            <span>•</span>
-            <time datetime={pubDate.toISOString()}>{formattedDate}</time>
-          </div>
-        </div>
-      </div>
-    </div>
-  )}
-
-  <!-- Content -->
-  <main class="min-h-[calc(100vh-60vh)] py-8 md:py-12">
-    <div class="max-w-4xl mx-auto px-4 md:px-8">
-      <article class="bg-white/85 backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] p-6 md:p-10 -mt-12 relative z-10">
-        <div class="prose prose-lg max-w-none prose-headings:text-gray-900 prose-headings:font-['Space_Grotesk',sans-serif] prose-p:text-gray-700 prose-a:text-[#4b9aaa] prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-li:text-gray-700 prose-blockquote:text-gray-500 prose-blockquote:border-[#4b9aaa]/40 prose-code:text-[#4b9aaa] prose-hr:border-gray-200">
-          <slot />
-        </div>
-
-        <footer class="mt-10 pt-6">
-          <div class="flex flex-wrap items-center justify-between gap-4">
-            <a
-              href="/blog"
-              class="inline-flex items-center text-[#4b9aaa] hover:text-[#5bc8d8] font-medium"
-            >
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-              </svg>
-              Back to Blog
-            </a>
-
-            {tags && tags.length > 0 && (
-              <div class="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <a
-                    href={`/blog/tag/${tag}`}
-                    class="px-3 py-1 bg-[#4b9aaa]/20 text-[#4b9aaa] rounded-full text-sm font-medium hover:bg-[#4b9aaa]/30 transition-colors"
-                  >
-                    {tag}
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-        </footer>
-      </article>
-    </div>
-  </main>
-</BlogBaseLayout>
+<ArticleShell post={meta} related={related}>
+  <div slot="header">
+    <BlogArticleHeader client:only="svelte" post={meta} rank={rank} variant="hero" />
+  </div>
+  <div class="bl-prose bl-prose--hero max-w-[720px] mx-auto pt-2 pb-4">
+    <slot />
+  </div>
+</ArticleShell>

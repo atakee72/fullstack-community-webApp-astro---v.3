@@ -1,95 +1,30 @@
 ---
-import BlogBaseLayout from '../BlogBaseLayout.astro';
-import { Image } from 'astro:assets';
-import ImageGallery from '../../components/blog/ImageGallery.svelte';
+// postLayout „gallery" = Bildstrecke: nummerierte Bilder mit
+// Unterschriften (BILD nn / NN), kurze Fließtext-Strecke dazwischen.
 import type { CollectionEntry } from 'astro:content';
+import ArticleShell from '../../components/blog/kiosk/ArticleShell.astro';
+import BlogArticleHeader from '../../components/blog/kiosk/BlogArticleHeader.svelte';
+import BlogGalleryGrid from '../../components/blog/kiosk/BlogGalleryGrid.svelte';
+import type { BeilagePost, RelatedItem } from '../../lib/blog/beilage';
 
 interface Props {
-  post: CollectionEntry<'blog'>;
+  post: CollectionEntry<'blog'>;      // kept for compatibility; unused directly
+  meta: BeilagePost;
+  related: RelatedItem[];
+  rank: { no: number; of: number };
 }
-
-const { post } = Astro.props;
-const { title, description, pubDate, author, tags, galleryImages, cover, coverAlt } = post.data;
-
-const formattedDate = pubDate.toLocaleDateString('en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric'
-});
-
-// Prepare gallery images for the Svelte component
-const galleryImagesData = galleryImages?.map((img, index) => ({
-  src: img.src,
-  width: img.width,
-  height: img.height,
-  alt: `Gallery image ${index + 1}`
-})) || [];
+const { post, meta, related, rank } = Astro.props;
 ---
 
-<BlogBaseLayout title={title} description={description}>
-  <main class="min-h-[calc(100vh-60px)] py-8">
-    <div class="max-w-6xl mx-auto px-4 md:px-8">
-      <!-- Header -->
-      <header class="text-center mb-8">
-        <div class="flex flex-wrap justify-center gap-2 mb-4">
-          {tags && tags.map((tag) => (
-            <a
-              href={`/blog/tag/${tag}`}
-              class="px-3 py-1 bg-[#4b9aaa]/20 text-[#4b9aaa] rounded-full text-sm font-medium hover:bg-[#4b9aaa]/30 transition-colors"
-            >
-              {tag}
-            </a>
-          ))}
-        </div>
-        <h1 class="text-3xl md:text-5xl font-bold text-[#e8e6e1] mb-4 font-['Space_Grotesk',sans-serif]">{title}</h1>
-        <p class="text-lg md:text-xl text-white/80 mb-4 max-w-2xl mx-auto">{description}</p>
-        <div class="flex items-center justify-center gap-4 text-white/50 text-sm">
-          <span>{author}</span>
-          <span>•</span>
-          <time datetime={pubDate.toISOString()}>{formattedDate}</time>
-        </div>
-      </header>
-
-      <!-- Gallery -->
-      {galleryImagesData && galleryImagesData.length > 0 && (
-        <div class="mb-8">
-          <ImageGallery images={galleryImagesData} client:load />
-        </div>
-      )}
-
-      <!-- Content -->
-      <article class="bg-white/85 backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] p-6 md:p-10">
-        <div class="prose prose-lg max-w-none prose-headings:text-gray-900 prose-headings:font-['Space_Grotesk',sans-serif] prose-p:text-gray-700 prose-a:text-[#4b9aaa] prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-li:text-gray-700 prose-blockquote:text-gray-500 prose-blockquote:border-[#4b9aaa]/40 prose-code:text-[#4b9aaa] prose-hr:border-gray-200">
-          <slot />
-        </div>
-
-        <footer class="mt-10 pt-6">
-          <div class="flex flex-wrap items-center justify-between gap-4">
-            <a
-              href="/blog"
-              class="inline-flex items-center text-[#4b9aaa] hover:text-[#5bc8d8] font-medium"
-            >
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-              </svg>
-              Back to Blog
-            </a>
-
-            {tags && tags.length > 0 && (
-              <div class="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <a
-                    href={`/blog/tag/${tag}`}
-                    class="px-3 py-1 bg-[#4b9aaa]/20 text-[#4b9aaa] rounded-full text-sm font-medium hover:bg-[#4b9aaa]/30 transition-colors"
-                  >
-                    {tag}
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-        </footer>
-      </article>
-    </div>
-  </main>
-</BlogBaseLayout>
+<ArticleShell post={meta} related={related}>
+  <div slot="header" class="max-w-[940px] mx-auto px-5 lg:px-0 pt-8">
+    <BlogArticleHeader client:only="svelte" post={meta} rank={rank} variant="gallery" />
+    <BlogGalleryGrid
+      client:only="svelte"
+      images={(post.data.galleryImages ?? []).map((img, i) => ({ src: img.src, alt: post.data.coverAlt ? `${post.data.coverAlt} (${i + 1})` : undefined }))}
+    />
+  </div>
+  <div class="bl-prose max-w-[940px] mx-auto pt-2 pb-4">
+    <slot />
+  </div>
+</ArticleShell>
