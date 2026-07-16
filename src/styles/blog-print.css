@@ -1,0 +1,105 @@
+/* ══════════════════════════════════════════════════════════
+   blog-print.css — Druckbogen (A4) print rules for the Blog article route.
+   Imported ONLY by src/components/blog/kiosk/ArticleShell.astro (the sole
+   route with a .bl-sheet element). MUST NOT be imported by index/tag pages:
+   the visibility-isolation pattern below (`body * { visibility: hidden }`
+   with only `.bl-sheet` revealed) blanks any page that has no `.bl-sheet` —
+   moved out of blog.css after that exact regression printed /blog and
+   /blog/tag/* as blank pages (see CLAUDE.md "Druckbogen" section).
+   ══════════════════════════════════════════════════════════ */
+
+/* ─ Druckbogen (A4) · novel §05 — @media print on the article route ─
+   Visibility-isolation pattern from steckbrief.astro / druck.astro:
+   body* hidden, .bl-sheet subtree visible. DELIBERATE DEVIATION from
+   those precedents: they pin their sheet with position: FIXED, which
+   clips everything past the first page — fine for their single-sheet
+   cards, WRONG for a multi-page article. Here the sheet is ABSOLUTE
+   (anchored to body's top — body.k-paper-bg is position: relative) so
+   content flows across pages, and the 18mm margins live on @page so
+   EVERY page gets them (padding on the sheet would only pad page 1).
+   The !important still outranks Astro's [data-astro-cid-*] selectors.
+   These rules MUST load via a global style block — <body> belongs to
+   KioskLayout, not the page. 2-riso-color rule: ink + rust only. */
+@media print {
+  @page { size: A4; margin: 18mm; }
+
+  body * { visibility: hidden; }
+  .bl-sheet, .bl-sheet * { visibility: visible; }
+
+  .bl-sheet {
+    position: absolute !important;
+    top: 0; left: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Hero ink title band: ink backgrounds don't print — without this the
+     band's paper-colored text vanishes on white. Flip to outlined ink. */
+  .bl-sheet .bl-hero-band {
+    background: transparent !important;
+    color: var(--k-ink) !important;
+    border: 1pt solid var(--k-ink) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  .bl-sheet .bl-hero-band * { color: var(--k-ink) !important; }
+
+  /* Chrome hidden even inside the sheet: CTAs, rail, interactive rows */
+  .bl-sheet .bl-print-hide { display: none !important; }
+
+  /* Print furniture on */
+  .bl-print-head, .bl-print-foot { display: block !important; }
+  .bl-print-head {
+    font-family: var(--k-font-mono);
+    font-size: 7pt;
+    letter-spacing: 0.16em;
+    color: var(--k-ink-mute);
+    border-bottom: 1pt solid var(--k-ink);
+    padding-bottom: 3mm;
+    margin-bottom: 5mm;
+  }
+  .bl-print-foot {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-top: 0.5pt solid var(--k-ink);
+    padding-top: 3mm;
+    margin-top: 8mm;
+  }
+  .bl-print-stand {
+    font-family: var(--k-font-mono);
+    font-size: 7pt;
+    line-height: 1.6;
+    color: var(--k-ink-mute);
+  }
+  .bl-print-qr { width: 18mm; height: 18mm; }
+
+  /* Single serif column, 11pt, ink + rust only */
+  .bl-sheet .bl-prose,
+  .bl-sheet .bl-prose--cols,
+  .bl-sheet .bl-prose--hero {
+    columns: 1 !important;
+    font-family: var(--k-font-serif) !important;
+    font-size: 11pt !important;
+    line-height: 1.55 !important;
+    color: var(--k-ink) !important;
+    max-width: none !important;
+  }
+  .bl-sheet .bl-prose blockquote { color: var(--k-rust-deep) !important; }
+  .bl-sheet h1 { font-size: 20pt !important; }
+  .bl-sheet img {
+    max-width: 100% !important;
+    height: auto !important;
+    border: 1pt solid var(--k-ink) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+  .bl-sheet * { box-shadow: none !important; text-shadow: none !important; }
+  /* The STAND+QR footer flows after the content — on a multi-page
+     article it lands at the end of the last page, not pinned to a
+     page edge. Acceptable: the sheet metaphor loosens across pages. */
+}
+/* Injected QR SVG sizing — global on purpose (set:html output carries
+   no Astro scope hash), harmless outside print (parent is hidden). */
+.bl-print-qr svg { width: 100%; height: 100%; display: block; }
