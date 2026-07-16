@@ -28,7 +28,6 @@
   let confirmDelete = $state<any | null>(null); // item pending delete modal
   let composerTitle = $state('');
   let composerBody = $state('');
-  let pendingTempId = $state<string | null>(null);
   // Bumped after every successful create so the composer remounts blank
   // even though `editing` stays null across repeated creates.
   let composerResetKey = $state(0);
@@ -58,14 +57,20 @@
   // Background reconciliation after a successful mutation — reconciles
   // author population / server-side displacement side-effects without
   // flipping `status` (the optimistic state already looks right).
-  async function refetch(): Promise<void> {
+  async function refetch(opts: { animate?: boolean } = {}): Promise<void> {
     const mySeq = ++seq;
     try {
       const res = await fetch('/api/admin/announcements', { credentials: 'include' });
       if (!res.ok) throw new Error(`status ${res.status}`);
       const json = await res.json();
       if (mySeq !== seq) return;
-      items = Array.isArray(json.items) ? json.items : [];
+      if (opts.animate) {
+        await withMove(() => {
+          items = Array.isArray(json.items) ? json.items : [];
+        });
+      } else {
+        items = Array.isArray(json.items) ? json.items : [];
+      }
     } catch {
       // silent — the optimistic state stands, next successful reconcile wins
     }
@@ -178,7 +183,7 @@
           body: JSON.stringify({ pinnedUntil: displacedUntilISO }),
         });
         if (!res.ok) throw new Error(String(res.status));
-        await refetch();
+        await refetch({ animate: true });
         showToast($t['admin.ann.toast.undone'], { type: 'success' });
       } catch {
         showError($t['admin.ann.toast.actionError']);
@@ -196,7 +201,6 @@
       const json = await res.json();
 
       items = items.map((it) => (it._id === tempId ? json.announcement : it));
-      pendingTempId = null;
       composerTitle = '';
       composerBody = '';
       composerResetKey += 1;
@@ -220,7 +224,6 @@
       await withMove(() => {
         items = prevItems;
       });
-      pendingTempId = null;
       saving = false;
       composeError = true;
     }
@@ -347,6 +350,7 @@
       if (!res.ok) throw new Error(String(res.status));
       items = items.filter((it) => it._id !== target._id);
       showToast($t['admin.ann.toast.deleted'], { type: 'success' });
+      void refetch();
     } catch {
       showError($t['admin.ann.toast.actionError']);
     }
