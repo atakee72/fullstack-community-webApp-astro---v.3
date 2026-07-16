@@ -5,23 +5,52 @@ import KioskLayout from '../../../layouts/KioskLayout.astro';
 import BlogReadBar from './BlogReadBar.svelte';
 import BlogArticleFooter from './BlogArticleFooter.svelte';
 import BlogRelatedRail from './BlogRelatedRail.svelte';
-import type { BeilagePost, RelatedItem } from '../../../lib/blog/beilage';
+import QRCode from 'qrcode';
+import { getTrustedBaseUrl } from '../../../lib/auth/baseUrl';
+import { fmtDate, type BeilagePost, type RelatedItem } from '../../../lib/blog/beilage';
 
 interface Props {
   post: BeilagePost;
   related: RelatedItem[];
 }
 const { post, related } = Astro.props;
+
+// getTrustedBaseUrl fails closed to '' in prod when NEXTAUTH_URL is unset —
+// that protects EMAILED links; this route only prints a public URL into a
+// QR. Fall back to the canonical domain (same literal + rationale as
+// steckbrief.astro:41 — the Kiez final review marked mahalle.berlin the
+// forward-looking preference over druck's vercel.app literal).
+const baseUrl = getTrustedBaseUrl(Astro.request) || 'https://mahalle.berlin';
+const articleUrl = `${baseUrl}/blog/${post.id}`;
+// SAFE to set:html — QRCode.toString output for a same-origin URL we
+// construct ourselves; never user-supplied. Same pattern as steckbrief/druck.
+const qrSvg = await QRCode.toString(articleUrl, {
+  type: 'svg',
+  margin: 0,
+  color: { dark: '#1b1a17', light: '#0000' },
+});
+const standDate = fmtDate(post.pubDateISO, 'de'); // print sheet is DE-only, like both existing print surfaces
 ---
 
 <KioskLayout title={post.title} description={post.description} page="blog">
   <BlogReadBar client:only="svelte" title={post.title} minutes={post.minutes} />
   <div class="bl-sheet">
+    <div class="bl-print-head hidden">
+      <div class="bl-print-strap">DIE BEILAGE · SCHILLERKIEZ KURIER</div>
+    </div>
     <slot name="header" />
     <div class="max-w-[940px] mx-auto px-5 lg:px-0">
       <slot />
-      <BlogArticleFooter client:only="svelte" post={post} />
-      <BlogRelatedRail client:only="svelte" items={related} />
+      <div class="bl-print-hide">
+        <BlogArticleFooter client:only="svelte" post={post} />
+      </div>
+      <div class="bl-print-hide">
+        <BlogRelatedRail client:only="svelte" items={related} />
+      </div>
+    </div>
+    <div class="bl-print-foot hidden">
+      <div class="bl-print-stand">STAND: {standDate}<br />{articleUrl.replace(/^https?:\/\//, '')}</div>
+      <div class="bl-print-qr"><Fragment set:html={qrSvg} /></div>
     </div>
   </div>
 </KioskLayout>
