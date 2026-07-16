@@ -65,6 +65,20 @@
     `/topics/create?prefill_title=${encodeURIComponent($t['blog.call.prefillTitle'])}&prefill_tags=blogidee`
   );
 
+  // State-02 headline subject: whatever filters produced the empty result.
+  // A tag/month filter can zero out without any search query — quoting just
+  // `query` would render empty curly quotes „“ in that case.
+  const activeMonthLabel = $derived.by(() => {
+    if (!activeMonth) return null;
+    const g = months.find((m) => m.key === activeMonth);
+    return g ? fmtMonthLabel(g.iso, $locale) : null;
+  });
+  const emptySubject = $derived(
+    [query.trim() || null, activeTag ? `#${activeTag}` : null, activeMonthLabel]
+      .filter(Boolean)
+      .join(' · ')
+  );
+
   // ── Handlers (page resets live here — rune-safe, no effect loop) ──
   function toggleTag(tag: string) {
     activeTag = activeTag === tag ? null : tag;
@@ -292,7 +306,7 @@
       {#if filtered.length === 0}
         <div class="text-center" style="padding: 40px 20px;">
           <div class="font-bricolage" style="font-size: 22px; font-weight: 800;">
-            {$t['blog.search.none.pre']}<span class="font-instrument italic" style="color: var(--k-rust);">{query}</span>{$t['blog.search.none.post']}
+            {$t['blog.search.none.pre']}<span class="font-instrument italic" style="color: var(--k-rust);">{emptySubject}</span>{$t['blog.search.none.post']}
           </div>
           <div style="font-size: 13px; color: var(--k-ink-soft); margin: 6px 0 14px;">{tStr($t['blog.search.none.body'], { n: posts.length })}</div>
           <div class="flex justify-center flex-wrap" style="gap: 6px;">
@@ -303,9 +317,12 @@
         </div>
       {:else}
         {#if lead}
+          <!-- Stretched-link card: the <a> covers the whole card (z-1) so
+               body clicks navigate; only the interactive tag-chip row is
+               raised above it (z-2) so chips filter instead of navigating. -->
           <div class="relative bl-card-in">
             <a href={`/blog/${lead.id}`} class="absolute inset-0" style="z-index: 1;" aria-label={lead.title}></a>
-            <div class="relative grid grid-cols-1 md:grid-cols-[1.05fr_1fr]" style="z-index: 2; gap: 24px;">
+            <div class="grid grid-cols-1 md:grid-cols-[1.05fr_1fr]" style="gap: 24px;">
               <div>
                 <span
                   class="font-dmmono inline-block"
@@ -314,9 +331,9 @@
                 <h2 class="font-bricolage text-[21px] md:text-[33px]" style="font-weight: 800; letter-spacing: -0.025em; line-height: 1.04; margin: 12px 0 8px;">{lead.title}</h2>
                 <div class="font-instrument italic" style="font-size: 16.5px; line-height: 1.45; color: var(--k-ink-soft); margin-bottom: 10px;">{lead.description}</div>
                 <BlPostMeta post={lead} />
-                <div class="flex flex-wrap" style="gap: 5px; margin-top: 10px;">
+                <div class="relative flex flex-wrap" style="z-index: 2; gap: 5px; margin-top: 10px;">
                   {#each lead.tags as tag (tag)}
-                    <BlRubrikChip {tag} small />
+                    <BlRubrikChip {tag} small active={activeTag === tag} onclick={() => toggleTag(tag)} />
                   {/each}
                 </div>
               </div>

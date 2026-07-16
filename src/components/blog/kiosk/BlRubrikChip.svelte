@@ -3,8 +3,12 @@
    * Rubric/tag pill — shared atom reused by the rubric row, sidebar
    * Rubriken-Cloud, lead-card tag list, and state-02 exit chips.
    * Idle = ink border / transparent bg / ink text. Active = rust border /
-   * rust bg / paper text. Renders an <a> when `href` is given, otherwise a
-   * <button type="button"> wired to `onclick`. Transcribed from
+   * rust bg / paper text. Renders an <a> when `href` is given, a
+   * <button type="button"> when `onclick` is given, and a plain
+   * non-interactive <span> (no cursor-pointer, not focusable) when
+   * neither is provided — so no call site can accidentally render a
+   * dead-button affordance that swallows clicks and does nothing.
+   * Transcribed from
    * design/handoffs/design_handoff_blog/jsx/kiosk-blog.jsx `BlRubrik`.
    */
   let {
@@ -41,7 +45,7 @@
       color: {active ? 'var(--k-paper)' : 'var(--k-ink)'};
     "
   >{@render chipContent()}</a>
-{:else}
+{:else if onclick}
   <button
     type="button"
     {onclick}
@@ -55,4 +59,15 @@
       cursor: pointer;
     "
   >{@render chipContent()}</button>
+{:else}
+  <span
+    class="font-dmmono rounded-full whitespace-nowrap shrink-0 inline-block"
+    style="
+      font-size: {small ? '10px' : '10.5px'};
+      padding: {small ? '2px 8px' : '3px 10px'};
+      border: 1.5px solid {active ? 'var(--k-rust)' : 'var(--k-ink)'};
+      background: {active ? 'var(--k-rust)' : 'transparent'};
+      color: {active ? 'var(--k-paper)' : 'var(--k-ink)'};
+    "
+  >{@render chipContent()}</span>
 {/if}
