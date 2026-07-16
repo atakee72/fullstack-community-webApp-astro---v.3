@@ -30,35 +30,46 @@
   } = $props();
 </script>
 
+{#snippet heroBand()}
+  <div
+    class="bl-hero-band text-center"
+    style="
+      background: var(--k-ink);
+      color: var(--k-paper);
+      border: 2px solid var(--k-ink);
+      border-radius: var(--k-radius-lg);
+      box-shadow: 3px 3px 0 var(--k-rust);
+      padding: 20px 34px;
+      max-width: 760px;
+    "
+  >
+    <div class="font-dmmono" style="font-size: 9.5px; letter-spacing: 0.2em; color: var(--k-rust-on-ink);">
+      {$t['blog.strap.hero']} · {$t['blog.strap.rubrik']} {post.tags[0]?.toUpperCase()} · № {rank.no} / {rank.of}
+    </div>
+    <h1 class="font-bricolage text-[26px] lg:text-[38px]" style="font-weight: 800; letter-spacing: -0.025em; line-height: 1.02; margin: 8px 0 0;">{post.title}</h1>
+  </div>
+{/snippet}
+
 {#if variant === 'hero'}
-  <div class="relative">
-    <img
-      src={post.cover}
-      alt={post.coverAlt ?? ''}
-      class="w-full object-cover h-[260px] lg:h-[420px]"
-      style="border-bottom: 2px solid var(--k-ink);"
-    />
-    <div class="absolute left-0 right-0 flex justify-center" style="bottom: -74px;">
-      <div
-        class="bl-hero-band text-center"
-        style="
-          background: var(--k-ink);
-          color: var(--k-paper);
-          border: 2px solid var(--k-ink);
-          border-radius: var(--k-radius-lg);
-          box-shadow: 3px 3px 0 var(--k-rust);
-          padding: 20px 34px;
-          max-width: 760px;
-        "
-      >
-        <div class="font-dmmono" style="font-size: 9.5px; letter-spacing: 0.2em; color: var(--k-rust-on-ink);">
-          {$t['blog.strap.hero']} · {$t['blog.strap.rubrik']} {post.tags[0]?.toUpperCase()} · № {rank.no} / {rank.of}
-        </div>
-        <h1 class="font-bricolage text-[26px] lg:text-[38px]" style="font-weight: 800; letter-spacing: -0.025em; line-height: 1.02; margin: 8px 0 0;">{post.title}</h1>
+  {#if post.cover}
+    <div class="relative">
+      <img
+        src={post.cover}
+        alt={post.coverAlt ?? ''}
+        class="w-full object-cover h-[260px] lg:h-[420px]"
+        style="border-bottom: 2px solid var(--k-ink);"
+      />
+      <div class="absolute left-0 right-0 flex justify-center" style="bottom: -74px;">
+        {@render heroBand()}
       </div>
     </div>
-  </div>
-  <div class="text-center" style="padding-top: 98px;">
+  {:else}
+    <!-- coverless hero: no band overlap — render the ink title band in flow -->
+    <div class="flex justify-center px-5" style="padding-top: 24px;">
+      {@render heroBand()}
+    </div>
+  {/if}
+  <div class="text-center" style="padding-top: {post.cover ? '98px' : '24px'};">
     <div class="font-instrument italic" style="font-size: 19px; line-height: 1.45; color: var(--k-ink-soft); max-width: 780px; margin: 0 auto;">{post.description}</div>
     <div class="flex justify-center" style="margin-top: 10px;"><BlPostMeta {post} /></div>
     <div style="width: 56px; height: 3px; background: var(--k-rust); margin: 16px auto 0;"></div>
@@ -82,7 +93,7 @@
 
     <BlPostMeta {post} />
 
-    {#if variant === 'standard'}
+    {#if variant === 'standard' && post.cover}
       <div style="margin: 18px 0 6px; border: 1.5px solid var(--k-ink); border-radius: var(--k-radius-lg); overflow: hidden; box-shadow: 2px 2px 0 var(--k-ink);">
         <img src={post.cover} alt={post.coverAlt ?? ''} class="w-full object-cover h-[170px] lg:h-[330px]" />
       </div>
