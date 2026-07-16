@@ -1,32 +1,42 @@
 ---
-export const prerender = true;
-
+// /blog/[slug] — SSR (Decision 1). Drafts 404 in prod, visible in dev.
 import { getCollection, render } from 'astro:content';
 import StandardLayout from '../../layouts/blog/StandardLayout.astro';
-import HeroLayout from '../../layouts/blog/HeroLayout.astro';
-import GalleryLayout from '../../layouts/blog/GalleryLayout.astro';
+// TODO(Task 4): HeroLayout/GalleryLayout still have the old (incompatible)
+// props — restore these imports once Task 4 rewrites them.
+// import HeroLayout from '../../layouts/blog/HeroLayout.astro';
+// import GalleryLayout from '../../layouts/blog/GalleryLayout.astro';
+import { readingMinutes, relatedFor, rankOf, type BeilagePost } from '../../lib/blog/beilage';
 
-export async function getStaticPaths() {
-  const posts = await getCollection('blog');
-  return posts.map((post) => ({
-    params: { slug: post.id },
-    props: { post },
-  }));
-}
+const { slug } = Astro.params;
 
-const { post } = Astro.props;
-const { Content } = await render(post);
+const entries = await getCollection('blog', ({ data }) => !data.draft || !import.meta.env.PROD);
+const entry = entries.find((e) => e.id === slug);
+if (!entry) return new Response(null, { status: 404 });
 
-// Map layout names to components
-const layoutComponents = {
-  standard: StandardLayout,
-  hero: HeroLayout,
-  gallery: GalleryLayout,
-};
+const published = entries.filter((e) => !e.data.draft);
+const toMeta = (e: typeof entry): BeilagePost => ({
+  id: e.id,
+  title: e.data.title,
+  description: e.data.description,
+  pubDateISO: e.data.pubDate.toISOString(),
+  tags: e.data.tags ?? [],
+  layout: e.data.postLayout,
+  minutes: readingMinutes(e.body ?? ''),
+  cover: e.data.cover?.src,
+  coverAlt: e.data.coverAlt,
+});
+const all = published.map(toMeta);
+const meta = toMeta(entry);
+const related = relatedFor(meta.id, all);
+const rank = rankOf(meta.id, all);
 
-const Layout = layoutComponents[post.data.postLayout] || StandardLayout;
+const { Content } = await render(entry);
+// TODO(Task 4): point hero/gallery at their real layouts once rewritten.
+const layouts = { standard: StandardLayout, hero: StandardLayout, gallery: StandardLayout } as const;
+const Layout = layouts[entry.data.postLayout] ?? StandardLayout;
 ---
 
-<Layout post={post}>
+<Layout post={entry} meta={meta} related={related} rank={rank}>
   <Content />
 </Layout>

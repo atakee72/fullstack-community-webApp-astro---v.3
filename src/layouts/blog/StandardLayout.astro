@@ -1,82 +1,25 @@
 ---
-import BlogBaseLayout from '../BlogBaseLayout.astro';
+// postLayout „standard" = Zeitungsseite: Rubrik-Strap, Standfirst,
+// zweispaltiger Satz, Pull-Quote via blockquote-Styling.
 import type { CollectionEntry } from 'astro:content';
+import ArticleShell from '../../components/blog/kiosk/ArticleShell.astro';
+import BlogArticleHeader from '../../components/blog/kiosk/BlogArticleHeader.svelte';
+import type { BeilagePost, RelatedItem } from '../../lib/blog/beilage';
 
 interface Props {
-  post: CollectionEntry<'blog'>;
+  post: CollectionEntry<'blog'>;      // kept for compatibility; unused directly
+  meta: BeilagePost;
+  related: RelatedItem[];
+  rank: { no: number; of: number };
 }
-
-const { post } = Astro.props;
-const { title, description, pubDate, author, tags } = post.data;
-
-const formattedDate = pubDate.toLocaleDateString('en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric'
-});
+const { meta, related, rank } = Astro.props;
 ---
 
-<BlogBaseLayout title={title} description={description}>
-  <main class="min-h-[calc(100vh-60px)] py-8">
-    <div class="max-w-6xl mx-auto px-4 md:px-8">
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <!-- Main content -->
-        <article class="lg:col-span-3 bg-white/85 backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] p-6 md:p-10">
-          <header class="mb-8 pb-6">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-['Space_Grotesk',sans-serif]">{title}</h1>
-            <p class="text-lg text-gray-600">{description}</p>
-          </header>
-
-          <div class="prose prose-lg max-w-none prose-headings:text-gray-900 prose-headings:font-['Space_Grotesk',sans-serif] prose-p:text-gray-700 prose-a:text-[#4b9aaa] prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-li:text-gray-700 prose-blockquote:text-gray-500 prose-blockquote:border-[#4b9aaa]/40 prose-code:text-[#4b9aaa] prose-hr:border-gray-200">
-            <slot />
-          </div>
-        </article>
-
-        <!-- Sidebar -->
-        <aside class="lg:col-span-1">
-          <div class="bg-white/[0.06] backdrop-blur-sm border border-white/[0.15] border-t-white/30 border-l-white/25 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] p-6 sticky top-24">
-            <div class="space-y-4">
-              <div>
-                <span class="text-xs uppercase tracking-wider text-white/40 font-semibold">Published</span>
-                <p class="text-[#e8e6e1] font-medium">{formattedDate}</p>
-              </div>
-
-              <div>
-                <span class="text-xs uppercase tracking-wider text-white/40 font-semibold">Author</span>
-                <p class="text-[#e8e6e1] font-medium">{author}</p>
-              </div>
-
-              {tags && tags.length > 0 && (
-                <div>
-                  <span class="text-xs uppercase tracking-wider text-white/40 font-semibold">Tags</span>
-                  <div class="flex flex-wrap gap-2 mt-2">
-                    {tags.map((tag) => (
-                      <a
-                        href={`/blog/tag/${tag}`}
-                        class="px-3 py-1 bg-[#4b9aaa]/20 text-[#4b9aaa] rounded-full text-sm font-medium hover:bg-[#4b9aaa]/30 transition-colors"
-                      >
-                        {tag}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div class="pt-4">
-                <a
-                  href="/blog"
-                  class="inline-flex items-center text-[#4b9aaa] hover:text-[#5bc8d8] font-medium"
-                >
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                  Back to Blog
-                </a>
-              </div>
-            </div>
-          </div>
-        </aside>
-      </div>
-    </div>
-  </main>
-</BlogBaseLayout>
+<ArticleShell post={meta} related={related}>
+  <div slot="header" class="max-w-[940px] mx-auto px-5 lg:px-0 pt-8">
+    <BlogArticleHeader client:only="svelte" post={meta} rank={rank} variant="standard" />
+  </div>
+  <div class="bl-prose bl-prose--cols pt-2 pb-4">
+    <slot />
+  </div>
+</ArticleShell>

@@ -1,0 +1,31 @@
+---
+// Shared article scaffold for all 3 postLayouts. The wrapping div
+// `.bl-sheet` is the Druckbogen print-isolation root (Task 6).
+import KioskLayout from '../../../layouts/KioskLayout.astro';
+import BlogReadBar from './BlogReadBar.svelte';
+import BlogArticleFooter from './BlogArticleFooter.svelte';
+import BlogRelatedRail from './BlogRelatedRail.svelte';
+import type { BeilagePost, RelatedItem } from '../../../lib/blog/beilage';
+
+interface Props {
+  post: BeilagePost;
+  related: RelatedItem[];
+}
+const { post, related } = Astro.props;
+---
+
+<KioskLayout title={post.title} description={post.description} page="blog">
+  <BlogReadBar client:only="svelte" title={post.title} minutes={post.minutes} />
+  <div class="bl-sheet">
+    <slot name="header" />
+    <div class="max-w-[940px] mx-auto px-5 lg:px-0">
+      <slot />
+      <BlogArticleFooter client:only="svelte" post={post} />
+      <BlogRelatedRail client:only="svelte" items={related} />
+    </div>
+  </div>
+</KioskLayout>
+
+<style is:global>
+  @import '../../../styles/blog.css';
+</style>
