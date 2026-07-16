@@ -1,7 +1,15 @@
 /* ══════════════════════════════════════════════════════════
    blog.css — „Die Beilage" (kiosk blog surface)
-   Imported per-page (index, tag, ArticleShell) via
-   <style is:global>@import '../styles/blog.css';</style>
+   Imported per-page (index, tag, ArticleShell) via an is:global
+   style block that @imports this file. NOTE: never spell out a closing
+   style tag as a contiguous string anywhere in this file (even in a
+   comment) — Vite injects this CSS as the raw text content of a real
+   style element in both dev and prod, and the browser's HTML parser
+   treats that element as raw text: it ends the element at the first
+   occurrence of that closing sequence it sees, regardless of comments
+   or escaping, dumping the remainder of this file as visible text at
+   the top of <body>. (Confirmed 2026-07 while building the kiosk index
+   page — the doc comment used to spell the tag out literally.)
    Scope: [data-page="blog"] where the rule could leak.
    ══════════════════════════════════════════════════════════ */
 
