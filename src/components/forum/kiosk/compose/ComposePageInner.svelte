@@ -17,6 +17,9 @@
   // trigger the live-mode footer + slide-in for the new card on the
   // home page (handles the cross-page navigation case the
   // forumMutations.ts in-memory `lastSubmittedAt` writable can't span).
+  //
+  // `?prefill_tags` (comma-separated) seeds the tag field — consumed by
+  // the blog „Die Beilage" Aufruf CTA (opens compose pre-tagged #blogidee).
 
   import ComposeForm, { type ComposeValues } from './ComposeForm.svelte';
   import ComposePreview from './ComposePreview.svelte';
@@ -79,12 +82,19 @@
         const sp = new URLSearchParams(window.location.search);
         const pt = sp.get('prefill_title');
         const pb = sp.get('prefill_body');
-        if (pt || pb) {
+        const ptags = sp.get('prefill_tags');
+        // Mirrors ComposeForm's own addTag() rules exactly (lowercase, strip
+        // leading '#', 3-tag cap) plus a safe charset/length whitelist so a
+        // prefilled tag can never be a value the form itself would reject.
+        const tags = ptags
+          ? ptags.split(',').map((t) => t.trim().replace(/^#/, '').toLowerCase()).filter((t) => /^[a-zäöüß0-9-]{2,24}$/.test(t)).slice(0, 3)
+          : null;
+        if (pt || pb || tags?.length) {
           result = {
             title: pt ?? result?.title ?? '',
             body: pb ?? result?.body ?? '',
             kind: result?.kind ?? 'discussion',
-            tags: result?.tags ?? [],
+            tags: tags ?? result?.tags ?? [],
             pendingFiles: [],
             existingImages: []
           };

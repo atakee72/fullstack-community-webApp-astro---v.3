@@ -21,6 +21,10 @@
   --k-teal:    #3f8f9f;   /* announcement                         */
   --k-moss:    #6b8a4a;   /* recommendation                       */
   --k-ochre:   #e8a53a;   /* highlight, "neu" badge               */
+  --k-rust: #a3552e;          /* Blog „Die Beilage" — carved accent, straps, progress fill */
+  --k-rust-deep: #7e401f;     /* hover, GEMEINSAM lines, back links */
+  --k-rust-on-ink: #e0966b;   /* rust legible on ink (hero title band strap) */
+  --k-rust-tint: rgba(163, 85, 46, 0.09); /* Aufruf card bg, archiv active row */
   --k-sky:     #b6d4db;   /* info background                      */
   --k-success: #5a8a3a;   /* approved (slightly darker than moss for legibility on paper) */
   --k-warn:    #c8881e;   /* warning (deeper than ochre)         */
@@ -105,6 +109,7 @@
 [data-page="schillerkiez"] { --k-accent: var(--k-moss); }
 [data-page="auth"]         { --k-accent: var(--k-ochre); }
 [data-page="admin"]        { --k-accent: var(--k-plum); }
+[data-page="blog"]         { --k-accent: var(--k-rust); }
 /* profile — ochre, deliberately shared with auth ("your door" pair) */
 [data-page="profile"]      { --k-accent: var(--k-ochre); }
 

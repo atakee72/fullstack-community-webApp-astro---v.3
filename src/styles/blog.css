@@ -1,0 +1,93 @@
+/* ══════════════════════════════════════════════════════════
+   blog.css — „Die Beilage" (kiosk blog surface)
+   Imported per-page (index, tag, ArticleShell) via
+   <style is:global>@import '../styles/blog.css';</style>
+   Scope: [data-page="blog"] where the rule could leak.
+   ══════════════════════════════════════════════════════════ */
+
+/* ─ Masthead double rule (Kurier-family signal — never simplify) ─
+   Standalone element placed AFTER the title block:
+   heavy 2.5px rule on top, 2px gap (the element's height), 1px below. */
+.bl-mast-rules {
+  border-top: 2.5px solid var(--k-ink);
+  height: 2px;
+  border-bottom: 1px solid var(--k-ink);
+}
+
+/* ─ Article body prose (standard: 2 columns; hero: single set inline) ─ */
+[data-page="blog"] .bl-prose {
+  font-size: 14.5px;
+  line-height: 1.62;
+  color: var(--k-ink-soft);
+}
+[data-page="blog"] .bl-prose--cols {
+  columns: 2;
+  column-gap: 30px;
+}
+@media (max-width: 768px) {
+  [data-page="blog"] .bl-prose--cols { columns: 1; }
+}
+[data-page="blog"] .bl-prose > p:first-child {
+  font-size: 16px;
+  color: var(--k-ink);
+}
+[data-page="blog"] .bl-prose p { margin: 0 0 14px; }
+[data-page="blog"] .bl-prose h2,
+[data-page="blog"] .bl-prose h3 {
+  font-family: var(--k-font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--k-ink);
+  break-after: avoid;
+}
+[data-page="blog"] .bl-prose h2 { font-size: 21px; margin: 22px 0 10px; }
+[data-page="blog"] .bl-prose h3 { font-size: 16.5px; margin: 16px 0 8px; }
+[data-page="blog"] .bl-prose a {
+  color: var(--k-rust-deep);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+[data-page="blog"] .bl-prose img {
+  max-width: 100%;
+  border: 1.5px solid var(--k-ink);
+  border-radius: 10px;
+}
+/* Pull quote = markdown blockquote (Decision 7) */
+[data-page="blog"] .bl-prose blockquote {
+  break-inside: avoid;
+  border-top: 2px solid var(--k-ink);
+  border-bottom: 2px solid var(--k-ink);
+  border-left: none;
+  padding: 14px 4px;
+  margin: 6px 0 16px;
+  font-family: var(--k-font-serif);
+  font-style: italic;
+  font-size: 21px;
+  line-height: 1.3;
+  color: var(--k-rust-deep);
+}
+[data-page="blog"] .bl-prose blockquote p { margin: 0; font-size: inherit; color: inherit; }
+
+/* ─ Motion (per motion-blog.css spec) ─ */
+@keyframes blReadDone {
+  0%   { opacity: 0; transform: scale(1.15); }
+  60%  { opacity: 1; transform: scale(0.98); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.bl-read-done { animation: blReadDone 220ms cubic-bezier(.2,.8,.2,1.2) both; }
+
+@keyframes blSettleIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.bl-card-in { animation: blSettleIn 380ms cubic-bezier(.2,.7,.3,1) both; }
+.bl-card-in:nth-child(2) { animation-delay: 60ms; }
+.bl-card-in:nth-child(3) { animation-delay: 120ms; }
+/* stagger caps at 3 steps — a paper, not a cascade */
+
+@media (prefers-reduced-motion: reduce) {
+  .bl-read-done, .bl-card-in { animation: none; opacity: 1; transform: none; }
+  /* Lesefaden stays — it is position, not motion. */
+}
+
+/* ─ Druckbogen (A4) — filled in by Task 6; keep block present ─ */
