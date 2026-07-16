@@ -256,6 +256,7 @@ See `src/components/blog/CLAUDE.md` — full notes load when working in that sub
 
 ### Global UI: Toasts & Confirm Dialogs
 - **Toast system**: `sonner` library, triggered via `CustomEvent` bridge (`app:toast`) from `src/utils/toast.ts`
+- **Action button** (July 2026): `showToast(msg, { action: { label, onClick } })` renders a clickable pill inside the toast — the optional `action` passes through the bridge (functions survive same-document CustomEvents) into sonner's `action` option. Styled via the `actionButton: 'kiosk-toast__action'` classNames entry + `.kiosk-toast__action` in `global.css`. First consumer: the announce dashboard's displacement-undo toast (`duration: 8000` to leave reaction time).
 - **Confirm dialog**: Custom `<dialog>`-based modal replaces all `window.confirm()` calls. Uses `CustomEvent` bridge (`app:confirm`) with `confirmAction()` returning `Promise<boolean>`. Works across React and Svelte.
 - Both are mounted globally in `ToastProvider.tsx` (rendered in layouts) — no per-component state needed
 - `confirmAction(message, { title, confirmLabel, variant })` — `variant: 'danger'` shows red confirm button
