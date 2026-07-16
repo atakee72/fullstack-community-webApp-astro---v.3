@@ -151,7 +151,6 @@
     const displaced = pinnedItem;
     const displacedUntilISO = displaced ? new Date(displaced.pinnedUntil).toISOString() : null;
     const tempId = 'tmp-' + crypto.randomUUID();
-    pendingTempId = tempId;
 
     await withMove(() => {
       if (displaced) {
