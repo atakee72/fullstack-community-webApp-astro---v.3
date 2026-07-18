@@ -39,6 +39,8 @@
       if (!res.ok) {
         unreachable = true;
         enabled = null;
+        totalLast24h = 0;
+        topIssues = [];
         return;
       }
       const json = await res.json();
@@ -47,9 +49,13 @@
       if (json && 'error' in json) {
         unreachable = true;
         enabled = null;
+        totalLast24h = 0;
+        topIssues = [];
       } else if (json?.enabled === false) {
         unreachable = false;
         enabled = false;
+        totalLast24h = 0;
+        topIssues = [];
       } else {
         unreachable = false;
         enabled = true;
@@ -60,6 +66,8 @@
       if (seq !== fetchSeq) return;
       unreachable = true;
       enabled = null;
+      totalLast24h = 0;
+      topIssues = [];
     } finally {
       if (seq === fetchSeq) loading = false;
     }
