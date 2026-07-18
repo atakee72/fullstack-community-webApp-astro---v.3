@@ -1367,6 +1367,16 @@ const de = {
   'admin.ann.mobile.board': 'AM BRETT',
   'admin.ann.mobile.archive': 'ARCHIV',
 
+  // ── Sentry errors card (admin dashboard) ────────────────────────────────
+  'admin.errors.kicker': 'SENTRY · FEHLER (24H)',
+  'admin.errors.total': 'EREIGNISSE',
+  'admin.errors.top': 'HÄUFIGSTE',
+  'admin.errors.none': 'Keine offenen Fehler — die Presse läuft rund.',
+  'admin.errors.open': 'in Sentry öffnen ↗',
+  'admin.errors.disabled': 'Fehler-Monitoring nicht konfiguriert (SENTRY_* Env-Variablen setzen).',
+  'admin.errors.unreachable': 'Sentry nicht erreichbar — später erneut versuchen.',
+  'admin.errors.count': '{n}×',
+
   // ── Profile (Task 5 scaffold) — "Meldebogen" ────────────────────────────
   'profile.eyebrow.own': 'PROFIL · @{h} · IM KIEZ SEIT {y}',
   'profile.heading.own': 'Dein <em>Meldebogen</em>',
@@ -2937,6 +2947,16 @@ const en: Dict = {
   'admin.ann.mobile.hint': 'pinned for 7 days · replaces the current pin',
   'admin.ann.mobile.board': 'ON THE BOARD',
   'admin.ann.mobile.archive': 'ARCHIVE',
+
+  // ── Sentry errors card (admin dashboard) ────────────────────────────────
+  'admin.errors.kicker': 'SENTRY · ERRORS (24H)',
+  'admin.errors.total': 'EVENTS',
+  'admin.errors.top': 'TOP ISSUES',
+  'admin.errors.none': 'No open errors — the presses run clean.',
+  'admin.errors.open': 'open in Sentry ↗',
+  'admin.errors.disabled': 'Error monitoring not configured (set the SENTRY_* env vars).',
+  'admin.errors.unreachable': 'Sentry unreachable — try again later.',
+  'admin.errors.count': '{n}×',
 
   // ── Profile (Task 5 scaffold) — "Meldebogen" ────────────────────────────
   'profile.eyebrow.own': 'PROFILE · @{h} · IN THE KIEZ SINCE {y}',

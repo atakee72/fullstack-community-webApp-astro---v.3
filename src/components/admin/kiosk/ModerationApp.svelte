@@ -17,6 +17,7 @@
   import { ADM_TYPES, type FlaggedItem } from '../../../lib/adminModeration';
   import { showToast, showError } from '../../../utils/toast';
   import AdmStatRow from './AdmStatRow.svelte';
+  import AdmErrorsCard from './AdmErrorsCard.svelte';
   import AdmTitleBlock from './AdmTitleBlock.svelte';
   import AdmFilterRail from './AdmFilterRail.svelte';
   import AdmBulkBar from './AdmBulkBar.svelte';
@@ -470,6 +471,7 @@
      filter rail, bulk bar, history. ═══════════════════════════════════ -->
 <div class="hidden md:block">
 <AdmStatRow {counts} />
+<AdmErrorsCard />
 <AdmTitleBlock {view} onViewChange={handleViewChange} />
 
 {#if view === 'queue'}
