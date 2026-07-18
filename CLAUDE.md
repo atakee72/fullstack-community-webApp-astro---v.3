@@ -421,7 +421,7 @@ See `src/components/forum/kiosk/CLAUDE.md` — full notes load when working in t
 - **When to use it**: any time the user reports a visual issue ("there's a gap", "looks wrong on mobile") OR you've made a UI change you want to verify before declaring done. Avoids the "I theorized it was invisible — actually no, the user could see it" trap from the May 2026 mobile-compose polish session.
 
 ## Error Monitoring (Sentry)
-- **Errors only** — `@sentry/astro`, `tracesSampleRate: 0` and both replay sample rates `0` in `sentry.client.config.ts` / `sentry.server.config.ts` (5k errors/mo free-tier cap is the whole budget; `sendDefaultPii: false` for GDPR, EU-region org). With `SENTRY_DSN`/`PUBLIC_SENTRY_DSN` unset, init is a documented no-op.
+- **Errors only** — `@sentry/astro`, `tracesSampleRate: 0` in both configs; replay sample rates `0` in the client config (replay is browser-only) (5k errors/mo free-tier cap is the whole budget; `sendDefaultPii: false` for GDPR, EU-region org). With `SENTRY_DSN`/`PUBLIC_SENTRY_DSN` unset, init is a documented no-op.
 - **`beforeSend` transient filter** (server config only): drops OpenAI 429/rate-limit noise, `AbortError`, and transient `MongoNetworkError` timeouts before they ship — the moderation pipeline's per-submission OpenAI calls would otherwise let a provider incident burn the monthly cap.
 - **Widget**: `AdmErrorsCard.svelte` on `/admin/moderation` (desktop only, between the stat row and title block) via the `requireAdminSession`-gated proxy `GET /api/admin/errors`. Full architecture in `src/components/admin/CLAUDE.md`.
 - **Runbook**: `docs/runbooks/sentry-smoke.md` — the one-time post-account-creation smoke checklist (deploy smoke, cron coverage, widget live states, alerts, CSP, privacy policy).

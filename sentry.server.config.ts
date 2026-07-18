@@ -13,7 +13,11 @@ const TRANSIENT_PATTERNS = [
 
 Sentry.init({
   dsn: import.meta.env.SENTRY_DSN,
-  environment: import.meta.env.MODE,
+  // VERCEL_ENV distinguishes production/preview/development at runtime
+  // (serverless Node); MODE alone is always 'production' in any build.
+  // Runtime process.env read is deliberate here — this executes
+  // server-side only.
+  environment: process.env.VERCEL_ENV || import.meta.env.MODE,
   tracesSampleRate: 0,
   sendDefaultPii: false,
   beforeSend(event, hint) {

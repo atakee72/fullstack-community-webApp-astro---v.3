@@ -13,7 +13,12 @@ Sentry.init({
   // custom envPrefix covering SENTRY_ — that would leak SENTRY_AUTH_TOKEN
   // into the client bundle.
   dsn: import.meta.env.PUBLIC_SENTRY_DSN,
-  environment: import.meta.env.MODE,
+  // Client bundles inline at build time and Vercel does not auto-expose
+  // a PUBLIC_-prefixed env name. Optionally set PUBLIC_VERCEL_ENV per
+  // Vercel environment scope (production/preview) for accurate
+  // client-event tagging; falls back to MODE (always 'production' in
+  // builds) otherwise.
+  environment: import.meta.env.PUBLIC_VERCEL_ENV || import.meta.env.MODE,
   tracesSampleRate: 0,
   replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 0,
