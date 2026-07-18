@@ -6,7 +6,13 @@
 import * as Sentry from '@sentry/astro';
 
 Sentry.init({
-  dsn: import.meta.env.SENTRY_DSN,
+  // PUBLIC_ prefix REQUIRED: Astro only exposes PUBLIC_*-prefixed env vars
+  // to the client bundle — a bare SENTRY_DSN statically inlines to
+  // undefined in the browser and client capture never works. The DSN is
+  // a public ingest identifier, safe to expose. NEVER "fix" this with a
+  // custom envPrefix covering SENTRY_ — that would leak SENTRY_AUTH_TOKEN
+  // into the client bundle.
+  dsn: import.meta.env.PUBLIC_SENTRY_DSN,
   environment: import.meta.env.MODE,
   tracesSampleRate: 0,
   replaysSessionSampleRate: 0,
