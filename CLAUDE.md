@@ -183,6 +183,11 @@ MSS_XLSX_URL=           # MSS social index XLSX URL (optional, sync script)
 MSS_PERIOD=             # MSS report period, e.g. "2023" (optional, sync script)
 MSS_SDI_URL=            # MSS SDI XLSX URL (optional, for Status/Dynamik index)
 MSS_BEZIRKE_XLSX_URL=   # MSS Bezirke-level shares XLSX (optional, reference import for Berlin-Vergleich)
+SENTRY_DSN=              # Sentry ingest DSN, server-side config (sentry.server.config.ts). Not a secret (public ingest identifier), but not hardcoded either.
+PUBLIC_SENTRY_DSN=       # Same value as SENTRY_DSN — client bundles only see PUBLIC_-prefixed vars (sentry.client.config.ts reads this one).
+SENTRY_AUTH_TOKEN=       # SERVER-ONLY secret. Never exposed to the client. Powers /api/admin/errors + sourcemap uploads (astro.config.mjs).
+SENTRY_ORG=              # Sentry org slug
+SENTRY_PROJECT=          # Sentry project slug
 ```
 
 ## Component Patterns
@@ -414,6 +419,12 @@ See `src/components/forum/kiosk/CLAUDE.md` — full notes load when working in t
 - **Caveat: `client:only` Svelte/React islands**. The initial snapshot fires at `domcontentloaded`, before islands hydrate. `<main>` will look empty on Forum pages. Either re-snapshot after a delay, or use `wait-for` for a known post-hydration selector.
 - **Caveat: auth-gated routes**. `/topics/create`, `/admin/*` redirect to `/login`. Two ways to verify auth-only UI: (a) scripted login — `goto /login` → `fill` email + password → `click Login` (requires test creds in chat — avoid); (b) cookie reuse — user logs in once in their normal browser, copies session cookie, assistant sets it on the CLI session (preferred — no creds in chat history).
 - **When to use it**: any time the user reports a visual issue ("there's a gap", "looks wrong on mobile") OR you've made a UI change you want to verify before declaring done. Avoids the "I theorized it was invisible — actually no, the user could see it" trap from the May 2026 mobile-compose polish session.
+
+## Error Monitoring (Sentry)
+- **Errors only** — `@sentry/astro`, `tracesSampleRate: 0` and both replay sample rates `0` in `sentry.client.config.ts` / `sentry.server.config.ts` (5k errors/mo free-tier cap is the whole budget; `sendDefaultPii: false` for GDPR, EU-region org). With `SENTRY_DSN`/`PUBLIC_SENTRY_DSN` unset, init is a documented no-op.
+- **`beforeSend` transient filter** (server config only): drops OpenAI 429/rate-limit noise, `AbortError`, and transient `MongoNetworkError` timeouts before they ship — the moderation pipeline's per-submission OpenAI calls would otherwise let a provider incident burn the monthly cap.
+- **Widget**: `AdmErrorsCard.svelte` on `/admin/moderation` (desktop only, between the stat row and title block) via the `requireAdminSession`-gated proxy `GET /api/admin/errors`. Full architecture in `src/components/admin/CLAUDE.md`.
+- **Runbook**: `docs/runbooks/sentry-smoke.md` — the one-time post-account-creation smoke checklist (deploy smoke, cron coverage, widget live states, alerts, CSP, privacy policy).
 
 ## Secret Scanning
 - **Pre-commit**: `.husky/pre-commit` runs `gitleaks protect --staged` on every commit. Falls back to a warning (exit 0) if gitleaks isn't installed locally, so collaborators without it aren't blocked.

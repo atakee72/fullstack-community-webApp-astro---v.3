@@ -43,6 +43,21 @@ Loaded lazily when Claude reads/edits files in `src/components/admin/`.
 ### Mobile-triage rule
 Below `md`, the app is triage-only by design (per the design handoff's non-negotiable "mobil wird triagiert, nicht verwaltet"): single-column `AdmTriageCard` stack with the same approve/warn/reject actions and modals as desktop, but **no** Protokoll (history), bulk selection, or column menu — those three surfaces are desktop-only and simply don't render below the breakpoint. Don't add mobile affordances for them; if history/bulk needs to become mobile-reachable, that's a deliberate scope change, not a bug fix.
 
+### Errors card (`AdmErrorsCard.svelte`) + Sentry proxy (`/api/admin/errors`)
+**Placement**: `AdmErrorsCard` (no props) is mounted in `ModerationApp.svelte`'s desktop tree only, directly between `<AdmStatRow {counts} />` and `<AdmTitleBlock>` (both inside the same `hidden md:block` wrapper — mobile stays triage-only, same precedent as Protokoll/bulk above).
+
+**States** (five, driven by local `$state`, not TanStack): `loading` (skeleton bar) → `unreachable` (502 from the proxy, or the `fetch` itself rejecting — warn-tone text, no toast; the card is the signal) → `disabled` (`{ enabled: false }`, i.e. `SENTRY_*` env vars unset — the normal pre-setup state, not an error) → `enabled === true && topIssues.length === 0` ("all clear" italic line) → `enabled === true` with issues (total 24h count + up to 3 top-issue rows, each a link out to its Sentry `permalink`). A malformed/`error` JSON body is treated the same as `unreachable`.
+
+**Refresh + guard**: self-fetches on mount, then every 5 minutes via `setInterval` (cleared `onDestroy`). A `fetchSeq` counter (mirrors `ModerationApp`'s own `fetchSeq` pattern) increments per request and every state write checks `seq === fetchSeq` first, so a slow in-flight response from a stale interval tick can't clobber a newer one.
+
+**`GET /api/admin/errors`** (`src/pages/api/admin/errors.ts`) — server-only proxy to the Sentry REST API so `SENTRY_AUTH_TOKEN` never reaches the client:
+- **Guard runs BEFORE the env check**: `requireAdminSession(request)` is the very first thing the handler does — an unauthenticated/non-admin caller gets the standard 401/403 and never learns whether Sentry is configured. Only after the guard passes does the handler read `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT` and return `{ enabled: false }` if any are missing.
+- **Cache**: a 60-second module-level `{ data, expires }` cache, success-only (a 502 or thrown error is never cached, so a transient Sentry outage doesn't get pinned for a full minute). **Per-instance caveat**: Vercel can spin up multiple warm serverless containers, each with its own cache — fine for a single-admin, infrequent-visit route; don't reach for Redis/Vercel KV unless that stops being true.
+- **Timeout**: `AbortSignal.timeout(5000)` on the outbound `fetch` to `sentry.io/api/0/projects/{org}/{project}/issues/`.
+- **Response contract**: `{ enabled: false }` (not configured) | `{ enabled: true, totalLast24h, topIssues: [{ id, title, permalink, count24h }] }` | 502 `{ error: 'sentry_unreachable' }`. `count24h` and `totalLast24h` are summed from each issue's `stats['24h']` bucket array, NOT Sentry's `count`/`userCount` fields (those are lifetime totals — see root plan Decision 10). No `affectedUsers` field — there is no honest 24h-scoped users source in this endpoint, so it's omitted rather than shown wrong.
+
+**i18n**: 8 `admin.errors.*` keys (`kicker`, `total`, `top`, `none`, `open`, `disabled`, `unreachable`, `count`) in `src/lib/kiosk-i18n.ts`, DE + EN, both real (unlike the modal DE-contract keys above — this card's copy is properly translated both ways).
+
 ## Admin Official Announcements (`AnnounceApp.svelte` + `/admin/announcements.astro`)
 **Kiosk design system** (`AdminLayout`, plum accent via `[data-page="admin"]` like moderation) — migrated from the legacy `BaseLayout` panel in July 2026 (Tasks 1–5). Page-level auth gate redirects (unlike moderation's in-page no-access state): logged-out → `/login?redirect=/admin/announcements`, non-admin → `/`.
 
