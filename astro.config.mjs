@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config';
+import sentry from '@sentry/astro';
 import react from '@astrojs/react';
 import svelte from '@astrojs/svelte';
 import tailwind from '@astrojs/tailwind';
@@ -17,6 +18,23 @@ export default defineConfig({
   }),
 
   integrations: [
+    sentry({
+      // NO dsn / SDK options here — initialization lives exclusively in
+      // sentry.client.config.ts + sentry.server.config.ts (Decision 9).
+      // process.env, NOT import.meta.env: astro.config.mjs runs before
+      // Vite env injection, where import.meta.env is not populated —
+      // this is the repo's one sanctioned process.env site.
+      // Missing token must not fail the build — uploads turn on when it lands.
+      ...(process.env.SENTRY_AUTH_TOKEN
+        ? {
+            sourceMapsUploadOptions: {
+              org: process.env.SENTRY_ORG,
+              project: process.env.SENTRY_PROJECT,
+              authToken: process.env.SENTRY_AUTH_TOKEN,
+            },
+          }
+        : {}),
+    }),
     auth(),
     react({
       experimentalReactChildren: true
