@@ -188,6 +188,7 @@ PUBLIC_SENTRY_DSN=       # Same value as SENTRY_DSN — client bundles only see 
 SENTRY_AUTH_TOKEN=       # SERVER-ONLY secret. Never exposed to the client. Powers /api/admin/errors + sourcemap uploads (astro.config.mjs).
 SENTRY_ORG=              # Sentry org slug
 SENTRY_PROJECT=          # Sentry project slug
+PUBLIC_VERCEL_ENV=       # Optional; set per Vercel scope (production/preview) so CLIENT Sentry events tag their true environment (server gets VERCEL_ENV for free). Not needed locally.
 ```
 
 ## Component Patterns
