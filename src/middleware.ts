@@ -89,7 +89,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // single capture point — no duplicate events. `await next()` (not
     // bare `return next()`) everywhere above is what routes downstream
     // rejections into this catch.
-    Sentry.captureException(err);
+    // Path tag recovers the most useful context lost by disabling the
+    // SDK's request handler (reviewer-suggested enrichment).
+    Sentry.captureException(err, { tags: { path: context.url.pathname } });
     await Sentry.flush(2000);
     throw err;
   }
