@@ -19,6 +19,12 @@ export default defineConfig({
 
   integrations: [
     sentry({
+      // Request-error capture lives in src/middleware.ts (explicit
+      // captureException + flush before the serverless freeze — see the
+      // comment there). The SDK's own request handler would sit OUTSIDE
+      // user middleware where nothing can flush after its capture, and
+      // its async delivery is exactly what the freeze eats.
+      autoInstrumentation: { requestHandler: false },
       // NO dsn / SDK options here — initialization lives exclusively in
       // sentry.client.config.ts + sentry.server.config.ts (Decision 9).
       // process.env, NOT import.meta.env: astro.config.mjs runs before
