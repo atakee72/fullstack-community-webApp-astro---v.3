@@ -1,14 +1,11 @@
 // src/lib/auth/sendDeletionEmails.ts — SERVER-ONLY.
-// Sends the account-deletion-scheduled mail via Resend when configured;
-// otherwise logs to the server console (dev-log fallback) so the flow is
-// testable without a key. Mirrors src/lib/auth/sendEmailChangeEmails.ts.
+// Renders the account-deletion-scheduled mail and hands it to the shared
+// mailer (src/lib/email/mailer.ts); with no transport configured it logs to
+// the server console (dev-log fallback). Mirrors src/lib/auth/sendEmailChangeEmails.ts.
 import React from 'react';
-import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import AccountDeletionScheduled from '../../emails/AccountDeletionScheduled';
-
-const RESEND_API_KEY = import.meta.env.RESEND_API_KEY || '';
-const SENDING_FROM = import.meta.env.SENDING_FROM_EMAIL || 'Mahalle <noreply@mahalle.berlin>';
+import { isMailerConfigured, sendMail } from '../email/mailer';
 
 /** Sent when a deletion is first scheduled — carries the undo link. */
 export async function sendAccountDeletionScheduled(
@@ -16,7 +13,7 @@ export async function sendAccountDeletionScheduled(
   deletionDate: Date,
   undoLink: string
 ): Promise<void> {
-  if (!RESEND_API_KEY) {
+  if (!isMailerConfigured()) {
     console.log(
       `[account-deletion] (dev) scheduled for ${to}, deletion at ${deletionDate.toISOString()}, undo link: ${undoLink}`
     );
@@ -25,11 +22,5 @@ export async function sendAccountDeletionScheduled(
   const html = await render(
     React.createElement(AccountDeletionScheduled, { deletionDate: deletionDate.toISOString(), undoLink })
   );
-  const resend = new Resend(RESEND_API_KEY);
-  await resend.emails.send({
-    from: SENDING_FROM,
-    to,
-    subject: 'Mahalle — Konto-Löschung vorgemerkt',
-    html,
-  });
+  await sendMail({ to, subject: 'Mahalle — Konto-Löschung vorgemerkt', html });
 }
