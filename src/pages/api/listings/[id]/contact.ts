@@ -3,9 +3,9 @@ import { z } from 'zod';
 import { createHash } from 'crypto';
 import { ObjectId } from 'mongodb';
 import React from 'react';
-import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import { connectDB } from '../../../../lib/mongodb';
+import { isMailerConfigured, sendMail } from '../../../../lib/email/mailer';
 import { moderateText, checkSpamWithGPT } from '../../../../lib/moderation';
 import { isValidObjectId } from '../../../../schemas/validation.utils';
 import MarketplaceContactEmail from '../../../../emails/MarketplaceContactEmail';
@@ -19,11 +19,10 @@ if (!IP_SALT && import.meta.env.PROD) {
   console.error('[contact] CONTACT_IP_SALT is required in production');
 }
 
-const RESEND_API_KEY = import.meta.env.RESEND_API_KEY || '';
-if (!RESEND_API_KEY && import.meta.env.PROD) {
-  console.error('[contact] RESEND_API_KEY is required in production');
-}
-const SENDING_FROM = import.meta.env.SENDING_FROM_EMAIL || 'Mahalle <noreply@mahalle.berlin>';
+// Mail transport (SMTP or Resend) comes from the shared mailer — see
+// src/lib/email/mailer.ts. Without one, prod fails closed (503 below):
+// this route's whole job is sending mail, pretending success would eat
+// buyer messages silently (it did, until July 2026).
 const ALLOWED_ORIGINS_RAW = import.meta.env.ALLOWED_ORIGINS || '';
 
 function getAllowedOrigins(): string[] {
@@ -68,6 +67,12 @@ export const POST: APIRoute = async ({ request, params, clientAddress }) => {
   const allowedOrigins = getAllowedOrigins();
   if (allowedOrigins.length > 0 && !allowedOrigins.includes(origin)) {
     return jsonErr('Forbidden', 403);
+  }
+
+  // 2b. Mail transport must exist in prod — fail closed BEFORE consuming
+  // rate limits or writing metadata. Dev continues (dev-log at the send step).
+  if (!isMailerConfigured() && import.meta.env.PROD) {
+    return jsonErr('email_unavailable', 503);
   }
 
   // 3. Parse + Zod-validate body
@@ -198,20 +203,24 @@ export const POST: APIRoute = async ({ request, params, clientAddress }) => {
       })
     );
 
-    // 15. Send emails via Resend — sequential, owner-first
+    // 15. Send emails via the shared mailer — sequential, owner-first
     // Strip CRLF from titles before embedding in subject lines (defense
     // in depth against header injection; Resend sanitizes too).
     const safeTitle = listing.title.replace(/[\r\n]+/g, ' ').slice(0, 120);
-    const resend = new Resend(RESEND_API_KEY);
 
-    // (a) Owner email MUST succeed — if it throws the catch returns 500.
-    await resend.emails.send({
-      from: SENDING_FROM,
-      to: seller.email,
-      replyTo: email,
-      subject: `Nachricht zu deiner Anzeige „${safeTitle}"`,
-      html: ownerHtml,
-    });
+    // (a) Owner email MUST succeed — sendMail throws on failure (real
+    // failures now actually throw, unlike the old SDK path) and the
+    // outer catch returns 500. Dev without transport: log instead.
+    if (isMailerConfigured()) {
+      await sendMail({
+        to: seller.email,
+        replyTo: email,
+        subject: `Nachricht zu deiner Anzeige „${safeTitle}"`,
+        html: ownerHtml,
+      });
+    } else {
+      console.log(`[contact] (dev) owner mail to ${seller.email} (replyTo ${email}) for listing "${safeTitle}"`);
+    }
 
     // (b) Metadata-only record (no message body — GDPR A6). Insert BEFORE the
     // confirmation send so a flaky confirmation can't be retried to bypass
@@ -229,12 +238,15 @@ export const POST: APIRoute = async ({ request, params, clientAddress }) => {
     // message; if Resend hiccups on the second send we don't want to fail
     // the request (user would retry → duplicate owner emails).
     try {
-      await resend.emails.send({
-        from: SENDING_FROM,
-        to: email,
-        subject: `Bestätigung: Nachricht zu „${safeTitle}" gesendet`,
-        html: confirmHtml,
-      });
+      if (isMailerConfigured()) {
+        await sendMail({
+          to: email,
+          subject: `Bestätigung: Nachricht zu „${safeTitle}" gesendet`,
+          html: confirmHtml,
+        });
+      } else {
+        console.log(`[contact] (dev) confirmation mail to ${email} for listing "${safeTitle}"`);
+      }
     } catch (e) {
       console.warn('[contact] confirmation send failed (owner email succeeded):', e);
     }
