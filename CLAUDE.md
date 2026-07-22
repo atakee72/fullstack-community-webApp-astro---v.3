@@ -90,6 +90,12 @@ export const POST: APIRoute = async ({ request }) => {
 };
 ```
 
+### Outgoing Email (shared mailer)
+- **One transport chooser**: `src/lib/email/mailer.ts` (SERVER-ONLY) — SMTP (nodemailer, mailbox.org) when `SMTP_HOST/USER/PASS` set, else Resend when `RESEND_API_KEY` set, else "not configured" and each send module dev-logs its link instead of sending. `sendMail()` THROWS on failure — including Resend's `{ error }` return, which the SDK does not throw on — and captures to Sentry with `flush(2000)` before rethrowing (best-effort callers swallow the throw; Vercel freeze would eat an unflushed capture).
+- **Send modules** (`src/lib/auth/send*.ts`, contact relay) own copy + dev-log fallbacks; the mailer owns transport, From (`SENDING_FROM_EMAIL`), timeouts (10s connect, `requireTLS`).
+- **Contact relay fails closed**: `POST /api/listings/[id]/contact` returns `503 email_unavailable` in prod when no transport is configured (before rate-limit/metadata writes).
+- **Vercel scope**: `SMTP_*` in Production only — Preview deploys never email real users (auth mails dev-log into function logs; the contact relay 503s there since `import.meta.env.PROD` is true on Preview builds too). Runbook: `docs/runbooks/smtp-mailer-smoke.md`.
+
 ### Data Fetching
 - TanStack Query for client-side data fetching
 - Custom hooks in `src/hooks/api/` (useTopicsQuery, useEventsQuery, etc.)
@@ -173,8 +179,12 @@ CLOUDINARY_API_SECRET=
 OPENAI_API_KEY=         # Content moderation API + news relevance scoring
 CRON_SECRET=            # Vercel cron job authentication
 NEWSDATA_API_KEY=       # NewsData.io API (optional, for additional news sources)
-RESEND_API_KEY=         # Resend.com API key (marketplace contact relay)
-SENDING_FROM_EMAIL=     # e.g. "Mahalle <noreply@mahalle.berlin>" (contact relay sender)
+SMTP_HOST=              # SMTP relay host (currently smtp.mailbox.org). With SMTP_USER+SMTP_PASS set, SMTP is the active mail transport (wins over Resend).
+SMTP_PORT=              # 587 (STARTTLS; 465 = implicit TLS also supported)
+SMTP_USER=              # SMTP login (mailbox.org account, e.g. atakee@mailbox.org)
+SMTP_PASS=              # mailbox.org APP password (not the account password). Secret.
+RESEND_API_KEY=         # Resend.com API key — legacy/fallback transport, used only when no SMTP_* is set. Kept for the future own-domain switch.
+SENDING_FROM_EMAIL=     # e.g. "Mahalle <noreply@ercan-atak.de>". For SMTP this MUST be an address registered at the provider (mailbox.org "Externes Alias") or sends are rejected. All app email (auth + contact relay) uses it.
 CONTACT_IP_SALT=        # 32+ chars, fixed across deploys (hashes IPs in contact rate-limit keys). Also used by auth rate limiting (src/lib/auth/rateLimit.ts).
 ALLOWED_ORIGINS=        # CSV of allowed origins for contact relay + resend-verification CSRF guard. Must match the real deploy origin (currently https://mahalle-das-kiezgesichterbuch.vercel.app) or be unset. Currently UNSET in Vercel prod — the guard is a no-op until set.
 STATS_XLSX_URL=         # AfS demographics XLSX URL (sync script + GitHub Actions)
