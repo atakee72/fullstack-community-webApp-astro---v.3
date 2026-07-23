@@ -111,8 +111,12 @@ CTA routes to `/marketplace/edit/{id}?from=backfill`. Edit page pre-populates wh
 
 **Required env vars for contact relay:**
 ```
-RESEND_API_KEY=            # Resend.com API key
-SENDING_FROM_EMAIL=        # e.g. "Mahalle <noreply@mahalle.berlin>"
+SMTP_HOST=                 # SMTP relay (with SMTP_USER+SMTP_PASS: active transport; see src/lib/email/mailer.ts)
+SMTP_PORT=                 # 587
+SMTP_USER=                 # SMTP login
+SMTP_PASS=                 # app password (secret)
+RESEND_API_KEY=            # Resend.com API key — legacy/fallback transport (used only without SMTP_*)
+SENDING_FROM_EMAIL=        # e.g. "Mahalle <noreply@ercan-atak.de>" — must be registered at the SMTP provider
 CONTACT_IP_SALT=           # 32+ chars, fixed across deploys (for hashing IPs in rate-limit keys)
 ALLOWED_ORIGINS=           # CSV of allowed origins, e.g. "https://mahalle.berlin" (defaults to this)
 ```

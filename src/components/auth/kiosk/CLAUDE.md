@@ -78,8 +78,9 @@ react-email pattern.
 - **Email** `src/lib/auth/sendResetEmail.ts` + `src/emails/PasswordResetEmail.tsx`.
   Reset link is built from the trusted `NEXTAUTH_URL` (not request Host header) and fails
   closed in production if unset (CWE-640 host-header-injection protection). Dev-log fallback:
-  when `RESEND_API_KEY` is empty it `console.log`s the link instead of sending (so the flow
-  is testable in dev) — read the dev server stdout to get the link.
+  when no mail transport is configured (`isMailerConfigured()` in `src/lib/email/mailer.ts`
+  — SMTP or Resend) it `console.log`s the link instead of sending (so the flow is testable
+  in dev) — read the dev server stdout to get the link.
 - **Endpoints**: `POST /api/auth/forgot-password` (ALWAYS generic 200 — anti-enumeration;
   issues token + sends/logs link for real users only); `POST /api/auth/reset-password`
   (`ResetPasswordSchema` validation; generic `invalid_or_expired` for bad/expired/used
@@ -103,7 +104,8 @@ the nag surfaces. Mirrors the forgot-password stack.
 - **Base URL**: emailed links use `getTrustedBaseUrl()` from `src/lib/auth/baseUrl.ts`
   (extracted from forgot-password; NEXTAUTH_URL, prod fail-closed, CWE-640).
 - **Email** `src/lib/auth/sendVerifyEmail.ts` + `src/emails/VerifyEmail.tsx`;
-  dev-log fallback when `RESEND_API_KEY` is empty (link in dev-server stdout).
+  dev-log fallback when no mail transport is configured (`isMailerConfigured()`,
+  `src/lib/email/mailer.ts`) — link in dev-server stdout.
 - **Endpoints**: `POST /api/auth/verify-email` ({token}, sessionless — link may open
   in another browser; POST-not-GET so scanner prefetches can't burn tokens);
   `POST /api/auth/resend-verification` (session-gated own-account, 429 on 60s guard);
