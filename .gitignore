@@ -97,6 +97,6 @@ conversation-summary.md
 .playwright/
 .playwright-cli/
 
-# project docs (local only)
-docs/
+# private local docs (strategy notes etc.) — everything else in docs/ is tracked
+docs/local/
 .vercel
