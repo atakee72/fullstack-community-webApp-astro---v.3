@@ -13,7 +13,7 @@ Mahalle - A Fullstack Community Web App for Local Neighborhoods. The name means 
 - **Data Fetching**: TanStack Query 5.17 (with `@tanstack/react-query-devtools` in dev)
 - **Authentication**: auth-astro with NextAuth (Credentials provider)
 - **Database**: MongoDB 6.3 (direct driver, no Mongoose)
-- **Deployment**: Vercel (serverless)
+- **Deployment**: Vercel (serverless) — function region pinned to `fra1` in `vercel.json` (July 2026): the Atlas cluster lives in Frankfurt, and the default `iad1` made every DB roundtrip cross the Atlantic (root cause of recurring `MongoServerSelectionError` blips + slow SSR). Don't remove the `regions` pin; verify with `curl -sI <prod>/api/kiez-stats | grep x-vercel-id` → must show `fra1::fra1`.
 - **Validation**: Zod schemas
 
 ## Development Commands
