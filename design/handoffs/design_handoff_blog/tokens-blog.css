@@ -1,0 +1,61 @@
+/* ══════════════════════════════════════════════════════════
+   tokens-blog.css — „Die Beilage" extensions over kiosk tokens
+   Spec values: wire through the established --k-* pattern in
+   tokens.css rather than importing this file verbatim.
+   Scope: [data-page="blog"]
+   ══════════════════════════════════════════════════════════ */
+
+[data-page="blog"] {
+  /* ─ Accent · RUST (new — no other page claims it) ─ */
+  --blog-accent: #a3552e;            /* rust/terrakotta — carved accent, straps, progress fill */
+  --blog-accent-deep: #7e401f;       /* hover, GEMEINSAM lines, back links */
+  --blog-accent-on-ink: #e0966b;     /* rust legible on ink (hero title band strap) */
+  --blog-accent-tint: rgba(163, 85, 46, 0.09);  /* Aufruf card bg, archiv active row */
+
+  /* ─ Masthead ─ */
+  --blog-mast-rule-heavy: 2.5px;     /* double rule: heavy */
+  --blog-mast-rule-gap: 2px;
+  --blog-mast-rule-light: 1px;       /* double rule: light */
+  --blog-mast-strap-tracking: 0.22em;
+
+  /* ─ Zeitungsspalten (index + standard body) ─ */
+  --blog-col-divider: 1px;           /* hairline between columns, color --k-rule */
+  --blog-body-columns: 2;            /* standard layout body */
+  --blog-body-size: 14.5px;
+  --blog-body-leading: 1.62;
+  --blog-standfirst-size: 20px;      /* serif italic */
+
+  /* ─ Rubrik chips ─ */
+  --blog-chip-border: 1.5px;         /* ink idle · rust active (filled) */
+  --blog-chip-radius: 999px;
+
+  /* ─ ReadBar (Lesefaden §01) ─ */
+  --blog-readbar-h: 44px;            /* sticky, paperWarm, 1.5px ink bottom */
+  --blog-progress-h: 4px;            /* track: paperSoft · fill: rust · 1.5px ink leading edge */
+  --blog-wpm: 200;                   /* Lesezeit = words / wpm, build-time */
+
+  /* ─ Rubrik-Rail (§02) ─ */
+  --blog-rail-max: 3;                /* related cards, ranked by shared tags */
+
+  /* ─ Pagination ─ */
+  --blog-page-sizes: 12, 24, 48;     /* default 12 */
+
+  /* ─ Layout badges ─ */
+  --blog-badge-hero: "◼ AUFMACHER";
+  --blog-badge-gallery: "▤ BILDSTRECKE";
+
+  /* ─ Forum bridge (§04) — the ONLY wine on this page ─ */
+  --blog-forum-cta: var(--k-wine, #b23a5b);
+  --blog-forum-quota: 5;             /* posts/day, existing quota — display only */
+}
+
+/* ─ Druckbogen A4 (§05) — @media print on /blog/[slug] ─ */
+@media print {
+  [data-page="blog"] {
+    --blog-print-margin: 18mm;
+    --blog-print-body: 11pt;         /* single serif column */
+    --blog-print-colors: 2;          /* ink + rust only */
+    /* footer mandatory: STAND date + QR → article URL */
+    /* hide: nav, ReadBar, ArticleFooter CTAs, RelatedRail, Aufruf */
+  }
+}

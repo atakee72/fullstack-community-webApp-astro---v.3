@@ -1,0 +1,20 @@
+/* tokens-announce.css — Spec, kein Drop-in. Über bestehendes --k-* Muster verdrahten. */
+[data-page="admin-announcements"] {
+  /* Chrome — geteilt mit Moderation */
+  --ann-accent: var(--k-plum, #6f2f59);
+  /* Offizielle Karte = Forum-Ankündigungs-Behandlung */
+  --ann-card-ink: var(--k-ink, #1b1a17);
+  --ann-strap: var(--k-teal, #3f8f9f);
+  --ann-pin-chip: var(--k-ochre, #e8a53a);
+  /* Archiv */
+  --ann-archive-opacity: 0.92;
+  --ann-expired-border: 1px dashed var(--k-rule, #c9bea3);
+  /* Composer */
+  --ann-note-bg: color-mix(in srgb, var(--k-teal, #3f8f9f) 9%, transparent);
+  --ann-title-max: 120;
+  /* Pin-Lifecycle (Server-Wahrheit, hier nur als Copy-Konstante) */
+  --ann-pin-days: 7;
+  /* Mobile */
+  --ann-touch-min: 44px;
+  --ann-cta-height: 48px;
+}

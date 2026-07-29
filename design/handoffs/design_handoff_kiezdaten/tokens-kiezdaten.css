@@ -1,0 +1,98 @@
+/* ════════════════════════════════════════════════════════════
+   MAHALLE · KIEZ-DATEN TOKEN EXTENSION
+   Batch 3 · LAST surface (/schillerkiez — Messstation ·
+   broadsheet Kanäle · PLR selector · novel modules §00–§04)
+
+   Carved accent: MOSS (#6b8a4a) — the last free primary.
+     Forum = wine · Calendar = teal · Marketplace = wine ·
+     Newsboard = ink · Auth/Profile = ochre · Admin = plum ·
+     Kiez-Daten = moss.
+
+   These tokens EXTEND the base Kiosk system. Nothing here is
+   duplicated from base — only kiezdaten-specific additions.
+   Values mirror window.kiosk + KZ_* in
+   directions/kiosk-kiezdaten*.jsx so design + code stay in
+   lockstep. NOTE: all seed FIGURES in the JSX are invented —
+   see READMEFIRST flag 3.
+   ════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Kiez-Daten carved accent ───────────────────────────── */
+  --kiezdaten-accent: #6b8a4a;         /* = kiosk.color.moss */
+
+  /* ── PLR series colors (fixed — one selector, all Kanäle) ─ */
+  --kz-series-gesamt:   #6b8a4a;       /* moss  · Gesamt Schillerkiez        */
+  --kz-series-08100102: #3f8f9f;       /* teal  · Schillerpromenade Nord     */
+  --kz-series-08100103: #b23a5b;       /* wine  · Schillerpromenade Süd      */
+  --kz-series-08100104: #e8a53a;       /* ochre · Wartheplatz                */
+  --kz-series-08100105: #6f2f59;       /* plum  · Silbersteinstraße          */
+
+  /* ── LQI grade ramp (1–5: sehr gut…sehr schlecht) ───────── */
+  /* on paper: */
+  --kz-grade-good:   #5a8a3a;          /* = kiosk.color.success · LQI ≤ 2 */
+  --kz-grade-mid:    #c8881e;          /* = kiosk.color.warn    · LQI 3   */
+  --kz-grade-bad:    #a83245;          /* = kiosk.color.danger  · LQI ≥ 4 */
+  /* on the ink instrument strip (lightened for contrast): */
+  --kz-grade-good-on-ink: #9fd08a;
+  --kz-grade-mid-on-ink:  #ecc76e;
+  --kz-grade-bad-on-ink:  #e08a8a;
+  /* null pollutant value renders „k.A.“ — never 0, never hidden */
+
+  /* ── Chart hand · „Mischung“ ────────────────────────────── */
+  /* Axes/grid: precise hairlines (rule #c9beA3, 0.8px; axis  */
+  /* ink 1.1–1.2px). Data marks: wobble via kdWobLine/-Rect   */
+  /* (seeded, deterministic) + offset double-strike.          */
+  --kz-wobble-amp: 1.4px;              /* line amplitude · rect 1.3px */
+  --kz-doublestrike-dx: 2px;           /* offset ghost strike          */
+  --kz-doublestrike-dy: 1.6px;
+  --kz-doublestrike-opacity: 0.42;     /* bars · line dots 0.45        */
+
+  /* ── Data sources & caching (existing behaviour — keep) ─── */
+  --kz-air-cache-min: 30;              /* /api/kiez-air · BLUME mc042      */
+  --kz-stats-cache-h: 24;              /* /api/kiez-stats · Mongo          */
+  /* sync: GitHub Action 2×/yr (Mar 1 + Sep 1) · AfS XLSX + MSS */
+
+  /* ── Messwert-Logger (NOVEL §00 · README flag 1) ────────── */
+  --kz-logger-interval-min: 30;        /* cron → schillerkiez_air_log      */
+  --kz-logger-gap-h: 6;                /* gap > 6 h ⇒ dashed empty bars,
+                                          NEVER interpolate                */
+  --kz-logger-retention-hourly-d: 90;  /* hourly readings kept 90 days     */
+  /* daily rollup (max + mean) kept forever                               */
+
+  /* ── Freshness (state §07) ──────────────────────────────── */
+  --kz-stale-months: 8;                /* lastUpdated older ⇒ warn line,
+                                          page stays fully usable          */
+
+  /* ── Zahl der Woche (NOVEL §01) ─────────────────────────── */
+  /* rotation: ISO week seeds a pick from a fixed code-side   */
+  /* menu of derivable figures — zero new schema.             */
+  --kz-zdw-rotate: 1;                  /* figures per ISO week             */
+  /* share = /topics/create pre-filled · counts against the   */
+  /* 5/day forum quota · normal AI moderation                 */
+
+  /* ── Anwohner-Kontext (NOVEL §04) ───────────────────────── */
+  --kz-kontext-min-thread-age-h: 1;    /* spam guard, like Kurier heat     */
+  --kz-kontext-cache-h: 24;            /* daily keyword-match compute      */
+  --kz-kontext-glyph: "♨";             /* ochre, prefixes each chip        */
+  /* asymmetric: dashboard → forum only. 0 matches ⇒ no chips.            */
+
+  /* ── Datenarchiv (NOVEL §03) ────────────────────────────── */
+  --kz-print-page: A4;                 /* route /schillerkiez/druck        */
+  /* 2-color riso: ink + moss · QR local · Stand-Datum mandatory          */
+
+  /* ── LOR-2021 merge (Kanal 05 — existing rule, keep) ────── */
+  /* pre-2021: 08010117 Schillerpromenade / 08010118 Silber-  */
+  /* steinstraße · 2021+: average of the 2 successor PLRs     */
+  /* each ⇒ 2 continuous virtual series + dashed in-chart     */
+  /* boundary marker + Gebietsreform footnote.                */
+  --kz-lor-boundary-dash: 4 4;         /* stroke-dasharray, inkMute 1.2px  */
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Per-page scope. KioskLayout emits data-page="schillerkiez" on
+   /schillerkiez (and /schillerkiez/druck) so the moss accent is
+   contained (mirrors data-page="marketplace" / "auth" / …).
+   ────────────────────────────────────────────────────────────── */
+[data-page="schillerkiez"] {
+  --carved-accent: var(--kiezdaten-accent);
+}

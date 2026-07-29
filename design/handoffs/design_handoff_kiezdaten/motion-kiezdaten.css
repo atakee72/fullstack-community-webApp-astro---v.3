@@ -1,0 +1,102 @@
+/* ════════════════════════════════════════════════════════════
+   MAHALLE · KIEZ-DATEN MOTION EXTENSION
+   Batch 3 · LAST surface. Mirrors the KS_CSS block in
+   directions/kiosk-kiezdaten-states.jsx (kzSweep + kzPulse are
+   IN the canvas) plus the chart draw-in spec the canvas can't
+   show statically. Base timing language: POP cubic(.2,.8,.2,1.2)
+   · SETTLE cubic(.2,.7,.3,1) · INK cubic(.4,0,.2,1) —
+   140 / 220 / 380 ms.
+   ════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: no-preference) {
+
+  /* ── Skeleton sweep (state §01) — in canvas ─────────────── */
+  .kz-skel {
+    background: linear-gradient(90deg, #ebe1c7 25%, #e2d7bd 50%, #ebe1c7 75%);
+    background-size: 400px 100%;
+    animation: kzSweep 1.4s linear infinite;
+  }
+  @keyframes kzSweep {
+    0%   { background-position: -200px 0; }
+    100% { background-position: 400px 0; }
+  }
+
+  /* ── Live dot on the instrument strip — in canvas ───────── */
+  /* Success-green while LIVE; static + inkMute when the       */
+  /* station is silent (state §04) — a dead station must not   */
+  /* pulse.                                                    */
+  .kz-live-dot { animation: kzPulse 1.8s ease-in-out infinite; }
+  @keyframes kzPulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+  }
+
+  /* ── Chart draw-in (spec — apply on first viewport entry) ─ */
+  /* The user asked for chart draw-in as part of the „alive“   */
+  /* language. Draw each Kanal's data marks ONCE when the      */
+  /* Kanal first scrolls into view (IntersectionObserver),     */
+  /* and again on PLR switch. Never loop.                      */
+
+  /* Bars (Kanal 02/04, archive): grow from the axis. */
+  .kz-bar-in {
+    transform-origin: left center;
+    animation: kzBarIn 480ms cubic-bezier(.2,.7,.3,1) both;
+  }
+  @keyframes kzBarIn {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
+  /* Lines (Kanal 01/03/05): dash-draw left to right.          */
+  /* Set --kz-len to the polyline's measured length.           */
+  .kz-line-in {
+    stroke-dasharray: var(--kz-len, 600);
+    stroke-dashoffset: var(--kz-len, 600);
+    animation: kzLineIn 720ms cubic-bezier(.4,0,.2,1) 120ms both;
+  }
+  @keyframes kzLineIn { to { stroke-dashoffset: 0; } }
+
+  /* Donut (Kanal 03): same dash technique on the segment      */
+  /* circles, 720ms, segments staggered 90ms.                  */
+
+  /* Data dots: pop in after their line lands. */
+  .kz-dot-in { animation: kzDotIn 220ms cubic-bezier(.2,.8,.2,1.2) 700ms both; }
+  @keyframes kzDotIn {
+    from { transform: scale(0);   opacity: 0; }
+    60%  { transform: scale(1.2); opacity: 1; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  /* ── PLR switch: Kanal content crossfade (spec) ─────────── */
+  /* Swap data under a 220ms SETTLE fade-through — old fades   */
+  /* out 90ms, new fades in + rises 6px. Selector chip itself  */
+  /* flips instantly (ink fill).                               */
+  .kz-kanal-swap-in { animation: kzSwapIn 220ms cubic-bezier(.2,.7,.3,1) both; }
+  @keyframes kzSwapIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Zahl der Woche stamp (spec) ────────────────────────── */
+  /* On page load the stamp card settles in with a tiny rotate */
+  /* overshoot — printed once, not bouncing.                   */
+  .kz-zdw-in { animation: kzStampIn 380ms cubic-bezier(.2,.8,.2,1.2) 200ms both; }
+  @keyframes kzStampIn {
+    from { opacity: 0; transform: rotate(2.2deg) scale(0.96); }
+    to   { opacity: 1; transform: rotate(0.6deg) scale(1); }
+  }
+
+  /* ── Anwohner-Kontext chips (spec) ──────────────────────── */
+  .kz-kontext-chip-in { animation: kzChipIn 220ms cubic-bezier(.2,.8,.2,1.2) both; }
+  @keyframes kzChipIn {
+    from { opacity: 0; transform: translateY(4px) scale(0.94); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+}
+
+/* ── Reduced motion ───────────────────────────────────────── */
+/* Everything above is gated on no-preference; with reduced    */
+/* motion, all elements render in their final state:           */
+/* skeleton = static paperSoft blocks · live dot = static ·    */
+/* charts = fully drawn · stamp/chips = visible. No fallback   */
+/* animations.                                                 */

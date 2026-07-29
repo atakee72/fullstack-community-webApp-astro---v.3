@@ -1,0 +1,41 @@
+/* ══════════════════════════════════════════════════════════
+   motion-blog.css — „Die Beilage" motion spec
+   The quietest surface of the app: it's a magazine, not a feed.
+   The ONE living element — the Lesefaden — is scroll-bound,
+   NOT animated. Keep keyframes minimal.
+   ══════════════════════════════════════════════════════════ */
+
+/* §01 Lesefaden — NO keyframes. width = scroll position, direct
+   binding (rAF or CSS scroll-timeline where supported). The 1.5px
+   ink leading edge travels with the fill. reduced-motion: unchanged
+   — scroll-bound position is not an animation. */
+
+/* „gelesen ✓" swap at 100 % — a print stamp, not a celebration */
+@keyframes blReadDone {
+  0%   { opacity: 0; transform: scale(1.15); }
+  60%  { opacity: 1; transform: scale(0.98); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.bl-read-done { animation: blReadDone 220ms cubic-bezier(.2,.8,.2,1.2) both; }
+
+/* Index scroll-reveal (existing pattern, retuned): cards settle in
+   once on first viewport entry — never re-trigger, never loop. */
+@keyframes blSettleIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.bl-card-in { animation: blSettleIn 380ms cubic-bezier(.2,.7,.3,1) both; }
+.bl-card-in:nth-child(2) { animation-delay: 60ms; }
+.bl-card-in:nth-child(3) { animation-delay: 120ms; }
+/* stagger caps at 3 steps — a paper, not a cascade */
+
+/* Rubrik filter / search results swap — old rows out is instant,
+   new rows use blSettleIn without stagger. */
+
+/* Aufruf CTA + Forum-CTA press: standard kiosk press
+   (translate 1px 1px, shadow 3px→2px, 140ms) — reuse global. */
+
+@media (prefers-reduced-motion: reduce) {
+  .bl-read-done, .bl-card-in { animation: none; opacity: 1; transform: none; }
+  /* Lesefaden stays — it is position, not motion. */
+}

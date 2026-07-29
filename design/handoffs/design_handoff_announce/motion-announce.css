@@ -1,0 +1,25 @@
+/* motion-announce.css — Keyframes + Spec. Reduced-motion: Endzustand, kein Loop. */
+
+/* 01 laden — Skelett-Sweep */
+@keyframes annSweep { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.ann-skel { background: linear-gradient(90deg, var(--k-paper-soft, #ebe1c7) 25%, #e2d6b8 50%, var(--k-paper-soft, #ebe1c7) 75%); background-size: 200% 100%; animation: annSweep 1.4s linear infinite; }
+
+/* 03 speichert — Puls auf „WIRD ANGEPINNT…“-Chip */
+@keyframes annPending { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+.ann-pending-chip { animation: annPending 1.2s ease-in-out infinite; }
+
+/* 03 Verdrängung — die abgelöste Karte rutscht vom Brett ins Archiv.
+   settle-easing (cubic-bezier(.2,.7,.3,1)), 220ms translate + Chip-Wechsel 📌→abgelaufen.
+   Implementierung: FLIP oder view transition; KEIN Fade-out/Fade-in an anderer Stelle —
+   die Bewegung IST die Lesbarkeit der Invariante. */
+.ann-displace { transition: transform 220ms cubic-bezier(.2,.7,.3,1), opacity 220ms; }
+
+/* Toast — Stamp-in wie Moderation (translateY(6px)→0 + Druckschatten erscheint), 180ms pop-easing */
+@keyframes annToastIn { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+.ann-toast { animation: annToastIn 180ms cubic-bezier(.2,.8,.2,1.2) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ann-skel, .ann-pending-chip { animation: none; }
+  .ann-displace { transition: none; }
+  .ann-toast { animation: none; }
+}
