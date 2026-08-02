@@ -8,13 +8,13 @@ A modern, performant community web application built with Astro, TypeScript, and
 
 - **Framework**: Astro 5.x with Hybrid SSR/SSG
 - **UI**: React 18.2 + Svelte 5 for interactive islands
-- **Styling**: Tailwind CSS 3.4 with kiosk design system (paper-warm + ink borders, mid-migration from legacy dark-glass)
+- **Styling**: Tailwind CSS 3.4 with kiosk design system (paper-warm + ink borders — migration from legacy dark-glass completed July 2026)
 - **Animation**: Motion 12.x (`motion/react`) + Web Animations API for `is:inline` scripts
 - **State Management**: TanStack Query for server state, local `useState` for UI (no Zustand/Redux)
 - **Data Fetching**: TanStack Query 5.17 with localStorage persistence (24h)
 - **Database**: MongoDB 6.3 (direct driver, no Mongoose)
 - **Authentication**: auth-astro with NextAuth (Credentials provider, JWT strategy)
-- **Deployment**: Vercel (serverless)
+- **Deployment**: Vercel (serverless, functions pinned to `fra1` — co-located with the Frankfurt Atlas cluster)
 - **Validation**: Zod schemas
 - **Language**: TypeScript
 
@@ -56,9 +56,9 @@ src/
 
 ## 🎨 Design System
 
-The app is mid-migration from a **dark-glass** aesthetic (deep indigo `#0e1033` + purple radial gradient + glass surfaces) to a **kiosk** aesthetic (paper-warm surfaces, ink borders, print shadows, carved-italic title accents, DM Mono kickers, Instrument italic copy).
+The app has completed its migration (July 2026) from a **dark-glass** aesthetic (deep indigo `#0e1033` + purple radial gradient + glass surfaces) to a **kiosk** aesthetic (paper-warm surfaces, ink borders, print shadows, carved-italic title accents, DM Mono kickers, Instrument italic copy).
 
-### Migration status
+### Migration status — complete, all 10 surfaces
 
 | Surface | State |
 |---|---|
