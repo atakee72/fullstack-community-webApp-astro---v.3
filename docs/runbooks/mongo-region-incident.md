@@ -1,6 +1,6 @@
-# Incident: recurring MongoServerSelectionError blips — CLOSED
+# Incident: recurring MongoServerSelectionError blips
 
-**Window:** 2026-07-19 → 2026-07-27 (fix deployed) · watch closed 2026-07-30
+**Window:** 2026-07-19 → 2026-07-27 (region fix deployed) · watch closed 2026-07-30 · **low-rate regression 2026-08-02** → staged driver tuning (see bottom)
 
 ## Symptom
 Sporadic prod errors (Sentry MAHALLE-PROD-2, 34 events; MAHALLE-PROD-4, 4 events):
@@ -27,5 +27,14 @@ curl -sI https://<prod-domain>/api/kiez-stats | grep x-vercel-id   # must show f
 - Air logger probed the DB every 30 min throughout — all clean.
 - Both Sentry issues resolved 2026-07-28; regressions auto-reopen + alert.
 
-## If it regresses
-Next step (deliberately deferred, one variable at a time): driver tuning in `src/lib/mongodb.ts` — `serverSelectionTimeoutMS: 10000` + `maxIdleTimeMS: 60000`. Rare freeze-artifact one-offs (PROD-4 style) don't count as regression.
+## Regression (2026-08-02/03) → staged driver tuning
+
+Both Sentry issues auto-reopened: 3 events over two days (vs ~5/day pre-region-fix — a different, much smaller problem). Region pin verified intact (`fra1::fra1`), so these are **within-region cold-start blips**: topology rediscovery occasionally needs >5s even next to the cluster.
+
+**Step 1 (applied 2026-08-03, `be6db7fc`):** `serverSelectionTimeoutMS: 5000 → 10000` in `src/lib/mongodb.ts`. Trade-off accepted: +5s worst-case hang on a genuine outage, in exchange for cold-start rediscovery becoming a slow success instead of a user-facing error.
+
+**Step 2 (held back, one variable at a time):** `maxIdleTimeMS: 60000` — apply ONLY if network-flavored timeouts persist after step 1. Note it cannot fix PROD-4-style events: those show elapsed times far beyond the configured budget (e.g. 341s vs 30s), which is a Vercel freeze/thaw timer artifact, not a stale socket.
+
+**Known quirk (deliberate):** the Sentry `beforeSend` transient filter's pattern `/MongoNetworkError.*timed out/i` never matches the actually-thrown subclass `MongoNetworkTimeoutError`. This gap is what let PROD-4 through as a useful tripwire — leave it unfixed.
+
+**Watch:** PROD-2/PROD-4 left unresolved as tripwires; evaluate ~2026-08-10 (air logger probes the DB every 30 min as a free canary).
