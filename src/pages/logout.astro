@@ -1,6 +1,44 @@
 ---
-// Logout page - simple redirect (NextAuth handles session clearing)
-// NextAuth's API endpoint already handles session clearing through signOut()
-// This page is just a fallback redirect
-return Astro.redirect('/');
+// Sign-out page (also Auth.js's pages.signOut target for GET /api/auth/signout).
+// The actual sign-out happens client-side via LogoutAction — auth-astro's
+// signOut() runs the CSRF + POST /api/auth/signout flow, so Auth.js emits the
+// clearing Set-Cookie with the correct name/attributes in dev AND prod
+// (__Secure- prefix); server-side cookie deletion here would have to guess both.
+import { getSession } from 'auth-astro/server';
+import LogoutAction from '../components/auth/kiosk/LogoutAction.svelte';
+
+const session = await getSession(Astro.request);
+if (!session?.user) {
+  return Astro.redirect('/');
+}
 ---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Abmelden · Mahalle</title>
+    <!-- Standalone page: no layout, so no global.css / kiosk fonts — inline styles only. -->
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #f4efe6;
+        color: #1b1a17;
+        font-family: system-ui, sans-serif;
+      }
+      p {
+        font-size: 1rem;
+        letter-spacing: 0.02em;
+      }
+    </style>
+  </head>
+  <body>
+    <p>Du wirst abgemeldet &hellip;</p>
+    <LogoutAction client:only="svelte" />
+  </body>
+</html>
