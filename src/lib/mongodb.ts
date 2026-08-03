@@ -8,12 +8,15 @@ const uri = import.meta.env.MONGODB_URI;
 
 // Connection pool tuning for serverless. Small pool because each invocation
 // is short-lived and shares the container; server selection timeout trimmed
-// from the 30s default so a stalled primary fails fast instead of blocking
-// the whole function.
+// from the 30s default so a stalled primary fails within the request window
+// instead of blocking the whole function. 10s (not the original 5s): even
+// with functions pinned to fra1 next to the Atlas cluster, cold-start
+// topology rediscovery occasionally needs >5s (Sentry MAHALLE-PROD-2) —
+// 5s turned those into user-facing errors instead of slow successes.
 const options: MongoClientOptions = {
   maxPoolSize: 10,
   minPoolSize: 0,
-  serverSelectionTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 10000,
   socketTimeoutMS: 45000,
 };
 
