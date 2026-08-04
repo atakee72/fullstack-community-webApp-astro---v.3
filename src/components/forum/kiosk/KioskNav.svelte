@@ -8,11 +8,28 @@
   // bar (5 short labels). Profile reachable via the avatar.
 
   import { locale, t, toggleLocale } from '../../../lib/kiosk-i18n';
+  import AvatarMenu from './AvatarMenu.svelte';
 
   let { currentPath = '/', user = null } = $props<{
     currentPath?: string;
-    user?: { name?: string; image?: string | null } | null;
+    user?: { name?: string; image?: string | null; role?: string } | null;
   }>();
+
+  let menuOpen = $state(false);
+  let avatarEl = $state<HTMLElement | null>(null);
+
+  // Desktop: avatar click opens the dropdown. Below lg the anchor navigates
+  // to /profile as before (mobile gets NO dropdown — design constraint).
+  function handleAvatarClick(e: MouseEvent) {
+    if (window.matchMedia('(min-width: 1024px)').matches) {
+      e.preventDefault();
+      menuOpen = !menuOpen;
+    }
+  }
+  function closeMenu() {
+    menuOpen = false;
+    avatarEl?.focus(); // focus returns to the avatar (design constraint)
+  }
 
   // Forum item's `match` covers `/`, the legacy `/forum`, and the three
   // per-kind detail/create routes — so the Forum tab stays highlighted on
@@ -137,19 +154,28 @@
 
       <!-- User disc (ochre + initials, or photo) -->
       {#if user?.name}
-        <a
-          href="/profile"
-          aria-label={user.name}
-          aria-current={profileActive ? 'page' : undefined}
-          class:prof-nav-avatar-active={profileActive}
-          class="w-9 h-9 rounded-full border-2 border-ink overflow-hidden flex items-center justify-center font-dmmono font-bold text-[11px] uppercase tracking-wider bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
-        >
-          {#if liveImage ?? user.image}
-            <img src={liveImage ?? user.image} alt="" class="w-full h-full object-cover" />
-          {:else}
-            {initialsOf(user.name)}
+        <div class="relative">
+          <a
+            bind:this={avatarEl}
+            href="/profile"
+            onclick={handleAvatarClick}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            aria-label={user.name}
+            aria-current={profileActive ? 'page' : undefined}
+            class:prof-nav-avatar-active={profileActive}
+            class="w-9 h-9 rounded-full border-2 border-ink overflow-hidden flex items-center justify-center font-dmmono font-bold text-[11px] uppercase tracking-wider bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
+          >
+            {#if liveImage ?? user.image}
+              <img src={liveImage ?? user.image} alt="" class="w-full h-full object-cover" />
+            {:else}
+              {initialsOf(user.name)}
+            {/if}
+          </a>
+          {#if menuOpen}
+            <AvatarMenu {user} onClose={closeMenu} />
           {/if}
-        </a>
+        </div>
       {:else}
         <a
           href="/login"

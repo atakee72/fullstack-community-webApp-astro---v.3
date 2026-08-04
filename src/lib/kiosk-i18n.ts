@@ -78,6 +78,14 @@ const de = {
   'nav.short.marketplace': 'markt',
   'nav.short.kiez': 'kiez',
 
+  // avatar dropdown menu (desktop)
+  'nav.menu.profil': 'Mein Profil',
+  'nav.menu.beitraege': 'Meine Beiträge',
+  'nav.menu.gespeichert': 'Gespeichert',
+  'nav.menu.moderation': 'Moderation',
+  'nav.menu.abmelden': 'Abmelden',
+  'nav.menu.seit': 'IM KIEZ SEIT',
+
   // forum page
   // The title carries an italic Instrument-Serif accent word, so it ships
   // as three pieces. Use `forum.title` for plain-text contexts (meta tags).
@@ -1739,6 +1747,14 @@ const en: Dict = {
   'nav.short.news': 'news',
   'nav.short.marketplace': 'market',
   'nav.short.kiez': 'kiez',
+
+  // avatar dropdown menu (desktop)
+  'nav.menu.profil': 'My profile',
+  'nav.menu.beitraege': 'My posts',
+  'nav.menu.gespeichert': 'Saved',
+  'nav.menu.moderation': 'Moderation',
+  'nav.menu.abmelden': 'Sign out',
+  'nav.menu.seit': 'IN THE KIEZ SINCE',
 
   'forum.title': 'What are we talking about today?',
   'forum.title.prefix': 'What are we',
