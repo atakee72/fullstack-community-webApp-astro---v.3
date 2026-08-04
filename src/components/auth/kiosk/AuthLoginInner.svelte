@@ -33,7 +33,7 @@
       signedOut = true;
       params.delete('abgemeldet');
       const qs = params.toString();
-      history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : ''));
+      history.replaceState(history.state, '', window.location.pathname + (qs ? `?${qs}` : ''));
     }
   }
 

@@ -26,9 +26,13 @@
       menuOpen = !menuOpen;
     }
   }
-  function closeMenu() {
+  function closeMenu(restoreFocus: boolean) {
     menuOpen = false;
-    avatarEl?.focus(); // focus returns to the avatar (design constraint)
+    // Focus returns to the avatar only when the close originated from Escape
+    // or focus was still inside the menu (keyboard nav) — NOT on an
+    // outside-click that landed on another interactive element (e.g. a text
+    // field), which would otherwise yank focus back 140ms later.
+    if (restoreFocus) avatarEl?.focus();
   }
 
   // Forum item's `match` covers `/`, the legacy `/forum`, and the three

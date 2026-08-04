@@ -1,3 +1,11 @@
+<script module lang="ts">
+  // Module-scope cache — evaluated once per module load, so it survives the
+  // island remounting on every menu open (unlike instance `<script>` state,
+  // which re-initializes on every mount). Gives the who-am-i fetch a single
+  // lazy call on the FIRST menu open per page-load, not one per open.
+  let whoamiCache: { handle: string | null; sinceYear: number | null } | null = null;
+</script>
+
 <script lang="ts">
   // Paper dropdown anchored to the nav avatar (desktop only — KioskNav gates
   // mounting). Design source: design/handoffs/design_handoff_avatarmenu/
@@ -8,22 +16,31 @@
 
   let { user, onClose } = $props<{
     user: { name?: string; role?: string };
-    onClose: () => void;
+    onClose: (restoreFocus: boolean) => void;
   }>();
 
   const isAdmin = $derived(user?.role === 'admin');
 
-  // Who-am-i extras — one lazy fetch per menu open, name renders regardless.
+  // Who-am-i extras — one lazy fetch across the session (module cache above),
+  // name renders regardless.
   let handle = $state<string | null>(null);
   let sinceYear = $state<number | null>(null);
   $effect(() => {
+    if (whoamiCache) {
+      handle = whoamiCache.handle;
+      sinceYear = whoamiCache.sinceYear;
+      return;
+    }
     let alive = true;
     fetch('/api/profile/me')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!alive || !d?.profile) return;
-        handle = d.profile.handle ?? null;
-        sinceYear = d.profile.memberSince ?? null;
+        if (!d?.profile) return;
+        const next = { handle: d.profile.handle ?? null, sinceYear: d.profile.memberSince ?? null };
+        whoamiCache = next;
+        if (!alive) return;
+        handle = next.handle;
+        sinceYear = next.sinceYear;
       })
       .catch(() => {});
     return () => { alive = false; };
@@ -31,11 +48,12 @@
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let closing = $state(false);
-  function close() {
+  function close(fromEscape = false) {
     if (closing) return;
-    if (reduced) { onClose(); return; }
+    const restoreFocus = fromEscape || (menuEl?.contains(document.activeElement) ?? false);
+    if (reduced) { onClose(restoreFocus); return; }
     closing = true;
-    setTimeout(onClose, 140);
+    setTimeout(() => onClose(restoreFocus), 140);
   }
 
   let menuEl = $state<HTMLElement | null>(null);
@@ -44,7 +62,7 @@
     if (menuEl && !menuEl.contains(e.target as Node)) close();
   }
   function onKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+    if (e.key === 'Escape') { e.preventDefault(); close(true); return; }
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
     e.preventDefault();
     const items = menuEl ? Array.from(menuEl.querySelectorAll<HTMLElement>('[role="menuitem"]')) : [];
