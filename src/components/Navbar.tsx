@@ -52,8 +52,11 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
 
   const handleLogout = async () => {
     setMenuOpen(false);
-    await signOut({ redirect: false });
-    window.location.href = '/';
+    try {
+      await signOut({ callbackUrl: '/login?abgemeldet=1' });
+    } catch {
+      window.location.href = '/login?abgemeldet=1';
+    }
   };
 
   const closeMenu = () => setMenuOpen(false);

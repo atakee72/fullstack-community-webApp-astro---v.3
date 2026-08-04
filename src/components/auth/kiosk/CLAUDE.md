@@ -195,6 +195,10 @@ truncated to 32 chars (same salt as the contact relay).
   (admins are trusted superusers); revisit when the admin moderation
   redesign touches these endpoints.
 
+## Signed-out confirmation strap
+
+Login has a signed-out strap keyed off `?abgemeldet=1` (stripped via `replaceState`); ALL logout paths must use `/login?abgemeldet=1` (LogoutAction, PKontoCard, legacy Navbar). The strap shows a one-line confirmation „Du bist abgemeldet. Bis bald im Kiez." / "You're signed out. See you around the Kiez." Task 3's avatar-menu links to `/logout`, whose island uses this contract.
+
 ## Phase 1 scope / deferred
 Phase 1 = login + register reskin ONLY. Splash + `KiezHeartbeat` shipped in
 Phase 2A (above). Forgot/reset password + email-verify soft gate + unverified banner

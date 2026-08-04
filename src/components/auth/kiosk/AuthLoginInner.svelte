@@ -24,6 +24,19 @@
   // Replaces the whole card — there is nothing else to do on this page.
   let bannedState = $state(false);
 
+  // Signed-out confirmation strap (?abgemeldet=1) — set by every logout path.
+  // Param is stripped via replaceState so reload/bookmark doesn't re-show it.
+  let signedOut = $state(false);
+  {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('abgemeldet') === '1') {
+      signedOut = true;
+      params.delete('abgemeldet');
+      const qs = params.toString();
+      history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : ''));
+    }
+  }
+
   function startLock(sec: number) {
     lockSec = Math.max(1, Math.round(sec));
     credErr = false;
@@ -119,6 +132,16 @@
     <h1 class="font-bricolage" style="font-weight:800; font-size:38px; letter-spacing:-0.035em; line-height:1; margin:8px 0 0; color:var(--k-ink);">
       {$t['auth.login.title.a']}<span class="font-instrument" style="font-style:italic; font-weight:400; color:var(--k-accent);">{$t['auth.login.title.accent']}</span>{$t['auth.login.title.b']}
     </h1>
+
+    {#if signedOut}
+      <div
+        class="font-dmmono"
+        role="status"
+        style="margin-bottom: 14px; padding: 9px 12px; border: 1.5px solid var(--k-ink); border-radius: var(--k-radius-sm); background: var(--k-paper-warm); font-size: 10.5px; letter-spacing: 0.08em; color: var(--k-ink-soft);"
+      >
+        ✓ {$t['auth.login.signedout']}
+      </div>
+    {/if}
 
     {#if locked}
       <AuthBanner kind="danger" title={$t['auth.err.lockedTitle']}

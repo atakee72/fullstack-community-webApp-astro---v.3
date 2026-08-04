@@ -86,8 +86,11 @@
   }
 
   async function handleLogout() {
-    await signOut({ redirect: false });
-    window.location.href = '/';
+    try {
+      await signOut({ callbackUrl: '/login?abgemeldet=1' });
+    } catch {
+      window.location.href = '/login?abgemeldet=1';
+    }
   }
 </script>
 
