@@ -39,7 +39,17 @@
 
   const isPublic = $derived(publicView || !!publicHandle);
 
-  let filter = $state<ActivityFilter>('alle');
+  // URL-param preselect (/profile?filter=forum etc.) — used by the nav avatar
+  // menu's „Meine Beiträge"/„Gespeichert" rows. Own-view only: on the public
+  // profile a stranger's `gespeichert` must never preselect (that filter
+  // doesn't exist there), and public links don't carry the param anyway.
+  const VALID_FILTERS: ActivityFilter[] = ['alle', 'forum', 'markt', 'kalender', 'kurier', 'gespeichert'];
+  function initialFilter(): ActivityFilter {
+    if (typeof window === 'undefined' || publicView || publicHandle) return 'alle';
+    const p = new URLSearchParams(window.location.search).get('filter') as ActivityFilter | null;
+    return p && VALID_FILTERS.includes(p) ? p : 'alle';
+  }
+  let filter = $state<ActivityFilter>(initialFilter());
   let items = $state<ActivityItem[]>([]);
   let nextBefore = $state<string | null>(null);
   let status = $state<'loading' | 'ready' | 'error'>('loading');
