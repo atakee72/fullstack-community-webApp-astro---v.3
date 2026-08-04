@@ -184,8 +184,13 @@
         <a
           href="/login"
           aria-label="Sign in"
-          class="w-9 h-9 rounded-full border-2 border-ink flex items-center justify-center font-dmmono font-bold text-[11px] bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
-        >EA</a>
+          class="w-9 h-9 rounded-full border-2 border-ink flex items-center justify-center bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
+        >
+          <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="8.5" r="3.5" />
+            <path d="M5 19.5c1.4-3 4-4.5 7-4.5s5.6 1.5 7 4.5" />
+          </svg>
+        </a>
       {/if}
     </div>
   </div>
