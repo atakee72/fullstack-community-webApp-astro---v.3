@@ -9,6 +9,8 @@
  * - Nothing is permanently deleted without admin review
  */
 
+import * as Sentry from '@sentry/astro';
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -593,7 +595,21 @@ function createApprovedResult(): ModerationResult {
  * FAIL-SAFE: When moderation can't complete, queue for manual review
  * Nothing gets published without either AI approval OR human review
  */
-function createFailSafeResult(reason: string): ModerationResult {
+async function createFailSafeResult(reason: string): Promise<ModerationResult> {
+  // Fail-safe is invisible by design (content just queues for manual review),
+  // so an OpenAI outage never surfaced anywhere — see Aug 2026 credits
+  // incident. Static message = one Sentry issue (variable `reason` goes in
+  // extra, else every distinct error string becomes its own issue). flush
+  // before returning: the surrounding request may complete fine (200), and
+  // Vercel's post-response freeze would eat an unflushed event. All call
+  // sites are `return createFailSafeResult(...)` inside async functions, so
+  // the async-ification needs no caller changes.
+  console.error(`[Moderation] FAIL-SAFE: ${reason}`);
+  Sentry.captureMessage('moderation: check failed — content queued for manual review', {
+    level: 'error',
+    extra: { reason },
+  });
+  await Sentry.flush(2000);
   return {
     decision: 'pending_review',
     canPublish: false,

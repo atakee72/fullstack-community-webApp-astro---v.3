@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import * as Sentry from '@sentry/astro';
 import { connectDB } from '../../../lib/mongodb';
 import type { NewsItem } from '../../../types';
 import crypto from 'crypto';
@@ -211,8 +212,8 @@ async function fetchNewsDataIO(apiKey: string): Promise<FetchedArticle[]> {
 async function scoreArticlesWithGPT(
   articles: FetchedArticle[],
   openaiKey: string
-): Promise<ScoredArticle[]> {
-  if (articles.length === 0) return [];
+): Promise<{ scored: ScoredArticle[]; degraded: boolean }> {
+  if (articles.length === 0) return { scored: [], degraded: false };
 
   const articleList = articles.map((a, i) => ({
     id: i,
@@ -260,14 +261,17 @@ ${JSON.stringify(articleList)}`;
 
     if (!response.ok) {
       console.error(`GPT-4o scoring failed: ${response.status}`);
-      // Fallback: return all articles with default score
-      return articles.map(a => ({
-        ...a,
-        relevanceScore: 50,
-        aiCategory: a.category || 'unknown',
-        aiReason: 'AI scoring unavailable',
-        aiSummary: '',
-      }));
+      // Fallback: return all articles with default score (below threshold)
+      return {
+        degraded: true,
+        scored: articles.map(a => ({
+          ...a,
+          relevanceScore: 50,
+          aiCategory: a.category || 'unknown',
+          aiReason: 'AI scoring unavailable',
+          aiSummary: '',
+        })),
+      };
     }
 
     const data = await response.json();
@@ -279,25 +283,31 @@ ${JSON.stringify(articleList)}`;
 
     const scoreMap = new Map(scores.map(s => [s.id, s]));
 
-    return articles.map((article, i) => {
-      const score = scoreMap.get(i);
-      return {
-        ...article,
-        relevanceScore: score?.score ?? 50,
-        aiCategory: score?.category ?? article.category ?? 'unknown',
-        aiReason: score?.reason ?? 'unscored',
-        aiSummary: score?.summary ?? '',
-      };
-    });
+    return {
+      degraded: false,
+      scored: articles.map((article, i) => {
+        const score = scoreMap.get(i);
+        return {
+          ...article,
+          relevanceScore: score?.score ?? 50,
+          aiCategory: score?.category ?? article.category ?? 'unknown',
+          aiReason: score?.reason ?? 'unscored',
+          aiSummary: score?.summary ?? '',
+        };
+      }),
+    };
   } catch (error) {
     console.error('GPT-4o scoring error:', error);
-    return articles.map(a => ({
-      ...a,
-      relevanceScore: 50,
-      aiCategory: a.category || 'unknown',
-      aiReason: 'AI scoring error',
-      aiSummary: '',
-    }));
+    return {
+      degraded: true,
+      scored: articles.map(a => ({
+        ...a,
+        relevanceScore: 50,
+        aiCategory: a.category || 'unknown',
+        aiReason: 'AI scoring error',
+        aiSummary: '',
+      })),
+    };
   }
 }
 
@@ -398,7 +408,21 @@ export const GET: APIRoute = async ({ request }) => {
     }
 
     // Step 3: Score with GPT-4o
-    const scoredArticles = await scoreArticlesWithGPT(newArticles, openaiKey);
+    const { scored: scoredArticles, degraded } = await scoreArticlesWithGPT(newArticles, openaiKey);
+
+    // Scoring failure is swallowed above (fallback score 50 < threshold), so
+    // without an explicit capture the cron "succeeds" daily while the board
+    // silently starves — exactly what happened Aug 1-4 2026 (OpenAI credits
+    // exhausted). captureMessage bypasses the beforeSend transient-exception
+    // filter (it only inspects event.exception); flush before returning or
+    // Vercel's post-response freeze eats the event (see src/middleware.ts).
+    if (degraded) {
+      Sentry.captureMessage('news: GPT scoring degraded — daily fetch will save nothing', {
+        level: 'error',
+        extra: { fetched: allArticles.length, newArticles: newArticles.length },
+      });
+      await Sentry.flush(2000);
+    }
 
     // Step 4: Filter by relevance threshold, sort by score, cap at MAX_DAILY_ARTICLES
     const qualifyingArticles = scoredArticles
