@@ -27,6 +27,7 @@
   // label, row + PBtn danger small "löschen …").
 
   import { signOut } from 'auth-astro/client';
+  import { slide } from 'svelte/transition';
   import { t, tStr } from '../../../lib/kiosk-i18n';
   import PCard from './atoms/PCard.svelte';
   import PCardHead from './atoms/PCardHead.svelte';
@@ -63,6 +64,14 @@
   let resendLoading = $state(false);
   let cancelLoading = $state(false);
   let cancelDelLoading = $state(false);
+
+  // Mobile-only disclosure (design: Gefahrenzone ZU per default — one
+  // deliberate tap separates routine (Abmelden) from irreversible (löschen)).
+  // Local per-mount state is safe: PKontoCard is double-mounted but only one
+  // mount is ever visible per breakpoint, and the fold is pure presentation.
+  let dangerOpen = $state(false);
+  const reducedMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   async function handleCancelDeletion() {
     if (cancelDelLoading || !onCancelDeletion) return;
@@ -175,15 +184,41 @@
       >{$t['profile.del.widerrufen']}</button>
     </div>
   {:else if onOpenDelete}
-    <div style="margin-top: 16px; padding: 12px 14px; border: 1.5px dashed var(--k-danger); border-radius: var(--k-radius-md);">
-      <div class="font-dmmono" style="font-size: 9.5px; color: var(--k-danger); letter-spacing: 0.14em; margin-bottom: 6px;">
-        {$t['profile.del.zone.label']}
+    {#if bare}
+      <!-- Mobile: collapsed disclosure (≥44px row). Desktop box below stays unchanged. -->
+      <div style="margin-top: 16px; border-top: 1.5px dashed var(--k-rule);">
+        <button
+          type="button"
+          class="font-dmmono"
+          aria-expanded={dangerOpen}
+          onclick={() => (dangerOpen = !dangerOpen)}
+          style="width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: space-between; background: none; border: none; padding: 13px 0 2px; cursor: pointer;"
+        >
+          <span style="font-size: 9.5px; color: var(--k-danger); letter-spacing: 0.14em;">{$t['profile.del.zone.label']}</span>
+          <span style="font-size: 11px; color: var(--k-danger);">{dangerOpen ? '▾' : '▸'}</span>
+        </button>
+        {#if dangerOpen}
+          <div
+            transition:slide={{ duration: reducedMotion ? 0 : 220 }}
+            style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 4px;"
+          >
+            <span class="font-bricolage" style="font-size: 12.5px; color: var(--k-ink-soft);">{$t['profile.del.zone.row']}</span>
+            <PBtn danger small onclick={onOpenDelete}>{$t['profile.del.zone.cta']}</PBtn>
+          </div>
+        {/if}
       </div>
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-        <span class="font-bricolage" style="font-size: 12.5px; color: var(--k-ink-soft);">{$t['profile.del.zone.row']}</span>
-        <PBtn danger small onclick={onOpenDelete}>{$t['profile.del.zone.cta']}</PBtn>
+    {:else}
+      <!-- Desktop: existing open dashed box, byte-identical to before -->
+      <div style="margin-top: 16px; padding: 12px 14px; border: 1.5px dashed var(--k-danger); border-radius: var(--k-radius-md);">
+        <div class="font-dmmono" style="font-size: 9.5px; color: var(--k-danger); letter-spacing: 0.14em; margin-bottom: 6px;">
+          {$t['profile.del.zone.label']}
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <span class="font-bricolage" style="font-size: 12.5px; color: var(--k-ink-soft);">{$t['profile.del.zone.row']}</span>
+          <PBtn danger small onclick={onOpenDelete}>{$t['profile.del.zone.cta']}</PBtn>
+        </div>
       </div>
-    </div>
+    {/if}
   {/if}
 {/snippet}
 

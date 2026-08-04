@@ -230,6 +230,16 @@ is expected/benign, not a bug). Toggling is a local click handler, no
 external wiring. Header is a real `<button>` (native `aria-expanded`
 semantics, ≥44px tall via `min-height: 44px` + `padding: 13px 16px`).
 
+**`PKontoCard` Gefahrenzone mobile disclosure (Task 4)**: the mobile `bare`
+mount collapses the Gefahrenzone (account deletion zone) behind a ≥44px
+disclosure button (`GEFAHRENZONE ▸/▾`) — clicking reveals a slide transition
+(220ms, zero on `prefers-reduced-motion: reduce`) showing the deletion row +
+danger button. The desktop `bare=false` branch renders the open dashed box
+unchanged. The `deletionScheduledAt` pending-deletion banner stays ALWAYS
+visible on both breakpoints, never behind the fold — active deletion
+countdown is status the user must see, not an action to tuck away. Design
+source: `design_handoff_avatarmenu`.
+
 **Grid item overflow gotcha (real bug hit + fixed during Task 10)**: every
 direct child of the grid carries `min-w-0`. Without it, CSS Grid's default
 "automatic minimum size" on a grid item is its content's min-content width
