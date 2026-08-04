@@ -409,6 +409,13 @@ When migrating a surface into kiosk, swap kicker + italic-accent text to the pag
 - Replaced earlier `overflow: hidden` on html/body and `position: fixed; top: -scrollY` patterns — both had edge cases (iOS touch leaks, fixed-descendant conflicts with `backdrop-filter` containing blocks).
 - For new modals: just wrap in `<RemoveScroll enabled={isOpen}>` and drop any bespoke scroll-lock `useEffect`.
 
+### Nested-island Svelte `<style>` blocks get orphaned in prod builds
+- **A Svelte component imported ONLY through another Svelte island (never from any `.astro` file) loses its scoped `<style>` in production.** Astro/Vite extracts the CSS into a chunk that NO route links — the file is emitted and deployed, but nothing loads it. First hit: `AvatarMenu.svelte` (imported solely by `KioskNav.svelte`), Aug 2026.
+- **Symptom**: component renders perfectly in dev (Vite injects styles via JS/HMR) and passes `pnpm build` green, but arrives completely unstyled in prod. The compiled JS applies the scoped classes; the CSS never arrives.
+- **Diagnosis recipe**: build, then check the SSR manifest — `grep -o "<hash>.css" .vercel/output/_functions/manifest_*.mjs | wc -l`. A route-linked stylesheet appears once per route (~28×); an orphan appears exactly once (global assets list only).
+- **Fix pattern**: move the styles into `global.css` with a namespaced class prefix (`.am-*`), same escape hatch as the `.kiosk-toast*` block. Components imported directly by a layout/page (`VerifyEmailBanner` etc.) are unaffected — their CSS lands in the route-linked bundle.
+- **Rule**: any NEW styled `.svelte` component that is only reachable through another island either gets its styles in `global.css` from the start, or must be prod-build-verified with the manifest check above before declaring done.
+
 ### Server-only modules bleeding into client bundles
 - **The server/client boundary in Astro is enforced by what you TRANSITIVELY import, not by file location.** If a React component with `client:only="react"` (or `client:load`) imports anything from a module that in turn imports `mongodb`, `fs`, `auth-astro/server`, etc., Vite pulls that entire module graph into the browser chunk. Node built-ins (`net`, `tls`, ...) get silently externalized and the chunk fails to evaluate at runtime — the component just never mounts.
 - **Symptom**: page renders, hydration slot is empty, no obvious error in build output. `pnpm build` goes green because Vite doesn't error on unresolved Node built-ins in client bundles — it just produces a broken bundle. You only see it when you load the page in a browser.
