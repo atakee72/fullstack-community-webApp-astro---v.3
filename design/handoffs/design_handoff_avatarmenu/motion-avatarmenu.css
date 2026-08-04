@@ -1,0 +1,7 @@
+/* Avatar-Menü · motion spec — extends existing kiosk motion vocabulary. No new tokens. */
+@keyframes amStampIn { from { opacity: 0; transform: scale(.96) translateY(-4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.am-menu { transform-origin: top right; animation: amStampIn 220ms cubic-bezier(.2,.7,.3,1); }
+.am-menu.closing { animation: none; transition: opacity 140ms cubic-bezier(.4,0,.2,1); opacity: 0; }
+/* Gefahrenzone disclosure (mobile Konto-Karte) */
+.am-danger-body { overflow: hidden; transition: max-height 220ms cubic-bezier(.2,.7,.3,1); }
+@media (prefers-reduced-motion: reduce) { .am-menu { animation: none; } .am-menu.closing { transition: none; } .am-danger-body { transition: none; } }
