@@ -34,6 +34,9 @@
 
   // Direct RSVP toggle for the round +/✓ button in the agenda action
   // column. Going ↔ cancel only; the modal handles maybe.
+  // Initial-value capture is deliberate: currentUserId comes from the SSR
+  // session and never changes within a page's lifetime.
+  // svelte-ignore state_referenced_locally
   const rsvp = rsvpMutation(currentUserId ?? '__anon__');
 
   const isGoing = $derived.by(() => {

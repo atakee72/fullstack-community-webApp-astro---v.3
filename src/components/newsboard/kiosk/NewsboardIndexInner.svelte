@@ -37,7 +37,11 @@
 
   // Data — seed first paint from the server-fetched articles (C1: SSR-prefetch).
   // toVM is a hoisted function declaration, so calling it here is fine.
+  // Capturing the initial prop value is deliberate: the island prop never
+  // changes after mount; later data arrives via client re-fetches.
+  // svelte-ignore state_referenced_locally
   let status = $state<'loading' | 'ready' | 'error'>(initialArticles.length ? 'ready' : 'loading');
+  // svelte-ignore state_referenced_locally
   let articles = $state<NewsVM[]>(initialArticles.map((it) => toVM(it, new Set<string>())));
   let savedIds = $state<Set<string>>(new Set());
   let seq = 0;
