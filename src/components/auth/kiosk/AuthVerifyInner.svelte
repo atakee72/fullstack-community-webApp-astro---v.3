@@ -9,6 +9,7 @@
   } = $props();
 
   type Stage = 'sent' | 'resent' | 'confirming' | 'confirmed' | 'invalid';
+  // svelte-ignore state_referenced_locally
   let stage = $state<Stage>(token ? (tokenValid ? 'confirming' : 'invalid') : 'sent');
   let resendLoading = $state(false);
   let resendErr = $state<string | null>(null);

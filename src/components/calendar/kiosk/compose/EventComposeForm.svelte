@@ -60,22 +60,35 @@
     return new Date().toISOString().slice(0, 10);
   }
 
+  // svelte-ignore state_referenced_locally
   let title = $state(initialValues?.title ?? '');
+  // svelte-ignore state_referenced_locally
   let body = $state(initialValues?.body ?? '');
+  // svelte-ignore state_referenced_locally
   let category = $state<EventCategory>(initialValues?.category ?? 'kiez');
+  // svelte-ignore state_referenced_locally
   let startDate = $state(initialValues?.startDate ?? todayISO());
+  // svelte-ignore state_referenced_locally
   let startTime = $state(initialValues?.startTime ?? defaultStartHHMM());
+  // svelte-ignore state_referenced_locally
   let endDate = $state(initialValues?.endDate ?? initialValues?.startDate ?? todayISO());
+  // svelte-ignore state_referenced_locally
   let endTime = $state(initialValues?.endTime ?? defaultEndHHMM());
+  // svelte-ignore state_referenced_locally
   let allDay = $state(initialValues?.allDay ?? false);
+  // svelte-ignore state_referenced_locally
   let location = $state(initialValues?.location ?? '');
+  // svelte-ignore state_referenced_locally
   let capacity = $state<number | null>(initialValues?.capacity ?? null);
+  // svelte-ignore state_referenced_locally
   let visibility = $state<'public' | 'private'>(initialValues?.visibility ?? 'public');
+  // svelte-ignore state_referenced_locally
   let tagsInput = $state((initialValues?.tags ?? []).join(' '));
 
   // Multi-day mode — auto-on when the URL prefill brings a different
   // start/end (drag-select pin path). User can toggle via the
   // 'mehrtägig' checkbox in the When section.
+  // svelte-ignore state_referenced_locally
   let multiDay = $state(
     !!(initialValues?.startDate &&
       initialValues?.endDate &&

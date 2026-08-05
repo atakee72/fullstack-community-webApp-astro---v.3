@@ -132,6 +132,7 @@
   }
 
   // ─── Mutation ───────────────────────────────────────────────────────
+  // svelte-ignore state_referenced_locally
   const create = createTopicMutation({
     id: currentUser.id,
     name: currentUser.name,

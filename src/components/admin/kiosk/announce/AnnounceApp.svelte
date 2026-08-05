@@ -19,7 +19,9 @@
   let { initialItems = [], adminName = '' }: { initialItems?: any[]; adminName?: string } = $props();
 
   // ── State contract ──────────────────────────────────────────────────────
+  // svelte-ignore state_referenced_locally
   let status = $state<'loading' | 'ready'>(initialItems.length > 0 ? 'ready' : 'loading');
+  // svelte-ignore state_referenced_locally
   let items = $state<any[]>(initialItems);
 
   let editing = $state<any | null>(null); // item loaded into composer

@@ -48,10 +48,15 @@
 
   // Core form state. `$state` runes scope to this component instance —
   // the auto-save store on the consumer side decides what to persist.
+  // svelte-ignore state_referenced_locally
   let title = $state(initialValues?.title ?? '');
+  // svelte-ignore state_referenced_locally
   let body = $state(initialValues?.body ?? '');
+  // svelte-ignore state_referenced_locally
   let kind = $state<Kind>(initialValues?.kind ?? 'discussion');
+  // svelte-ignore state_referenced_locally
   let tags = $state<string[]>(initialValues?.tags ?? []);
+  // svelte-ignore state_referenced_locally
   let existingImages = $state(initialValues?.existingImages ?? []);
   let pendingFiles = $state<File[]>([]);
   let tagInput = $state('');

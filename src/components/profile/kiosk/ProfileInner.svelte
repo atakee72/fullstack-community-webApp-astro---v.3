@@ -59,6 +59,7 @@
   // — but cheap to guard) renders nothing rather than an empty strip shell.
   const showChronik = $derived(!!initialChronik && initialChronik.stops.length > 0);
 
+  // svelte-ignore state_referenced_locally
   let profile = $state<ProfileMe | null>(initialProfile);
 
   // Seq-guarded client refetch — only runs when we land in the "logged in

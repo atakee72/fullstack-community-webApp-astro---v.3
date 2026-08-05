@@ -41,7 +41,9 @@
   const visibilityClass = $derived(embedded ? '' : 'lg:hidden');
   const positionClass = $derived(embedded ? 'relative' : 'fixed bottom-12 inset-x-0 z-30');
 
+  // svelte-ignore state_referenced_locally
   let expanded = $state(initialExpanded);
+  // svelte-ignore state_referenced_locally
   let body = $state(initialDraft);
   let textareaEl: HTMLTextAreaElement | null = $state(null);
 

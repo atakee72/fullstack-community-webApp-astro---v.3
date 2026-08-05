@@ -14,6 +14,7 @@
   let { token = '' }: { token?: string } = $props();
 
   type Stage = 'confirming' | 'confirmed' | 'invalid';
+  // svelte-ignore state_referenced_locally
   let stage = $state<Stage>(token ? 'confirming' : 'invalid');
 
   onMount(() => {

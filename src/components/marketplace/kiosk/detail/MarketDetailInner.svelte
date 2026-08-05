@@ -30,6 +30,7 @@
     isOwner: boolean;
   } = $props();
 
+  // svelte-ignore state_referenced_locally
   let listing = $state(initialListing);
   let reportOpen = $state(false);
 

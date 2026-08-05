@@ -42,6 +42,7 @@
     initialEvent?: EventDoc;
   }>();
 
+  // svelte-ignore state_referenced_locally
   const isEditing = mode === 'edit';
 
   // ─── Initial values — computed synchronously at script-top.

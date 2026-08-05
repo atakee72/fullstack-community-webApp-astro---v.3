@@ -54,11 +54,15 @@
   };
 
   // ── Form state ───────────────────────────────────────────────────────
+  // svelte-ignore state_referenced_locally
   let kindRail = $state<RailKind | null>(
     initialListing?.listingType ? API_TO_RAIL[initialListing.listingType] : null
   );
+  // svelte-ignore state_referenced_locally
   let category = $state<string | null>(initialListing?.category ?? null);
+  // svelte-ignore state_referenced_locally
   let title = $state(initialListing?.title ?? '');
+  // svelte-ignore state_referenced_locally
   let descriptionPlainText = $state(
     typeof initialListing?.descriptionPlainText === 'string'
       ? initialListing.descriptionPlainText
@@ -66,12 +70,17 @@
         ? initialListing.description
         : ''
   );
+  // svelte-ignore state_referenced_locally
   let price = $state<number | null>(
     initialListing?.price != null && initialListing.price > 0 ? initialListing.price : null
   );
+  // svelte-ignore state_referenced_locally
   let originalPrice = $state<number | null>(initialListing?.originalPrice ?? null);
+  // svelte-ignore state_referenced_locally
   let delivery = $state<ListingDelivery | null>(initialListing?.delivery ?? null);
+  // svelte-ignore state_referenced_locally
   let condition = $state<ListingCondition | null>(initialListing?.condition ?? null);
+  // svelte-ignore state_referenced_locally
   let specs = $state<{
     masse?: string;
     material?: string;
@@ -79,6 +88,7 @@
     farbe?: string;
     gewicht?: string;
   } | null>(initialListing?.specs ?? null);
+  // svelte-ignore state_referenced_locally
   let images = $state<string[]>(initialListing?.images ?? []);
 
   // ── UI state ─────────────────────────────────────────────────────────
@@ -90,6 +100,7 @@
   // /marketplace/create?draft=<id> → passed as initialListing), track its id
   // so "Als Entwurf speichern" updates the same row and publish routes to the
   // draft-publish endpoint instead of creating a fresh listing.
+  // svelte-ignore state_referenced_locally
   let draftId = $state<string | null>(
     initialListing?.status === 'draft' && initialListing._id
       ? String(initialListing._id)
@@ -97,6 +108,7 @@
   );
 
   // ── Draft storage key ─────────────────────────────────────────────────
+  // svelte-ignore state_referenced_locally
   const DRAFT_KEY = `marketplace-compose-draft-${mode}`;
 
   // ── Helpers ──────────────────────────────────────────────────────────

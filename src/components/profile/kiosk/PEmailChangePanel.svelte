@@ -45,7 +45,9 @@
   // Seeded once at mount from the current server state — opening the panel
   // while a change is already pending jumps straight to stage 02 (per brief).
   type Stage = 'form' | 'sent';
+  // svelte-ignore state_referenced_locally
   let stage = $state<Stage>(pendingEmail ? 'sent' : 'form');
+  // svelte-ignore state_referenced_locally
   let sentAddr = $state(pendingEmail ?? '');
 
   // ─── Stage 01 · form ────────────────────────────────────────────────────

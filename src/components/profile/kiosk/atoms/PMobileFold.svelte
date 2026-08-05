@@ -23,6 +23,7 @@
     children?: Snippet;
   } = $props();
 
+  // svelte-ignore state_referenced_locally
   let open = $state(initialOpen);
 </script>
 

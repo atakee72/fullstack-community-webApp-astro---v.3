@@ -51,7 +51,9 @@
     isOfficial?: boolean;
   }>();
 
+  // svelte-ignore state_referenced_locally
   let topic = $state(initialTopic);
+  // svelte-ignore state_referenced_locally
   let comments = $state<any[]>(initialComments);
 
   function authorIdOf(v: any): string | null {

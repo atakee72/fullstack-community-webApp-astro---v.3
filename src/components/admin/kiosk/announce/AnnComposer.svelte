@@ -46,7 +46,9 @@
     onRetry: () => void;
   } = $props();
 
+  // svelte-ignore state_referenced_locally
   let title = $state(initialTitle);
+  // svelte-ignore state_referenced_locally
   let body = $state(initialBody);
 
   // Local override — see file header comment.
