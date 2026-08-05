@@ -8,6 +8,7 @@ Loaded lazily when Claude reads/edits files in `src/pages/api/news/`. Note: the 
 - **GPT-4o scoring**: All articles scored for Berlin/Neukölln relevance (threshold 70/100, max 20/day)
 - **Relevance sorting**: Articles sorted by day (`fetchDate`), then user-submitted first, then by `aiRelevanceScore` descending (most hyperlocal on top). User-submitted articles get `fetchDate` set at admin approval time, not submission time.
 - **Auto-approve**: AI-fetched articles are auto-approved (no moderation needed); only user-submitted news goes through moderation
+- **Degraded-scoring alert**: GPT scoring failure (e.g. OpenAI credits exhausted) falls back to score 50 — below the 70 threshold — so the cron "succeeds" daily while saving nothing (real incident Aug 1–4 2026: board starved 4 days, zero errors). `scoreArticlesWithGPT` returns `{ scored, degraded }`; on `degraded` the handler sends `Sentry.captureMessage` + `flush(2000)` before returning (flush is mandatory — success responses aren't flushed by middleware, Vercel's freeze would eat the event).
 - **Image pipeline**: RSS media:content → enclosure → description `<img>` → og:image scrape → placeholder fallback
 - **Dedup**: By sourceUrl + title, with unique index on title
 - **Bookmarks**: Server-side persistence via `savedNews` collection (localStorage fallback for logged-out users)
