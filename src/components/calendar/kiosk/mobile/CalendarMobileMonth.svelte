@@ -117,6 +117,9 @@
   // RSVP toggle for the day-panel rows. Mutation is bound to the
   // current user id at component init; clicking +/✓ on a row flips
   // between 'going' and 'cancel'. Logged-out users see no button.
+  // Initial-value capture is deliberate: currentUserId comes from the SSR
+  // session and never changes within a page's lifetime.
+  // svelte-ignore state_referenced_locally
   const rsvp = rsvpMutation(currentUserId ?? '__anon__');
 
   function isGoing(ev: EventDoc): boolean {

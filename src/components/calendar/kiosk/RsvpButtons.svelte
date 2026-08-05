@@ -23,6 +23,9 @@
   // Mutation must be created with a non-empty user id (the optimistic
   // onMutate callback uses it). When unauthenticated we render a
   // login prompt instead of the buttons.
+  // Initial-value capture is deliberate: currentUserId comes from the SSR
+  // session and never changes within a page's lifetime.
+  // svelte-ignore state_referenced_locally
   const rsvp = rsvpMutation(currentUserId ?? '__anon__');
 
   function setStatus(target: 'going' | 'maybe') {
