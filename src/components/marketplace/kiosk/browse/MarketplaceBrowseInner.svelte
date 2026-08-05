@@ -65,6 +65,9 @@
     offset: 0,
   });
 
+  // Initial-value capture is deliberate: initialData is the SSR-prefetch
+  // seed for first paint; later data arrives via client re-fetches.
+  // svelte-ignore state_referenced_locally
   let data = $state<{ items: Listing[]; total: number }>(initialData);
   let loading = $state(false);
   let error = $state<Error | null>(null);
