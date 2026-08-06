@@ -38,3 +38,7 @@ Both Sentry issues auto-reopened: 3 events over two days (vs ~5/day pre-region-f
 **Known quirk (deliberate):** the Sentry `beforeSend` transient filter's pattern `/MongoNetworkError.*timed out/i` never matches the actually-thrown subclass `MongoNetworkTimeoutError`. This gap is what let PROD-4 through as a useful tripwire — leave it unfixed.
 
 **Watch:** PROD-2/PROD-4 left unresolved as tripwires; evaluate ~2026-08-10 (air logger probes the DB every 30 min as a free canary).
+
+## Closure (2026-08-06)
+
+Step 1 held: 2.5+ quiet days after the last event (2026-08-03 20:53 UTC) with the air logger probing every 30 min. Both issues **resolved** in Sentry. The manual watch is retired — alert rule 725977 now includes a Regression condition (added 2026-08-05), so any recurrence emails immediately. Playbook if that email arrives: freeze-artifact events (elapsed ≫ configured budget) don't count; a real network-flavored timeout → apply step 2 (`maxIdleTimeMS: 60000`).
