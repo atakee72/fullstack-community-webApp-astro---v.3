@@ -70,9 +70,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
 
     if (isAuthRoute && context.locals.user) {
-      // Redirect to home if trying to access auth routes while logged in
+      // Redirect to home if trying to access auth routes while logged in.
+      // Only follow same-origin paths: "/x" yes, but not "//evil.com"
+      // (protocol-relative) or "/\evil.com" (backslash variant some browsers
+      // normalize to "//") — otherwise /login?redirect= is an open redirect.
       const redirectTo = new URL(context.request.url).searchParams.get("redirect");
-      return context.redirect(redirectTo || "/");
+      const safeTarget =
+        redirectTo && redirectTo.startsWith("/") && !/^\/[/\\]/.test(redirectTo)
+          ? redirectTo
+          : "/";
+      return context.redirect(safeTarget);
     }
 
     return await next();
