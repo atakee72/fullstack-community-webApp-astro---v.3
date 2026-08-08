@@ -908,4 +908,93 @@ option:disabled {
   .tour-card, .tour-stamp { animation: none; }
   .tour-ring { animation: none; }
 }
+
+/* ── Tour entrance 1 — hello modal (task-4). Plain full-viewport scrim
+   (no hole — this isn't the spotlight ring), card mirrors .tour-card's
+   paperWarm/inkBold/ochre-top-rule look at a larger, centered size.
+   Reuses `.tour-x` for the close affordance (positioned absolute here,
+   flex-positioned there — same visual token, different host layout). ─── */
+.tour-hello-scrim {
+  position: fixed; inset: 0; z-index: 65;
+  background: rgba(27, 26, 23, 0.5);
+  animation: tourScrimIn 180ms ease-out both;
+}
+@keyframes tourScrimIn { from { opacity: 0; } to { opacity: 1; } }
+.tour-hello {
+  position: fixed; z-index: 71; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 520px; max-width: calc(100vw - 32px);
+  background: var(--k-paper-warm); border: 2px solid var(--k-ink);
+  border-top: 4px solid var(--k-ochre); border-radius: 10px;
+  box-shadow: 4px 4px 0 var(--k-ochre); padding: 30px 36px 24px;
+  animation: tourHelloIn 220ms cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes tourHelloIn { from { transform: translate(-50%, calc(-50% + 6px)) scale(0.98); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+.tour-hello .tour-x { position: absolute; top: 14px; right: 16px; }
+.tour-hello-grabber { display: none; }
+.tour-hello-kicker { font-size: 10px; letter-spacing: 0.22em; color: #b07515; font-weight: 700; }
+.tour-hello-title { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; margin: 10px 0 12px; color: var(--k-ink); }
+.tour-hello-accent { font-style: italic; font-weight: 400; color: #b07515; }
+.tour-hello-body { font-size: 14.5px; line-height: 1.55; color: var(--k-ink-soft); margin: 0; }
+.tour-hello-actions { display: flex; gap: 16px; align-items: center; margin-top: 20px; }
+.tour-hello-start {
+  padding: 11px 22px; border-radius: var(--k-radius-md); background: var(--k-ink); color: var(--k-paper);
+  font-weight: 700; font-size: 14px; min-height: 44px;
+}
+.tour-hello-later {
+  font-size: 12px; color: var(--k-ink-mute); text-decoration: underline; text-underline-offset: 3px;
+  min-height: 44px; display: inline-flex; align-items: center; padding: 0 4px;
+}
+.tour-hello-foot {
+  font-size: 8.5px; letter-spacing: 0.1em; color: var(--k-ink-mute); margin-top: 18px;
+  border-top: 1px dashed var(--k-rule); padding-top: 10px;
+}
+@media (max-width: 1023px) {
+  .tour-hello-sheet {
+    top: auto; left: 0; right: 0; bottom: 0; transform: none;
+    width: auto; max-width: none;
+    border-radius: 14px 14px 0 0; padding: 10px 22px 30px;
+    animation-name: tourHelloSheetIn;
+  }
+  .tour-hello-sheet .tour-x { top: 10px; }
+  .tour-hello-grabber { display: block; width: 44px; height: 4px; border-radius: var(--k-radius-pill); background: var(--k-rule); margin: 0 auto 16px; }
+  .tour-hello-title { font-size: 27px; letter-spacing: -0.025em; line-height: 1.05; }
+  .tour-hello-body { font-size: 13.5px; }
+  .tour-hello-actions { flex-direction: column; align-items: stretch; gap: 10px; margin-top: 18px; }
+  .tour-hello-start { width: 100%; text-align: center; padding: 14px 0; font-size: 14.5px; }
+  .tour-hello-later { justify-content: center; padding: 12px 0; }
+}
+@keyframes tourHelloSheetIn { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .tour-hello-scrim { animation-duration: 120ms; }
+  .tour-hello { animation: tourHelloInReduced 120ms ease-out both; }
+}
+@keyframes tourHelloInReduced { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── Tour entrance 2 — chapter offer strip (task-4). Full-width, below
+   nav, in normal document flow (v1 deviation — see tour/CLAUDE.md). Kicker
+   uses the page's own --k-accent (wine on forum, teal on calendar, …) —
+   the strip lives IN the page, unlike the hello modal / spotlight chrome
+   which stay ochre-branded everywhere. ─────────────────────────────── */
+.tour-offer {
+  background: var(--k-paper-warm); border-bottom: 1.5px solid var(--k-ink);
+  animation: tourOfferIn 220ms cubic-bezier(.2,.7,.3,1) both;
+  transition: opacity 140ms ease-out;
+}
+.tour-offer.tour-offer-closing { opacity: 0; }
+@keyframes tourOfferIn { from { opacity: 0; } to { opacity: 1; } }
+.tour-offer-kicker { font-size: 10.5px; letter-spacing: 0.14em; font-weight: 700; color: var(--k-accent, #b07515); flex-shrink: 0; }
+.tour-offer-text { font-size: 12.5px; color: var(--k-ink-soft); flex: 1; line-height: 1.4; min-width: 0; }
+.tour-offer-start {
+  font-size: 11.5px; font-weight: 600; color: var(--k-ink); text-decoration: underline; text-underline-offset: 3px;
+  min-height: 44px; display: inline-flex; align-items: center; padding: 0 4px; flex-shrink: 0;
+}
+.tour-offer-x {
+  font-size: 13px; color: var(--k-ink-mute); min-width: 44px; min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-offer { animation: none; transition: opacity 120ms ease-out; }
+}
+
+button.am-row { width: 100%; text-align: left; }
 .am-icon { font-size: 11px; opacity: 0.55; }
