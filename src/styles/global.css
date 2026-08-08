@@ -876,6 +876,10 @@ option:disabled {
 /* --k-ink-2 is not defined in tokens.css (only --k-ink-soft / --k-ink-mute
    exist) — hardcoded to --k-ink-mute's hex (#7a7264) per brief instruction
    to hardcode+comment any missing --k-* var. */
+/* Base hit-box is 24px tall (fine here — it sits in a flex row with siblings
+   that pad the row out to a comfortable tap target). Hosts that place this
+   as a standalone/absolute close affordance MUST override min-height (and
+   ideally center the glyph in a real ≥44px box) — see `.tour-hello .tour-x`. */
 .tour-x { font-size: 13px; color: #7a7264; min-width: 44px; min-height: 24px; text-align: right; }
 .tour-title { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; margin: 6px 0 4px; color: var(--k-ink); }
 .tour-body { font-size: 12.5px; line-height: 1.5; color: #7a7264; }
@@ -929,7 +933,10 @@ option:disabled {
   animation: tourHelloIn 220ms cubic-bezier(.2,.7,.3,1) both;
 }
 @keyframes tourHelloIn { from { transform: translate(-50%, calc(-50% + 6px)) scale(0.98); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
-.tour-hello .tour-x { position: absolute; top: 14px; right: 16px; }
+.tour-hello .tour-x {
+  position: absolute; top: 14px; right: 16px;
+  min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;
+}
 .tour-hello-grabber { display: none; }
 .tour-hello-kicker { font-size: 10px; letter-spacing: 0.22em; color: #b07515; font-weight: 700; }
 .tour-hello-title { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; margin: 10px 0 12px; color: var(--k-ink); }
