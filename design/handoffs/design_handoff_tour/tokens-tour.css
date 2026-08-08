@@ -1,0 +1,32 @@
+/* tokens-tour.css — Spec, kein Drop-in. Über bestehendes --k-* Muster verdrahten; Klassen .tour-* in global.css (Overlay lebt im KioskLayout, nicht auf einer Seite → kein data-page-Scope). */
+:root {
+  /* Tour-Chrome — OCHRE. Der Flächen-Akzent (Wein, Teal, …) bleibt semantisch die Seite DARUNTER. */
+  --tour-accent: var(--k-ochre, #e8a53a);
+  --tour-accent-deep: #b07515; /* Kicker/Link-Text auf Papier — Ochre selbst ist zu hell für Text */
+  /* Ring */
+  --tour-ring-width: 2.5px;
+  --tour-ring-inset: -6px;                                /* um den Anker herum */
+  --tour-ring-halo: 0 0 0 4px color-mix(in srgb, var(--tour-accent) 20%, transparent);
+  /* Scrim + Stapel — Anker liegt per z-index ÜBER dem Scrim, wird nie ausgeschnitten */
+  --tour-scrim: rgba(27, 26, 23, 0.5);                    /* ink @ 0.5 */
+  --tour-z-scrim: 20;
+  --tour-z-anchor: 30;
+  --tour-z-card: 40;
+  /* Karte (Desktop) */
+  --tour-card-w: 380px;
+  --tour-card-bg: var(--k-paper-warm, #f0e6cc);
+  --tour-card-top-rule: 4px solid var(--tour-accent);
+  --tour-card-gap: 16px;                                  /* Anker → Karte */
+  --tour-nose: 14px;                                      /* Pfeil-Nase, 45°-Quadrat */
+  /* Fortschritt */
+  --tour-dot: 7px;
+  --tour-chapter-max: 7;                                  /* längste Kapitel-Länge (Forum) */
+  /* Kapitel-Ende */
+  --tour-done: var(--k-moss, #6b8a4a);
+  --tour-stamp-rotate: -8deg;
+  /* Mobile Bottom-Sheet */
+  --tour-sheet-inset: 12px;                               /* left/right */
+  --tour-sheet-above-nav: 78px;                           /* Station-Sheet sitzt ÜBER der Bottom-Nav */
+  --tour-touch-min: 44px;
+  /* Kapitel-Angebot-Zeile: Strap trägt den FLÄCHEN-Akzent (teal auf Kalender usw.), nicht Ochre */
+}

@@ -1,0 +1,34 @@
+/* motion-tour.css — Keyframes + Spec. Reduced-motion: Scrim + Karte nur faden, Ring STATISCH. */
+
+/* Karte — Stamp-in, 220ms SETTLE (wie Moderation/Avatar-Menü) */
+@keyframes tourCardIn { from { transform: translateY(6px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+.tour-card { animation: tourCardIn 220ms cubic-bezier(.2,.7,.3,1) both; }
+
+/* Scrim — 180ms Fade beim Öffnen; Schließen: 140ms INK-Fade (alles zusammen raus) */
+@keyframes tourScrimIn { from { opacity: 0; } to { opacity: 1; } }
+.tour-scrim { animation: tourScrimIn 180ms ease-out both; }
+
+/* Ring — EIN Einschwing-Puls beim Stationswechsel (Hof zieht sich von 10px auf 4px zusammen), dann Ruhe. NIE Dauerloop. */
+@keyframes tourRingIn { from { box-shadow: 0 0 0 10px color-mix(in srgb, var(--tour-accent, #e8a53a) 0%, transparent); } to { box-shadow: var(--tour-ring-halo, 0 0 0 4px rgba(232,165,58,0.2)); } }
+.tour-ring { animation: tourRingIn 320ms ease-out both; }
+
+/* Stationswechsel-Sequenz (Spec): Karte alt 140ms Fade-out → Engine scrollt Anker in den View →
+   NACH dem Scroll messen (Pflicht 04) → Ring + Karte neu Stamp-in. Keine fliegende Karte zwischen Ankern. */
+
+/* Mobile Sheet — von unten, 220ms SETTLE */
+@keyframes tourSheetIn { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+.tour-sheet { animation: tourSheetIn 220ms cubic-bezier(.2,.7,.3,1) both; }
+
+/* Kapitel-Ende — Moss-Stempel stempelt ein (Rotation bleibt, nur Scale + Fade), 260ms POP */
+@keyframes tourStampIn { from { transform: rotate(var(--tour-stamp-rotate, -8deg)) scale(1.25); opacity: 0; } to { transform: rotate(var(--tour-stamp-rotate, -8deg)) scale(1); opacity: 1; } }
+.tour-stamp { animation: tourStampIn 260ms cubic-bezier(.2,.8,.2,1.2) both; }
+
+/* Kapitel-Angebot-Zeile — leiser Height-Reveal 220ms SETTLE beim ersten Rendern; ✕ = 140ms Fade */
+.tour-offer { transition: opacity 140ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-card, .tour-sheet, .tour-stamp { animation: none; }
+  .tour-ring { animation: none; box-shadow: var(--tour-ring-halo, 0 0 0 4px rgba(232,165,58,0.2)); }
+  .tour-scrim { animation-duration: 120ms; } /* reiner Fade bleibt erlaubt */
+  .tour-offer { transition: none; }
+}
