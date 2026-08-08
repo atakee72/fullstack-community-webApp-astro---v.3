@@ -95,6 +95,7 @@
     {#each filters as f (f.key)}
       <button
         type="button"
+        data-tour={`forum-filter-${f.key}`}
         onclick={() => setFilter(f.key)}
         class={`shrink-0 px-4 py-1 rounded-full font-bricolage font-medium text-sm transition-colors duration-150 ${pillClass(activeFilter === f.key)}`}
         aria-pressed={activeFilter === f.key}
@@ -106,6 +107,7 @@
     {#each personalFilters as f (f.key)}
       <button
         type="button"
+        data-tour={`forum-filter-${f.key}`}
         onclick={() => setFilter(f.key)}
         class={`shrink-0 px-4 py-1 rounded-full font-bricolage font-medium text-sm transition-colors duration-150 ${pillClass(activeFilter === f.key)}`}
         aria-pressed={activeFilter === f.key}
@@ -120,9 +122,10 @@
       class="kiosk-scroll-fade flex items-center gap-2 overflow-x-auto no-scrollbar mt-2 lg:mt-0 lg:contents"
     >
       <span class={`shrink-0 lg:ml-2 ${tagsLabelClass}`}>{$t['filter.tagsLabel']}</span>
-      {#each tags as tag (tag)}
+      {#each tags as tag, i (tag)}
         <button
           type="button"
+          data-tour={i === 0 ? 'forum-tag' : undefined}
           onclick={() => toggleTag(tag)}
           class={`shrink-0 px-3 py-1 rounded-full font-bricolage font-medium text-sm transition-colors duration-150 ${pillClass(activeTag === tag)}`}
           aria-pressed={activeTag === tag}

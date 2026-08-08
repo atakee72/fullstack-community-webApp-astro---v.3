@@ -355,6 +355,7 @@
       </h1>
       <a
         href="/topics/create"
+        data-tour="forum-new-topic"
         class="self-start md:self-auto inline-flex items-center gap-2 px-5 py-2 rounded-full bg-ink text-paper font-bricolage font-medium text-sm border-2 border-ink shadow-[2px_2px_0_var(--k-wine)] hover:shadow-[3px_3px_0_var(--k-wine)] hover:-translate-x-px hover:-translate-y-px active:translate-x-px active:translate-y-px transition-all duration-[180ms] ease-out shrink-0"
       >
         {$t['forum.cta.newTopic']}
