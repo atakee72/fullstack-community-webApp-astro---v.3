@@ -851,4 +851,61 @@ option:disabled {
 .am-row:hover, .am-row:focus-visible { background: var(--k-paper-soft); outline: none; }
 .am-row.am-plum { color: var(--k-plum); }
 .am-row.am-wine { color: var(--k-wine); font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; }
+
+/* ── Tour („Die Führung") — layout-mounted island, styles global by rule.
+   Ring paints the scrim via oversized box-shadow: stacking-context-proof
+   spotlight (design_handoff_tour, plan decision 1). ─────────────────── */
+.tour-ring {
+  position: fixed; z-index: 60; pointer-events: none;
+  border: 2.5px solid var(--k-ochre);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--k-ochre) 20%, transparent),
+              0 0 0 200vmax rgba(27, 26, 23, 0.5);
+  animation: tourRingIn 320ms ease-out both;
+}
+@keyframes tourRingIn { from { opacity: 0; } to { opacity: 1; } }
+.tour-card {
+  position: fixed; z-index: 70; width: 380px; max-width: calc(100vw - 24px);
+  background: var(--k-paper-warm); border: 2px solid var(--k-ink);
+  border-top: 4px solid var(--k-ochre); border-radius: 10px;
+  box-shadow: 4px 4px 0 var(--k-ochre); padding: 14px 18px 12px;
+  animation: tourCardIn 220ms cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes tourCardIn { from { transform: translateY(6px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+.tour-card-head { display: flex; justify-content: space-between; align-items: center; }
+.tour-kicker { font-size: 9px; letter-spacing: 0.18em; color: #b07515; font-weight: 700; }
+/* --k-ink-2 is not defined in tokens.css (only --k-ink-soft / --k-ink-mute
+   exist) — hardcoded to --k-ink-mute's hex (#7a7264) per brief instruction
+   to hardcode+comment any missing --k-* var. */
+.tour-x { font-size: 13px; color: #7a7264; min-width: 44px; min-height: 24px; text-align: right; }
+.tour-title { font-size: 18px; font-weight: 800; letter-spacing: -0.015em; margin: 6px 0 4px; color: var(--k-ink); }
+.tour-body { font-size: 12.5px; line-height: 1.5; color: #7a7264; }
+.tour-end { display: flex; gap: 10px; align-items: center; margin-top: 10px; padding: 8px 10px;
+  background: color-mix(in srgb, var(--k-moss) 8%, transparent); border: 1.5px solid var(--k-moss); border-radius: 6px; }
+.tour-stamp { width: 40px; height: 40px; border-radius: 999px; border: 2px solid var(--k-moss); color: var(--k-moss);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0;
+  transform: rotate(-8deg); animation: tourStampIn 260ms cubic-bezier(.2,.8,.2,1.2) both; }
+.tour-stamp span:first-child { font-size: 12px; } .tour-stamp span:last-child { font-size: 5.5px; letter-spacing: 0.06em; }
+@keyframes tourStampIn { from { transform: rotate(-8deg) scale(1.25); opacity: 0; } to { transform: rotate(-8deg) scale(1); opacity: 1; } }
+.tour-end-note { font-size: 11.5px; color: #7a7264; line-height: 1.4; }
+.tour-foot { display: flex; align-items: center; gap: 10px; margin-top: 12px; border-top: 1px dashed var(--k-rule); padding-top: 10px; }
+.tour-dots { display: flex; gap: 4px; }
+.tour-dot { width: 7px; height: 7px; border-radius: 999px; border: 1.5px solid var(--k-rule); background: transparent; }
+.tour-dot.past { border-color: var(--k-ochre); } .tour-dot.on { background: var(--k-ochre); }
+.tour-count { font-size: 10px; color: #7a7264; }
+/* Binding footer-layout note (brief): back+next wrapped in .tour-actions,
+   which owns the right-alignment — no per-button margin-left rules. */
+.tour-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.tour-back { font-size: 11px; color: #7a7264; text-decoration: underline; text-underline-offset: 3px; padding: 10px 6px; }
+.tour-next { padding: 6px 14px; border-radius: 6px; background: var(--k-ink); color: var(--k-paper); font-size: 12px; font-weight: 700; min-height: 32px; }
+.tour-nextch { display: block; font-size: 9.5px; color: #b07515; margin-top: 8px; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 1023px) {
+  .tour-card { left: 12px !important; right: 12px; top: auto !important; bottom: 78px; width: auto;
+    animation-name: tourSheetIn; }
+  .tour-next, .tour-back { min-height: 44px; }
+}
+@keyframes tourSheetIn { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .tour-card, .tour-stamp { animation: none; }
+  .tour-ring { animation: none; }
+}
 .am-icon { font-size: 11px; opacity: 0.55; }
