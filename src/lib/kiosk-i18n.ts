@@ -3368,7 +3368,7 @@ const en: Dict = {
   'tour.forum.s2.title': 'Announcements',
   'tour.forum.s2.body': 'Official notes from the team — in teal, sometimes pinned. Rare, but important.',
   'tour.forum.s3.title': 'Recommendations',
-  'tour.forum.s3.body': "Tips from the neighborhood: shops, doctors, corners. The Kiez's memory.",
+  'tour.forum.s3.body': 'Tips from the neighborhood: shops, doctors, corners. The Kiez’s memory.',
   'tour.forum.s4.title': 'Saved',
   'tour.forum.s4.body': 'Everything you mark with ◈ waits here — nothing gets lost.',
   'tour.forum.s5.title': 'Mine',
