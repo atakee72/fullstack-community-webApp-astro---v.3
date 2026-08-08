@@ -18,12 +18,12 @@
   // whatever punctuation the copy authored around it (a dangling comma is
   // not a crash, and the brief doesn't require trimming it).
   const titlePre = $derived.by(() => {
-    const filled = $t['tour.hello.title'].replace('{name}', name);
+    const filled = $t['tour.hello.title'].split('{name}').join(name);
     const idx = filled.indexOf('{da}');
     return idx === -1 ? filled : filled.slice(0, idx);
   });
   const titlePost = $derived.by(() => {
-    const filled = $t['tour.hello.title'].replace('{name}', name);
+    const filled = $t['tour.hello.title'].split('{name}').join(name);
     const idx = filled.indexOf('{da}');
     return idx === -1 ? '' : filled.slice(idx + 4);
   });
@@ -35,13 +35,22 @@
     startBtn?.focus();
   });
 
-  // Esc = dismiss; simple Tab trap (same recipe as TourSpotlight's card).
-  function onKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      onDismiss();
-      return;
+  // Esc = dismiss, document-level so it fires regardless of focus (same
+  // pattern as TourController's onKeydown). Tab trap stays scoped to the
+  // card since it only needs to matter while focus is inside it.
+  $effect(() => {
+    function onDocKeydown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onDismiss();
+      }
     }
+    document.addEventListener('keydown', onDocKeydown);
+    return () => document.removeEventListener('keydown', onDocKeydown);
+  });
+
+  // Tab trap (same recipe as TourSpotlight's card).
+  function onKeydown(e: KeyboardEvent) {
     if (e.key !== 'Tab' || !cardEl) return;
     const focusables = Array.from(cardEl.querySelectorAll<HTMLElement>('button, a[href]'));
     if (!focusables.length) return;
@@ -59,7 +68,7 @@
 
 <!-- Plain full-viewport scrim, no hole (binding constraint — this isn't the
      spotlight ring, there's no anchor to reveal). -->
-<div class="tour-hello-scrim"></div>
+<div class="tour-hello-scrim" onclick={onDismiss}></div>
 <div
   bind:this={cardEl}
   class="tour-hello tour-hello-sheet"
@@ -70,7 +79,7 @@
   onkeydown={onKeydown}
 >
   <div class="tour-hello-grabber"></div>
-  <button class="tour-x" onclick={onDismiss} aria-label="Schließen">✕</button>
+  <button class="tour-x" onclick={onDismiss} aria-label={$t['tour.chrome.close']}>✕</button>
   <div class="tour-hello-kicker font-dmmono">{$t['tour.hello.kicker']}</div>
   <h2 id="tour-hello-title" class="tour-hello-title font-bricolage">{titlePre}<span class="tour-hello-accent font-instrument">{$t['tour.hello.accent']}</span>{titlePost}</h2>
   <p class="tour-hello-body">{$t['tour.hello.body']}</p>

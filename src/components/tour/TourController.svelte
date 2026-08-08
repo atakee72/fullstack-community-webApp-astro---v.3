@@ -8,7 +8,6 @@
   //   4. Scroll first, measure AFTER the scroll settles (content-visibility:auto
   //      cards report a stale rect until they're actually in viewport).
   //   5. A chapter never crosses a navigation — nav-away aborts and stamps seen.
-  import { t, locale } from '../../lib/kiosk-i18n';
   import { CHAPTERS_BY_PAGE, type TourChapter } from '../../lib/tour/tourChapters';
   import { getLocalState, isChapterSeen, markChapterSeen, markHelloDismissed, syncWithServer, type TourState } from '../../lib/tour/tourStore';
   import TourSpotlight from './TourSpotlight.svelte';
@@ -111,13 +110,13 @@
         targetRect = { top: r.top, left: r.left, width: r.width, height: r.height };
       });
     };
-    window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('scroll', onScroll, { passive: true, capture: true });
     window.addEventListener('resize', onScroll);
     return () => {
       delete (window as any).__mahalleTourStart;
       document.removeEventListener('keydown', onKeydown);
       document.removeEventListener('astro:before-preparation', onNav);
-      window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('scroll', onScroll, { capture: true });
       window.removeEventListener('resize', onScroll);
       cancelAnimationFrame(raf);
     };

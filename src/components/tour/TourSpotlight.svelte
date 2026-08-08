@@ -72,7 +72,7 @@
 <div class="tour-card" bind:this={cardEl} tabindex="-1" role="dialog" aria-modal="true" aria-label={$t[stop.titleKey]} style={cardStyle} onkeydown={onCardKeydown}>
   <div class="tour-card-head">
     <span class="tour-kicker font-dmmono">{$t[chapter.kickerKey]}</span>
-    <button class="tour-x font-dmmono" onclick={onClose} aria-label="Schließen">✕</button>
+    <button class="tour-x font-dmmono" onclick={onClose} aria-label={$t['tour.chrome.close']}>✕</button>
   </div>
   <div class="tour-title font-bricolage">{$t[stop.titleKey]}</div>
   <div class="tour-body">{$t[stop.bodyKey]}</div>

@@ -31,6 +31,6 @@
     <span class="tour-offer-kicker font-dmmono">{$t['tour.offer.kicker']}</span>
     <span class="tour-offer-text truncate">{$t['tour.offer.text']}</span>
     <button class="tour-offer-start font-dmmono" onclick={onStart}>{$t['tour.offer.start']}</button>
-    <button class="tour-offer-x font-dmmono" onclick={dismiss} aria-label="Schließen">✕</button>
+    <button class="tour-offer-x font-dmmono" onclick={dismiss} aria-label={$t['tour.chrome.close']}>✕</button>
   </div>
 </div>
