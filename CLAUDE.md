@@ -95,7 +95,7 @@ export const POST: APIRoute = async ({ request }) => {
 - **One transport chooser**: `src/lib/email/mailer.ts` (SERVER-ONLY) — SMTP (nodemailer, mailbox.org) when `SMTP_HOST/USER/PASS` set, else Resend when `RESEND_API_KEY` set, else "not configured" and each send module dev-logs its link instead of sending. `sendMail()` THROWS on failure — including Resend's `{ error }` return, which the SDK does not throw on — and captures to Sentry with `flush(2000)` before rethrowing (best-effort callers swallow the throw; Vercel freeze would eat an unflushed capture).
 - **Send modules** (`src/lib/auth/send*.ts`, contact relay) own copy + dev-log fallbacks; the mailer owns transport, From (`SENDING_FROM_EMAIL`), timeouts (10s connect, `requireTLS`).
 - **Contact relay fails closed**: `POST /api/listings/[id]/contact` returns `503 email_unavailable` in prod when no transport is configured (before rate-limit/metadata writes).
-- **Vercel scope**: `SMTP_*` in Production only — Preview deploys never email real users (auth mails dev-log into function logs; the contact relay 503s there since `import.meta.env.PROD` is true on Preview builds too). Runbook: `docs/runbooks/smtp-mailer-smoke.md`.
+- **Prod transport is Resend** (since 2026-08-09, domain switch): `RESEND_API_KEY` + `SENDING_FROM_EMAIL="Mahalle <noreply@mahalle.digital>"` in Production; `SMTP_*` REMOVED from prod (mailbox.org SMTP retired there — it sent from the borrowed `noreply@ercan-atak.de`). Local `.env` still carries `SMTP_*`, so dev uses SMTP; that's fine. Resend domain `mahalle.digital` verified (EU region `eu-west-1`; DKIM/SPF/MX live on the `send.` subdomain at Porkbun, DMARC `p=none` on root). Preview deploys have no transport → auth mails dev-log into function logs; the contact relay 503s there since `import.meta.env.PROD` is true on Preview builds too. Runbook: `docs/runbooks/smtp-mailer-smoke.md` (SMTP-era, kept for the transport-chooser smoke pattern).
 
 ### Data Fetching
 - TanStack Query for client-side data fetching
@@ -175,7 +175,7 @@ Required in `.env`:
 ```
 AUTH_SECRET=            # NextAuth secret
 AUTH_TRUST_HOST=true
-NEXTAUTH_URL=           # Canonical app origin (e.g. https://mahalle.berlin). REQUIRED in prod — the password-reset link is built from this, NOT the request Host header (host-header-injection protection). If unset in prod the forgot-password flow FAILS CLOSED (no reset email sent). Dev falls back to the request origin.
+NEXTAUTH_URL=           # Canonical app origin — https://mahalle.digital in prod (domain live since 2026-08-09; the old mahalle-das-kiezgesichterbuch.vercel.app 308-redirects here, deep links preserved). REQUIRED in prod — the password-reset link is built from this, NOT the request Host header (host-header-injection protection). If unset in prod the forgot-password flow FAILS CLOSED (no reset email sent). Dev falls back to the request origin.
 MONGODB_URI=            # MongoDB connection string
 CLOUDINARY_CLOUD_NAME=  # Image upload
 CLOUDINARY_API_KEY=
@@ -183,14 +183,14 @@ CLOUDINARY_API_SECRET=
 OPENAI_API_KEY=         # Content moderation API + news relevance scoring
 CRON_SECRET=            # Vercel cron job authentication
 NEWSDATA_API_KEY=       # NewsData.io API (optional, for additional news sources)
-SMTP_HOST=              # SMTP relay host (currently smtp.mailbox.org). With SMTP_USER+SMTP_PASS set, SMTP is the active mail transport (wins over Resend).
+SMTP_HOST=              # SMTP relay host (smtp.mailbox.org). LOCAL DEV ONLY since 2026-08-09 — removed from Vercel prod (Resend is the prod transport). With SMTP_USER+SMTP_PASS set, SMTP wins over Resend in the transport chooser.
 SMTP_PORT=              # 587 (STARTTLS; 465 = implicit TLS also supported)
 SMTP_USER=              # SMTP login (mailbox.org account, e.g. atakee@mailbox.org)
-SMTP_PASS=              # mailbox.org APP password (not the account password). Secret.
-RESEND_API_KEY=         # Resend.com API key — legacy/fallback transport, used only when no SMTP_* is set. Kept for the future own-domain switch.
-SENDING_FROM_EMAIL=     # e.g. "Mahalle <noreply@ercan-atak.de>". For SMTP this MUST be an address registered at the provider (mailbox.org "Externes Alias") or sends are rejected. All app email (auth + contact relay) uses it.
+SMTP_PASS=              # mailbox.org APP password (not the account password). Secret. Keep double-quoted (contains #).
+RESEND_API_KEY=         # Resend.com API key — ACTIVE prod transport since 2026-08-09 (domain mahalle.digital verified at Resend, EU region). Set in Vercel Production (Sensitive).
+SENDING_FROM_EMAIL=     # Prod: "Mahalle <noreply@mahalle.digital>" (Resend). For SMTP sends the address MUST be registered at the provider (mailbox.org "Externes Alias") or sends are rejected. All app email (auth + contact relay) uses it.
 CONTACT_IP_SALT=        # 32+ chars, fixed across deploys (hashes IPs in contact rate-limit keys). Also used by auth rate limiting (src/lib/auth/rateLimit.ts).
-ALLOWED_ORIGINS=        # CSV of allowed origins for contact relay + resend-verification CSRF guard. Must match the real deploy origin (currently https://mahalle-das-kiezgesichterbuch.vercel.app) or be unset. Currently UNSET in Vercel prod — the guard is a no-op until set.
+ALLOWED_ORIGINS=        # CSV of allowed origins for contact relay + resend-verification CSRF guard. SET in Vercel prod since 2026-08-09: "https://mahalle.digital,https://mahalle-das-kiezgesichterbuch.vercel.app" — the guard is ARMED now.
 STATS_XLSX_URL=         # AfS demographics XLSX URL (sync script + GitHub Actions)
 STATS_PERIOD=           # AfS period, e.g. "2025h2" (sync script + GitHub Actions)
 MSS_XLSX_URL=           # MSS social index XLSX URL (optional, sync script)

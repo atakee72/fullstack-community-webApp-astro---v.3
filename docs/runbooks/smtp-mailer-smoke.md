@@ -1,5 +1,12 @@
 # SMTP mailer go-live runbook
 
+> **HISTORICAL (2026-08-09):** prod switched to **Resend** with the own domain —
+> `SENDING_FROM_EMAIL="Mahalle <noreply@mahalle.digital>"`, `RESEND_API_KEY` set,
+> all `SMTP_*` removed from Vercel Production. mailbox.org SMTP (borrowed
+> `noreply@ercan-atak.de`) now serves LOCAL DEV only (still in `.env`).
+> The smoke *pattern* below (transport chooser, forgot-password probe, Sentry
+> check) still applies — substitute the Resend config where it says SMTP.
+
 Prereq (manual, account owner): `noreply@ercan-atak.de` registered as
 "Externes Alias" at mailbox.org; an APP password created (Settings →
 Security → App passwords). Transactional mail only — no bulk/newsletters
