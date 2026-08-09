@@ -1,9 +1,23 @@
 import type { ChapterKey } from './tourStore';
 
-export interface TourStop { anchor: string; titleKey: string; bodyKey: string; }
+export interface TourStop {
+  anchor: string;
+  titleKey: string;
+  bodyKey: string;
+  bodyMobileKey?: string;               // used once (Kalender S2)
+  link?: {                              // used once (Forum S7 template)
+    labelKey: string;
+    hrefBase: string;                   // e.g. '/topics/create'
+    prefillTitleKey: string;
+    prefillBodyKey: string;
+    prefillTags: string;                // e.g. 'neu-hier'
+  };
+}
 export interface TourChapter {
   key: ChapterKey; page: string; kickerKey: string;
-  stops: TourStop[]; endNoteKey: string; nextChapterKey: string; nextChapterHref: string;
+  stops: TourStop[]; endNoteKey: string;
+  nextChapterKey?: string; nextChapterHref?: string;   // optional (final chapter has neither)
+  final?: boolean;                                     // Profil only
 }
 
 // v1: Forum only. The other 6 chapters are confirm-before-code (design review
