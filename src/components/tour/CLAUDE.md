@@ -99,13 +99,14 @@ earns its complexity when there's a hole to cut.
   goes through it.
 - **`TourStop.bodyMobileKey?: string`** — optional alternate body copy shown
   under a mobile breakpoint instead of `bodyKey`. Used once: Kalender S2,
-  where the desktop body describes drag-to-select and the mobile body
-  describes tap-to-select (different interaction, same anchor).
+  where the desktop body describes click-then-second-click range selection
+  (two discrete clicks, no drag) and the mobile body describes a single tap
+  (no range gesture on mobile — different interaction, same anchor).
 - **`TourChapter.final?: boolean`** — marks the last chapter in the chain
-  (Profil). The end card swaps the normal "✓ Kapitel gesehen" stamp for
-  `tour.chrome.stampFinal` and omits the next-chapter link entirely (no
-  `nextChapterKey`/`nextChapterHref` on that registry entry) instead of
-  dead-ending into an empty href.
+  (Profil). The end card swaps the normal stamp text (`tour.chrome.stamp`,
+  'KAPITEL') for `tour.chrome.stampFinal` ('FÜHRUNG') and omits the
+  next-chapter link entirely (no `nextChapterKey`/`nextChapterHref` on that
+  registry entry) instead of dead-ending into an empty href.
 - **`TourStop.link?: { labelKey, hrefBase, prefillTitleKey, prefillBodyKey,
   prefillTags }`** — optional CTA on a single stop that opens a
   pre-filled compose flow instead of just ringing the anchor. Used once:
