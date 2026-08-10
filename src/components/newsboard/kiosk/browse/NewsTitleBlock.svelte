@@ -15,5 +15,7 @@
       {@html $t['news.titleblock.heading']}
     </h2>
   </div>
-  <KioskBtn variant="secondary" href="/newsboard/submit">{$t['news.titleblock.submit']}</KioskBtn>
+  <span data-tour="kurier-submit" class="inline-flex">
+    <KioskBtn variant="secondary" href="/newsboard/submit">{$t['news.titleblock.submit']}</KioskBtn>
+  </span>
 </section>

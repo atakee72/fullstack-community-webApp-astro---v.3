@@ -70,4 +70,21 @@ export const CHAPTERS_BY_PAGE: Record<string, TourChapter> = {
     nextChapterKey: 'tour.markt.end.next',
     nextChapterHref: '/newsboard',
   },
+  newsboard: {
+    key: 'kurier',
+    page: 'newsboard',
+    kickerKey: 'tour.kurier.kicker',
+    stops: [
+      { anchor: '[data-tour="kurier-masthead"]', titleKey: 'tour.kurier.s1.title', bodyKey: 'tour.kurier.s1.body' },
+      { anchor: '[data-tour="kurier-saved"]',    titleKey: 'tour.kurier.s2.title', bodyKey: 'tour.kurier.s2.body' },
+      // S3 anchor deviates from TOUR_CC_ANSWERS (Ungelesen filter is shipped
+      // disabled — Phase-1 placeholder); rings the filter row instead,
+      // copy softened accordingly. User-approved 2026-08-10.
+      { anchor: '[data-tour="kurier-fade"]',     titleKey: 'tour.kurier.s3.title', bodyKey: 'tour.kurier.s3.body' },
+      { anchor: '[data-tour="kurier-submit"]',   titleKey: 'tour.kurier.s4.title', bodyKey: 'tour.kurier.s4.body' },
+    ],
+    endNoteKey: 'tour.kurier.end.note',
+    nextChapterKey: 'tour.kurier.end.next',
+    nextChapterHref: '/schillerkiez',
+  },
 };
