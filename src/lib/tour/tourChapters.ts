@@ -42,4 +42,18 @@ export const CHAPTERS_BY_PAGE: Record<string, TourChapter> = {
     nextChapterKey: 'tour.forum.end.next',
     nextChapterHref: '/calendar',
   },
+  calendar: {
+    key: 'kalender',
+    page: 'calendar',
+    kickerKey: 'tour.cal.kicker',
+    stops: [
+      { anchor: '[data-tour="cal-view"]',       titleKey: 'tour.cal.s1.title', bodyKey: 'tour.cal.s1.body' },
+      { anchor: '[data-tour="cal-grid"]',       titleKey: 'tour.cal.s2.title', bodyKey: 'tour.cal.s2.body', bodyMobileKey: 'tour.cal.s2.bodyMobile' },
+      { anchor: '[data-tour="cal-rsvp"]',       titleKey: 'tour.cal.s3.title', bodyKey: 'tour.cal.s3.body' },
+      { anchor: '[data-tour="cal-categories"]', titleKey: 'tour.cal.s4.title', bodyKey: 'tour.cal.s4.body' },
+    ],
+    endNoteKey: 'tour.cal.end.note',
+    nextChapterKey: 'tour.cal.end.next',
+    nextChapterHref: '/marketplace',
+  },
 };

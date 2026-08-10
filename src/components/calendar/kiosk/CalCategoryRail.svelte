@@ -41,6 +41,7 @@
 </script>
 
 <section
+  data-tour="cal-categories"
   class="px-4 md:px-9 lg:px-10 py-3 flex items-center flex-wrap gap-2 border-b border-dashed border-rule"
 >
   <!-- Pills wrapper: horizontally-scrollable with peek/fade on mobile,

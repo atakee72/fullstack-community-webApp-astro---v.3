@@ -448,6 +448,7 @@
         {/if}
       </div>
       <div
+        data-tour="cal-view"
         class="inline-flex border-2 border-ink rounded-full overflow-hidden font-dmmono text-[12px] font-semibold shrink-0"
         role="tablist"
         aria-label="View"
@@ -474,6 +475,7 @@
        Scrollbar hidden via the `.no-scrollbar` rule below — the
        category-color cues are enough; an extra scrollbar is noise. -->
   <div
+    data-tour="cal-categories"
     use:scrollFade
     class="kiosk-scroll-fade no-scrollbar flex gap-1.5 overflow-x-auto px-4 py-2.5 border-b border-dashed border-rule"
   >
@@ -521,7 +523,7 @@
   </div>
 
   <!-- Mini dot-grid -->
-  <div class="px-2 pt-2 relative" bind:this={gridWrapper}>
+  <div data-tour="cal-grid" class="px-2 pt-2 relative" bind:this={gridWrapper}>
     <div class="grid grid-cols-7 border-b border-ink">
       {#each dowLabels as label, i (label + '-' + i)}
         <div
@@ -606,7 +608,7 @@
   </p>
 
   <!-- Bottom day panel -->
-  <div class="px-4 pt-4 mt-2 border-t-[1.5px] border-ink">
+  <div data-tour="cal-rsvp" class="px-4 pt-4 mt-2 border-t-[1.5px] border-ink">
     <div class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-teal mb-2">
       {dayKicker}
     </div>
