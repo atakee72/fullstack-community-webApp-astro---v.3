@@ -22,7 +22,7 @@
   const isMobileVp = typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches;
   const bodyKey = $derived(isMobileVp && stop.bodyMobileKey ? stop.bodyMobileKey : stop.bodyKey);
   function stopLinkHref(l: NonNullable<import('../../lib/tour/tourChapters').TourStop['link']>): string {
-    return `${l.hrefBase}?prefill_title=${encodeURIComponent($t[l.prefillTitleKey])}&prefill_body=${encodeURIComponent($t[l.prefillBodyKey])}&prefill_tags=${l.prefillTags}`;
+    return `${l.hrefBase}?prefill_title=${encodeURIComponent($t[l.prefillTitleKey])}&prefill_body=${encodeURIComponent($t[l.prefillBodyKey])}&prefill_tags=${encodeURIComponent(l.prefillTags)}`;
   }
 
   let cardEl: HTMLElement | undefined = $state();
