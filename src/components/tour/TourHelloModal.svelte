@@ -6,8 +6,10 @@
   import { onMount } from 'svelte';
   import { t } from '../../lib/kiosk-i18n';
 
-  let { name = '', onStart, onDismiss } = $props<{
+  let { name = '', surfaceKey, stopCount, onStart, onDismiss } = $props<{
     name: string;
+    surfaceKey: string;
+    stopCount: number;
     onStart: () => void;
     onDismiss: () => void;
   }>();
@@ -27,6 +29,13 @@
     const idx = filled.indexOf('{da}');
     return idx === -1 ? '' : filled.slice(idx + 4);
   });
+
+  // Body interpolation (brief, Step 3): substitute {surface} with the
+  // chapter-scoped surface phrase, then {n} with the stop count. Same
+  // split/join pattern as the title above — never .replace.
+  const body = $derived(
+    $t['tour.hello.body'].split('{surface}').join($t[surfaceKey]).split('{n}').join(String(stopCount))
+  );
 
   let cardEl: HTMLElement | undefined = $state();
   let startBtn: HTMLButtonElement | undefined = $state();
@@ -82,7 +91,7 @@
   <button class="tour-x" onclick={onDismiss} aria-label={$t['tour.chrome.close']}>✕</button>
   <div class="tour-hello-kicker font-dmmono">{$t['tour.hello.kicker']}</div>
   <h2 id="tour-hello-title" class="tour-hello-title font-bricolage">{titlePre}<span class="tour-hello-accent font-instrument">{$t['tour.hello.accent']}</span>{titlePost}</h2>
-  <p class="tour-hello-body">{$t['tour.hello.body']}</p>
+  <p class="tour-hello-body">{body}</p>
   <div class="tour-hello-actions">
     <button bind:this={startBtn} class="tour-hello-start font-bricolage" onclick={onStart}>{$t['tour.hello.start']}</button>
     <button class="tour-hello-later font-dmmono" onclick={onDismiss}>{$t['tour.hello.later']}</button>

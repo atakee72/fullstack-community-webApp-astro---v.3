@@ -153,9 +153,9 @@
 </script>
 
 {#if mode === 'hello' && chapter}
-  <TourHelloModal name={user?.name?.split(' ')[0] ?? ''} onStart={() => { void markHelloDismissed(loggedIn); mode = 'idle'; void startChapter(); }} onDismiss={() => { void markHelloDismissed(loggedIn); state = getLocalState(); mode = isChapterSeen(state, chapter.key) ? 'idle' : 'offer'; }} />
+  <TourHelloModal name={user?.name?.split(' ')[0] ?? ''} surfaceKey={'tour.surface.' + chapter.key} stopCount={chapter.stops.length} onStart={() => { void markHelloDismissed(loggedIn); mode = 'idle'; void startChapter(); }} onDismiss={() => { void markHelloDismissed(loggedIn); state = getLocalState(); mode = isChapterSeen(state, chapter.key) ? 'idle' : 'offer'; }} />
 {:else if mode === 'offer' && chapter}
-  <TourOfferStrip page={chapter.page} onStart={() => { mode = 'idle'; void startChapter(); }} onDismiss={() => { void markChapterSeen(chapter.key, loggedIn); state = getLocalState(); mode = 'idle'; }} />
+  <TourOfferStrip page={chapter.page} surfaceKey={'tour.surface.' + chapter.key} stopCount={chapter.stops.length} onStart={() => { mode = 'idle'; void startChapter(); }} onDismiss={() => { void markChapterSeen(chapter.key, loggedIn); state = getLocalState(); mode = 'idle'; }} />
 {:else if mode === 'touring' && chapter && targetRect}
   <TourSpotlight {chapter} {stopIndex} {availableStops} {targetRect} {radius} onNext={next} onBack={back} onClose={endChapter} />
 {/if}

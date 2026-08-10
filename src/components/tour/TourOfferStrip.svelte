@@ -9,11 +9,18 @@
   // `page` matches TourController's exact prop contract (chapter.page) —
   // accepted for interface parity / possible future per-page copy, not
   // rendered in v1 (the copy is deliberately generic: "this page").
-  let { page, onStart, onDismiss } = $props<{
+  let { page, surfaceKey, stopCount, onStart, onDismiss } = $props<{
     page: string;
+    surfaceKey: string;
+    stopCount: number;
     onStart: () => void;
     onDismiss: () => void;
   }>();
+
+  // Same split/join interpolation as TourHelloModal's body — never .replace.
+  const text = $derived(
+    $t['tour.offer.text'].split('{surface}').join($t[surfaceKey]).split('{n}').join(String(stopCount))
+  );
 
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let closing = $state(false);
@@ -29,7 +36,7 @@
 <div class="tour-offer" class:tour-offer-closing={closing} data-tour-page={page}>
   <div class="max-w-7xl mx-auto px-4 md:px-8 py-2.5 flex items-center gap-3">
     <span class="tour-offer-kicker font-dmmono">{$t['tour.offer.kicker']}</span>
-    <span class="tour-offer-text truncate">{$t['tour.offer.text']}</span>
+    <span class="tour-offer-text truncate">{text}</span>
     <button class="tour-offer-start font-dmmono" onclick={onStart}>{$t['tour.offer.start']}</button>
     <button class="tour-offer-x font-dmmono" onclick={dismiss} aria-label={$t['tour.chrome.close']}>✕</button>
   </div>
