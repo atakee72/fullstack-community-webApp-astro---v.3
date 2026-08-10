@@ -95,7 +95,7 @@
     </div>
 
     <!-- Right: CTA button -->
-    <div class="hidden lg:block shrink-0">
+    <div class="hidden lg:block shrink-0" data-tour="markt-create">
       <KioskBtn href="/marketplace/create" variant="primary" size="md">
         {$t['market.cta.newListing']}
       </KioskBtn>

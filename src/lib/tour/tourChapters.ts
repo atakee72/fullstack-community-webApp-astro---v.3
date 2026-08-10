@@ -56,4 +56,18 @@ export const CHAPTERS_BY_PAGE: Record<string, TourChapter> = {
     nextChapterKey: 'tour.cal.end.next',
     nextChapterHref: '/marketplace',
   },
+  marketplace: {
+    key: 'markt',
+    page: 'marketplace',
+    kickerKey: 'tour.markt.kicker',
+    stops: [
+      { anchor: '[data-tour="markt-kinds"]',  titleKey: 'tour.markt.s1.title', bodyKey: 'tour.markt.s1.body' },
+      { anchor: '[data-tour="markt-create"]', titleKey: 'tour.markt.s2.title', bodyKey: 'tour.markt.s2.body' },
+      { anchor: '[data-tour="markt-grid"]',   titleKey: 'tour.markt.s3.title', bodyKey: 'tour.markt.s3.body' },
+      { anchor: '[data-tour="markt-mine"]',   titleKey: 'tour.markt.s4.title', bodyKey: 'tour.markt.s4.body' },
+    ],
+    endNoteKey: 'tour.markt.end.note',
+    nextChapterKey: 'tour.markt.end.next',
+    nextChapterHref: '/newsboard',
+  },
 };
