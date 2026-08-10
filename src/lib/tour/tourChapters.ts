@@ -87,4 +87,17 @@ export const CHAPTERS_BY_PAGE: Record<string, TourChapter> = {
     nextChapterKey: 'tour.kurier.end.next',
     nextChapterHref: '/schillerkiez',
   },
+  schillerkiez: {
+    key: 'kiezdaten',
+    page: 'schillerkiez',
+    kickerKey: 'tour.kiez.kicker',
+    stops: [
+      { anchor: '[data-tour="kiez-plr"]',   titleKey: 'tour.kiez.s1.title', bodyKey: 'tour.kiez.s1.body' },
+      { anchor: '[data-tour="kiez-kanal"]', titleKey: 'tour.kiez.s2.title', bodyKey: 'tour.kiez.s2.body' },
+      { anchor: '[data-tour="kiez-druck"]', titleKey: 'tour.kiez.s3.title', bodyKey: 'tour.kiez.s3.body' },
+    ],
+    endNoteKey: 'tour.kiez.end.note',
+    nextChapterKey: 'tour.kiez.end.next',
+    nextChapterHref: '/blog',
+  },
 };

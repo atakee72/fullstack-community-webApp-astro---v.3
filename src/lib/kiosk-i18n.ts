@@ -1803,6 +1803,15 @@ const de = {
   'tour.kurier.s4.body': 'Du hast selbst eine Meldung? Reich sie ein — die Moderation schaut kurz drauf. Bis zu fünf am Tag.',
   'tour.kurier.end.note': 'Kapitel geschafft — weiter zu den Kiez-Daten.',
   'tour.kurier.end.next': 'Nächstes Kapitel: Kiez-Daten →',
+  'tour.kiez.kicker': 'FÜHRUNG · KIEZ-DATEN',
+  'tour.kiez.s1.title': 'Planungsraum wählen',
+  'tour.kiez.s1.body': 'Vier Planungsräume, ein Kiez. Wähl deinen — und alle Kanäle darunter zeigen deine Ecke.',
+  'tour.kiez.s2.title': 'Die Kanäle',
+  'tour.kiez.s2.body': 'Fünf Kanäle von Bevölkerung bis soziale Entwicklung — amtliche Zahlen, von Hand gezeichnet. Und ganz oben: die Luft, live gemessen.',
+  'tour.kiez.s3.title': 'Kiez in Zahlen',
+  'tour.kiez.s3.body': 'Der ganze Kiez auf einem Blatt — zum Drucken, fürs Schwarze Brett im Hausflur. Mit Stand-Datum, versteht sich.',
+  'tour.kiez.end.note': 'Kapitel geschafft — als Nächstes: die Beilage.',
+  'tour.kiez.end.next': 'Nächstes Kapitel: Blog →',
   'nav.menu.tour': 'Führung starten',
 } as const;
 
@@ -3473,6 +3482,15 @@ const en: Dict = {
   'tour.kurier.s4.body': 'Got news of your own? Submit it — moderation takes a quick look. Up to five a day.',
   'tour.kurier.end.note': 'Chapter done — on to the Kiez data.',
   'tour.kurier.end.next': 'Next chapter: Kiez data →',
+  'tour.kiez.kicker': 'TOUR · KIEZ DATA',
+  'tour.kiez.s1.title': 'Pick your area',
+  'tour.kiez.s1.body': 'Four planning areas, one Kiez. Pick yours — and every channel below follows your corner.',
+  'tour.kiez.s2.title': 'The channels',
+  'tour.kiez.s2.body': 'Five channels, from population to social change — official figures, drawn by hand. And up top: the air, measured live.',
+  'tour.kiez.s3.title': 'The Kiez in figures',
+  'tour.kiez.s3.body': 'The whole Kiez on one sheet — to print, for the notice board in your hallway. Dated, of course.',
+  'tour.kiez.end.note': 'Chapter done — next up: the Beilage.',
+  'tour.kiez.end.next': 'Next chapter: Blog →',
   'nav.menu.tour': 'Start tour',
 };
 

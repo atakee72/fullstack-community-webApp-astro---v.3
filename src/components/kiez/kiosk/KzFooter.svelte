@@ -22,6 +22,7 @@
   </div>
   <a
     href="/schillerkiez/druck"
+    data-tour="kiez-druck"
     class="inline-flex min-h-[44px] items-center gap-1.5 whitespace-nowrap rounded-full border-[1.5px] border-[var(--k-ink)] px-4 py-2 font-dmmono text-[11.5px] font-semibold text-[var(--k-ink)] shadow-[2px_2px_0_var(--k-ink)]"
   >
     <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="shrink-0">

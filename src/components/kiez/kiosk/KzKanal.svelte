@@ -16,7 +16,7 @@
 </script>
 
 <section class="mx-4 border-b border-dashed border-rule py-5 lg:mx-9">
-  <div class="mb-3.5 flex flex-wrap items-end justify-between gap-3">
+  <div class="mb-3.5 flex flex-wrap items-end justify-between gap-3" data-tour={nr === '01' ? 'kiez-kanal' : undefined}>
     <div class="min-w-0">
       <div class="font-dmmono text-[10px] uppercase tracking-[0.16em] text-ink-mute">
         {$t['kiez.kanal.label']} {nr} · {area}
