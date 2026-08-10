@@ -30,7 +30,7 @@
 
 <section class="px-4 md:px-9" style="border-bottom:1px dashed var(--k-rule);">
   <!-- Row 1: Sektion (scrollFade peek on mobile) -->
-  <div class="py-3 flex items-center gap-2">
+  <div data-tour="kurier-sections" class="py-3 flex items-center gap-2">
     <span class="font-dmmono uppercase shrink-0" style="font-size:9.5px; color:var(--k-ink-mute); letter-spacing:0.12em; width:56px;">
       {$t['news.filter.sektion']}
     </span>

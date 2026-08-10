@@ -221,7 +221,7 @@
   </div>
 
   <!-- Row 2: Category chips ──────────────────────────────────────────── -->
-  <div class="pb-3 flex items-center gap-3 flex-wrap lg:flex-nowrap">
+  <div data-tour="markt-categories" class="pb-3 flex items-center gap-3 flex-wrap lg:flex-nowrap">
     <!-- Label -->
     <span
       class="font-dmmono uppercase shrink-0"

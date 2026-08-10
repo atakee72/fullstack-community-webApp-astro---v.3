@@ -20,9 +20,11 @@ export interface TourChapter {
   final?: boolean;                                     // Profil only
 }
 
-// v1: Forum only. The other 6 chapters are confirm-before-code (design review
-// pending) — add them here once their copy is approved. Safe anchors only:
-// chrome + top-level controls, never the n-th card (handoff, non-negotiable).
+// All 7 chapters live (copy source: design/handoffs/TOUR_CC_ANSWERS.md +
+// TOUR_DEPTH_ANSWERS.md). Safe anchors only: chrome + top-level controls,
+// never the n-th card (handoff, non-negotiable). Anchors must be
+// unconditional (always in the DOM) — silent skip is defect insurance,
+// not a design tool (TOUR_DEPTH_ANSWERS §3).
 export const CHAPTERS_BY_PAGE: Record<string, TourChapter> = {
   forum: {
     key: 'forum',
@@ -50,7 +52,8 @@ export const CHAPTERS_BY_PAGE: Record<string, TourChapter> = {
       { anchor: '[data-tour="cal-view"]',       titleKey: 'tour.cal.s1.title', bodyKey: 'tour.cal.s1.body' },
       { anchor: '[data-tour="cal-grid"]',       titleKey: 'tour.cal.s2.title', bodyKey: 'tour.cal.s2.body', bodyMobileKey: 'tour.cal.s2.bodyMobile' },
       { anchor: '[data-tour="cal-rsvp"]',       titleKey: 'tour.cal.s3.title', bodyKey: 'tour.cal.s3.body' },
-      { anchor: '[data-tour="cal-categories"]', titleKey: 'tour.cal.s4.title', bodyKey: 'tour.cal.s4.body' },
+      { anchor: '[data-tour="cal-my-filters"]', titleKey: 'tour.cal.s4.title', bodyKey: 'tour.cal.s4.body' },
+      { anchor: '[data-tour="cal-categories"]', titleKey: 'tour.cal.s5.title', bodyKey: 'tour.cal.s5.body' },
     ],
     endNoteKey: 'tour.cal.end.note',
     nextChapterKey: 'tour.cal.end.next',
@@ -61,10 +64,11 @@ export const CHAPTERS_BY_PAGE: Record<string, TourChapter> = {
     page: 'marketplace',
     kickerKey: 'tour.markt.kicker',
     stops: [
-      { anchor: '[data-tour="markt-kinds"]',  titleKey: 'tour.markt.s1.title', bodyKey: 'tour.markt.s1.body' },
-      { anchor: '[data-tour="markt-create"]', titleKey: 'tour.markt.s2.title', bodyKey: 'tour.markt.s2.body' },
-      { anchor: '[data-tour="markt-grid"]',   titleKey: 'tour.markt.s3.title', bodyKey: 'tour.markt.s3.body' },
-      { anchor: '[data-tour="markt-mine"]',   titleKey: 'tour.markt.s4.title', bodyKey: 'tour.markt.s4.body' },
+      { anchor: '[data-tour="markt-kinds"]',      titleKey: 'tour.markt.s1.title', bodyKey: 'tour.markt.s1.body' },
+      { anchor: '[data-tour="markt-categories"]', titleKey: 'tour.markt.s2.title', bodyKey: 'tour.markt.s2.body' },
+      { anchor: '[data-tour="markt-create"]',     titleKey: 'tour.markt.s3.title', bodyKey: 'tour.markt.s3.body' },
+      { anchor: '[data-tour="markt-grid"]',       titleKey: 'tour.markt.s4.title', bodyKey: 'tour.markt.s4.body' },
+      { anchor: '[data-tour="markt-mine"]',       titleKey: 'tour.markt.s5.title', bodyKey: 'tour.markt.s5.body' },
     ],
     endNoteKey: 'tour.markt.end.note',
     nextChapterKey: 'tour.markt.end.next',
@@ -76,12 +80,13 @@ export const CHAPTERS_BY_PAGE: Record<string, TourChapter> = {
     kickerKey: 'tour.kurier.kicker',
     stops: [
       { anchor: '[data-tour="kurier-masthead"]', titleKey: 'tour.kurier.s1.title', bodyKey: 'tour.kurier.s1.body' },
-      { anchor: '[data-tour="kurier-saved"]',    titleKey: 'tour.kurier.s2.title', bodyKey: 'tour.kurier.s2.body' },
-      // S3 anchor deviates from TOUR_CC_ANSWERS (Ungelesen filter is shipped
-      // disabled — Phase-1 placeholder); rings the filter row instead,
+      { anchor: '[data-tour="kurier-sections"]', titleKey: 'tour.kurier.s2.title', bodyKey: 'tour.kurier.s2.body' },
+      { anchor: '[data-tour="kurier-saved"]',    titleKey: 'tour.kurier.s3.title', bodyKey: 'tour.kurier.s3.body' },
+      // Fade-stop anchor deviates from TOUR_CC_ANSWERS (Ungelesen filter is
+      // shipped disabled — Phase-1 placeholder); rings the filter row instead,
       // copy softened accordingly. User-approved 2026-08-10.
-      { anchor: '[data-tour="kurier-fade"]',     titleKey: 'tour.kurier.s3.title', bodyKey: 'tour.kurier.s3.body' },
-      { anchor: '[data-tour="kurier-submit"]',   titleKey: 'tour.kurier.s4.title', bodyKey: 'tour.kurier.s4.body' },
+      { anchor: '[data-tour="kurier-fade"]',     titleKey: 'tour.kurier.s4.title', bodyKey: 'tour.kurier.s4.body' },
+      { anchor: '[data-tour="kurier-submit"]',   titleKey: 'tour.kurier.s5.title', bodyKey: 'tour.kurier.s5.body' },
     ],
     endNoteKey: 'tour.kurier.end.note',
     nextChapterKey: 'tour.kurier.end.next',

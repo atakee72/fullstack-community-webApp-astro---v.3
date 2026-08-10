@@ -117,11 +117,15 @@ earns its complexity when there's a hole to cut.
 ## How to add a chapter (all seven live — this is now a template, not a spec)
 
 All seven chapters (Forum, Kalender, Markt, Kurier, Kiez-Daten, Blog, Profil —
-28 stops total) shipped in phase 2. `design/handoffs/TOUR_CC_ANSWERS.md` is
-the copy source of truth (stop titles/bodies, anchor corrections, the arrow-
-nose call, the offer-strip placement call, the chapter chain, the hello-modal
-template) — read it before touching any stop copy or adding an eighth
-chapter.
+31 stops, 7·5·5·5·3·3·3) shipped in phase 2 + depth pass.
+`design/handoffs/TOUR_CC_ANSWERS.md` + `TOUR_DEPTH_ANSWERS.md` are the copy
+source of truth (stop titles/bodies, anchor corrections, the arrow-nose call,
+the offer-strip placement call, the chapter chain, the hello-modal template)
+— read both before touching any stop copy or adding an eighth chapter.
+Depth-pass rules that bind future stops: anchors must be UNCONDITIONAL
+(always in the DOM — silent skip is defect insurance, not a design tool);
+the tour never explains search fields; two chapters never speak the same
+sentence; 7 stops (Forum) is the per-chapter maximum.
 
 1. **Registry entry** in `src/lib/tour/tourChapters.ts` — one
    `CHAPTERS_BY_PAGE[page]` object: `key` (must be a `ChapterKey` from

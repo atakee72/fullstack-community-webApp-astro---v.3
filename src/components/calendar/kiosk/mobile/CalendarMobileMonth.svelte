@@ -499,6 +499,7 @@
 
     <span class="w-px h-[18px] bg-rule mx-1 shrink-0" aria-hidden="true"></span>
 
+    <span data-tour="cal-my-filters" class="inline-flex items-center gap-1.5 flex-shrink-0">
     <button
       type="button"
       onclick={onMyRsvps}
@@ -520,6 +521,7 @@
     >
       {$t['cal.filter.saved']}
     </button>
+    </span>
   </div>
 
   <!-- Mini dot-grid -->

@@ -89,27 +89,29 @@
 
     <span class="shrink-0 w-px h-[18px] bg-rule mx-1" aria-hidden="true"></span>
 
-    <button
-      type="button"
-      onclick={onMyRsvps}
-      aria-pressed={myRsvps}
-      class="shrink-0 inline-flex items-center px-2.5 py-1 rounded-full font-bricolage font-semibold text-[12px] border-[1.5px] border-ink transition-colors {
-        myRsvps ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
-      }"
-    >
-      {$t['cal.filter.myRsvps']}
-    </button>
+    <span data-tour="cal-my-filters" class="shrink-0 inline-flex items-center gap-2">
+      <button
+        type="button"
+        onclick={onMyRsvps}
+        aria-pressed={myRsvps}
+        class="shrink-0 inline-flex items-center px-2.5 py-1 rounded-full font-bricolage font-semibold text-[12px] border-[1.5px] border-ink transition-colors {
+          myRsvps ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
+        }"
+      >
+        {$t['cal.filter.myRsvps']}
+      </button>
 
-    <button
-      type="button"
-      onclick={onSaved}
-      aria-pressed={saved}
-      class="shrink-0 inline-flex items-center px-2.5 py-1 rounded-full font-bricolage font-semibold text-[12px] border-[1.5px] border-ink transition-colors {
-        saved ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
-      }"
-    >
-      {$t['cal.filter.saved']}
-    </button>
+      <button
+        type="button"
+        onclick={onSaved}
+        aria-pressed={saved}
+        class="shrink-0 inline-flex items-center px-2.5 py-1 rounded-full font-bricolage font-semibold text-[12px] border-[1.5px] border-ink transition-colors {
+          saved ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
+        }"
+      >
+        {$t['cal.filter.saved']}
+      </button>
+    </span>
   </div>
 
   <!-- Right-side cluster: coachmark + Heute + view switcher. Mirrors the
