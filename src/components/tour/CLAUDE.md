@@ -69,11 +69,17 @@ earns its complexity when there's a hole to cut.
    current page has a registered chapter (`CHAPTERS_BY_PAGE[page]`). One-shot
    per account, ever; "Später"/✕/Esc all write `tourHelloDismissedAt` and it
    never reappears — the avatar-menu row is the only way back in after that.
+   Body copy is parameterized per surface: `tour.hello.body` has `{surface}`
+   and `{n}` placeholders, substituted at render time with the chapter's
+   `tour.surface.*` phrase (e.g. "durch den Kalender") and its stop count —
+   one shared string instead of seven near-duplicates.
 2. **Offer strip** — current page has a chapter **AND** that chapter is
    unseen (`!isChapterSeen(state, chapter.key)`). Fires for BOTH logged-out
    and logged-in users (unlike the hello modal), and falls through from a
    dismissed/absent hello modal on the same page load — see the `mode`
-   state machine in `TourController.svelte`.
+   state machine in `TourController.svelte`. Same `{surface}`/`{n}`
+   interpolation as the hello modal (`tour.offer.text`), same `tour.surface.*`
+   source.
 3. **Avatar-menu row** ("Führung starten") — always rendered (no seen-state
    gate, no entrance decision at all), always starts the **current page's**
    chapter via `window.__mahalleTourStart()`. Never writes anything by
@@ -81,25 +87,57 @@ earns its complexity when there's a hole to cut.
    `markChapterSeen` first-write-wins path as any other completion/abort, so
    repeat runs are idempotent no-ops against storage.
 
-## How to add a chapter (v1 ships Forum only — six more are confirm-before-code)
+## Engine capabilities added for the six-chapter rollout (phase 2)
 
-1. **Design review first** — the six remaining chapters (Kalender, Markt,
-   Kurier, Kiez-Daten, Blog, Profil) are out of scope until CD signs off on
-   their stop copy. Don't add a registry entry speculatively.
-2. **Registry entry** in `src/lib/tour/tourChapters.ts` — one
+- **`findAnchor` is visible-first, not first-match.** Several anchors exist
+  twice in the DOM (desktop + mobile variants, CSS-hidden per breakpoint via
+  `hidden md:block`/`md:hidden` etc.). `document.querySelector` would happily
+  return a `display:none` node with a zero rect and ring nothing; `findAnchor`
+  iterates `querySelectorAll` and returns the first element with a non-empty
+  `getClientRects()`. Every anchor lookup in `TourController.svelte`
+  (`waitForAnchor`, `startChapter`, `showStop`, the scroll/resize re-measure)
+  goes through it.
+- **`TourStop.bodyMobileKey?: string`** — optional alternate body copy shown
+  under a mobile breakpoint instead of `bodyKey`. Used once: Kalender S2,
+  where the desktop body describes drag-to-select and the mobile body
+  describes tap-to-select (different interaction, same anchor).
+- **`TourChapter.final?: boolean`** — marks the last chapter in the chain
+  (Profil). The end card swaps the normal "✓ Kapitel gesehen" stamp for
+  `tour.chrome.stampFinal` and omits the next-chapter link entirely (no
+  `nextChapterKey`/`nextChapterHref` on that registry entry) instead of
+  dead-ending into an empty href.
+- **`TourStop.link?: { labelKey, hrefBase, prefillTitleKey, prefillBodyKey,
+  prefillTags }`** — optional CTA on a single stop that opens a
+  pre-filled compose flow instead of just ringing the anchor. Used once:
+  Forum S7 ("Hallo Kiez") links to `/topics/create` with a bracketed-fill-in
+  template (title + body + `neu-hier` tag) — the user still edits and submits
+  normally, no auto-posting, normal 5/day quota + AI moderation apply.
+
+## How to add a chapter (all seven live — this is now a template, not a spec)
+
+All seven chapters (Forum, Kalender, Markt, Kurier, Kiez-Daten, Blog, Profil —
+28 stops total) shipped in phase 2. `design/handoffs/TOUR_CC_ANSWERS.md` is
+the copy source of truth (stop titles/bodies, anchor corrections, the arrow-
+nose call, the offer-strip placement call, the chapter chain, the hello-modal
+template) — read it before touching any stop copy or adding an eighth
+chapter.
+
+1. **Registry entry** in `src/lib/tour/tourChapters.ts` — one
    `CHAPTERS_BY_PAGE[page]` object: `key` (must be a `ChapterKey` from
    `tourStore.ts`), `page`, `kickerKey`, an ordered `stops[]`
-   (`{ anchor, titleKey, bodyKey }`), `endNoteKey`, `nextChapterKey`,
-   `nextChapterHref`.
-3. **i18n keys** in both dictionaries of `src/lib/kiosk-i18n.ts` — kicker,
-   per-stop title/body, end note, next-chapter link text. No new *engine*
-   keys needed (`tour.chrome.*` is shared across all chapters).
-4. **`data-tour` anchors** on the real DOM elements the stops point at —
+   (`{ anchor, titleKey, bodyKey, bodyMobileKey?, link? }`), `endNoteKey`,
+   `nextChapterKey`/`nextChapterHref` (omit both only for the final chapter,
+   and set `final: true` there instead).
+2. **i18n keys** in both dictionaries of `src/lib/kiosk-i18n.ts` — kicker,
+   per-stop title/body, end note, next-chapter link text, plus a
+   `tour.surface.*` entry if this is a new surface. No new *engine* keys
+   needed beyond that (`tour.chrome.*` is shared across all chapters).
+3. **`data-tour` anchors** on the real DOM elements the stops point at —
    chrome + top-level controls ONLY, never the n-th item in a list (a card
    can scroll out of existence between page loads; a filter tab or a compose
-   CTA can't). Mirrors the forum chapter's anchors (`forum-filter-*`,
-   `forum-tag`, `forum-new-topic`).
-5. Nothing in `TourController`, `TourSpotlight`, `TourHelloModal`, or
+   CTA can't). If an anchor legitimately exists twice (desktop/mobile
+   variants), that's fine — `findAnchor` picks the visible one.
+4. Nothing in `TourController`, `TourSpotlight`, `TourHelloModal`, or
    `TourOfferStrip` needs to change — they're all chapter-agnostic, driven
    entirely by the registry + `page` prop.
 
@@ -113,9 +151,13 @@ earns its complexity when there's a hole to cut.
   threading a slot for it. Rendering it in the layout's own flow (still
   full-width, still "first thing you see below the nav") gets the same
   "quiet, page-scoped nudge" effect for one shared mount point instead of N
-  page-specific ones. Revisit with CD if the visual distance from the title
-  turns out to matter.
-- **"Hallo Kiez" composer prefill (stop 7) is copy-only in v1** — the handoff
-  mandates a prefilled composer entry point; v1 stop 7 highlights the CTA
-  without prefilling `/topics/create`. Tracked in the plan's out-of-scope
-  list, blocked on CD delivering template copy.
+  page-specific ones. **Confirmed final for v1** — CD approved below-nav in
+  TOUR_CC_ANSWERS.md §4 ("unter der Nav = final"); "unterm Seitentitel" stays
+  a someday target image, not load-bearing.
+- **Kurier S3 anchor deviates from the handoff copy.** The handoff's stop 3
+  points at an "ungelesen" (unread) filter; the shipped Kurier filter row
+  ships that toggle disabled (Phase-1 placeholder, not wired to real
+  read-state yet). Re-anchored to the filter row itself
+  (`[data-tour="kurier-fade"]`) with softened copy that doesn't promise a
+  working unread filter. User-approved option (a) — ring the row, adjust
+  copy — over blocking the chapter on the feature. Decided 2026-08-10.
