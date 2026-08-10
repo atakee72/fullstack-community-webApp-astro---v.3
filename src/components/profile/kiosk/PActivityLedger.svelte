@@ -141,7 +141,7 @@
     <span style="font-family: var(--k-font-mono); font-size: 9.5px; color: var(--k-ink-mute); letter-spacing: 0.1em;">{$t['profile.archiv.note']}</span>
   </div>
 
-  <div use:scrollFade class="kiosk-scroll-fade no-scrollbar flex overflow-x-auto" style="gap: 6px; margin-bottom: 8px; padding-bottom: 2px;">
+  <div use:scrollFade data-tour="profil-archiv" class="kiosk-scroll-fade no-scrollbar flex overflow-x-auto" style="gap: 6px; margin-bottom: 8px; padding-bottom: 2px;">
     {#each FILTERS as f (f.key)}
       <PFilterChip
         label={$t[f.labelKey as keyof typeof $t]}

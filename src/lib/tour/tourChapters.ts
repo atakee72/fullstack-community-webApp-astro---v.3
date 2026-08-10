@@ -113,4 +113,16 @@ export const CHAPTERS_BY_PAGE: Record<string, TourChapter> = {
     nextChapterKey: 'tour.blog.end.next',
     nextChapterHref: '/profile',
   },
+  profile: {
+    key: 'profil',
+    page: 'profile',
+    kickerKey: 'tour.profil.kicker',
+    stops: [
+      { anchor: '[data-tour="profil-hobbies"]', titleKey: 'tour.profil.s1.title', bodyKey: 'tour.profil.s1.body' },
+      { anchor: '[data-tour="profil-archiv"]',  titleKey: 'tour.profil.s2.title', bodyKey: 'tour.profil.s2.body' },
+      { anchor: '[data-tour="profil-chronik"]', titleKey: 'tour.profil.s3.title', bodyKey: 'tour.profil.s3.body' },
+    ],
+    endNoteKey: 'tour.profil.end.note',
+    final: true,
+  },
 };

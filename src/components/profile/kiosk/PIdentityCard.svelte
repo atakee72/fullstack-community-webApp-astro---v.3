@@ -378,7 +378,7 @@
       {/each}
     </div>
 
-    <div style="margin-top: 16px;">
+    <div style="margin-top: 16px;" data-tour="profil-hobbies">
       <div class="font-dmmono" style="font-size: 9.5px; color: var(--k-ink-mute); letter-spacing: 0.14em; margin-bottom: 8px;">{$t['profile.interests']}</div>
       <div style="display: flex; flex-wrap: wrap; gap: 6px;">
         {#each displayHobbies as h (h)}

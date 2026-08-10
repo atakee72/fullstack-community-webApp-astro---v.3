@@ -1821,6 +1821,14 @@ const de = {
   'tour.blog.s3.body': 'Unter jedem Beitrag führt ein Knopf zur Diskussion ins Forum. Und wer selbst schreiben will: Der Aufruf hier zeigt den Weg.',
   'tour.blog.end.note': 'Kapitel geschafft — zum Schluss: dein Profil.',
   'tour.blog.end.next': 'Nächstes Kapitel: Profil →',
+  'tour.profil.kicker': 'FÜHRUNG · PROFIL',
+  'tour.profil.s1.title': 'Steckbrief & Hobbys',
+  'tour.profil.s1.body': 'Dein Steckbrief. Trag ein paar Hobbys ein — sie zeigen Nachbar:innen, wofür du zu haben bist.',
+  'tour.profil.s2.title': 'Dein Archiv',
+  'tour.profil.s2.body': 'Alles, was du im Kiez tust, sammelt sich hier — Beiträge, Anzeigen, Termine. Der ◈-Schalter zeigt stattdessen dein Gespeichertes.',
+  'tour.profil.s3.title': 'Kiez-Chronik',
+  'tour.profil.s3.body': 'Deine Zeit im Kiez, als kleine Chronik: seit wann du dabei bist, dein erster Beitrag, dein hundertstes Danke.',
+  'tour.profil.end.note': 'Das war die Führung — du kennst jetzt den ganzen Kiosk. Jederzeit neu: Avatar-Menü → „Führung starten“.',
   'nav.menu.tour': 'Führung starten',
 } as const;
 
@@ -3509,6 +3517,14 @@ const en: Dict = {
   'tour.blog.s3.body': 'Under every post, a button carries the discussion into the forum. And if you’d rather write: this call shows the way.',
   'tour.blog.end.note': 'Chapter done — last stop: your profile.',
   'tour.blog.end.next': 'Next chapter: Profile →',
+  'tour.profil.kicker': 'TOUR · PROFILE',
+  'tour.profil.s1.title': 'Your card & hobbies',
+  'tour.profil.s1.body': 'Your card. Add a few hobbies — they show neighbors what you’re up for.',
+  'tour.profil.s2.title': 'Your archive',
+  'tour.profil.s2.body': 'Everything you do in the Kiez collects here — posts, listings, events. The ◈ switch shows what you’ve saved instead.',
+  'tour.profil.s3.title': 'Kiez chronicle',
+  'tour.profil.s3.body': 'Your time in the Kiez, as a small chronicle: when you joined, your first post, your hundredth thanks.',
+  'tour.profil.end.note': 'That’s the tour — you now know the whole kiosk. Any time again: avatar menu → ‘Start tour’.',
   'nav.menu.tour': 'Start tour',
 };
 
