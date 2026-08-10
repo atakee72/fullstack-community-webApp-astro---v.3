@@ -1812,6 +1812,15 @@ const de = {
   'tour.kiez.s3.body': 'Der ganze Kiez auf einem Blatt — zum Drucken, fürs Schwarze Brett im Hausflur. Mit Stand-Datum, versteht sich.',
   'tour.kiez.end.note': 'Kapitel geschafft — als Nächstes: die Beilage.',
   'tour.kiez.end.next': 'Nächstes Kapitel: Blog →',
+  'tour.blog.kicker': 'FÜHRUNG · BLOG',
+  'tour.blog.s1.title': 'Rubriken',
+  'tour.blog.s1.body': 'Die Beilage zum Kiez: längere Geschichten, sortiert in Rubriken. Ein Klick, und du liest nur noch eine.',
+  'tour.blog.s2.title': 'Archiv nach Monat',
+  'tour.blog.s2.body': 'Jede Ausgabe bleibt: Das Archiv sortiert alle Beiträge nach Monat — zum Zurückblättern.',
+  'tour.blog.s3.title': 'Mitreden & mitschreiben',
+  'tour.blog.s3.body': 'Unter jedem Beitrag führt ein Knopf zur Diskussion ins Forum. Und wer selbst schreiben will: Der Aufruf hier zeigt den Weg.',
+  'tour.blog.end.note': 'Kapitel geschafft — zum Schluss: dein Profil.',
+  'tour.blog.end.next': 'Nächstes Kapitel: Profil →',
   'nav.menu.tour': 'Führung starten',
 } as const;
 
@@ -3491,6 +3500,15 @@ const en: Dict = {
   'tour.kiez.s3.body': 'The whole Kiez on one sheet — to print, for the notice board in your hallway. Dated, of course.',
   'tour.kiez.end.note': 'Chapter done — next up: the Beilage.',
   'tour.kiez.end.next': 'Next chapter: Blog →',
+  'tour.blog.kicker': 'TOUR · BLOG',
+  'tour.blog.s1.title': 'Sections',
+  'tour.blog.s1.body': 'The Kiez’s own supplement: longer stories, sorted into sections. One click, and you’re reading just one.',
+  'tour.blog.s2.title': 'Archive by month',
+  'tour.blog.s2.body': 'Every issue stays: the archive sorts all posts by month — for leafing back.',
+  'tour.blog.s3.title': 'Join in, write on',
+  'tour.blog.s3.body': 'Under every post, a button carries the discussion into the forum. And if you’d rather write: this call shows the way.',
+  'tour.blog.end.note': 'Chapter done — last stop: your profile.',
+  'tour.blog.end.next': 'Next chapter: Profile →',
   'nav.menu.tour': 'Start tour',
 };
 

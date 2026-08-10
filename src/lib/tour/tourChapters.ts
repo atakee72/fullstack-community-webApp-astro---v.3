@@ -100,4 +100,17 @@ export const CHAPTERS_BY_PAGE: Record<string, TourChapter> = {
     nextChapterKey: 'tour.kiez.end.next',
     nextChapterHref: '/blog',
   },
+  blog: {
+    key: 'blog',
+    page: 'blog',
+    kickerKey: 'tour.blog.kicker',
+    stops: [
+      { anchor: '[data-tour="blog-rubriken"]', titleKey: 'tour.blog.s1.title', bodyKey: 'tour.blog.s1.body' },
+      { anchor: '[data-tour="blog-archiv"]',   titleKey: 'tour.blog.s2.title', bodyKey: 'tour.blog.s2.body' },
+      { anchor: '[data-tour="blog-aufruf"]',   titleKey: 'tour.blog.s3.title', bodyKey: 'tour.blog.s3.body' },
+    ],
+    endNoteKey: 'tour.blog.end.note',
+    nextChapterKey: 'tour.blog.end.next',
+    nextChapterHref: '/profile',
+  },
 };
