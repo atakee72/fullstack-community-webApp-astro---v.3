@@ -42,3 +42,48 @@ Both Sentry issues auto-reopened: 3 events over two days (vs ~5/day pre-region-f
 ## Closure (2026-08-06)
 
 Step 1 held: 2.5+ quiet days after the last event (2026-08-03 20:53 UTC) with the air logger probing every 30 min. Both issues **resolved** in Sentry. The manual watch is retired — alert rule 725977 now includes a Regression condition (added 2026-08-05), so any recurrence emails immediately. Playbook if that email arrives: freeze-artifact events (elapsed ≫ configured budget) don't count; a real network-flavored timeout → apply step 2 (`maxIdleTimeMS: 60000`).
+
+## Reopened 2026-08-11 → root cause was NOT a stale socket (step 2 retired)
+
+Both tripwires reopened. PROD-2: 38 events total, ~1/night around 01:00–01:40 UTC,
+`userCount: 0`. PROD-4: 6 events, last 2026-08-09 — `617832ms` elapsed against a
+`30000ms` budget, i.e. the usual freeze artifact; ignored per the playbook.
+
+The playbook said "real network-flavored timeout → apply step 2
+(`maxIdleTimeMS: 60000`)". **That would have been the wrong fix**, and the stack
+trace is why:
+
+```
+MongoServerSelectionError: Server selection timed out after 10000 ms
+mechanism: auto.node.onunhandledrejection (unhandled)
+  at Topology.selectServer → Topology._connect → Topology.connect
+  → topologyConnect → MongoClient._connect
+```
+
+That is the **initial `client.connect()`** at module eval — a cold start with no
+pool yet — not a reused idle pooled connection. `maxIdleTimeMS` governs when idle
+*pooled* connections are discarded, so it has nothing to act on here. Step 2 is
+retired; don't apply it on this signal.
+
+Two real defects the trace exposed, both fixed in `de90bc37`
+(`src/lib/mongodb.ts`):
+
+1. **Unhandled rejection.** Nothing awaits the module-scope connect promise at
+   eval time, so a cold-start failure surfaced as a context-free
+   `unhandledRejection` instead of a request error. Now the promise carries a
+   `p.catch(() => {})` marker: awaiters still get the rejection (captured by the
+   middleware *with* request context), while a failure nobody was waiting on
+   stays quiet.
+2. **Poisoned container.** The rejected promise stayed cached on
+   `globalThis._mongoClientPromise`, so every later request on that container
+   awaited the same rejection until recycling. The catch now uncaches the failed
+   attempt (and closes the dead client) so the next caller connects fresh;
+   `connectDB()` reads the global lazily to pick that up.
+
+Verified against an unreachable host before shipping: 0 unhandled rejections,
+cache cleared, awaiter still receives `MongoServerSelectionError`, second call
+builds a fresh client.
+
+**Caveat:** consumers that await the *default export* (the Auth.js adapter in
+`auth.config.ts`) hold one fixed promise and don't get the retry. Prefer
+`connectDB()` in new code.
