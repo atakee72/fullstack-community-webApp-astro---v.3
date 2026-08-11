@@ -17,7 +17,7 @@
   );
 </script>
 
-<section class="relative" style="padding:30px 36px 22px; border-bottom:2px solid var(--k-ink);">
+<section class="relative" data-tour="kurier-masthead" style="padding:30px 36px 22px; border-bottom:2px solid var(--k-ink);">
   <!-- Top ribbon -->
   <div
     class="flex justify-between items-center font-dmmono uppercase"

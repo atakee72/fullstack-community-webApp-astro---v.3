@@ -19,6 +19,11 @@
 
   const stop = $derived(chapter.stops[availableStops[stopIndex]]);
   const isLast = $derived(stopIndex === availableStops.length - 1);
+  const isMobileVp = typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches;
+  const bodyKey = $derived(isMobileVp && stop.bodyMobileKey ? stop.bodyMobileKey : stop.bodyKey);
+  function stopLinkHref(l: NonNullable<import('../../lib/tour/tourChapters').TourStop['link']>): string {
+    return `${l.hrefBase}?prefill_title=${encodeURIComponent($t[l.prefillTitleKey])}&prefill_body=${encodeURIComponent($t[l.prefillBodyKey])}&prefill_tags=${encodeURIComponent(l.prefillTags)}`;
+  }
 
   let cardEl: HTMLElement | undefined = $state();
   let isDesktop = $state(true);
@@ -75,12 +80,15 @@
     <button class="tour-x font-dmmono" onclick={onClose} aria-label={$t['tour.chrome.close']}>✕</button>
   </div>
   <div class="tour-title font-bricolage">{$t[stop.titleKey]}</div>
-  <div class="tour-body">{$t[stop.bodyKey]}</div>
+  <div class="tour-body">{$t[bodyKey]}</div>
   {#if isLast}
     <div class="tour-end">
-      <span class="tour-stamp font-dmmono"><span>✓</span><span>KAPITEL</span></span>
+      <span class="tour-stamp font-dmmono"><span>✓</span><span>{$t[chapter.final ? 'tour.chrome.stampFinal' : 'tour.chrome.stamp']}</span></span>
       <span class="tour-end-note">{$t[chapter.endNoteKey]}</span>
     </div>
+  {/if}
+  {#if stop.link}
+    <a class="tour-nextch font-dmmono" href={stopLinkHref(stop.link)}>{$t[stop.link.labelKey]}</a>
   {/if}
   <div class="tour-foot">
     <span class="tour-dots">{#each availableStops as _, i}<span class="tour-dot" class:on={i === stopIndex} class:past={i <= stopIndex}></span>{/each}</span>
@@ -90,5 +98,5 @@
       <button class="tour-next font-bricolage" onclick={isLast ? onClose : onNext}>{isLast ? $t['tour.chrome.done'] : $t['tour.chrome.next']}</button>
     </span>
   </div>
-  {#if isLast}<a class="tour-nextch font-dmmono" href={chapter.nextChapterHref}>{$t[chapter.nextChapterKey]}</a>{/if}
+  {#if isLast && chapter.nextChapterHref && chapter.nextChapterKey}<a class="tour-nextch font-dmmono" href={chapter.nextChapterHref}>{$t[chapter.nextChapterKey]}</a>{/if}
 </div>

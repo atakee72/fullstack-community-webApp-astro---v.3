@@ -107,7 +107,7 @@
     >
 
     <!-- Kind section: label + 4 pills -->
-    <div class="flex items-center gap-2 shrink-0">
+    <div class="flex items-center gap-2 shrink-0" data-tour="markt-kinds">
       <!-- Label -->
       <span
         class="font-dmmono uppercase shrink-0"
@@ -170,6 +170,7 @@
 
       <button
         type="button"
+        data-tour="markt-mine"
         onclick={() => toggleView('mine')}
         disabled={!isAuthenticated}
         title={!isAuthenticated ? 'Anmelden, um eigene Anzeigen zu sehen.' : undefined}
@@ -220,7 +221,7 @@
   </div>
 
   <!-- Row 2: Category chips ──────────────────────────────────────────── -->
-  <div class="pb-3 flex items-center gap-3 flex-wrap lg:flex-nowrap">
+  <div data-tour="markt-categories" class="pb-3 flex items-center gap-3 flex-wrap lg:flex-nowrap">
     <!-- Label -->
     <span
       class="font-dmmono uppercase shrink-0"

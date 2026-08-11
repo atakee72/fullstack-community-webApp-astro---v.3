@@ -249,7 +249,7 @@
   });
 </script>
 
-<div class="px-4 md:px-9 lg:px-10 pb-6 relative" bind:this={gridWrapper}>
+<div data-tour="cal-grid" class="px-4 md:px-9 lg:px-10 pb-6 relative" bind:this={gridWrapper}>
   <!-- DOW header -->
   <div
     class="grid grid-cols-7 border-b-[1.5px] border-ink"

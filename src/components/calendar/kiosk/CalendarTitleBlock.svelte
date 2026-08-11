@@ -93,6 +93,7 @@
 
       <!-- View switcher — Monat / Agenda / Tag. -->
       <div
+        data-tour="cal-view"
         class="inline-flex border-2 border-ink rounded-full overflow-hidden font-dmmono text-[11px] font-semibold shrink-0"
         role="tablist"
         aria-label="View"

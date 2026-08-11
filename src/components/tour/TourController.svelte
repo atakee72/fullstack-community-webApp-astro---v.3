@@ -31,12 +31,22 @@
   let radius = $state('999px');
   let triggerEl: HTMLElement | null = null; // focus restore target
 
+  // Visible-first anchor lookup: several anchors exist twice in the DOM
+  // (desktop + mobile variants, CSS-hidden per breakpoint). A display:none
+  // node has no client rects — skip it and take the first visible match.
+  function findAnchor(sel: string): HTMLElement | null {
+    for (const el of document.querySelectorAll<HTMLElement>(sel)) {
+      if (el.getClientRects().length > 0) return el;
+    }
+    return null;
+  }
+
   // ── Duty 1: wait for hydration — poll for an anchor before starting. ──
   function waitForAnchor(sel: string, timeoutMs = 4000): Promise<HTMLElement | null> {
     return new Promise((resolve) => {
       const t0 = performance.now();
       (function poll() {
-        const el = document.querySelector<HTMLElement>(sel);
+        const el = findAnchor(sel);
         if (el) return resolve(el);
         if (performance.now() - t0 > timeoutMs) return resolve(null);
         requestAnimationFrame(poll);
@@ -49,7 +59,7 @@
     triggerEl = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     await waitForAnchor(chapter.stops[0].anchor);           // hydration gate
     // Duty 3: compute available stops — missing anchors are skipped, counter adapts.
-    availableStops = chapter.stops.map((s, i) => (document.querySelector(s.anchor) ? i : -1)).filter((i) => i >= 0);
+    availableStops = chapter.stops.map((s, i) => (findAnchor(s.anchor) ? i : -1)).filter((i) => i >= 0);
     if (!availableStops.length) return;
     stopIndex = 0; mode = 'touring';
     await showStop();
@@ -60,7 +70,7 @@
     if (!chapter) return;
     targetRect = null; // hide ring+card during transition (old card fades via mode CSS)
     const sel = chapter.stops[availableStops[stopIndex]].anchor;
-    const el = document.querySelector<HTMLElement>(sel);
+    const el = findAnchor(sel);
     if (!el) { // anchor vanished mid-chapter → skip forward (or end)
       availableStops = availableStops.filter((_, i) => i !== stopIndex);
       if (!availableStops.length || stopIndex >= availableStops.length) return void endChapter();
@@ -104,7 +114,7 @@
       if (mode !== 'touring' || !chapter || !targetRect) return;
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
-        const el = document.querySelector<HTMLElement>(chapter.stops[availableStops[stopIndex]].anchor);
+        const el = findAnchor(chapter.stops[availableStops[stopIndex]].anchor);
         if (!el) return;
         const r = el.getBoundingClientRect();
         targetRect = { top: r.top, left: r.left, width: r.width, height: r.height };
@@ -143,9 +153,9 @@
 </script>
 
 {#if mode === 'hello' && chapter}
-  <TourHelloModal name={user?.name?.split(' ')[0] ?? ''} onStart={() => { void markHelloDismissed(loggedIn); mode = 'idle'; void startChapter(); }} onDismiss={() => { void markHelloDismissed(loggedIn); state = getLocalState(); mode = isChapterSeen(state, chapter.key) ? 'idle' : 'offer'; }} />
+  <TourHelloModal name={user?.name?.split(' ')[0] ?? ''} surfaceKey={'tour.surface.' + chapter.key} stopCount={chapter.stops.length} onStart={() => { void markHelloDismissed(loggedIn); mode = 'idle'; void startChapter(); }} onDismiss={() => { void markHelloDismissed(loggedIn); state = getLocalState(); mode = isChapterSeen(state, chapter.key) ? 'idle' : 'offer'; }} />
 {:else if mode === 'offer' && chapter}
-  <TourOfferStrip page={chapter.page} onStart={() => { mode = 'idle'; void startChapter(); }} onDismiss={() => { void markChapterSeen(chapter.key, loggedIn); state = getLocalState(); mode = 'idle'; }} />
+  <TourOfferStrip page={chapter.page} surfaceKey={'tour.surface.' + chapter.key} stopCount={chapter.stops.length} onStart={() => { mode = 'idle'; void startChapter(); }} onDismiss={() => { void markChapterSeen(chapter.key, loggedIn); state = getLocalState(); mode = 'idle'; }} />
 {:else if mode === 'touring' && chapter && targetRect}
   <TourSpotlight {chapter} {stopIndex} {availableStops} {targetRect} {radius} onNext={next} onBack={back} onClose={endChapter} />
 {/if}

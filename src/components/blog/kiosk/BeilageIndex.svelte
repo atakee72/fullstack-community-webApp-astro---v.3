@@ -181,7 +181,7 @@
 {/snippet}
 
 {#snippet cloudModule()}
-  <div style="border: 1.5px solid var(--k-ink); border-radius: var(--k-radius-lg); background: var(--k-paper-warm); box-shadow: 2px 2px 0 var(--k-ink); padding: 16px 18px;">
+  <div data-tour="blog-rubriken" style="border: 1.5px solid var(--k-ink); border-radius: var(--k-radius-lg); background: var(--k-paper-warm); box-shadow: 2px 2px 0 var(--k-ink); padding: 16px 18px;">
     <div class="font-dmmono" style="font-size: 10px; letter-spacing: 0.16em; color: var(--k-rust); border-bottom: 1px solid var(--k-ink); padding-bottom: 7px; margin-bottom: 12px;">
       {$t['blog.rubrics']} · {counts.length}
     </div>
@@ -289,7 +289,7 @@
 
     <!-- Mobile rubric row: horizontal-scroll chips + full-width search -->
     <div class="lg:hidden">
-      <div use:scrollFade class="kiosk-scroll-fade no-scrollbar flex overflow-x-auto" style="gap: 8px; padding-bottom: 2px;">
+      <div data-tour="blog-rubriken" use:scrollFade class="kiosk-scroll-fade no-scrollbar flex overflow-x-auto" style="gap: 8px; padding-bottom: 2px;">
         <div class="shrink-0"><BlRubrikChip tag={$t['blog.rubric.all']} active={!activeTag} onclick={clearTag} /></div>
         {#each counts as [tag, n] (tag)}
           <div class="shrink-0"><BlRubrikChip {tag} {n} active={activeTag === tag} onclick={() => toggleTag(tag)} /></div>
@@ -387,15 +387,15 @@
 
     <div class="hidden lg:flex flex-col" style="gap: 18px;">
       {@render cloudModule()}
-      {@render archivModule()}
+      <div data-tour="blog-archiv">{@render archivModule()}</div>
       {@render aboutCard()}
-      {@render aufrufCard()}
+      <div data-tour="blog-aufruf">{@render aufrufCard()}</div>
     </div>
   </div>
 
   <div class="lg:hidden flex flex-col px-6" style="gap: 18px; padding-bottom: 32px;">
-    {@render archivModule()}
+    <div data-tour="blog-archiv">{@render archivModule()}</div>
     {@render aboutCard()}
-    {@render aufrufCard()}
+    <div data-tour="blog-aufruf">{@render aufrufCard()}</div>
   </div>
 {/if}

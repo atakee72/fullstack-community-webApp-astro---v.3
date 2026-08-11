@@ -457,7 +457,7 @@
 
     <!-- ─── Listing grid ───────────────────────────────────────────── -->
     {#if gridItems.length > 0}
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 px-5 py-5 lg:px-9 lg:py-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 px-5 py-5 lg:px-9 lg:py-6" data-tour="markt-grid">
         {#each gridItems as item (item._id)}
           <a
             href="/marketplace/{item._id}"
@@ -567,5 +567,6 @@
 <a
   href="/marketplace/create"
   aria-label="Neue Anzeige erstellen"
+  data-tour="markt-create"
   class="fixed bottom-16 right-4 z-30 w-14 h-14 rounded-full bg-wine text-paper border-2 border-ink font-bricolage font-bold text-[28px] leading-none shadow-[3px_3px_0_var(--k-ink,#0e1033)] flex items-center justify-center lg:hidden"
 >+</a>

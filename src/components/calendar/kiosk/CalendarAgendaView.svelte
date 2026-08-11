@@ -63,7 +63,7 @@
   );
 </script>
 
-<div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] lg:gap-0">
+<div data-tour="cal-rsvp" class="grid grid-cols-1 lg:grid-cols-[1fr_320px] lg:gap-0">
   <!-- Agenda list -->
   <div class="px-4 md:px-9 lg:px-10 py-3">
     {#if pastCount > 0}

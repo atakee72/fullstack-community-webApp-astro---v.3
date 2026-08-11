@@ -372,7 +372,7 @@
       />
     </div>
     <!-- Desktop month: full grid with event pills + drag-select. -->
-    <div class="hidden lg:block">
+    <div data-tour="cal-rsvp" class="hidden lg:block">
       <CalendarMonthGrid
         {visibleMonth}
         events={displayedEvents}

@@ -30,7 +30,7 @@
 
 <section class="px-4 md:px-9" style="border-bottom:1px dashed var(--k-rule);">
   <!-- Row 1: Sektion (scrollFade peek on mobile) -->
-  <div class="py-3 flex items-center gap-2">
+  <div data-tour="kurier-sections" class="py-3 flex items-center gap-2">
     <span class="font-dmmono uppercase shrink-0" style="font-size:9.5px; color:var(--k-ink-mute); letter-spacing:0.12em; width:56px;">
       {$t['news.filter.sektion']}
     </span>
@@ -57,7 +57,7 @@
   </div>
 
   <!-- Row 2: Zeitraum + Saved + Unread -->
-  <div class="pb-3 flex items-center gap-3 flex-wrap">
+  <div class="pb-3 flex items-center gap-3 flex-wrap" data-tour="kurier-fade">
     <span class="font-dmmono uppercase shrink-0" style="font-size:9.5px; color:var(--k-ink-mute); letter-spacing:0.12em;">
       {$t['news.filter.zeitraum']}
     </span>
@@ -76,6 +76,7 @@
 
     <button type="button" onclick={() => onSavedToggle(!savedOnly)} disabled={!isAuthenticated}
       title={!isAuthenticated ? $t['news.filter.saved.gated'] : undefined} aria-pressed={savedOnly}
+      data-tour="kurier-saved"
       class="shrink-0 font-bricolage font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
       style="padding:5px 13px; font-size:12.5px; border-radius:var(--k-radius-pill);
              border:{savedOnly ? '2px solid var(--k-ink)' : '2px dashed var(--k-rule)'};

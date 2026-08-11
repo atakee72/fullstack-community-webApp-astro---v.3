@@ -51,6 +51,7 @@
 </script>
 
 <div
+  data-tour="profil-chronik"
   style="
     border: 1.5px solid var(--k-ink); border-radius: 12px; background: var(--k-paper-soft);
     padding: 14px 20px; display: flex; align-items: center; gap: 0;
