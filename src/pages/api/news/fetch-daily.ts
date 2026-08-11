@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import * as Sentry from '@sentry/astro';
 import { connectDB } from '../../../lib/mongodb';
+import { checkAirLoggerFreshness } from '../../../lib/kiez/airFreshness';
 import type { NewsItem } from '../../../types';
 import crypto from 'crypto';
 
@@ -338,6 +339,13 @@ export const GET: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    // Piggy-backed watchdog, unrelated to news: alerts if the GitHub-Actions
+    // air logger has gone silent. It rides this cron because Vercel-native
+    // schedules can't be broken by a domain/alias change — the failure mode
+    // that killed the logger unnoticed for two days. Runs before the early
+    // returns below so a news-side outage can't also blind the air check.
+    await checkAirLoggerFreshness();
 
     const openaiKey = import.meta.env.OPENAI_API_KEY;
     const newsDataKey = import.meta.env.NEWSDATA_API_KEY;
