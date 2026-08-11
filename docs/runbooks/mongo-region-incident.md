@@ -34,6 +34,9 @@ Both Sentry issues auto-reopened: 3 events over two days (vs ~5/day pre-region-f
 **Step 1 (applied 2026-08-03, `be6db7fc`):** `serverSelectionTimeoutMS: 5000 → 10000` in `src/lib/mongodb.ts`. Trade-off accepted: +5s worst-case hang on a genuine outage, in exchange for cold-start rediscovery becoming a slow success instead of a user-facing error.
 
 **Step 2 (held back, one variable at a time):** `maxIdleTimeMS: 60000` — apply ONLY if network-flavored timeouts persist after step 1. Note it cannot fix PROD-4-style events: those show elapsed times far beyond the configured budget (e.g. 341s vs 30s), which is a Vercel freeze/thaw timer artifact, not a stale socket.
+> ⛔ **RETIRED 2026-08-11 — do NOT apply step 2.** The recurrence turned out to be a
+> cold-start `client.connect()`, where no pool exists for `maxIdleTimeMS` to act on.
+> Jump to "Reopened 2026-08-11" at the end of this file before acting on anything below.
 
 **Known quirk (deliberate):** the Sentry `beforeSend` transient filter's pattern `/MongoNetworkError.*timed out/i` never matches the actually-thrown subclass `MongoNetworkTimeoutError`. This gap is what let PROD-4 through as a useful tripwire — leave it unfixed.
 
@@ -41,7 +44,7 @@ Both Sentry issues auto-reopened: 3 events over two days (vs ~5/day pre-region-f
 
 ## Closure (2026-08-06)
 
-Step 1 held: 2.5+ quiet days after the last event (2026-08-03 20:53 UTC) with the air logger probing every 30 min. Both issues **resolved** in Sentry. The manual watch is retired — alert rule 725977 now includes a Regression condition (added 2026-08-05), so any recurrence emails immediately. Playbook if that email arrives: freeze-artifact events (elapsed ≫ configured budget) don't count; a real network-flavored timeout → apply step 2 (`maxIdleTimeMS: 60000`).
+Step 1 held: 2.5+ quiet days after the last event (2026-08-03 20:53 UTC) with the air logger probing every 30 min. Both issues **resolved** in Sentry. The manual watch is retired — alert rule 725977 now includes a Regression condition (added 2026-08-05), so any recurrence emails immediately. Playbook if that email arrives: freeze-artifact events (elapsed ≫ configured budget) don't count; a real network-flavored timeout → apply step 2 (`maxIdleTimeMS: 60000`). ⛔ **This last clause was WRONG — see "Reopened 2026-08-11" below; step 2 is retired.** The correct first move on any recurrence is to read the stack frames: `MongoClient._connect` = cold-start connect (no pool), anything under `ConnectionPool` = an actual pooled-socket problem.
 
 ## Reopened 2026-08-11 → root cause was NOT a stale socket (step 2 retired)
 
