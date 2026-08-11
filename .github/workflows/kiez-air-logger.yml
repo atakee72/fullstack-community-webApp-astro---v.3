@@ -18,7 +18,12 @@ jobs:
       - name: Trigger logger tick
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          APP_ORIGIN: https://mahalle-das-kiezgesichterbuch.vercel.app
+          # Canonical domain since 2026-08-09. Must NOT be the old
+          # *.vercel.app origin: it 308-redirects here, and curl without -L
+          # treats that as a failure (silently killed the logger for 2 days).
+          # -L is not the fix either — curl drops Authorization on a
+          # cross-host redirect, so the follow-up would 401.
+          APP_ORIGIN: https://mahalle.digital
         run: |
           code=$(curl -s -o /tmp/resp.json -w '%{http_code}' \
             -H "Authorization: Bearer $CRON_SECRET" \
