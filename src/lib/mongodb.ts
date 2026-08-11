@@ -30,19 +30,47 @@ const globalWithMongo = globalThis as typeof globalThis & {
   _mongoClientPromise?: Promise<MongoClient>;
 };
 
-if (!globalWithMongo._mongoClientPromise) {
+function newClientPromise(): Promise<MongoClient> {
   const client = new MongoClient(uri, options);
-  globalWithMongo._mongoClientPromise = client.connect();
+  const p: Promise<MongoClient> = client.connect().catch(async (err) => {
+    // Uncache the failed attempt so the NEXT caller connects fresh. Without
+    // this, a single cold-start failure leaves a rejected promise cached on
+    // the container and every later request awaits that same rejection until
+    // the container is recycled.
+    if (globalWithMongo._mongoClientPromise === p) {
+      globalWithMongo._mongoClientPromise = undefined;
+    }
+    // Release the failed client's sockets + heartbeat timers.
+    await client.close().catch(() => {});
+    throw err;
+  });
+  // Mark the rejection observed. Nothing awaits this promise at module-eval
+  // time, so a cold-start connect failure otherwise surfaced as an
+  // `unhandledRejection` with no request context (Sentry MAHALLE-PROD-2).
+  // Awaiters still receive the rejection — a real DB-dependent request fails
+  // loudly and gets captured by the middleware WITH its request context;
+  // a failure nobody was waiting on stays quiet, which is correct.
+  p.catch(() => {});
+  return p;
 }
 
-const clientPromise: Promise<MongoClient> = globalWithMongo._mongoClientPromise;
+function getClientPromise(): Promise<MongoClient> {
+  if (!globalWithMongo._mongoClientPromise) {
+    globalWithMongo._mongoClientPromise = newClientPromise();
+  }
+  return globalWithMongo._mongoClientPromise;
+}
 
-// Export a module-scoped MongoClient promise. By doing this in a
-// separate module, the client can be shared across functions.
+// Export a module-scoped MongoClient promise. By doing this in a separate
+// module, the client can be shared across functions. NOTE: consumers that
+// await THIS binding (the Auth.js adapter in `auth.config.ts`) hold one fixed
+// promise and so don't get the retry-after-failure above — prefer `connectDB()`
+// in new code.
+const clientPromise: Promise<MongoClient> = getClientPromise();
 export default clientPromise;
 
 // Helper function to get DB instance (backward compatibility)
 export async function connectDB(): Promise<Db> {
-  const client = await clientPromise;
+  const client = await getClientPromise();
   return client.db();
 }
