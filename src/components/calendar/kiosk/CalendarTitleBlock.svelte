@@ -66,6 +66,7 @@
     <div class="flex items-center flex-wrap gap-3">
       <!-- Month stepper — ‹ MAI 2026 › per CD's desktop header. -->
       <div
+        data-tour="cal-month-nav"
         class="inline-flex items-center border-2 border-ink rounded-full overflow-hidden font-dmmono text-[11px] font-semibold"
       >
         <button

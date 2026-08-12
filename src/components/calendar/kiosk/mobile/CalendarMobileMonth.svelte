@@ -409,6 +409,7 @@
          bold year inside the same pill as the prev/next buttons. -->
     <div class="flex items-center justify-end gap-2 mt-5">
       <div
+        data-tour="cal-month-nav"
         class="inline-flex items-center border-[1.5px] border-ink rounded-full overflow-hidden font-dmmono text-[11px] font-semibold leading-none"
       >
         <button

@@ -117,7 +117,7 @@ earns its complexity when there's a hole to cut.
 ## How to add a chapter (all seven live — this is now a template, not a spec)
 
 All seven chapters (Forum, Kalender, Markt, Kurier, Kiez-Daten, Blog, Profil —
-31 stops, 7·5·5·5·3·3·3) shipped in phase 2 + depth pass.
+32 stops, 7·6·5·5·3·3·3) shipped in phase 2 + depth pass (Kalender gained a month-nav stop 2026-08-12).
 `design/handoffs/TOUR_CC_ANSWERS.md` + `TOUR_DEPTH_ANSWERS.md` are the copy
 source of truth (stop titles/bodies, anchor corrections, the arrow-nose call,
 the offer-strip placement call, the chapter chain, the hello-modal template)
