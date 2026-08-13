@@ -82,9 +82,9 @@ export interface Listing {
   originalPrice?: number | null;
   images: string[];
   sellerId: ObjectId | string;
-  sellerName?: string;
+  sellerName?: string | null;
   sellerEmail?: string;
-  sellerImage?: string;
+  sellerImage?: string | null;
   status: ListingStatus;
   moderationStatus?: 'approved' | 'pending' | 'rejected';
   isUserReported?: boolean;

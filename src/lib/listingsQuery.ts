@@ -12,6 +12,69 @@ import { LISTINGS_QUERY_OPTIONS } from './marketplaceQueryOptions';
 import type { Listing } from '../types/listing';
 
 /**
+ * Seller fields exposed to clients. ALLOWLIST — never `{ password: 0 }`,
+ * which would ship email / isBanned / pendingEmail / strike counts into
+ * client-visible SSR props and JSON responses. Same narrowing rationale as
+ * populateAuthors in topicsQuery.ts.
+ */
+const SELLER_PROJECTION = { name: 1, image: 1, userPicture: 1 } as const;
+
+/**
+ * Resolve seller name + avatar for a batch of listings with ONE $in query.
+ *
+ * Deliberately a read-time join, never a stored copy: accountDeletion.ts
+ * step 6 tombstones a deleted user's `name` to "Ehemaliges Mitglied" and
+ * relies on authored content picking that up on the next read. A
+ * denormalized sellerName would freeze the pre-deletion name (and go stale
+ * on every rename).
+ *
+ * sellerId is stored as a plain string today, but ObjectId-valued documents
+ * are handled too so a future writer can't silently break the join.
+ * Unresolvable sellers (hard-deleted user, malformed id) yield null, which
+ * the cards render as "—".
+ */
+export async function populateSellers<T extends Record<string, any>>(
+  docs: T[],
+): Promise<T[]> {
+  if (docs.length === 0) return docs;
+
+  const keyOf = (raw: unknown): string | null => {
+    if (!raw) return null;
+    const s = typeof raw === 'string' ? raw : String(raw);
+    return ObjectId.isValid(s) ? s : null;
+  };
+
+  const idSet = new Set<string>();
+  for (const doc of docs) {
+    const key = keyOf(doc.sellerId);
+    if (key) idSet.add(key);
+  }
+
+  let byId = new Map<string, any>();
+  if (idSet.size > 0) {
+    const db = await connectDB();
+    const users = await db
+      .collection('users')
+      .find(
+        { _id: { $in: Array.from(idSet).map((id) => new ObjectId(id)) } },
+        { projection: SELLER_PROJECTION },
+      )
+      .toArray();
+    byId = new Map(users.map((u) => [u._id.toString(), u]));
+  }
+
+  return docs.map((doc) => {
+    const key = keyOf(doc.sellerId);
+    const u = key ? byId.get(key) : undefined;
+    return {
+      ...doc,
+      sellerName: u?.name ?? null,
+      sellerImage: u?.userPicture ?? u?.image ?? null,
+    };
+  });
+}
+
+/**
  * Build the combined moderation + marketplace-status visibility filter.
  *
  * Moderation visibility (mirrors forum/calendar precedent):
@@ -215,7 +278,10 @@ export async function fetchListingsForSSR(
     };
   }) as Listing[];
 
-  return { items, total };
+  // Seller name/avatar are join-populated, never stored (see populateSellers).
+  const withSellers = (await populateSellers(items)) as Listing[];
+
+  return { items: withSellers, total };
 }
 
 /**
@@ -267,7 +333,7 @@ export async function fetchListingForSSR(
     typeof it.sellerId === 'object' ? it.sellerId.toString() : it.sellerId;
   const isOwner = !!(userId && sellerIdStr === userId);
 
-  return {
+  const listing = {
     ...it,
     _id: it._id?.toString(),
     sellerId: sellerIdStr,
@@ -296,6 +362,9 @@ export async function fetchListingForSSR(
         : false,
     isPubliclyHidden: isPubliclyHiddenFrom(it.lastBumpedAt, it.createdAt),
   } as Listing;
+
+  const [withSeller] = await populateSellers([listing]);
+  return withSeller as Listing;
 }
 
 /**
@@ -376,5 +445,6 @@ export async function fetchListingDetailForSSR(
     isPubliclyHidden: isPubliclyHiddenFrom(it.lastBumpedAt, it.createdAt),
   } as Listing;
 
-  return { kind: 'visible', listing };
+  const [withSeller] = await populateSellers([listing]);
+  return { kind: 'visible', listing: withSeller as Listing };
 }
