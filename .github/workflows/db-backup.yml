@@ -1,0 +1,123 @@
+# Nightly encrypted MongoDB backup.
+#
+# What: dumps the prod database (Atlas M0 free tier has NO built-in backups),
+# encrypts it with AES-256-CBC (PBKDF2, 200k iterations), and uploads it as a
+# GitHub Release asset in the PRIVATE repo atakee72/mahalle-backups (this app
+# repo is public, so Actions artifacts would be publicly downloadable — releases
+# in the private repo are not). Releases older than 90 days are pruned by this
+# job. Restore instructions: docs/runbooks/db-backup.md
+#
+# Alerting: GitHub emails the repo owner when a scheduled workflow run fails —
+# that email IS the alerting for this job. If it lands, investigate the same day
+# (every red night is a night without a backup).
+#
+# Auth: secrets.BACKUP_REPO_TOKEN is a fine-grained PAT scoped to
+# atakee72/mahalle-backups only (contents: read+write). Fine-grained PATs
+# EXPIRE — GitHub emails before expiry; rotate it then. A run failing with
+# 401/404 on the upload/prune steps usually means the token expired/was revoked
+# or the private repo was deleted.
+#
+# Passphrase: secrets.BACKUP_PASSPHRASE exists ONLY in the user's password
+# manager and in this repo's GitHub secrets. Losing both makes ALL uploaded
+# backups permanently unreadable — there is no recovery.
+name: DB Backup
+on:
+  schedule:
+    - cron: '17 3 * * *' # 03:17 UTC nightly — off-the-hour to dodge GH cron congestion
+  workflow_dispatch:
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Install MongoDB Database Tools
+        run: |
+          curl -fsSL -o tools.tgz https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2404-x86_64-100.13.0.tgz
+          tar -xzf tools.tgz
+          echo "$PWD/mongodb-database-tools-ubuntu2404-x86_64-100.13.0/bin" >> "$GITHUB_PATH"
+          rm tools.tgz
+
+      - name: Verify tools
+        run: mongodump --version
+
+      # A URI whose path names a database (.../mahalle) dumps ONLY that
+      # database — verified with tools v100.13.0. No extra flag needed.
+      - name: Dump database
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: mongodump --uri="$MONGODB_URI" --gzip --archive=backup.archive
+
+      # Two gates so an empty/failed dump can never upload as a "successful backup":
+      # 1) size floor (prod db is well over 100 KB gzipped)
+      # 2) read-only listing check — mongorestore --dryRun parses the archive and
+      #    lists its namespaces without writing anything to the cluster.
+      - name: Sanity-check archive
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: |
+          size=$(stat -c%s backup.archive)
+          echo "archive size: ${size} bytes"
+          if [ "$size" -lt 102400 ]; then
+            echo "::error::backup.archive is smaller than 100 KB — refusing to upload a likely-empty dump"
+            exit 1
+          fi
+          found=$(mongorestore --uri="$MONGODB_URI" --archive=backup.archive --gzip --dryRun -v 2>&1 | grep -c "found collection" || true)
+          echo "namespaces found in archive: ${found}"
+          if [ "$found" -lt 1 ]; then
+            echo "::error::archive contains no collections"
+            exit 1
+          fi
+
+      # Plaintext dump is deleted immediately after encryption — only the
+      # encrypted file may ever leave the runner.
+      - name: Encrypt
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in backup.archive -out backup.archive.enc -pass env:BACKUP_PASSPHRASE
+          rm backup.archive
+
+      # One release per UTC day. A manual re-run on the same day must not fail:
+      # if the release already exists, re-upload the asset with --clobber.
+      - name: Upload to private backup repo
+        env:
+          GH_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
+        run: |
+          tag="backup-$(date -u +%F)"
+          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          if ! gh release create "$tag" backup.archive.enc \
+              --repo atakee72/mahalle-backups \
+              --title "$tag" \
+              --notes "Nightly encrypted backup. Source run: ${run_url}"; then
+            echo "release ${tag} already exists — re-uploading asset with --clobber"
+            gh release upload "$tag" backup.archive.enc --clobber --repo atakee72/mahalle-backups
+          fi
+
+      # Rolling 90-day retention. A failed prune must NOT read as "no backup
+      # last night", so every failure here is a warning, never a job failure.
+      - name: Prune releases older than 90 days
+        env:
+          GH_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
+        run: |
+          cutoff="$(date -u -d '90 days ago' +%Y-%m-%dT%H:%M:%SZ)"
+          if ! releases_json="$(gh release list --repo atakee72/mahalle-backups --limit 200 --json tagName,createdAt)"; then
+            echo "::warning::could not list releases in the backup repo — skipping prune"
+            exit 0
+          fi
+          old_tags="$(jq -r --arg cutoff "$cutoff" '.[] | select(.createdAt < $cutoff) | .tagName' <<<"$releases_json")"
+          if [ -z "$old_tags" ]; then
+            echo "no releases older than ${cutoff} — nothing to prune"
+            exit 0
+          fi
+          for tag in $old_tags; do
+            if gh release delete "$tag" --yes --cleanup-tag --repo atakee72/mahalle-backups; then
+              echo "pruned ${tag}"
+            else
+              echo "::warning::failed to prune release ${tag}"
+            fi
+          done
+
+      # Belt and suspenders — the runner is ephemeral, but leave nothing behind.
+      - name: Clean up
+        if: always()
+        run: rm -f backup.archive backup.archive.enc
