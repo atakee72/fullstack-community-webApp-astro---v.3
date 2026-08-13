@@ -126,6 +126,25 @@ ALLOWED_ORIGINS=           # CSV of allowed origins, e.g. "https://mahalle.berli
 
 `ListingCard.svelte` uses `isBumped` as the canonical signal for the bump strap. **Never extend the public projection to expose `lastBumpedAt`** — bump timestamps are a privacy leak (tells competitors exactly when a seller is active/desperate).
 
+### Seller identity is a READ-TIME join — never store it (Aug 2026)
+`sellerName` / `sellerImage` are **not columns**. They are populated by `populateSellers()` in `src/lib/listingsQuery.ts`, one batched `$in` per fetcher call, and all three SSR fetchers (`fetchListingsForSSR`, `fetchListingForSSR`, `fetchListingDetailForSSR`) call it — so browse grid, editorial lead, detail `SellerCard` and the client-side `/api/listings` path are all fed from the same join.
+
+**Do not "optimize" this into a denormalized write.** `src/lib/auth/accountDeletion.ts` step 6 tombstones a deleted user's `name` to `"Ehemaliges Mitglied"` and unsets their avatar, relying on authored content resolving identity at read time. A stored `sellerName` would freeze the pre-deletion name and defeat the GDPR anonymization — and go stale on every rename. The tombstone path is the reason the join exists, not a side effect of it.
+
+Projection is an **allowlist**: `{ name: 1, image: 1, userPicture: 1 }`. Never `{ password: 0 }` — that returns email / `isBanned` / `pendingEmail` / strike counts into client-visible payloads. Same narrowing as `populateAuthors` in `topicsQuery.ts`. Unresolvable sellers (hard-deleted user) yield `null`, which the cards render as `—` / `?`.
+
+Historical: before this, 0 of 11 real listings had the fields — `create.ts` computed them for the API *response* only, after `insertOne`. That echo is now deleted; the compose flow reads only `moderationStatus` off the create response.
+
+### `GET /api/listings/[id]` is gated by `fetchListingDetailForSSR` (Aug 2026)
+It used to be a bare `findOne({ _id })` — no session, no moderation filter, no status filter, no freshness filter — so anonymous callers could read **moderation-rejected listings, drafts, sold items and past-21d listings**, with `sellerEmail` attached. It now delegates to the same helper `/marketplace/[id].astro` uses, so there is exactly one place where marketplace visibility is decided.
+
+Three things to preserve if you touch this endpoint:
+- **Both non-visible kinds (`hidden_past_21d`, `not_found`) collapse to the same 404 body.** Distinguishing them would turn the endpoint into an ID-existence oracle.
+- **`Cache-Control: no-cache, no-store, must-revalidate` + `Vary: Cookie` on the 200 *and* the 404.** The response became session-dependent the moment owners kept access to their own drafts; without these a shared cache can store an owner-scoped body and hand it to an anonymous requester — re-opening the exact hole the gate closes. Sibling endpoints (`index.ts`, `my-listings.ts`) already set the same Cache-Control.
+- **`sellerEmail` is gone from the `Listing` type**, so reintroducing it anywhere is a compile error. Keep it that way.
+
+Still un-gated by the same rules (pre-existing, distinguishable codes for missing vs. non-public): `POST /api/listings/[id]/contact` and `src/pages/api/listings/[id]/view.ts`.
+
 ### Bump — no rate limit (supersedes A5)
 - Endpoint: `POST /api/listings/[id]/bump`.
 - No cooldown. Bump is the freshness reset; sellers need to be able to use it whenever the listing slips out of the public feed (past the 21d freshness clock). Spamming it would be visible in the audit (`updatedAt` + `lastBumpedAt` timestamps) and gated by the user's own social signals — not a technical concern.

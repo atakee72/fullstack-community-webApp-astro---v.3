@@ -230,6 +230,8 @@ See `src/components/calendar/kiosk/CLAUDE.md` — full notes load when working i
 ### Marketplace patterns (kiosk: listings, contact relay, ownership lifecycle, freshness decay)
 See `src/components/marketplace/kiosk/CLAUDE.md` — full notes load when working in that subtree. Spans `src/lib/listingActions.ts`, `src/lib/listingsQuery.ts`, `src/pages/api/listings/*`; read the area file directly when working on those server-side pieces.
 
+**Seller identity is a read-time join, never stored** (Aug 2026): `populateSellers()` in `src/lib/listingsQuery.ts` resolves `sellerName`/`sellerImage` with one batched `$in` (allowlist projection `{name,image,userPicture}` — never `{password:0}`) from all three SSR fetchers. Denormalizing it would freeze the name a deleted user's tombstone is supposed to replace (`accountDeletion.ts` step 6 → "Ehemaliges Mitglied"). Same commit gated `GET /api/listings/[id]`, which had been a bare `findOne` serving rejected/draft/sold/past-21d listings plus `sellerEmail` to anonymous callers; it now routes through `fetchListingDetailForSSR` with `no-store` + `Vary: Cookie` (the response varies by session, so a shared cache would otherwise re-open the leak). Details in the area file.
+
 ### Auth (kiosk) patterns (login + register front door)
 See `src/components/auth/kiosk/CLAUDE.md` — full notes load when working in that subtree. Auth uses a dedicated `AuthLayout.astro` (not `KioskLayout` — no app nav on the logged-out door), ochre accent (`[data-page="auth"]`), and reuses the credentials backend untouched. Phase 1 = login + register only; splash/verify/forgot/KiezHeartbeat deferred.
 
