@@ -22,20 +22,30 @@ export const GET: APIRoute = async ({ params, request }) => {
     // rejected content, drafts, sold items and past-21d listings were all
     // publicly readable, and the response carried the seller's e-mail.
     // Owners still reach their own drafts/sold/stale listings (owner scope
-    // lives inside the helper). Both non-visible kinds collapse to 404 so the
-    // endpoint doesn't disclose which listings merely exist.
+    // lives inside the helper). Both non-visible kinds collapse to 404 so
+    // THIS endpoint doesn't disclose which listings merely exist — the
+    // contact relay and view.ts still do a bare findOne and return
+    // distinguishable codes for missing vs. existing-but-non-public.
     const result = await fetchListingDetailForSSR(id, userId);
 
     if (result.kind !== 'visible') {
       return new Response(JSON.stringify({ error: 'Listing not found' }), {
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Vary': 'Cookie'
+        }
       });
     }
 
     return new Response(JSON.stringify({ listing: result.listing }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Vary': 'Cookie'
+      }
     });
   } catch (error) {
     console.error('Error fetching listing:', error);

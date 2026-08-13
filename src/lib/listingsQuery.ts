@@ -28,8 +28,11 @@ const SELLER_PROJECTION = { name: 1, image: 1, userPicture: 1 } as const;
  * denormalized sellerName would freeze the pre-deletion name (and go stale
  * on every rename).
  *
- * sellerId is stored as a plain string today, but ObjectId-valued documents
- * are handled too so a future writer can't silently break the join.
+ * sellerId is stored as a plain string today; the join here tolerates an
+ * ObjectId-valued sellerId too. But buildListingsFilter below compares
+ * `{ sellerId: userId }` as a plain string, so switching storage to ObjectId
+ * would keep this join working while silently breaking owner visibility —
+ * that filter would need updating too.
  * Unresolvable sellers (hard-deleted user, malformed id) yield null, which
  * the cards render as "—".
  */
@@ -41,7 +44,11 @@ export async function populateSellers<T extends Record<string, any>>(
   const keyOf = (raw: unknown): string | null => {
     if (!raw) return null;
     const s = typeof raw === 'string' ? raw : String(raw);
-    return ObjectId.isValid(s) ? s : null;
+    // Canonicalize via ObjectId round-trip: ObjectId.isValid() also accepts
+    // uppercase hex and other 12-char strings that round-trip to a DIFFERENT
+    // canonical form than the map (built from `u._id.toString()`) uses — an
+    // uncanonicalized key would join fine but miss the lookup below.
+    return ObjectId.isValid(s) ? new ObjectId(s).toHexString() : null;
   };
 
   const idSet = new Set<string>();
