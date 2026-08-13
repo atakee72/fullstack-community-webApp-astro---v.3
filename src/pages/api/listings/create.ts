@@ -1,7 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../lib/mongodb';
-import { ObjectId } from 'mongodb';
 import type { Listing } from '../../../types/listing';
 import type { FlaggedContent } from '../../../types';
 import { ListingCreateSchema } from '../../../schemas/listing.schema';
@@ -112,19 +111,12 @@ export const POST: APIRoute = async ({ request }) => {
       await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
     }
 
-    // Fetch seller info
-    const usersCollection = db.collection('users');
-    const seller = await usersCollection.findOne(
-      { _id: new ObjectId(userId) },
-      { projection: { password: 0 } }
-    );
-
+    // No seller lookup: the only caller (MarketComposeInner) reads just
+    // `moderationStatus` off this response and redirects. Every read path
+    // joins seller identity live via populateSellers (src/lib/listingsQuery.ts).
     const createdListing = {
       ...newListing,
-      _id: result.insertedId,
-      sellerName: seller?.name || 'Unknown',
-      sellerEmail: seller?.email,
-      sellerImage: seller?.userPicture || seller?.image
+      _id: result.insertedId
     };
 
     // Return appropriate response based on moderation results

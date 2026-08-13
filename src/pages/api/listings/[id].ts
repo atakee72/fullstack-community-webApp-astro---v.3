@@ -1,10 +1,9 @@
 import type { APIRoute } from 'astro';
-import { connectDB } from '../../../lib/mongodb';
-import { ObjectId } from 'mongodb';
-import type { Listing } from '../../../types/listing';
+import { getSession } from 'auth-astro/server';
+import { fetchListingDetailForSSR } from '../../../lib/listingsQuery';
 import { isValidObjectId } from '../../../schemas/validation.utils';
 
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, request }) => {
   try {
     const { id } = params;
 
@@ -15,35 +14,26 @@ export const GET: APIRoute = async ({ params }) => {
       });
     }
 
-    const db = await connectDB();
-    const listingsCollection = db.collection<Listing>('listings');
+    const session = await getSession(request);
+    const userId = (session?.user as any)?.id ?? null;
 
-    const listing = await listingsCollection.findOne({ _id: new ObjectId(id) });
+    // Canonical visibility helper — the same one /marketplace/[id].astro uses.
+    // Replaces a raw findOne that returned ANY document to ANY caller:
+    // rejected content, drafts, sold items and past-21d listings were all
+    // publicly readable, and the response carried the seller's e-mail.
+    // Owners still reach their own drafts/sold/stale listings (owner scope
+    // lives inside the helper). Both non-visible kinds collapse to 404 so the
+    // endpoint doesn't disclose which listings merely exist.
+    const result = await fetchListingDetailForSSR(id, userId);
 
-    if (!listing) {
+    if (result.kind !== 'visible') {
       return new Response(JSON.stringify({ error: 'Listing not found' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    // Fetch seller info
-    const usersCollection = db.collection('users');
-    const seller = await usersCollection.findOne(
-      { _id: new ObjectId(listing.sellerId as string) },
-      { projection: { password: 0 } }
-    );
-
-    const listingWithSeller = {
-      ...listing,
-      _id: listing._id.toString(),
-      sellerId: listing.sellerId.toString(),
-      sellerName: seller?.name || 'Unknown',
-      sellerEmail: seller?.email,
-      sellerImage: seller?.userPicture || seller?.image
-    };
-
-    return new Response(JSON.stringify({ listing: listingWithSeller }), {
+    return new Response(JSON.stringify({ listing: result.listing }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
