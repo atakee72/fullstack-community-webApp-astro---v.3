@@ -20,6 +20,7 @@ import { randomBytes, createHash } from 'crypto';
 import { ObjectId } from 'mongodb';
 import { v2 as cloudinary } from 'cloudinary';
 import { connectDB } from '../mongodb';
+import * as Sentry from '@sentry/astro';
 
 cloudinary.config({
   cloud_name: import.meta.env.CLOUD_NAME,
@@ -165,6 +166,18 @@ export async function runDeletionPipeline(
     console.error(`[runDeletionPipeline] step "${step}" failed for user ${userId}:`, err);
     steps[step] = -1;
     ok = false;
+    // Every step here is GDPR-relevant and every failure is swallowed into the
+    // result object, so without this the pipeline degrades in total silence.
+    // The `tombstone` step is the worst case: `anonymized: true` and the
+    // $unset of `deletionScheduledAt` ride the SAME update as the PII $unsets,
+    // so if it throws, none of it lands — and the cron's
+    // {deletionScheduledAt: {$lte: now}, anonymized: {$ne: true}} query
+    // re-matches this user every night, re-running the destructive steps while
+    // their e-mail is retained. Stays SYNCHRONOUS (no await) so the ~8 catch
+    // sites don't have to change; the flush happens once before the return.
+    // `step` goes in extra rather than the message so recurring failures group
+    // into one issue instead of fragmenting per step.
+    Sentry.captureException(err, { extra: { step, userId } });
   };
 
   const claimed = await db.collection('users').findOneAndUpdate(
@@ -334,6 +347,13 @@ export async function runDeletionPipeline(
   } catch (err) {
     fail('avatarCloudinary', err);
   }
+
+  // Ship whatever fail() captured BEFORE returning. /api/cron/process-deletions
+  // is a Vercel-native cron that answers 200 even when ok is false, so the
+  // middleware's error-path flush never runs and Vercel freezes the function
+  // the moment the response leaves — an unflushed capture is simply lost.
+  // Same failure mode documented in src/lib/kiez/airFreshness.ts.
+  if (!ok) await Sentry.flush(2000);
 
   return { ok, steps };
 }
