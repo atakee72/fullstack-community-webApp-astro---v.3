@@ -21,6 +21,8 @@ export const LISTINGS_QUERY_OPTIONS = {
     'specs',
     'images',
     'sellerId',
+    // Join-populated by populateSellers() at read time, NOT stored on the
+    // document. Kept in this list because it is part of the client contract.
     'sellerName',
     'sellerImage',
     'status',
