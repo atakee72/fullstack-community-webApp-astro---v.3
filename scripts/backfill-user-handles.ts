@@ -39,6 +39,9 @@ async function main() {
   // PARTIAL index: users created by the currently-deployed prod code have no
   // handle; a full unique index would treat those as duplicate nulls and break
   // prod registration. Partial index only constrains docs that HAVE a handle.
+  // Also re-ensured (identical spec) by scripts/create-auth-indexes.ts, which
+  // is the canonical home for `users` indexes. Keep the two calls in sync —
+  // any divergence throws IndexOptionsConflict (85) against the live index.
   await users.createIndex(
     { handle: 1 },
     { unique: true, partialFilterExpression: { handle: { $type: 'string' } }, name: 'users_handle_unique' }

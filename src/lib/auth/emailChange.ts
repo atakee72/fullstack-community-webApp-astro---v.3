@@ -103,7 +103,18 @@ export async function confirmEmailChange(
         $unset: { pendingEmail: '' },
       }
     );
-  } catch (err) {
+  } catch (err: any) {
+    // A duplicate-key violation means users_email_unique caught a race the
+    // findOne above lost (someone took the address in between). That is the
+    // 'email_taken' case, NOT a transient write failure — so return it BEFORE
+    // the rollback below: the documented contract for 'email_taken' is that
+    // the claim stays burnt. Rolling back here instead would leave the token
+    // live, and the user would re-click a link that re-hits the same 11000
+    // forever. Externally indistinguishable from 'invalid' either way (the
+    // confirm endpoint deliberately maps both to one generic 400 so there is
+    // no enumeration oracle); this is about burning the token correctly.
+    if (err?.code === 11000) return { status: 'email_taken' };
+
     // The user write failed AFTER the token was claimed — roll the claim back
     // so the link stays usable and the change isn't lost.
     await tokens.updateOne({ _id: (claimed as any)._id }, { $set: { usedAt: null } })

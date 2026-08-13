@@ -7,6 +7,16 @@ import bcrypt from "bcrypt";
 import { peekRateLimit, consumeRateLimit, clearRateLimit, LOGIN_MAX_FAILS, LOGIN_WINDOW_MS, BAN_FLAG_WINDOW_MS } from "./src/lib/auth/rateLimit";
 
 export default defineConfig({
+    // NOTE (Aug 2026) — `users.email` carries a UNIQUE index
+    // (`users_email_unique`: partial on `$type:'string'`, collation
+    // {locale:'en',strength:2}). The adapter is effectively unreachable today
+    // (Credentials-only provider + JWT sessions never call createUser), but
+    // its `createUser` inserts the provider's email VERBATIM (no lowercasing)
+    // and its `getUserByEmail` queries WITHOUT collation. Adding any OAuth /
+    // magic-link provider therefore requires wrapping or overriding those two
+    // methods first. The index makes that failure LOUD (a hard 11000) rather
+    // than silent — before it, a second provider would have quietly created a
+    // duplicate user row for an address that already had an account.
     adapter: MongoDBAdapter(clientPromise, {
         databaseName: new URL(import.meta.env.MONGODB_URI).pathname.substring(1),
     }),

@@ -42,6 +42,30 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         // are matched via collation on lookups).
         const emailNorm = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
+        // Reject anything that isn't structurally an e-mail. Without this,
+        // input like "   " normalizes to '' and gets INSERTED — and '' is a
+        // string, so it occupies a slot in users_email_unique: one such
+        // request would permanently squat it and the next would get a
+        // nonsensical "already exists" 409.
+        //
+        // Deliberately NOT zod's .email() (nor RegisterSchema.shape.email,
+        // which wraps it): that regex is ASCII-only and rejects every
+        // internationalised address — `ali@müller.de` and `ümit@example.com`
+        // both fail it, and only punycode (`xn--mller-kva.de`) passes.
+        // Turning a Kiez resident away at registration over an umlaut domain
+        // is a worse bug than the one being fixed here, so this checks only
+        // the structure that actually protects the index: non-empty local and
+        // domain parts, exactly one @, no whitespace, a dot in the domain.
+        // (`src/pages/api/profile/email-change/start.ts` is still zod-strict,
+        // so an IDN address can be registered but not switched TO — worth
+        // aligning if a real user ever hits it.)
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(emailNorm)) {
+            return new Response(
+                JSON.stringify({ error: 'Invalid email address' }),
+                { status: 400, headers: { 'Content-Type': 'application/json' } }
+            );
+        }
+
         // Check display name for profanity (Turkish + English + German + OpenAI)
         const nameCheck = await checkNameProfanity(name);
         if (!nameCheck.clean) {
@@ -72,12 +96,26 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         const saltRounds = 12; // Using a higher salt round for better security
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        // Create user
-        // Handle collisions: users_handle_unique is the ONLY unique index on users
-        // (email uniqueness is the findOne+409 check above), so code 11000 here can
-        // only mean a handle collision — safe to retry with a suffix.
+        // Create user.
+        //
+        // TWO unique indexes exist on `users`: users_handle_unique and (since
+        // Aug 2026) users_email_unique. So a code 11000 here is ambiguous and
+        // must be discriminated on `keyPattern`, which carries the index KEY
+        // SPEC ({ handle: 1 } / { email: 1 }) and is unaffected by collation:
+        //   - handle  → retry with the next suffix (what this loop is for)
+        //   - email   → the findOne+409 above lost a TOCTOU race; return that
+        //               same 409 instead of burning attempts on a duplicate
+        //               that no amount of handle-rewriting can fix
+        //   - neither → unknown index, fail closed and rethrow. Retrying an
+        //               unrecognized violation would spend 6 attempts and
+        //               surface a misleading 500 (exactly the bug this
+        //               replaces, one index later).
+        // Never read `keyValue`: for a collated index the server reports the
+        // raw ICU sort key, which is not valid UTF-8 (SERVER-50454) — so it is
+        // useless for branching and garbage in logs.
         const baseHandle = slugifyHandle(name);
         let result: { insertedId: any } | null = null;
+        let emailTaken = false;
         for (let attempt = 0; attempt < 6 && !result; attempt++) {
             const suffix = attempt === 0 ? '' : String(attempt + 1);
             const handle = baseHandle.slice(0, 20 - suffix.length) + suffix;
@@ -96,7 +134,15 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
                 });
             } catch (e: any) {
                 if (e?.code !== 11000) throw e;
+                if (e?.keyPattern?.email !== undefined) { emailTaken = true; break; }
+                if (e?.keyPattern?.handle === undefined) throw e;
             }
+        }
+        if (emailTaken) {
+            return new Response(
+                JSON.stringify({ error: 'User with this email already exists' }),
+                { status: 409, headers: { 'Content-Type': 'application/json' } }
+            );
         }
         if (!result) {
             return new Response(
