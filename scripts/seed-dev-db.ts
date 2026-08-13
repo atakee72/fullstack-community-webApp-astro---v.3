@@ -12,13 +12,18 @@
  * from the Mongoose era — auth.config.ts stringifies it either way), and
  * author/sellerId store that string.
  *
- * All seeded logins use password: devpass123
+ * The seed password is RANDOM per run and printed at the end (override with
+ * DEV_SEED_PASSWORD=... for a stable local one). Never hardcode it here — a
+ * committed literal lands in the public repo and trips secret scanners
+ * (GitGuardian incident, 2026-08-14), and preview deployments point at the
+ * dev DB these accounts live in.
  */
 import 'dotenv/config';
 import { MongoClient, ObjectId } from 'mongodb';
 import bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 
-const DEV_PASSWORD = 'devpass123';
+const DEV_PASSWORD = process.env.DEV_SEED_PASSWORD || randomBytes(9).toString('base64url');
 
 async function main(): Promise<void> {
   const uri = process.env.MONGODB_URI;
