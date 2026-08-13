@@ -56,8 +56,8 @@ async function main() {
   }
   const client = new MongoClient(uri);
   await client.connect();
-  // Derive DB name from URI path (defaults to 'CommunityWebApp-test' per project memory).
-  const dbName = new URL(uri).pathname.slice(1) || 'CommunityWebApp-test';
+  // Derive DB name from URI path (defaults to 'mahalle-dev' — a path-less URI must never target prod).
+  const dbName = new URL(uri).pathname.slice(1) || 'mahalle-dev';
   const db = client.db(dbName);
   const col = db.collection('listings');
 

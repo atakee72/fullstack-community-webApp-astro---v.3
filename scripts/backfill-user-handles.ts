@@ -11,7 +11,7 @@ async function main() {
   if (!uri) { console.error('MONGODB_URI missing'); process.exit(1); }
   const client = new MongoClient(uri);
   await client.connect();
-  const dbName = new URL(uri).pathname.slice(1) || 'CommunityWebApp-test';
+  const dbName = new URL(uri).pathname.slice(1) || 'mahalle-dev';
   const users = client.db(dbName).collection('users');
 
   const taken = new Set<string>(

@@ -112,8 +112,12 @@ Instant. The application code stays correct and inert without it — the
 `keyPattern` branch simply never fires, and behaviour reverts to the
 pre-existing findOne + 409.
 
-## Shared-database caveat
+## Database layout (since 2026-08-14)
 
-Production and local dev share `CommunityWebApp-test`. Registering a throwaway
-dev account with an address a real user already holds now hard-fails. Correct,
-but newly surprising.
+Prod and dev were split on 2026-08-14: production is `mahalle`, local dev and
+Vercel Preview use `mahalle-dev` (same Atlas cluster). Both carry this index —
+`mahalle` inherited it via the migration restore, `mahalle-dev` via
+`create-auth-indexes.ts`. The pre-split database `CommunityWebApp-test` is kept
+as a frozen snapshot; nothing writes to it. If a third database is ever
+created, run `create-auth-indexes.ts` against it before any registration
+traffic.

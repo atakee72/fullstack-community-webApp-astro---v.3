@@ -20,7 +20,7 @@ async function main() {
   }
   const client = new MongoClient(uri);
   await client.connect();
-  const dbName = new URL(uri).pathname.slice(1) || 'CommunityWebApp-test';
+  const dbName = new URL(uri).pathname.slice(1) || 'mahalle-dev';
   const db = client.db(dbName);
   // Match actual query predicate (lastBumpedAt is a real Date), not just $exists,
   // so explicit nulls from create paths don't bloat the index.

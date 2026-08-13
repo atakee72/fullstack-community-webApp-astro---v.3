@@ -52,7 +52,7 @@ async function main() {
   }
   const client = new MongoClient(uri);
   await client.connect();
-  const dbName = new URL(uri).pathname.slice(1) || 'CommunityWebApp-test';
+  const dbName = new URL(uri).pathname.slice(1) || 'mahalle-dev';
   const db = client.db(dbName);
 
   // Token collections: TTL hygiene (queries already filter expiresAt/usedAt —
