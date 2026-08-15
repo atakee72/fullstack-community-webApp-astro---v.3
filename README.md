@@ -1,6 +1,6 @@
 # Mahalle Community App
 
-A modern, performant community web application built with Astro, TypeScript, and React.
+A modern, performant community web application built with Astro, TypeScript, and React — live at **[mahalle.digital](https://mahalle.digital)**, serving the Schillerkiez neighborhood in Berlin-Neukölln.
 
 > 📜 **Read the [Mahalle Manifesto](./MANIFESTO.md)** — the project's moral charter. It describes who Mahalle is for, what it must remain, and what it refuses to become. Anyone deploying, forking, or contributing to this project is expected to honor it.
 
@@ -125,15 +125,18 @@ Utilities in `global.css`: `.dark-glass-bg`, `.dark-glass-gradient` (fixed backg
    ```
    AUTH_SECRET=your-nextauth-secret
    AUTH_TRUST_HOST=true
-   MONGODB_URI=your-mongodb-uri
+   NEXTAUTH_URL=https://mahalle.digital   # canonical origin — REQUIRED in prod (password-reset links are built from it; forgot-password fails closed without it)
+   MONGODB_URI=your-mongodb-uri           # db name rides in the URI path: /mahalle (prod) vs /mahalle-dev (local dev + previews)
    CLOUDINARY_CLOUD_NAME=your-cloudinary-name
    CLOUDINARY_API_KEY=your-api-key
    CLOUDINARY_API_SECRET=your-api-secret
    OPENAI_API_KEY=your-openai-key
    RESEND_API_KEY=your-resend-key
-   SENDING_FROM_EMAIL=Mahalle <noreply@mahalle.berlin>
+   SENDING_FROM_EMAIL=Mahalle <noreply@mahalle.digital>
    CONTACT_IP_SALT=your-32-char-random-secret
-   ALLOWED_ORIGINS=https://mahalle.berlin
+   ALLOWED_ORIGINS=https://mahalle.digital
+   # optional: SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS (SMTP transport for local dev — wins over Resend when set)
+   # optional: SENTRY_DSN / PUBLIC_SENTRY_DSN / SENTRY_AUTH_TOKEN / SENTRY_ORG / SENTRY_PROJECT (error monitoring)
    ```
 
 4. **Run development server:**
@@ -161,10 +164,17 @@ Vercel will automatically:
 - Build the Astro app
 - Deploy serverless functions (API routes)
 - Handle SSR pages
-- Run cron jobs defined in `vercel.json` (daily news fetch at 6 AM UTC)
+- Run cron jobs defined in `vercel.json`: daily news fetch (6:00 UTC) + account-deletion pipeline (5:30 UTC)
+
+Scheduled jobs outside Vercel (GitHub Actions): air-quality logger (every 30 min, hits `/api/cron/log-air`), statistics sync (2×/year), **nightly encrypted DB backup** (`db-backup.yml` — mongodump → AES-256 → release asset in a private repo, 90-day rolling retention; see `docs/runbooks/db-backup.md`).
+
+### Databases
+
+Production (`mahalle`) and development (`mahalle-dev`) are separate databases on the same Atlas cluster — the name rides in the `MONGODB_URI` path. Local dev and Vercel previews use `mahalle-dev`; seed it with `pnpm tsx scripts/seed-dev-db.ts` (refuses to run against any db whose name lacks "dev", prints a random per-run password for the fake accounts).
 
 ### Manual deploy steps (run once per environment)
 
+- `pnpm tsx scripts/create-auth-indexes.ts` — idempotent. Ensures the auth/token/rate-limit indexes plus the two partial unique indexes on `users` (`users_handle_unique`, `users_email_unique` — see `docs/runbooks/users-email-unique-index.md`).
 - `pnpm tsx scripts/create-listing-indexes.ts` — idempotent. Creates the marketplace partial indexes (`listings.lastBumpedAt`, `listings.bundleId`) + the `listingContacts` rate-limit indexes + the `listingAuditTrail` history index. Re-run is a no-op.
 - `pnpm tsx scripts/migrate-legacy-categories.ts --dry-run` then `pnpm tsx scripts/migrate-legacy-categories.ts` — one-time backfill that maps pre-kiosk English category keys (furniture/electronics/etc.) → the 13 German kiosk taxonomy keys + defaults missing `delivery` to `'abholung'` + defaults missing `moderationStatus` to `'approved'`. Idempotent.
 
@@ -190,6 +200,8 @@ Vercel will automatically:
 - **Moderation visibility (forum + calendar)**: Author-only banners (`OwnStatusBanner` for pending / reported / rejected, with rejection-reason blockquote), author-only ghosting (dashed `border-warn`/`border-plum`/`border-danger` + body opacity), non-author "⚑ GEMELDET" chip for community-reported pending (no banner, no ghost — anti-stigma). Rejected items sort to the top of the author's view. Edit lockout (`403 'edit_blocked_by_moderation'`) on any non-approved status — UI mirrors with visibly disabled edit buttons.
 - **Calendar (kiosk)**: Live `now` ticker store (60s aligned to wall-clock minute) drives "is this event live right now?" reactivity across detail modal, agenda, sidebar, month grid, and mobile day view. Saved events with optimistic mutations. Public attendee-profile lookup endpoint for the going-list stack. Dedicated edit page at `/events/edit/[id]` with flash-redirect cache-bust.
 - **Profile (kiosk) & account lifecycle**: own-profile Meldebogen with a derived Kiez-Chronik tenure timeline, cross-surface Archiv activity feed, printable A6 Steckbrief card (QR-coded), and public neighbor profiles at `/nachbarn/[handle]` (trimmed view, no e-mail/moderation/settings) reached by clicking any author byline. Self-service e-mail change (double-confirm, old session stays valid) and password change (other-device sign-out via a `passwordChangedAt`-vs-`loginAt` JWT check, silent same-device re-login). Account deletion with a 7-day undo grace period (in-app "Widerrufen" + mailed token) followed by an automated day-7 anonymization pipeline (Vercel cron): the account is tombstoned as "Ehemaliges Mitglied" while authored content is kept intact (Nachweispflicht) and the user's own RSVPs/bookmarks/listings are cleaned up.
+- **Onboarding tour („Die Führung")**: spotlight tour in seven per-surface chapters (Forum → Kalender → Marktplatz → Kurier → Kiez-Daten → Blog → Profil, 32 stops total) with ochre chrome, per-chapter seen-stamps on the user doc, and a „Hallo Kiez" post template handoff at the forum chapter's end
+- **Error monitoring**: Sentry (errors-only, EU region, GDPR-conscious: no PII, no replay/tracing) with silent-degradation alerts for swallowed provider failures and an admin errors widget on `/admin/moderation`
 - **Forum post images**: Up to 5 images per post (topics, announcements, recommendations) with Cloudinary upload, GPT-4o vision moderation, and scroll-snap carousel with arrow nav in the detail modal.
 - **Forum bookmarks**: Save/bookmark posts with server-side persistence (`savedPosts` collection) and optimistic UI updates. Same pattern for saved events (`savedEvents`).
 - **Forum search & tag filtering**: Client-side filtering by title, body, author name, and tags. Clickable tag pills set the search value.
@@ -367,7 +379,7 @@ The `/schillerkiez` page shows neighborhood-level statistics for the Schillerkie
 - `POST /api/posts/upload` - Upload forum post image to Cloudinary (max 5MB)
 - `POST /api/posts/save` - Toggle save/unsave forum post bookmark
 - `GET /api/posts/save` - Get user's saved post IDs
-- `GET /api/users/update` - Update user profile
+- `POST /api/users/update` - Update user profile
 
 ## 🔒 Environment Variables
 
@@ -375,22 +387,26 @@ Required environment variables:
 
 - `AUTH_SECRET` - NextAuth secret key
 - `AUTH_TRUST_HOST` - Set to `true` for Vercel deployment
-- `MONGODB_URI` - MongoDB connection string
+- `NEXTAUTH_URL` - Canonical app origin (`https://mahalle.digital`) — **required in prod**; emailed links (password reset, e-mail verification) are built from it and the forgot-password flow fails closed without it
+- `MONGODB_URI` - MongoDB connection string (db name in the URI path: `/mahalle` prod, `/mahalle-dev` dev/preview)
 - `CLOUDINARY_CLOUD_NAME` - Cloudinary cloud name
 - `CLOUDINARY_API_KEY` - Cloudinary API key
 - `CLOUDINARY_API_SECRET` - Cloudinary API secret
 - `OPENAI_API_KEY` - OpenAI API key (content moderation + news relevance scoring)
 - `CRON_SECRET` - Vercel cron job authentication secret
 - `NEWSDATA_API_KEY` - NewsData.io API key (optional, for additional news sources)
-- `RESEND_API_KEY` - Resend.com API key (marketplace buyer→seller contact relay)
-- `SENDING_FROM_EMAIL` - Sender address for contact relay emails, e.g. `Mahalle <noreply@mahalle.berlin>`
+- `RESEND_API_KEY` - Resend.com API key — production email transport (auth mails + contact relay)
+- `SENDING_FROM_EMAIL` - Sender address for all app email, e.g. `Mahalle <noreply@mahalle.digital>`
+- `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` - Optional SMTP transport (local dev; wins over Resend when set)
 - `CONTACT_IP_SALT` - 32+ char secret, fixed across deploys, used to hash IPs in rate-limit keys
-- `ALLOWED_ORIGINS` - CSV of allowed origins for contact relay CSRF guard (default: `https://mahalle.berlin`)
+- `ALLOWED_ORIGINS` - CSV of allowed origins for contact relay + resend-verification CSRF guard (e.g. `https://mahalle.digital`)
+- `SENTRY_DSN` / `PUBLIC_SENTRY_DSN` / `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` - Error monitoring (all optional; init no-ops without the DSNs)
 - `STATS_XLSX_URL` - AfS demographics XLSX URL (optional, sync script)
 - `STATS_PERIOD` - AfS period, e.g. "2025h2" (optional, sync script)
 - `MSS_XLSX_URL` - MSS social index XLSX URL (optional, sync script)
 - `MSS_PERIOD` - MSS report period, e.g. "2023" (optional, sync script)
 - `MSS_SDI_URL` - MSS SDI XLSX URL (optional, sync script)
+- `MSS_BEZIRKE_XLSX_URL` - MSS Bezirke-level XLSX for the Berlin-Vergleich reference import (optional, sync script)
 
 ## 🐛 Debugging
 
