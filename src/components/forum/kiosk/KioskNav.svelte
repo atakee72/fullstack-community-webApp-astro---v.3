@@ -4,7 +4,9 @@
   //   center — outlined pill nav (Forum/Kalender/News/Markt/Kiez/Blog), desktop only
   //   right  — segmented DE/EN pill toggle + ochre user disc (initials)
   //
-  // Mobile shows the top bar (brand + locale toggle) plus a fixed bottom nav bar (5 short labels). The avatar opens the account menu on all viewports (bottom sheet on mobile); Profil is the menu's first row.
+  // Mobile shows the top bar (brand + locale toggle) plus a fixed bottom nav
+  // bar (5 short labels). The avatar opens the account menu on all viewports
+  // (bottom sheet on mobile); Profil is the menu's first row.
 
   import { locale, t, toggleLocale } from '../../../lib/kiosk-i18n';
   import AvatarMenu from './AvatarMenu.svelte';

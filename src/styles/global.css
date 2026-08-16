@@ -885,6 +885,11 @@ option:disabled {
   .am-row { min-height: 44px; padding: 11px 18px; }
 }
 
+/* MUST stay AFTER the max-width:1023px block above and remain the LAST
+   .am-* animation/transition rules in this file — media queries add no
+   specificity, so source order is the ONLY thing letting `none` beat the
+   mobile `animation: amSheetIn`. Reordering silently re-enables motion
+   for prefers-reduced-motion users. */
 @media (prefers-reduced-motion: reduce) {
   .am-menu { animation: none; }
   .am-menu.am-closing { transition: none; }
