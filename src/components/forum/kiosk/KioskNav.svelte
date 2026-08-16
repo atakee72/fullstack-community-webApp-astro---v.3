@@ -4,8 +4,7 @@
   //   center — outlined pill nav (Forum/Kalender/News/Markt/Kiez/Blog), desktop only
   //   right  — segmented DE/EN pill toggle + ochre user disc (initials)
   //
-  // Mobile shows the top bar (brand + locale toggle) plus a fixed bottom nav
-  // bar (5 short labels). Profile reachable via the avatar.
+  // Mobile shows the top bar (brand + locale toggle) plus a fixed bottom nav bar (5 short labels). The avatar opens the account menu on all viewports (bottom sheet on mobile); Profil is the menu's first row.
 
   import { locale, t, toggleLocale } from '../../../lib/kiosk-i18n';
   import AvatarMenu from './AvatarMenu.svelte';
@@ -18,13 +17,13 @@
   let menuOpen = $state(false);
   let avatarEl = $state<HTMLElement | null>(null);
 
-  // Desktop: avatar click opens the dropdown. Below lg the anchor navigates
-  // to /profile as before (mobile gets NO dropdown — design constraint).
+  // Avatar click toggles the account menu on ALL viewports (desktop:
+  // anchored dropdown; mobile: bottom sheet — presentation switches in
+  // CSS, .am-* block in global.css). /profile stays reachable as the
+  // menu's first row; the href remains for no-JS/middle-click semantics.
   function handleAvatarClick(e: MouseEvent) {
-    if (window.matchMedia('(min-width: 1024px)').matches) {
-      e.preventDefault();
-      menuOpen = !menuOpen;
-    }
+    e.preventDefault();
+    menuOpen = !menuOpen;
   }
   function closeMenu(restoreFocus: boolean) {
     menuOpen = false;
@@ -96,7 +95,7 @@
 </script>
 
 <!-- ─── Top bar (sticky, all viewports) ───────────────────────────────── -->
-<header class="sticky top-0 z-40 border-b-2 border-ink k-paper-bg">
+<header class="sticky top-0 {menuOpen ? 'z-50' : 'z-40'} border-b-2 border-ink k-paper-bg">
   <div class="max-w-7xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between gap-4">
     <!-- Brand: wine disc + wordmark + place tagline below -->
     <a href="/" class="flex items-center gap-3 group shrink-0">
