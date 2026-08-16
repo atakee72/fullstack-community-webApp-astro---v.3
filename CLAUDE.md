@@ -373,7 +373,9 @@ Each main page has its own accent color used for **kickers** (mono-uppercase eye
 | Admin | plum | `text-[#6f2f59]` via `--k-plum` |
 | Kiez-Daten | moss | `#6b8a4a` via `--k-moss` |
 | Blog | rust | `#a3552e` via `--k-rust` |
-| Newsboard / Marketplace / Profile | TBD | — |
+| Marketplace | wine | shares the forum's wine deliberately |
+| Newsboard (Kurier) | ink | ink-only surface — its "newspaper" identity, no color accent |
+| Auth / Profile | ochre | `--k-ochre` |
 
 When migrating a surface into kiosk, swap kicker + italic-accent text to the page's color. **Don't touch:** live-now indicators, today indicator, weekend day labels, required-field asterisks, compose step numbers (`01`, `02`, …), CTA wine-shadows, modal wine-shadows, or wine-filled FABs — those are semantic/sticker accents, not brand accent, and stay wine across all surfaces.
 
