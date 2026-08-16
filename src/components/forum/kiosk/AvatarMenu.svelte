@@ -1,6 +1,6 @@
 <script lang="ts">
-  // Paper dropdown anchored to the nav avatar (desktop only — KioskNav gates
-  // mounting). Design source: design/handoffs/design_handoff_avatarmenu/
+  // Paper dropdown (desktop) / bottom sheet (mobile <1024px) anchored to the nav
+  // avatar. Design source: design/handoffs/design_handoff_avatarmenu/
   // jsx/kiosk-avatar-menu.jsx (AvatarMenu) + motion-avatarmenu.css.
   // Foot slot: „Abmelden" as WORD, wine + mono, behind a SOLID ink rule —
   // links to /logout (which runs the real signOut flow → /login?abgemeldet=1).
@@ -84,8 +84,18 @@
       document.removeEventListener('keydown', onKeydown);
     };
   });
+
+  // Mobile bottom-sheet: lock body scroll while open. Desktop dropdown
+  // deliberately doesn't lock (unchanged behavior).
+  $effect(() => {
+    if (!window.matchMedia('(max-width: 1023px)').matches) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  });
 </script>
 
+<div class="am-scrim" class:am-closing={closing} aria-hidden="true"></div>
 <div bind:this={menuEl} class="am-menu" class:am-closing={closing} role="menu" aria-label={user?.name ?? 'Konto'}>
   <div class="am-caret"></div>
   <div class="am-card">
