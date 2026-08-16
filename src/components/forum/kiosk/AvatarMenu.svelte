@@ -85,13 +85,21 @@
     };
   });
 
-  // Mobile bottom-sheet: lock body scroll while open. Desktop dropdown
-  // deliberately doesn't lock (unchanged behavior).
+  // Mobile bottom-sheet: lock scroll while open. Must lock <html> too —
+  // global.css sets `html { overflow-x: clip }` (sticky fix), which stops
+  // body overflow from propagating to the viewport, so a body-only lock
+  // doesn't actually prevent page scroll. Desktop dropdown deliberately
+  // doesn't lock (unchanged behavior).
   $effect(() => {
     if (!window.matchMedia('(max-width: 1023px)').matches) return;
-    const prev = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    const prevBody = document.body.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
+    return () => {
+      document.documentElement.style.overflow = prevHtml;
+      document.body.style.overflow = prevBody;
+    };
   });
 </script>
 
