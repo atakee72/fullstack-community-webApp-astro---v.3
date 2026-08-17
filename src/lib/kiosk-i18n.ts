@@ -1600,6 +1600,9 @@ const de = {
   'kiez.state.stale.hint': 'Erwartet: Sync im März/September. Admin sieht Details im Aktions-Log.',
   'kiez.strip.station': 'MESSSTATION NANSENSTRASSE · MC042',
   'kiez.strip.live': 'LIVE',
+  'kiez.strip.disrupted': 'STÖRUNG',
+  'kiez.strip.staleNote':
+    'Messnetz gestört — die Berliner Stationen liefern zurzeit keine neuen Daten. Letzter Messwert: {ts}. Sobald das Messnetz wieder sendet, erscheinen hier neue Werte.',
   'kiez.strip.noSignal': 'KEIN SIGNAL',
   'kiez.strip.airQuality': 'Luftgüte',
   'kiez.strip.offTitle': 'Die Station meldet sich nicht.',
@@ -3304,6 +3307,9 @@ const en: Dict = {
   'kiez.state.stale.hint': 'Expected: sync in March/September. Admin sees details in the action log.',
   'kiez.strip.station': 'MEASURING STATION NANSENSTRASSE · MC042',
   'kiez.strip.live': 'LIVE',
+  'kiez.strip.disrupted': 'DISRUPTED',
+  'kiez.strip.staleNote':
+    'Measurement network disrupted — the Berlin stations are currently not delivering new data. Last reading: {ts}. New readings will appear here once the network is back.',
   'kiez.strip.noSignal': 'NO SIGNAL',
   'kiez.strip.airQuality': 'Air quality',
   'kiez.strip.offTitle': 'The station isn’t reporting.',

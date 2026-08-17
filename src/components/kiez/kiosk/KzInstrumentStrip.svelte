@@ -17,6 +17,16 @@
 
   const intlLocale = $derived($locale === 'de' ? 'de-DE' : 'en-GB');
 
+  // Störung detection (2026-08 BLUME freeze): the live API can serve a 200
+  // with an old measurement — a green LIVE badge next to a days-old
+  // timestamp is a lie. Timestamp-based, never banner-scraping: catches
+  // their outage, their API lying, and our proxy caching alike. BLUME
+  // publishes hourly; 6h absorbs normal hiccups without flapping.
+  const STALE_MS = 6 * 3_600_000;
+  const isStale = $derived(
+    !!air && Date.now() - Date.parse(air.datetime) > STALE_MS
+  );
+
   // "13.07. · 11:00" (DE) / "13 Jul · 11:00" (EN) — mirrors the seed's
   // KZ_DATA.air.at strings, but computed from the real ISO timestamp.
   function formatAirTs(iso: string): string {
@@ -102,13 +112,20 @@
     <div class="{wrapClass} {padClass}">
       <div class="{leftClass}">
         <div class="flex items-center gap-[7px] font-dmmono text-[10px] uppercase tracking-[0.18em] text-[var(--k-ochre)]">
-          <span class="kz-live-dot inline-block h-[7px] w-[7px] rounded-full bg-[var(--k-success)]"></span>
-          {$t['kiez.strip.station']} · {$t['kiez.strip.live']}
+          <span
+            class="inline-block h-[7px] w-[7px] rounded-full {isStale ? 'bg-[var(--k-ink-mute)]' : 'kz-live-dot bg-[var(--k-success)]'}"
+          ></span>
+          {$t['kiez.strip.station']} · {isStale ? $t['kiez.strip.disrupted'] : $t['kiez.strip.live']}
         </div>
         <div class="{headlineLiveClass}">
           {$t['kiez.strip.airQuality']}: <span style={`color:${gradeColor(air.overallGrade)}`}>{air.overallGrade} · {air.overallLabel}</span>
           <span class="ml-3 font-dmmono text-[10px] font-normal opacity-60">{formatAirTs(air.datetime)}</span>
         </div>
+        {#if isStale}
+          <div class="mt-1 max-w-[420px] font-dmmono text-[10px] leading-relaxed text-[var(--k-ochre)]">
+            {tStr($t['kiez.strip.staleNote'], { ts: formatAirTs(air.datetime) })}
+          </div>
+        {/if}
       </div>
 
       <div class="flex gap-2">
