@@ -28,7 +28,7 @@ const results = await Promise.allSettled([
 const collections = ['topics', 'announcements', 'recommendations'] as const;
 const [topics, announcements, recommendations] = results.map((r, i) => {
   if (r.status === 'fulfilled') return r.value as any[];
-  console.error(`[index.astro] ${collections[i]} SSR prefetch failed:`, r.reason);
+  console.error(`[forum.astro] ${collections[i]} SSR prefetch failed:`, r.reason);
   return [] as any[];
 });
 

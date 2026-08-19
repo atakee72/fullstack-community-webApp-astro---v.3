@@ -464,7 +464,7 @@
   <div
     class="flex items-center justify-between gap-4 mb-5 pb-2.5 border-b border-dashed border-rule font-dmmono text-[10.5px] uppercase tracking-[0.05em] text-ink-mute"
   >
-    <a href="/" class="inline-flex items-center gap-2 hover:text-ink transition-colors">
+    <a href="/forum" class="inline-flex items-center gap-2 hover:text-ink transition-colors">
       <span aria-hidden="true">←</span>
       <span>FORUM</span>
       <span aria-hidden="true">·</span>

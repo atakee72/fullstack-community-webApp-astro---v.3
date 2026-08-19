@@ -78,7 +78,7 @@
           ? 'Tippe auf das Lesezeichen eines Beitrags, um ihn hier zu sammeln.'
           : 'Tap the bookmark on a post to collect it here.'}
       </p>
-      <KioskBtn variant="secondary" size="md" href="/">
+      <KioskBtn variant="secondary" size="md" href="/forum">
         ← {$locale === 'de' ? 'zum Forum' : 'to forum'}
       </KioskBtn>
     </div>

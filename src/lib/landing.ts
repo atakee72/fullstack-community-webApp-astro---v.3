@@ -12,6 +12,7 @@
  */
 import { connectDB } from './mongodb';
 import { getAirHistory } from './kiez/airLog';
+import * as Sentry from '@sentry/astro';
 
 export interface HeartbeatRow {
   kind: 'air' | 'forum' | 'events' | 'kurier';
@@ -95,6 +96,7 @@ const PUBLIC_MOD = { moderationStatus: { $nin: ['pending', 'rejected'] } };
 
 async function compute(now: Date): Promise<LandingData> {
   const db = await connectDB();
+  const failures: [string, unknown][] = [];
 
   // ── air (row + grade + spark) ──
   let airGrade: number | null = null;
@@ -112,8 +114,9 @@ async function compute(now: Date): Promise<LandingData> {
       // §03 Luft-Absent-State: row STAYS, mute dash — never a stale value.
       airRow = { kind: 'air', mute: true };
     }
-  } catch {
+  } catch (err) {
     airRow = null; // air source completely down → row falls away entirely
+    failures.push(['air', err]);
   }
 
   // ── forum posts this ISO week ──
@@ -126,8 +129,9 @@ async function compute(now: Date): Promise<LandingData> {
       db.collection('recommendations').countDocuments({ ...PUBLIC_MOD, createdAt: { $gte: since } }),
     ]);
     forumCount = t + a + r;
-  } catch {
+  } catch (err) {
     forumCount = 0;
+    failures.push(['forum', err]);
   }
 
   // ── events on the coming weekend ──
@@ -139,8 +143,9 @@ async function compute(now: Date): Promise<LandingData> {
       visibility: { $ne: 'private' },
       startDate: { $gte: from, $lt: to },
     });
-  } catch {
+  } catch (err) {
     weekendEvents = 0;
+    failures.push(['events', err]);
   }
 
   // ── kurier: the STRIP row is today-only (honest "HEUTIGE AUSGABE"), but
@@ -179,9 +184,10 @@ async function compute(now: Date): Promise<LandingData> {
         sourceUrl: String(d.sourceUrl ?? ''),
       }));
     }
-  } catch {
+  } catch (err) {
     kurier = [];
     kurierToday = false;
+    failures.push(['kurier', err]);
   }
 
   // ── population: latest demographics period, all PLR areas summed ──
@@ -198,8 +204,9 @@ async function compute(now: Date): Promise<LandingData> {
       .toArray();
     population = agg[0]?.total ?? null;
     if (typeof population !== 'number' || population <= 0) population = null;
-  } catch {
+  } catch (err) {
     population = null;
+    failures.push(['population', err]);
   }
 
   // ── zero rule, SERVER-SIDE (§03): a row without life is omitted; the
@@ -209,6 +216,20 @@ async function compute(now: Date): Promise<LandingData> {
   if (forumCount > 0) rows.push({ kind: 'forum', value: forumCount });
   if (weekendEvents > 0) rows.push({ kind: 'events', value: weekendEvents });
   if (kurierToday) rows.push({ kind: 'kurier' });
+
+  if (failures.length) {
+    // Silent-degradation alert (root CLAUDE.md rule): the zero rule makes a
+    // failing source look identical to a quiet week — without this capture,
+    // a schema drift could blank the landing strip forever with no signal.
+    // STATIC message; variable detail in extra so all occurrences group.
+    try {
+      Sentry.captureMessage('landing heartbeat source(s) failed', {
+        level: 'warning',
+        extra: { sources: failures.map(([k]) => k), errors: failures.map(([, e]) => String(e)) },
+      });
+      await Sentry.flush(2000);
+    } catch { /* best-effort */ }
+  }
 
   return { rows, population, airGrade, airSpark, kurier, computedAt: now.toISOString() };
 }
@@ -230,6 +251,13 @@ export async function getLandingData(now: Date = new Date()): Promise<LandingDat
     return payload;
   } catch (err) {
     console.error('[landing] getLandingData failed:', err);
+    // Silent-degradation alert (root CLAUDE.md rule): total failure returns
+    // an empty payload below with no thrown error — without this capture,
+    // that's indistinguishable from a genuinely quiet week.
+    try {
+      Sentry.captureException(err);
+      await Sentry.flush(2000);
+    } catch { /* best-effort */ }
     // Total failure → empty data; the strip collapses, the manifest carries
     // the page (§03 Totalausfall). Never throw into the route.
     return { rows: [], population: null, airGrade: null, airSpark: [], kurier: [], computedAt: now.toISOString() };
