@@ -1,0 +1,72 @@
+---
+// Datenschutzerklärung — static legal page. Drafted from the actual data
+// flows of the app (processors: MongoDB Atlas Frankfurt, Vercel, Cloudinary,
+// Resend EU, Sentry EU, OpenAI moderation). User reviews before launch.
+import LandingLayout from '../layouts/LandingLayout.astro';
+---
+
+<LandingLayout title="Datenschutz | Mahalle" description="Datenschutzerklärung der Mahalle-Plattform.">
+  <div class="lgl-wrap">
+    <a href="/" class="lgl-back font-dmmono">← Mahalle</a>
+    <h1 class="font-bricolage">Datenschutzerklärung</h1>
+
+    <h2 class="font-bricolage">1. Verantwortlicher</h2>
+    <p>Ercan Atak, [Anschrift wie im Impressum] · <a href="mailto:admin@mahalle.digital">admin@mahalle.digital</a></p>
+
+    <h2 class="font-bricolage">2. Welche Daten wir verarbeiten</h2>
+    <p>
+      <strong>Konto:</strong> Name, E-Mail-Adresse und Passwort (verschlüsselt gespeichert
+      als bcrypt-Hash). <strong>Inhalte:</strong> Beiträge, Kommentare, Termine, Inserate
+      und hochgeladene Bilder, die du selbst veröffentlichst. <strong>Technisch:</strong>
+      Session-Cookies für den Login (JWT), Spracheinstellung im lokalen Speicher deines
+      Browsers, sowie gekürzte/gehashte IP-Adressen zur Missbrauchsabwehr (Rate-Limiting).
+      Es gibt kein Werbe-Tracking und keine Analyse-Cookies.
+    </p>
+
+    <h2 class="font-bricolage">3. Zwecke und Rechtsgrundlagen</h2>
+    <p>
+      Verarbeitung zur Bereitstellung der Plattform und deines Kontos
+      (Art. 6 Abs. 1 lit. b DSGVO), zur Missbrauchs- und Spamabwehr einschließlich
+      automatisierter Inhaltsprüfung (Art. 6 Abs. 1 lit. f DSGVO) sowie zum Versand
+      funktionaler E-Mails wie Verifizierung und Passwort-Zurücksetzen
+      (Art. 6 Abs. 1 lit. b DSGVO).
+    </p>
+
+    <h2 class="font-bricolage">4. Auftragsverarbeiter und Empfänger</h2>
+    <p>
+      Hosting: Vercel (Serverless, Region Frankfurt). Datenbank: MongoDB Atlas
+      (Frankfurt). Bilder: Cloudinary. E-Mail-Versand: Resend (EU-Region).
+      Fehlerdiagnose: Sentry (EU-Region, ohne personenbezogene Zusatzdaten).
+      Automatisierte Inhaltsprüfung: OpenAI (übermittelt werden nur die zu
+      prüfenden Texte/Bilder, keine Kontodaten). Mit den Anbietern bestehen
+      Auftragsverarbeitungsverträge nach Art. 28 DSGVO.
+    </p>
+
+    <h2 class="font-bricolage">5. Speicherdauer und Löschung</h2>
+    <p>
+      Deine Daten bleiben gespeichert, solange dein Konto besteht. Du kannst dein
+      Konto jederzeit selbst löschen (Profil → Konto): nach einer 7-tägigen
+      Widerrufsfrist werden Name, E-Mail, Passwort und Profildaten entfernt bzw.
+      anonymisiert. Beim Kontakt über den Marktplatz speichern wir nur Metadaten
+      (keine Nachrichtentexte).
+    </p>
+
+    <h2 class="font-bricolage">6. Deine Rechte</h2>
+    <p>
+      Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der
+      Verarbeitung, Datenübertragbarkeit und Widerspruch (Art. 15–21 DSGVO) sowie
+      das Recht auf Beschwerde bei einer Aufsichtsbehörde — in Berlin: Berliner
+      Beauftragte für Datenschutz und Informationsfreiheit. Anfragen an:
+      <a href="mailto:admin@mahalle.digital">admin@mahalle.digital</a>.
+    </p>
+  </div>
+</LandingLayout>
+
+<style>
+  .lgl-wrap { max-width: 680px; margin: 0 auto; padding: 40px 22px 60px; }
+  .lgl-back { display: inline-block; font-size: 11px; letter-spacing: 0.1em; color: var(--k-ink-mute); text-decoration: none; margin-bottom: 24px; }
+  .lgl-wrap h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 20px; }
+  .lgl-wrap h2 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; margin: 26px 0 8px; }
+  .lgl-wrap p { font-size: 14px; line-height: 1.65; color: var(--k-ink-soft); margin: 0 0 10px; }
+  .lgl-wrap a { color: var(--k-ink); text-decoration: underline; text-decoration-style: dashed; text-underline-offset: 3px; }
+</style>

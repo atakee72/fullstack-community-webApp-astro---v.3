@@ -1,0 +1,50 @@
+---
+// Impressum — static legal page on the landing's minimal layout.
+// ⚠ ADDRESS PLACEHOLDER: user must supply the ladungsfähige Anschrift
+// before this is legally complete (flagged in the release summary).
+import LandingLayout from '../layouts/LandingLayout.astro';
+---
+
+<LandingLayout title="Impressum | Mahalle" description="Impressum der Mahalle-Plattform.">
+  <div class="lgl-wrap">
+    <a href="/" class="lgl-back font-dmmono">← Mahalle</a>
+    <h1 class="font-bricolage">Impressum</h1>
+
+    <h2 class="font-bricolage">Angaben gemäß § 5 DDG</h2>
+    <p>
+      Ercan Atak<br />
+      [Straße Hausnummer]<br />
+      [PLZ] Berlin
+    </p>
+    <p>E-Mail: <a href="mailto:admin@mahalle.digital">admin@mahalle.digital</a></p>
+
+    <h2 class="font-bricolage">Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
+    <p>Ercan Atak (Anschrift wie oben)</p>
+
+    <h2 class="font-bricolage">Über dieses Projekt</h2>
+    <p>
+      Mahalle ist ein nichtkommerzielles Nachbarschaftsprojekt für den Schillerkiez
+      in Berlin-Neukölln. Der Quellcode ist öffentlich einsehbar
+      (<a href="https://github.com/atakee72/fullstack-community-webApp-astro---v.3" target="_blank" rel="noopener noreferrer">GitHub</a>,
+      PolyForm-Noncommercial-Lizenz). Das Projekt wird anteilig durch den
+      Gebietsfonds des Quartiersmanagements gefördert.
+    </p>
+
+    <h2 class="font-bricolage">Haftung für Inhalte</h2>
+    <p>
+      Beiträge im Forum, Kalender und Marktplatz werden von Mitgliedern erstellt.
+      Alle Inhalte durchlaufen eine automatisierte Prüfung und werden bei Meldungen
+      redaktionell geprüft. Bei Hinweisen auf Rechtsverstöße entfernen wir die
+      betroffenen Inhalte umgehend: <a href="mailto:admin@mahalle.digital">admin@mahalle.digital</a>.
+    </p>
+  </div>
+</LandingLayout>
+
+<style>
+  .lgl-wrap { max-width: 680px; margin: 0 auto; padding: 40px 22px 60px; }
+  .lgl-back { display: inline-block; font-size: 11px; letter-spacing: 0.1em; color: var(--k-ink-mute); text-decoration: none; margin-bottom: 24px; }
+  .lgl-wrap h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 20px; }
+  .lgl-wrap h2 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; margin: 26px 0 8px; }
+  .lgl-wrap p { font-size: 14px; line-height: 1.65; color: var(--k-ink-soft); margin: 0 0 10px; }
+  .lgl-wrap a { color: var(--k-ink); text-decoration: underline; text-decoration-style: dashed; text-underline-offset: 3px; }
+</style>
