@@ -238,6 +238,16 @@ export async function runDeletionPipeline(
     fail('savedFootprints', err);
   }
 
+  // Received notifications are orphaned junk once the account tombstones;
+  // the user's actorId in OTHERS' notifications stays and tombstones at
+  // read time (read-time name join).
+  try {
+    const delNotifications = await db.collection('notifications').deleteMany({ userId });
+    steps.notifications = delNotifications.deletedCount ?? 0;
+  } catch (err) {
+    fail('notifications', err);
+  }
+
   // Step 3: pull this user's OWN RSVPs from every event. Other users' RSVPs
   // on events this user authored are KEPT (their data, event stays).
   try {
