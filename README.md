@@ -62,7 +62,8 @@ The app has completed its migration (July 2026) from a **dark-glass** aesthetic 
 
 | Surface | State |
 |---|---|
-| Forum (`/`, `/topics/[id]`, `/announcements/[id]`, `/recommendations/[id]`) | ✅ Kiosk (Svelte) |
+| Landing „Das Schaufenster" (`/`, plus `/impressum`, `/datenschutz`) | ✅ Kiosk (Svelte island, own `LandingLayout`) — public front door, members SSR-redirect to `/forum` |
+| Forum (`/forum`, `/topics/[id]`, `/announcements/[id]`, `/recommendations/[id]`) | ✅ Kiosk (Svelte) |
 | Calendar (`/calendar`, `/events/edit/[id]`) | ✅ Kiosk (Svelte) |
 | Newsboard (`/newsboard`, `/newsboard/[id]`, `/newsboard/submit`) | ✅ Kiosk (Svelte) |
 | Marketplace (`/marketplace`, `/marketplace/[id]`, `/marketplace/create`, `/marketplace/edit/[id]`) | ✅ Kiosk (Svelte) |
@@ -195,7 +196,8 @@ Production (`mahalle`) and development (`mahalle-dev`) are separate databases on
 - **Marketplace (kiosk)**: 3 listing kinds (verkaufen / tausch / verschenken), **13 kiosk taxonomy categories** with one-time backfill of legacy English-key listings (`scripts/migrate-legacy-categories.ts`), delivery enum (Abholung / Versand / Abholung & Versand), optional detail fields (5 German free-text fields + condition enum), editorial lead-of-the-day on page 1, contact-form relay via Resend (privacy-preserving — no email addresses exposed), **single-threshold 21d visibility**: past-21d listings hide from public feed/search/direct URL (friendly "nicht mehr verfügbar" page at the same URL — HTTP 200, indexable-but-empty); author still sees them in „Meine Anzeigen" as grayed cards with a bump prompt, **no bump rate limit** (bump = freshness reset, available subject only to status/moderation guards), owner lifecycle (edit / bump / reserve / sold / delete with state-aware gating via `canMutateListing`). Warning-labeled AND rejected listings are editable — the edit endpoint re-runs full moderation + writes a pre-edit snapshot to `listingAuditTrail` for provability. Mobile FAB for new listings, SEO-friendly hybrid SSR-static + island-hydrate detail pages.
 - **Custom UI Dialogs**: Native `<dialog>`-based confirm modals and sonner toasts replace all browser-native dialogs
 - **Kiez Data Dashboard**: Interactive Schillerkiez neighborhood statistics with hand-drawn SVG charts, historical trends (demographics + social indicators 2013–2023), and live air quality data
-- **Forum (kiosk)**: Multi-collection merged feed (discussions + announcements + recommendations) on `/` with per-kind detail routes, per-kind card straps + chips, card height convergence (`line-clamp-3` body + `min-h-[340px]`), and resilient `Promise.allSettled` fetch (single-collection outage degrades to empty array for that kind only).
+- **Public landing + login gating** (Aug 2026): editorial one-pager at `/` (masthead, KiezHeartbeat strip with server-side zero rule, blog/Kiez-Daten/Kurier teasers, one CTA, watercolor riso overprint background) — member surfaces (forum, calendar, newsboard, bookmarks, search, profiles) require login via a central middleware gate with `?redirect=` round-trip (URL-normalization open-redirect guard in `src/lib/auth/safeRedirect.ts`); marketplace, blog, and Kiez-Daten stay public. Legal pages at `/impressum` + `/datenschutz`.
+- **Forum (kiosk)**: Multi-collection merged feed (discussions + announcements + recommendations) on `/forum` with per-kind detail routes, per-kind card straps + chips, card height convergence (`line-clamp-3` body + `min-h-[340px]`), and resilient `Promise.allSettled` fetch (single-collection outage degrades to empty array for that kind only).
 - **Official admin announcements**: 7-day pinned slot at the top of the forum feed, server-enforced single-pin invariant via atomic displacement, admin dashboard at `/admin/announcements` for create/edit/pin/unpin/delete. Admin role bypasses AI moderation.
 - **Moderation visibility (forum + calendar)**: Author-only banners (`OwnStatusBanner` for pending / reported / rejected, with rejection-reason blockquote), author-only ghosting (dashed `border-warn`/`border-plum`/`border-danger` + body opacity), non-author "⚑ GEMELDET" chip for community-reported pending (no banner, no ghost — anti-stigma). Rejected items sort to the top of the author's view. Edit lockout (`403 'edit_blocked_by_moderation'`) on any non-approved status — UI mirrors with visibly disabled edit buttons.
 - **Calendar (kiosk)**: Live `now` ticker store (60s aligned to wall-clock minute) drives "is this event live right now?" reactivity across detail modal, agenda, sidebar, month grid, and mobile day view. Saved events with optimistic mutations. Public attendee-profile lookup endpoint for the going-list stack. Dedicated edit page at `/events/edit/[id]` with flash-redirect cache-bust.
@@ -373,6 +375,7 @@ The `/schillerkiez` page shows neighborhood-level statistics for the Schillerkie
 ### Kiez Data
 - `GET /api/kiez-stats` - Schillerkiez demographics, social indicators, and trends (public, 24h cache)
 - `GET /api/kiez-air` - Live BLUME air quality grades for station MC042 (public, 30 min cache)
+- `GET /api/kiez-heartbeat` - Aggregate landing-strip data (air / posts this week / weekend events / today's Kurier issue), public, 1h in-DB cache, zero rule applied server-side
 
 ### Other
 - `POST /api/upload/image` - Upload image to Cloudinary (profile pictures)
