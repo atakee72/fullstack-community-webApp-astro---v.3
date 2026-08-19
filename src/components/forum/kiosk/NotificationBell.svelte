@@ -81,6 +81,5 @@
   {/if}
 </div>
 
-<!-- Styles live in src/styles/global.css (`.nc-*` block), NOT a component
-     <style>: this component is reachable only through the KioskNav island —
-     Astro's prod build would orphan scoped CSS (same rule as AvatarMenu). -->
+<!-- Styles live in src/styles/global.css (`.nc-*` block), not in this
+     component — nested-island orphan rule, same as AvatarMenu. -->

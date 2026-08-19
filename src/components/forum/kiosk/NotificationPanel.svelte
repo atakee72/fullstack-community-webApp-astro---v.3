@@ -53,7 +53,20 @@
     if (e.key === 'Escape') {
       e.preventDefault();
       close(true);
+      return;
     }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const rows = menuEl ? Array.from(menuEl.querySelectorAll<HTMLElement>('a.nc-row')) : [];
+    if (!rows.length) return;
+    const i = rows.indexOf(document.activeElement as HTMLElement);
+    // Nothing focused yet (mouse-open): ArrowDown enters at the first row,
+    // ArrowUp at the last (same off-by-one guard as AvatarMenu).
+    const next =
+      i === -1
+        ? (e.key === 'ArrowDown' ? 0 : rows.length - 1)
+        : (e.key === 'ArrowDown' ? (i + 1) % rows.length : (i - 1 + rows.length) % rows.length);
+    rows[next].focus();
   }
   $effect(() => {
     // Listener a tick late so the opening click doesn't instantly close.
