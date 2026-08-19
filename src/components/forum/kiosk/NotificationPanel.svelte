@@ -47,6 +47,12 @@
   }
 
   function onDocPointerDown(e: PointerEvent) {
+    const t = e.target as Element | null;
+    // Clicks on the bell itself must NOT close here — the bell's own click
+    // handler toggles; closing on its pointerdown would instantly reopen
+    // (close-then-toggle race; AvatarMenu only escapes it via its 140ms
+    // deferred close, which CD's instant-close ruling removed here).
+    if (t?.closest('.nc-bell')) return;
     if (menuEl && !menuEl.contains(e.target as Node)) close();
   }
   function onKeydown(e: KeyboardEvent) {

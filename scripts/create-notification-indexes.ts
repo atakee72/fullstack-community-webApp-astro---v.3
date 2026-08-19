@@ -1,5 +1,5 @@
 /**
- * Idempotent index creation for auth collections. Run manually at deploy
+ * Idempotent index creation for the notification collection. Run manually at deploy
  * (dev DB now, prod DB when this ships):
  *   pnpm tsx scripts/create-notification-indexes.ts
  *
