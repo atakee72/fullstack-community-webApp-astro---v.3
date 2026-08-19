@@ -82,15 +82,48 @@
   // Mobile bottom-sheet scroll-lock: must lock <html> too — global.css sets
   // `html { overflow-x: clip }` (sticky fix), which stops body overflow from
   // propagating to the viewport, so a body-only lock does nothing.
+  //
+  // ROOT CAUSE of the mobile-scroll bug this replaces: a one-time
+  // `matchMedia(...).matches` read at effect-mount only locks if the panel
+  // happens to be OPENED while already narrower than 1024px. If it's opened
+  // at desktop width and the viewport later crosses the breakpoint (browser
+  // resize, or — same effect — a devtools/responsive-mode toggle) while the
+  // panel stays open, the mount-time snapshot was `false` and nothing ever
+  // re-evaluates it: the lock silently never engages even though the sheet
+  // has already switched to its mobile layout via CSS. Confirmed live via
+  // console instrumentation: opening fresh at 390px logged
+  // `matches: true` + applied the lock; opening at 1280px then resizing to
+  // 390px logged only the initial `matches: false` — no second log line
+  // after the resize, and `getComputedStyle().overflow` stayed
+  // `"clip visible"` (unlocked) the whole time; a real scroll attempt then
+  // moved `window.scrollY` from 0 to 300. Fix: track the query live via
+  // `MediaQueryList.addEventListener('change', ...)` instead of a single
+  // imperative check, so crossing the breakpoint mid-session (still open)
+  // locks/unlocks immediately.
   $effect(() => {
-    if (!window.matchMedia('(max-width: 1023px)').matches) return;
+    const mq = window.matchMedia('(max-width: 1023px)');
     const prevHtml = document.documentElement.style.overflow;
     const prevBody = document.body.style.overflow;
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
+    let locked = false;
+    function sync() {
+      if (mq.matches && !locked) {
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+        locked = true;
+      } else if (!mq.matches && locked) {
+        document.documentElement.style.overflow = prevHtml;
+        document.body.style.overflow = prevBody;
+        locked = false;
+      }
+    }
+    sync();
+    mq.addEventListener('change', sync);
     return () => {
-      document.documentElement.style.overflow = prevHtml;
-      document.body.style.overflow = prevBody;
+      mq.removeEventListener('change', sync);
+      if (locked) {
+        document.documentElement.style.overflow = prevHtml;
+        document.body.style.overflow = prevBody;
+      }
     };
   });
 

@@ -133,33 +133,31 @@ export async function listNotifications(userId: string): Promise<NotificationIte
     .limit(LIST_LIMIT)
     .toArray();
 
+  // users._id exists in BOTH forms in this app (ObjectId for newer docs,
+  // legacy hex STRINGS for older ones — and the dev seed) — an
+  // ObjectId-only $in silently misses the string form, tombstoning every
+  // actor. Query both forms; key the map by String(_id), which yields the
+  // same hex for both.
   const actorIds = [
-    ...new Set(
-      docs
-        .map((d) => d.actorId)
-        .filter((s): s is string => !!s && ObjectId.isValid(s))
-        .map((s) => new ObjectId(s).toHexString()),
-    ),
+    ...new Set(docs.map((d) => d.actorId).filter((s): s is string => !!s)),
   ];
   let byId = new Map<string, { name?: string }>();
   if (actorIds.length) {
+    const objectIds = actorIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
     const users = await db
       .collection('users')
       .find(
-        { _id: { $in: actorIds.map((id) => new ObjectId(id)) } },
+        { _id: { $in: [...objectIds, ...actorIds] as any[] } },
         { projection: { name: 1 } },
       )
       .toArray();
-    byId = new Map(users.map((u) => [u._id.toString(), { name: (u as any).name }]));
+    byId = new Map(users.map((u) => [String(u._id), { name: (u as any).name }]));
   }
 
   return docs.map((d) => ({
     id: d._id!.toString(),
     type: d.type,
-    actorName:
-      d.actorId && ObjectId.isValid(d.actorId)
-        ? (byId.get(new ObjectId(d.actorId).toHexString())?.name ?? null)
-        : null,
+    actorName: d.actorId ? (byId.get(d.actorId)?.name ?? null) : null,
     target: d.target,
     meta: d.meta,
     createdAt: d.createdAt.toISOString(),
