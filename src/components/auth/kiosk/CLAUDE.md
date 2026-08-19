@@ -41,13 +41,20 @@ wrong-password and unknown-email. Never distinguish them externally.
 Frontend-only, no backend. Both live in `AuthLayout` (login/register only).
 
 - **`KiezHeartbeat.svelte`** — ambient "live im Kiez" strip in the AuthLayout footer
-  (`client:load`). Fetches three EXISTING public GETs client-side with a 3s abort
-  and per-stat graceful fallback (a failed stat is omitted; the strip always renders
-  the live label): air = `/api/kiez-air` `overallLabel`; posts = `/api/news?limit=1&dateFrom=<today>`
-  `pagination.total`; events = `/api/events` count of `startDate === today` (counted from
-  the API's default page, so approximate if there are many events — acceptable for an
-  ambient strip). Pulse dot keyframe is reduced-motion-gated. It is ambient, not
+  (`client:load`). Pulse dot keyframe is reduced-motion-gated. It is ambient, not
   load-bearing — never throws, never blocks paint.
+  - **Refit for the Aug 2026 landing release**: the per-surface list APIs
+    (`/api/events`, `/api/news`, …) went login-gated, so the original three-GET
+    fetch would 401 for logged-out visitors on exactly the page that needs it
+    most. `KiezHeartbeat` now makes a SINGLE public aggregate fetch to
+    `GET /api/kiez-heartbeat` (the same source that backs the landing page's
+    heartbeat strip, `src/lib/landing.ts`'s `getLandingData()`) with the same
+    3s-abort + per-segment graceful-omission contract. Segment semantics
+    changed with the source: `posts` is forum items (topics + announcements +
+    recommendations) created in the **current ISO week** (not "today"), and
+    `events` is events on the **coming weekend** (not "today") — read the
+    response's `rows[].kind` (`'air' | 'forum' | 'events' | 'kurier'`) and map
+    `forum`→posts, `events`→events, `air`→air (only when `!row.mute`).
 - **`KioskSplash.astro`** — once-per-session splash overlay on the auth front door.
   Reuses `SplashScreen.astro`'s proven logic (`/LogoVideo.mp4`, dual-gate dismiss =
   video-ended AND window-load, 4s safety timeout) but paper-skinned for kiosk. Gate =

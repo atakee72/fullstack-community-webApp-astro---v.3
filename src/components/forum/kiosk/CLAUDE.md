@@ -16,8 +16,9 @@ propagate to the preview/submit mirror automatically via ComposeForm's
 `$effect(() => onChange(...))`, which fires on mount. (Bug fixed 2026-06-22 — both
 paths were dead because the compute lived in onMount.)
 
-### Multi-collection feed on `/`
-- The forum index merges **topics + announcements + recommendations** into a single date-desc feed via `Promise.allSettled` parallel fetch (both SSR in `src/pages/index.astro` and the client query in `ForumIndexInner.svelte`). Each item is decorated with `kind: 'discussion' | 'announcement' | 'recommendation'`. queryKey is `['forum', 'all']`.
+### Multi-collection feed on `/forum`
+- **Index route moved to `/forum`** with the Aug 2026 landing release — `/` is now the public landing page (Das Schaufenster), which SSR-redirects logged-in members straight to `/forum`. `KioskNav.svelte`'s `FORUM_MATCH` no longer contains `/` (`['/forum', '/topics', '/announcements', '/recommendations']`).
+- The forum index merges **topics + announcements + recommendations** into a single date-desc feed via `Promise.allSettled` parallel fetch (both SSR in `src/pages/forum.astro` and the client query in `ForumIndexInner.svelte`). Each item is decorated with `kind: 'discussion' | 'announcement' | 'recommendation'`. queryKey is `['forum', 'all']`.
 - **Resilience**: a `safe()` helper wraps each fetch so a single-collection outage degrades to an empty array for that kind (others still render). Throws only when all three fetches fail (`okCount === 0`) — that's the case where `query.isError` flips and `ErrorPanel` renders with its `↻ neu laden` button.
 - **Kind decoration field is required**: `FORUM_QUERY_OPTIONS.fields` (`src/lib/forumQueryOptions.ts`) projects only listed fields from MongoDB. `isOfficial`, `pinnedUntil`, `rejectionReason` etc. are explicitly listed there — do NOT remove them or the merged feed loses its differentiation logic.
 - Mutation invalidations in `src/lib/forumMutations.ts` target `['forum', 'all']` (not `['forum', 'topics']`).

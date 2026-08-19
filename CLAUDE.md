@@ -5,6 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 Mahalle - A Fullstack Community Web App for Local Neighborhoods. The name means "neighborhood" in Turkish and sounds like "meine Halle" (my hall) in German, reflecting the multicultural community it serves.
 
+**Landing + forum split (Aug 2026)**: `/` is the public landing page („Das Schaufenster" — `LandingLayout.astro` + `src/components/landing/LandingPage.svelte`), SSR-gated so any logged-in member is redirected straight to `/forum` before render. The forum index itself lives at `src/pages/forum.astro`. See "Landing + login gating" below.
+
 ## Tech Stack
 - **Framework**: Astro 5.x with React 18.2 (hybrid SSR/SSG)
 - **Styling**: Tailwind CSS 3.4
@@ -47,7 +49,10 @@ src/
 │   │   ├── listings/      # Marketplace listings CRUD + draft save/publish
 │   │   ├── reports/       # User report submission
 │   │   ├── admin/         # Admin moderation APIs (review + bulk-review)
-│   │   └── kiez-stats.ts  # Public Schillerkiez demographics/social API
+│   │   ├── kiez-stats.ts  # Public Schillerkiez demographics/social API
+│   │   └── kiez-heartbeat.ts # Public landing-page heartbeat wrapper (getLandingData())
+│   ├── index.astro   # `/` — public landing page (SSR redirect to /forum for members)
+│   ├── forum.astro   # `/forum` — forum index (gated)
 │   └── *.astro       # Page components
 ├── hooks/
 │   └── api/          # TanStack Query hooks
@@ -74,6 +79,16 @@ src/
 - **emailVerified (soft gate)**: propagated through the same `authorize` → `jwt` → `session` chain as `role`, so `session.user.emailVerified` exists everywhere — but it SNAPSHOTS at login (JWT). For live truth use `GET /api/auth/verification-status`. Verification never blocks login or features; it only drives `/verify-email` + the `VerifyEmailBanner` nag in `KioskLayout`. Emailed links (reset + verify) build their base URL via `getTrustedBaseUrl()` (`src/lib/auth/baseUrl.ts`, NEXTAUTH_URL, prod fail-closed).
 - **Other-device sign-out**: the `jwt` callback stamps an immutable `token.loginAt` once at login (deliberately NOT the auto-refreshed `iat` claim) and, at most every 5 minutes per token, compares it against `users.passwordChangedAt` — a token whose `loginAt` predates a password change/reset returns `null` from the callback, forcing that device to re-authenticate. Full story (silent same-device re-login, legacy-token handling) in `src/components/profile/kiosk/CLAUDE.md`'s "Password change" section.
 - **Admin gate helper**: `requireAdminSession(request)` in `src/lib/auth.ts` returns `{ ok: true, userId }` or a pre-shaped 401/403 `Response`. Used by all `/api/admin/announcements/*` endpoints.
+
+### Landing + login gating (Aug 2026)
+- `/` is the public landing page; any request with a session is SSR-redirected to `/forum` before render (members never see the landing). Logged-out visitors get the landing, `/forum` and the other member surfaces bounce to login.
+- **Gate lives in `src/middleware.ts`**, runs only for SSR (non-prerendered) requests, ahead of the pre-existing protected-routes block:
+  - `GATED_PAGES` (prefix match, → `302 /login?redirect=<path+search>`): `/forum`, `/topics`, `/announcements`, `/recommendations`, `/calendar`, `/events`, `/newsboard`, `/bookmarks`, `/search`, `/steckbrief`, `/nachbarn`.
+  - `GATED_APIS` (prefix match, → `401 { error: 'Unauthorized' }`): `/api/topics`, `/api/announcements`, `/api/recommendations`, `/api/events`, `/api/news`, `/api/comments`.
+  - `API_ALLOWLIST`: `/api/news/fetch-daily` — the daily news cron authenticates via its own `CRON_SECRET` Bearer header and must keep working without a session.
+- **Marketplace is deliberately public** (not in either gated list) — an SEO decision, still pending a final call; `/profile` is also ungated (it renders its own logged-out state rather than redirecting).
+- **`?redirect=` login flow**: both the middleware's post-login bounce and `AuthLoginInner`'s post-login navigation validate the target through the shared, dependency-pure `safeInternalPath()` (`src/lib/auth/safeRedirect.ts`) — it parses the candidate against a fixed private base origin via `URL` and accepts it only if the parsed origin didn't escape that base, returning the re-serialized `pathname + search + hash` (never the raw string). This replaced an earlier `startsWith('//')`-style character-enumeration guard, which WHATWG URL normalization can bypass (e.g. tab/CR/LF stripped before resolution turns `/\t/evil.com` into `//evil.com`).
+- **`/landing` → `/` (301)**: the old `/landing` route is a redirect-only fossil kept for any stale bookmarks/links from before the route swap.
 
 ### API Routes
 All API routes in `src/pages/api/` follow this pattern:
@@ -168,6 +183,7 @@ See `src/pages/api/news/CLAUDE.md` — full notes load when working in that subt
 - `schillerkiez_air_daily` - Per-Berlin-day LQI rollups (`lqiMax`, `lqiMean`, `readings`), kept forever. Written only for days WITH readings — measurement gaps stay absent and render as dashed bars (never interpolated). Served with a last-reading lookup by public `GET /api/kiez-air-history`.
 - `schillerkiez_reference` - Berlin + Neukölln yardstick figures (unemployment/child-poverty/transfer rates) per MSS period, imported by `scripts/sync-stats.ts` from the MSS Bezirke-level XLSX (`MSS_BEZIRKE_XLSX_URL`). Berlin is the residents-weighted mean of the 12 Bezirke (the file has no Berlin row; see `derivation`). Exposed additively as `reference?` on `/api/kiez-stats`, strictly 1:1 with the displayed social period.
 - `kiezKontextCache` - 24h-TTL (checked in-code, same pattern as `chronikCache`) cache of the Kiez-Daten "Anwohner-Kontext" chip payload (`{ key, computedAt, payload: KiezKontext }`), computed by `getKiezKontext()` in `src/lib/kiez/kontext.ts` from a curated forum-title keyword match (public-approved-or-absent gate only, stricter than forum visibility). See `src/components/kiez/CLAUDE.md`.
+- `landingCache` - 1h in-code-TTL singleton doc (`{ _id: 'landing', payload, computedAt }`) behind `getLandingData()` (`src/lib/landing.ts`) — backs the public landing page's heartbeat strip (forum posts this ISO week, weekend events, air grade + 7-day spark, today's Kurier top 3, population). The "zero rule" (a row without life is omitted, not zeroed) is applied server-side before caching. `GET /api/kiez-heartbeat` is a thin public wrapper around the same lib call — never self-fetched by the landing SSR itself.
 
 ## Environment Variables
 
@@ -265,7 +281,7 @@ See `src/components/blog/CLAUDE.md` — full notes load when working in that sub
 
 ### Splash Screen
 - `SplashScreen.astro` — plays logo video with fade-out and 3D CSS effect
-- **Page allowlist**: Only shows on main nav pages (`/`, `/newsboard`, `/calendar`, `/marketplace`, `/profile`, `/schillerkiez`). `/blog` was dropped from the allowlist when it migrated to the kiosk system (kiosk pages don't use `SplashScreen` — see `KioskLayout.astro`). Sub-pages (e.g. `/login`) skip it entirely via pathname check.
+- **Page allowlist**: Only shows on main nav pages (`/newsboard`, `/calendar`, `/marketplace`, `/profile`, `/schillerkiez`). `/blog` was dropped from the allowlist when it migrated to the kiosk system (kiosk pages don't use `SplashScreen` — see `KioskLayout.astro`). `/` was dropped from the allowlist with the Aug 2026 landing release — the new public landing page doesn't use `SplashScreen` either. Sub-pages (e.g. `/login`) skip it entirely via pathname check.
 - **Session-gated**: `sessionStorage['mahalle-splash-shown']` — shows once per session, skipped on subsequent main-page visits/reloads. Also skipped if `prefers-reduced-motion: reduce`.
 - Included in `BaseLayout.astro`
 - Uses `<script is:inline data-astro-rerun>` for synchronous execution and ViewTransitions compatibility
