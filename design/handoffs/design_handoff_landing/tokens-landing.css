@@ -1,0 +1,46 @@
+/* tokens-landing.css · Spec, kein Drop-in — über bestehendes --k-*-Muster verdrahten.
+   Scope: [data-page="landing"] bzw. das Landing-Minimal-Layout. */
+:root {
+  /* Grundfläche — identisch zum Kiosk-System */
+  --lnd-paper: #f3ead8;
+  --lnd-ink: #1b1a17;
+  --lnd-ink-soft: #3a362e;
+  --lnd-ink-mute: #7a7264;
+  --lnd-rule: #c9bea3;
+
+  /* Hintergrund · VOLLBILD GESPIEGELT (§02) — einzige Überdruck-Ausnahme */
+  --lnd-bg-image: url("/assets/background_landing_page-transparent.png");
+  --lnd-bg-opacity: 0.16;
+  --lnd-bg-blend: multiply;
+  --lnd-bg-transform: rotate(180deg); /* cover · center top · KEIN blur */
+  /* z-Stapel: Bild-Layer z0, alle Geschwister position:relative + z1. Nie negativer z-index. */
+
+  /* Teaser-Akzente — NUR im eigenen Slot */
+  --lnd-blog: #a3552e;      /* rust · Beilage */
+  --lnd-daten: #6b8a4a;     /* moss · Kiez-Daten */
+  --lnd-kurier: var(--lnd-ink); /* Kurier = INK, kein Farbakzent */
+  --lnd-cta: #e8a53a;       /* ochre · CTA-Chrome */
+  --lnd-cta-deep: #b07515;  /* tiefes Ochre für Text/Kicker auf Papier */
+  --lnd-cta-wash: rgba(176, 117, 21, 0.10);
+
+  /* Heartbeat-Strip (auf Ink) — helle On-Ink-Varianten, nicht die Papier-Akzente */
+  --lnd-strip-bg: var(--lnd-ink);
+  --lnd-strip-text: var(--lnd-paper);
+  --lnd-strip-air: #9db97c;
+  --lnd-strip-forum: #d16a87;
+  --lnd-strip-events: #6fb5c4;
+  --lnd-strip-issue: var(--lnd-paper);
+  --lnd-strip-divider: rgba(243, 234, 216, 0.22);
+  --lnd-strip-mute-opacity: 0.45;  /* Absent-State: stiller Punkt + Gedankenstrich */
+  --lnd-strip-dot: 8px;
+  --lnd-strip-rows-max: 4;         /* Zero-Regel: 1–4 Zeilen, serverseitig gefiltert */
+
+  /* Masthead */
+  --lnd-wordmark-size: 96px;       /* mobil 54px */
+  --lnd-masthead-rule: 3px;        /* Doppellinie 3px + 1px, Abstand 3px */
+  /* Banner-Slot zwischen Doppellinie und Strip bleibt FREI (Sept) */
+
+  /* CTA */
+  --lnd-cta-btn-minheight: 48px;
+  --lnd-tap-min: 44px;
+}

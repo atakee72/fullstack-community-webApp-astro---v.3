@@ -1,0 +1,19 @@
+/* motion-landing.css · Spec, kein Drop-in.
+   Die Landing hat GENAU EINE Animation: den Heartbeat-Puls.
+   Keine Scroll-Reveals, keine Entrance-Stagger, kein Parallax. */
+
+/* Puls-Punkt im Heartbeat-Strip (Desktop-Band + Mobil-Stapel) */
+@keyframes lndPulse {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 1; }
+}
+.lnd-dot { animation: lndPulse 2.4s ease-in-out infinite; }
+
+/* Absent-State (Logger-Lücke): stiller Punkt — gedimmt, NIE pulsend */
+.lnd-dot--mute { animation: none; opacity: var(--lnd-strip-mute-opacity, 0.45); }
+
+/* reduced-motion: Punkte stehen still bei voller Deckung */
+@media (prefers-reduced-motion: reduce) {
+  .lnd-dot { animation: none; opacity: 1; }
+  .lnd-dot--mute { opacity: var(--lnd-strip-mute-opacity, 0.45); }
+}
