@@ -292,7 +292,24 @@
     .lnd-slogan { font-size: 18px; }
     .lnd-footer { padding: 16px 18px 20px; gap: 8px 14px; }
     .lnd-footlinks { gap: 8px 14px; }
-    .lnd-footlinks a { min-height: 24px; display: inline-flex; align-items: center; }
+    .lnd-footlinks a { min-height: 44px; display: inline-flex; align-items: center; }
+
+    /* §10 tap-target fix: hit boxes only, visual design unchanged (CD spec
+       §10, alle Tap-Targets ≥ 44px). The extra 40px of button min-width
+       (2×20px) left the date-line row with ~0 slack at 390px — signin and
+       the DE|EN pair were each sitting exactly at their one-line content
+       width, so the enlarged buttons pushed both into an internal line-wrap
+       (verified via screenshot: "Anmelden →" and "EN" both broke onto a
+       second line — a real regression from the controller's literal patch,
+       not a false read). Trimming the row's gap buys back real pixels
+       instead of relying on flex-shrink math staying knife-edge exact;
+       `white-space: nowrap` is a backstop so any residual sub-pixel
+       rounding overflows (silently clipped by the project's global
+       `overflow-x: clip` on html/body) rather than re-wrapping. */
+    .lnd-dateline-right { align-items: center; gap: 10px; }
+    .lnd-signin { display: inline-flex; align-items: center; min-height: 44px; white-space: nowrap; }
+    .lnd-lang { white-space: nowrap; }
+    .lnd-lang button { min-width: 44px; min-height: 44px; }
   }
 
   /* §12: reduced motion — dots static at FULL opacity, mute stays dimmed.
