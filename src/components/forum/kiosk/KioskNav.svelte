@@ -10,6 +10,7 @@
 
   import { locale, t, toggleLocale } from '../../../lib/kiosk-i18n';
   import AvatarMenu from './AvatarMenu.svelte';
+  import NotificationBell from './NotificationBell.svelte';
 
   let { currentPath = '/', user = null } = $props<{
     currentPath?: string;
@@ -17,6 +18,7 @@
   }>();
 
   let menuOpen = $state(false);
+  let bellOpen = $state(false);
   let avatarEl = $state<HTMLElement | null>(null);
 
   // Avatar click toggles the account menu on ALL viewports (desktop:
@@ -96,7 +98,7 @@
 </script>
 
 <!-- ─── Top bar (sticky, all viewports) ───────────────────────────────── -->
-<header class="sticky top-0 {menuOpen ? 'z-50' : 'z-40'} border-b-2 border-ink k-paper-bg">
+<header class="sticky top-0 {menuOpen || bellOpen ? 'z-50' : 'z-40'} border-b-2 border-ink k-paper-bg">
   <div class="max-w-7xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between gap-4">
     <!-- Brand: wine disc + wordmark + place tagline below -->
     <a href="/" class="flex items-center gap-3 group shrink-0">
@@ -158,6 +160,7 @@
 
       <!-- User disc (ochre + initials, or photo) -->
       {#if user?.name}
+        <NotificationBell onOpenChange={(o: boolean) => (bellOpen = o)} />
         <div class="relative">
           <a
             bind:this={avatarEl}

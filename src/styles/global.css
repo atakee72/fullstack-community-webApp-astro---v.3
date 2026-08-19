@@ -897,6 +897,126 @@ option:disabled {
   .am-scrim.am-closing { transition: none; }
 }
 
+/* ─── Notification bell + panel (KioskNav) ─────────────────────────────
+   Same escape hatch as .am-*: NotificationBell/NotificationPanel are
+   reachable only through the KioskNav island, so component <style> would
+   be orphaned in prod builds. Visual values from CD's handoff
+   (design_handoff_notify/tokens-notify.css). NO motion on bell or badge,
+   ever; close is INSTANT (CD ruling — no .nc-closing state exists). */
+.nc-bell {
+  position: relative; width: 44px; height: 44px; /* invisible ≥44px hit area */
+  /* Negative margin keeps the LAYOUT box at 36px (the hit area overlaps the
+     header's padding) — without it the 44px button out-grows the 40px brand
+     disc and stretches the sticky header by 4px on every page. */
+  margin: -4px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; padding: 0; cursor: pointer; color: var(--k-ink);
+}
+.nc-bell-disc {
+  position: relative; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--k-paper-warm); border: 1.5px solid var(--k-ink);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 180ms ease-out; /* hover feedback only — sibling of the avatar disc */
+}
+.nc-bell:hover .nc-bell-disc, .nc-bell:focus-visible .nc-bell-disc { transform: scale(1.05); }
+.nc-bell:focus-visible { outline: none; }
+.nc-badge {
+  position: absolute; top: -5px; right: -6px;
+  min-width: 17px; height: 17px; padding: 0 4px; box-sizing: border-box;
+  border-radius: 9999px; background: var(--k-wine); color: var(--k-paper);
+  font-size: 9px; font-weight: 700; line-height: 15px; text-align: center;
+  border: 1px solid var(--k-ink);
+}
+.nc-menu {
+  position: absolute; top: calc(100% + 10px); right: 0; width: 324px; z-index: 50;
+  transform-origin: top right;
+  animation: amStampIn 220ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.nc-caret {
+  position: absolute; top: -7px; right: 16px; width: 12px; height: 12px;
+  background: var(--k-paper-warm); border: 1.5px solid var(--k-ink);
+  border-right: none; border-bottom: none; transform: rotate(45deg);
+}
+.nc-card {
+  background: var(--k-paper); border: 1.5px solid var(--k-ink);
+  border-radius: 12px; box-shadow: 3px 3px 0 var(--k-ink);
+  overflow: hidden; position: relative;
+}
+.nc-grabber { display: none; } /* mobile-only, see media block */
+.nc-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  padding: 10px 14px; border-bottom: 1.5px solid var(--k-ink);
+  background: var(--k-paper-warm);
+}
+.nc-head-title { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; color: var(--k-ink); }
+.nc-head-neu { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; color: var(--k-wine); }
+.nc-list { max-height: 60vh; overflow-y: auto; }
+.nc-empty { padding: 18px 16px; font-size: 14.5px; line-height: 1.5; font-style: italic; color: var(--k-ink-soft); text-align: center; }
+.nc-row {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 11px 14px 11px 11px; text-decoration: none; cursor: pointer;
+  border-bottom: 1px dashed var(--k-rule);
+  border-left: 3px solid transparent; /* fresh edge slot — keeps text aligned */
+}
+.nc-row:last-child { border-bottom: none; }
+.nc-row:hover, .nc-row:focus-visible { background: var(--k-paper-soft); outline: none; }
+.nc-glyph { width: 16px; font-size: 13px; flex-shrink: 0; opacity: 0.45; } /* read default */
+.nc-text { font-size: 12.5px; font-weight: 500; line-height: 1.4; color: var(--k-ink-mute); flex: 1; } /* read default */
+.nc-time { font-size: 9.5px; color: var(--k-ink-mute); letter-spacing: 0.06em; flex-shrink: 0; }
+/* Kurier-Verblassen: fresh = full ink 600 + 3px INK edge (wine stays on
+   badge + „n NEU" only); read = the muted defaults above. */
+.nc-row.nc-fresh { border-left-color: var(--k-ink); }
+.nc-row.nc-fresh .nc-glyph { opacity: 1; }
+.nc-row.nc-fresh .nc-text { color: var(--k-ink); font-weight: 600; }
+/* Foot slot — anatomy from R1, renders nothing (R2: push opt-in). */
+.nc-foot { border-top: 1.5px solid var(--k-ink); background: var(--k-paper-warm); height: 10px; }
+
+/* Scrim behind the mobile bottom sheet (hidden on desktop — dropdown has
+   no scrim by design, matching the avatar menu). */
+.nc-scrim { display: none; }
+@media (max-width: 1023px) {
+  .nc-scrim {
+    display: block; position: fixed; inset: 0; z-index: 49;
+    background: rgba(27, 26, 23, 0.5);
+    animation: amScrimIn 180ms ease-out;
+  }
+
+  /* Bottom sheet: same DOM as the dropdown, repositioned. */
+  .nc-menu {
+    position: fixed; top: auto; right: 0; bottom: 0; left: 0; width: auto;
+    transform-origin: bottom center;
+    animation: amSheetIn 220ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  .nc-caret { display: none; }
+  .nc-card {
+    border-radius: 16px 16px 0 0;
+    border-bottom: none; box-shadow: 0 -3px 0 var(--k-ink);
+    max-height: 80vh; overflow-y: auto;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    max-width: 28rem; margin-inline: auto;
+  }
+  .nc-grabber {
+    display: block; width: 44px; height: 4px; border-radius: 999px;
+    background: color-mix(in srgb, var(--k-ink) 25%, transparent);
+    margin: 8px auto 0;
+  }
+  .nc-list { max-height: none; }
+  .nc-row { min-height: 44px; padding: 13px 16px 13px 13px; }
+  .nc-glyph { font-size: 15px; }
+  .nc-text { font-size: 13.5px; }
+}
+
+/* MUST stay AFTER the max-width:1023px block above and remain the LAST
+   .nc-* animation rules in this file — media queries add no specificity,
+   so source order is the ONLY thing letting `none` beat the mobile
+   `animation: amSheetIn`. Reordering silently re-enables motion for
+   prefers-reduced-motion users. */
+@media (prefers-reduced-motion: reduce) {
+  .nc-menu { animation: none; }
+  .nc-scrim { animation: none; }
+  .nc-bell-disc { transition: none; }
+}
+
 /* ── Tour („Die Führung") — layout-mounted island, styles global by rule.
    Ring paints the scrim via oversized box-shadow: stacking-context-proof
    spotlight (design_handoff_tour, plan decision 1). ─────────────────── */

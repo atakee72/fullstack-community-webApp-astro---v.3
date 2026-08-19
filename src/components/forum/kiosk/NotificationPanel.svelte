@@ -1,0 +1,168 @@
+<script lang="ts">
+  // Notification list panel — desktop dropdown / mobile bottom sheet.
+  // Structural sibling of AvatarMenu.svelte (outside-click a tick late,
+  // Escape, dual html+body scroll-lock on mobile) with ONE deliberate
+  // deviation per CD's motion spec: close is INSTANT — no 140ms exit fade.
+  import { t, tStr } from '../../../lib/kiosk-i18n';
+  import type { NotificationItem } from '../../../types/notification';
+
+  let { onClose } = $props<{ onClose: (restoreFocus: boolean) => void }>();
+
+  let items = $state<NotificationItem[] | null>(null);
+  let failed = $state(false);
+  // Ids that were unread at fetch time — POST /read marks them server-side,
+  // but this session still renders them as fresh so nothing feels swallowed.
+  // Also feeds the head's „n NEU" counter; capped at the 30-item list by
+  // design (the bell badge shows the TRUE unread count — beyond 30 unread
+  // the two can differ; deliberate, don't "sync" them).
+  let freshIds = $state<Set<string>>(new Set());
+
+  $effect(() => {
+    let alive = true;
+    fetch('/api/notifications')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d) => {
+        if (!alive) return;
+        const list: NotificationItem[] = d.items ?? [];
+        items = list;
+        freshIds = new Set(list.filter((i) => !i.readAt).map((i) => i.id));
+        if ((d.unreadCount ?? 0) > 0) {
+          fetch('/api/notifications/read', { method: 'POST' }).catch(() => {});
+        }
+      })
+      .catch(() => {
+        if (alive) failed = true;
+      });
+    return () => {
+      alive = false;
+    };
+  });
+
+  let menuEl = $state<HTMLElement | null>(null);
+
+  // CD motion spec: „Schließen: kein Exit-Theater — sofort weg."
+  function close(fromEscape = false) {
+    const restoreFocus = fromEscape || (menuEl?.contains(document.activeElement) ?? false);
+    onClose(restoreFocus);
+  }
+
+  function onDocPointerDown(e: PointerEvent) {
+    if (menuEl && !menuEl.contains(e.target as Node)) close();
+  }
+  function onKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      close(true);
+    }
+  }
+  $effect(() => {
+    // Listener a tick late so the opening click doesn't instantly close.
+    const id = setTimeout(() => document.addEventListener('pointerdown', onDocPointerDown), 0);
+    document.addEventListener('keydown', onKeydown);
+    return () => {
+      clearTimeout(id);
+      document.removeEventListener('pointerdown', onDocPointerDown);
+      document.removeEventListener('keydown', onKeydown);
+    };
+  });
+
+  // Mobile bottom-sheet scroll-lock: must lock <html> too — global.css sets
+  // `html { overflow-x: clip }` (sticky fix), which stops body overflow from
+  // propagating to the viewport, so a body-only lock does nothing.
+  $effect(() => {
+    if (!window.matchMedia('(max-width: 1023px)').matches) return;
+    const prevHtml = document.documentElement.style.overflow;
+    const prevBody = document.body.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.documentElement.style.overflow = prevHtml;
+      document.body.style.overflow = prevBody;
+    };
+  });
+
+  // CD hybrid rule: accents ONLY on the glyph, only where the SYSTEM speaks.
+  // ⇄ for market — NOT ◈, which means „Gespeichert" in the avatar menu.
+  const GLYPH: Record<string, { g: string; c: string }> = {
+    comment: { g: '✎', c: 'var(--k-ink)' },
+    market_contact: { g: '⇄', c: 'var(--k-ink)' },
+    moderation: { g: '§', c: 'var(--k-plum, #6f2f59)' },
+    official: { g: '◉', c: 'var(--k-teal, #3f8f9f)' },
+  };
+
+  function rowText(it: NotificationItem): string {
+    const title = it.target?.title || '…';
+    switch (it.type) {
+      case 'comment': {
+        const actor = it.actorName ?? $t['nc.tombstone'];
+        // Per-contentType variants (CD: „DE-Artikel je contentType als Key-Varianten").
+        const key = `nc.comment.${it.target?.contentType}`;
+        return tStr($t[key] ?? $t['nc.comment.topic'], { actor, title });
+      }
+      case 'official':
+        return tStr($t['nc.official'], { title });
+      case 'market_contact':
+        return tStr($t['nc.market'], { title });
+      case 'moderation': {
+        const isComment = it.meta?.contentKind === 'comment';
+        const o = it.meta?.outcome;
+        if (o === 'rejected') {
+          const n = String(it.meta?.strikeCount ?? 1);
+          return tStr($t[isComment ? 'nc.mod.rejectedComment' : 'nc.mod.rejected'], { n });
+        }
+        if (o === 'warned') {
+          return isComment ? $t['nc.mod.warnedComment'] : tStr($t['nc.mod.warned'], { title });
+        }
+        return isComment ? $t['nc.mod.approvedComment'] : tStr($t['nc.mod.approved'], { title });
+      }
+      default:
+        return title;
+    }
+  }
+
+  function relTime(iso: string): string {
+    const mins = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));
+    if (mins < 1) return $t['nc.time.now'];
+    if (mins < 60) return tStr($t['nc.time.m'], { n: String(mins) });
+    const h = Math.round(mins / 60);
+    if (h < 24) return tStr($t['nc.time.h'], { n: String(h) });
+    return tStr($t['nc.time.d'], { n: String(Math.round(h / 24)) });
+  }
+</script>
+
+<div class="nc-scrim" aria-hidden="true"></div>
+<div bind:this={menuEl} class="nc-menu" role="dialog" aria-label={$t['nc.title']}>
+  <div class="nc-caret"></div>
+  <div class="nc-card">
+    <div class="nc-grabber" aria-hidden="true"></div>
+    <div class="nc-head">
+      <span class="nc-head-title font-dmmono">{$t['nc.title']}</span>
+      {#if freshIds.size > 0}
+        <span class="nc-head-neu font-dmmono">{freshIds.size} {$t['nc.neu']}</span>
+      {/if}
+    </div>
+    {#if failed}
+      <div class="nc-empty font-instrument">{$t['nc.error']}</div>
+    {:else if items === null}
+      <div class="nc-empty font-instrument">…</div>
+    {:else if items.length === 0}
+      <div class="nc-empty font-instrument">{$t['nc.empty']}</div>
+    {:else}
+      <div class="nc-list">
+        {#each items as it (it.id)}
+          <a href={it.target?.href || '/forum'} class="nc-row" class:nc-fresh={freshIds.has(it.id)}>
+            <span class="nc-glyph font-dmmono" style="color: {GLYPH[it.type]?.c ?? 'var(--k-ink)'}" aria-hidden="true">{GLYPH[it.type]?.g ?? '•'}</span>
+            <span class="nc-text font-bricolage">{rowText(it)}</span>
+            <span class="nc-time font-dmmono">{relTime(it.createdAt)}</span>
+          </a>
+        {/each}
+      </div>
+    {/if}
+    <!-- Foot slot: part of the anatomy from R1, renders NOTHING (CD §6) —
+         R2's push opt-in moves in here without head/rows shifting. -->
+    <div class="nc-foot" aria-hidden="true"></div>
+  </div>
+</div>
+
+<!-- Styles live in src/styles/global.css (`.nc-*` block) — nested-island
+     CSS orphan rule, same as AvatarMenu. -->

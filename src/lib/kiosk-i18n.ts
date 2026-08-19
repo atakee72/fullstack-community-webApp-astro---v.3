@@ -86,6 +86,31 @@ const de = {
   'nav.menu.abmelden': 'Abmelden',
   'nav.menu.seit': 'IM KIEZ SEIT',
 
+  // notification bell + panel
+  'nav.bell.aria': 'Mitteilungen',
+  'nc.title': 'MITTEILUNGEN',
+  'nc.neu': 'NEU',
+  'nc.empty': "Alles gelesen — der Kiez meldet sich, wenn's was Neues gibt.",
+  'nc.error': 'Konnte nicht geladen werden.',
+  'nc.tombstone': 'Ehemaliges Mitglied',
+  'nc.comment.topic': '{actor} hat auf dein Thema geantwortet: ‚{title}’',
+  'nc.comment.announcement': '{actor} hat auf deine Ankündigung geantwortet: ‚{title}’',
+  'nc.comment.recommendation': '{actor} hat auf deine Empfehlung geantwortet: ‚{title}’',
+  'nc.comment.event': '{actor} hat auf deinen Termin geantwortet: ‚{title}’',
+  'nc.market': 'Neue Anfrage zu deinem Angebot ‚{title}’',
+  'nc.official': 'Amtliche Mitteilung: {title}',
+  'nc.mod.approved': 'Dein Beitrag ‚{title}’ ist veröffentlicht',
+  'nc.mod.approvedComment': 'Dein Kommentar ist veröffentlicht',
+  'nc.mod.warned': 'Dein Beitrag ‚{title}’ ist veröffentlicht — mit Hinweis. Details in deinem Profil',
+  'nc.mod.warnedComment': 'Dein Kommentar ist veröffentlicht — mit Hinweis. Details in deinem Profil',
+  'nc.mod.rejected': 'Dein Beitrag wurde abgelehnt — {n}. Verwarnung. Details in deinem Profil',
+  'nc.mod.rejectedComment': 'Dein Kommentar wurde abgelehnt — {n}. Verwarnung. Details in deinem Profil',
+  'nc.time.now': 'jetzt',
+  'nc.time.m': 'vor {n} Min.',
+  'nc.time.h': 'vor {n} Std.',
+  'nc.time.d': 'vor {n} Tg.',
+
+
   // Landing („Das Schaufenster")
   'lnd.loc': 'SCHILLERKIEZ · BERLIN-NEUKÖLLN',
   'lnd.signin': 'Anmelden →',
@@ -1916,6 +1941,31 @@ const en: Dict = {
   'nav.menu.moderation': 'Moderation',
   'nav.menu.abmelden': 'Sign out',
   'nav.menu.seit': 'IN THE KIEZ SINCE',
+
+  // notification bell + panel
+  'nav.bell.aria': 'Notifications',
+  'nc.title': 'NOTIFICATIONS',
+  'nc.neu': 'NEW',
+  'nc.empty': "All caught up — the kiez will let you know when there's news.",
+  'nc.error': 'Could not load.',
+  'nc.tombstone': 'Former member',
+  'nc.comment.topic': '{actor} replied to your topic ‘{title}’',
+  'nc.comment.announcement': '{actor} replied to your announcement ‘{title}’',
+  'nc.comment.recommendation': '{actor} replied to your recommendation ‘{title}’',
+  'nc.comment.event': '{actor} replied to your event ‘{title}’',
+  'nc.market': 'New inquiry about your listing ‘{title}’',
+  'nc.official': 'Official notice: {title}',
+  'nc.mod.approved': 'Your post ‘{title}’ is published',
+  'nc.mod.approvedComment': 'Your comment is published',
+  'nc.mod.warned': 'Your post ‘{title}’ is published — with a note. Details in your profile',
+  'nc.mod.warnedComment': 'Your comment is published — with a note. Details in your profile',
+  'nc.mod.rejected': 'Your post was rejected — warning no. {n}. Details in your profile',
+  'nc.mod.rejectedComment': 'Your comment was rejected — warning no. {n}. Details in your profile',
+  'nc.time.now': 'now',
+  'nc.time.m': '{n} min ago',
+  'nc.time.h': '{n} h ago',
+  'nc.time.d': '{n} d ago',
+
 
   // Landing ("The shop window")
   'lnd.loc': 'SCHILLERKIEZ · BERLIN-NEUKÖLLN',
