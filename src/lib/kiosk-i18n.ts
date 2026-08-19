@@ -121,7 +121,7 @@ const de = {
   'lnd.cta.h': 'Mach mit im Kiez.',
   'lnd.cta.btn': 'Mitmachen — kostenlos',
   'lnd.cta.sub': 'FÜR NACHBAR:INNEN IM SCHILLERKIEZ · ANMELDUNG IN ZWEI MINUTEN',
-  'lnd.cta.slogan': '„Das hier wird, was wir draus machen.”',
+  'lnd.cta.slogan': '„Das hier wird, was wir draus machen.“',
   'lnd.foot.impressum': 'Impressum',
   'lnd.foot.datenschutz': 'Datenschutz',
   'lnd.foot.ueber': 'Über das Projekt',
