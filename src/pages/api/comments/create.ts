@@ -7,6 +7,7 @@ import { CommentCreateSchema } from '../../../schemas/comment.schema';
 import { parseRequestBody } from '../../../schemas/validation.utils';
 import { moderateText, checkSpamWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../lib/moderation';
 import { rejectIfBanned } from '../../../lib/auth/banGuard';
+import { notify, commentTarget } from '../../../lib/notifications';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -90,15 +91,27 @@ export const POST: APIRoute = async ({ request }) => {
       (flaggedRecord as any).parentCollection = parentCollection;
       await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
     } else {
-      // Only add to parent's comments array if approved immediately
+      // Only add to parent's comments array if approved immediately.
+      // findOneAndUpdate (not updateOne) so the parent's author + title come
+      // back in the same round-trip for the notification below.
       const postsCollection = db.collection(parentCollection);
-      await postsCollection.updateOne(
+      const parentDoc = await postsCollection.findOneAndUpdate(
         { _id: new ObjectId(topicId) },
         {
-          $push: { comments: result.insertedId },
+          $push: { comments: result.insertedId } as any,
           $set: { updatedAt: new Date() }
-        }
+        },
+        { projection: { author: 1, title: 1 } }
       );
+
+      if (parentDoc?.author) {
+        await notify({
+          userId: String(parentDoc.author),
+          type: 'comment',
+          actorId: userId,
+          target: commentTarget(parentCollection, topicId, parentDoc.title ?? ''),
+        });
+      }
     }
 
     // Fetch author info to return with the created comment

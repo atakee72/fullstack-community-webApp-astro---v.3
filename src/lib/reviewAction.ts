@@ -5,6 +5,7 @@
 
 import { ObjectId, type Db } from 'mongodb';
 import type { FlaggedContent, User } from '../types';
+import { notify, commentTarget, moderationTarget } from './notifications';
 
 const MAX_STRIKES = 3;
 
@@ -111,13 +112,25 @@ export async function processReviewAction(
 
           if (parentPostId && parentCollection) {
             const parentCollectionRef = db.collection(parentCollection);
-            await parentCollectionRef.updateOne(
+            const parentDoc = await parentCollectionRef.findOneAndUpdate(
               { _id: new ObjectId(parentPostId) },
               {
                 $addToSet: { comments: new ObjectId(flaggedContent.contentId) },
                 $set: { updatedAt: new Date() }
-              }
+              },
+              { projection: { author: 1, title: 1 } }
             );
+
+            // The comment just became visible — fire the "someone replied"
+            // notification that create.ts skipped while it was pending.
+            if (parentDoc?.author) {
+              await notify({
+                userId: String(parentDoc.author),
+                type: 'comment',
+                actorId: flaggedContent.authorId,
+                target: commentTarget(parentCollection, parentPostId, parentDoc.title ?? ''),
+              });
+            }
           }
         } else {
           // REJECTED: Remove comment from parent's comments array
@@ -180,6 +193,36 @@ export async function processReviewAction(
         }
       }
     }
+  }
+
+  // Notify the author of the decision — every reviewed item, including clean
+  // approvals (silent rejection was the dark pattern this feature fixes; an
+  // approved item reads as „ist veröffentlicht" per the CD copy).
+  if (flaggedContent.contentId && flaggedContent.contentType && flaggedContent.authorId) {
+    const excerpt = (flaggedContent.title ?? flaggedContent.body ?? '').slice(0, 80);
+    const flaggedAny = flaggedContent as any;
+    // A moderated COMMENT deep-links to its parent post when we know it
+    // (approve path stores parentPostId/parentCollection on the flagged
+    // record); otherwise moderationTarget's fallback links to the forum.
+    const target =
+      flaggedContent.contentType === 'comment' && flaggedAny.parentPostId && flaggedAny.parentCollection
+        ? commentTarget(flaggedAny.parentCollection, flaggedAny.parentPostId, excerpt)
+        : moderationTarget(flaggedContent.contentType, flaggedContent.contentId, excerpt);
+    await notify({
+      userId: flaggedContent.authorId,
+      type: 'moderation',
+      target,
+      meta: {
+        outcome: isRejection ? 'rejected' : hasWarning ? 'warned' : 'approved',
+        // The moderated thing itself — target.contentType can't carry this for
+        // comments (it points at the parent page). Drives Beitrag/Kommentar copy.
+        contentKind: flaggedContent.contentType,
+        // CD copy renders „{n}. Verwarnung" — the strike NUMBER, not a flag.
+        // newStrikeCount is populated by the strike block above (every
+        // rejection increments strikes, so it is ≥1 here).
+        ...(isRejection ? { strikeCount: newStrikeCount } : {}),
+      },
+    });
   }
 
   return {

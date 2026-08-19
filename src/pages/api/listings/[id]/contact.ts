@@ -11,6 +11,7 @@ import { isValidObjectId } from '../../../../schemas/validation.utils';
 import MarketplaceContactEmail from '../../../../emails/MarketplaceContactEmail';
 import ContactConfirmationEmail from '../../../../emails/ContactConfirmationEmail';
 import type { Listing } from '../../../../types/listing';
+import { notify } from '../../../../lib/notifications';
 
 // ─── Env ─────────────────────────────────────────────────────────────────────
 
@@ -232,6 +233,19 @@ export const POST: APIRoute = async ({ request, params, clientAddress }) => {
       buyerEmail: email,
       senderIpHash,
       sentAt: now,
+    });
+
+    // In-app mirror of the owner email. No actorId — the buyer is anonymous
+    // by design (metadata-only GDPR stance of listingContacts).
+    await notify({
+      userId: listing.sellerId.toString(),
+      type: 'market_contact',
+      target: {
+        contentType: 'listing',
+        contentId: id,
+        title: listing.title ?? '',
+        href: `/marketplace/${id}`,
+      },
     });
 
     // (c) Confirmation email is best-effort. The owner already received the

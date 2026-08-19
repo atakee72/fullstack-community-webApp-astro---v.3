@@ -5,6 +5,7 @@ import { requireAdminSession } from '../../../../lib/auth';
 import { AnnouncementCreateSchema } from '../../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../../schemas/validation.utils';
 import type { Announcement } from '../../../../types';
+import { notifyAllMembers } from '../../../../lib/notifications';
 
 // Pin duration for new official announcements: 7 days from creation.
 // After expiry the doc slips into the regular feed (still official-
@@ -58,6 +59,19 @@ export const POST: APIRoute = async ({ request }) => {
     };
 
     const result = await announcementsCollection.insertOne(newAnnouncement);
+
+    // Broadcast to every member (fan-out on write; excludes the posting
+    // admin and anonymized accounts inside the helper).
+    await notifyAllMembers({
+      type: 'official',
+      actorId: userId,
+      target: {
+        contentType: 'announcement',
+        contentId: result.insertedId.toString(),
+        title,
+        href: `/announcements/${result.insertedId.toString()}`,
+      },
+    });
 
     // Return with populated author so the panel can render the row
     // without a follow-up fetch.
