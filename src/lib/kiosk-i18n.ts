@@ -1146,8 +1146,8 @@ const de = {
 
   // ── Auth (Phase 2: heartbeat) ──
   'auth.heartbeat.live': 'live im Kiez',
-  'auth.heartbeat.events': 'Events heute',
-  'auth.heartbeat.posts': 'neue Beiträge',
+  'auth.heartbeat.events': 'Events am Wochenende',
+  'auth.heartbeat.posts': 'Beiträge diese Woche',
   'auth.heartbeat.air': 'Luft',
 
   // ── Auth (Phase 2: email-verify) ──
@@ -2898,8 +2898,8 @@ const en: Dict = {
   'auth.err.resetFailed': "Couldn't change the password. The link may have expired.",
 
   'auth.heartbeat.live': 'live in the Kiez',
-  'auth.heartbeat.events': 'events today',
-  'auth.heartbeat.posts': 'new posts',
+  'auth.heartbeat.events': 'events this weekend',
+  'auth.heartbeat.posts': 'posts this week',
   'auth.heartbeat.air': 'air',
 
   // ── Auth (Phase 2: email-verify) ──

@@ -11,34 +11,27 @@
   let posts = $state<number | null>(null);
   let air = $state<string | null>(null);
 
-  function todayISO(): string {
-    return new Date().toISOString().slice(0, 10);
-  }
+  // LQI grade → label (matches /api/kiez-air's GRADE_LABELS, grades 1–5).
+  const AIR_LABELS: Record<number, string> = { 1: 'sehr gut', 2: 'gut', 3: 'mäßig', 4: 'schlecht', 5: 'sehr schlecht' };
 
   onMount(() => {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 3000);
     const opts = { signal: ctrl.signal };
 
-    // air — single cheap public call; show the LQI grade label (e.g. "gut")
-    fetch('/api/kiez-air', opts)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.overallLabel) air = d.overallLabel; })
-      .catch(() => {});
-
-    // posts today — news total within today's window (limit=1, we only need the count)
-    fetch(`/api/news?limit=1&dateFrom=${todayISO()}`, opts)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (typeof d?.pagination?.total === 'number') posts = d.pagination.total; })
-      .catch(() => {});
-
-    // events today — count events whose startDate is today
-    fetch('/api/events', opts)
+    // Single public aggregate fetch — same source as the landing strip.
+    // Each segment still resolves independently: a missing row leaves its
+    // stat null and the segment is omitted (ambient, never blocks paint).
+    fetch('/api/kiez-heartbeat', opts)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (Array.isArray(d?.events)) {
-          const today = new Date().toDateString();
-          events = d.events.filter((e: any) => e?.startDate && new Date(e.startDate).toDateString() === today).length;
+        if (!Array.isArray(d?.rows)) return;
+        for (const row of d.rows) {
+          if (row.kind === 'air' && !row.mute && typeof row.value === 'number') {
+            air = AIR_LABELS[row.value] ?? null;
+          }
+          if (row.kind === 'forum' && typeof row.value === 'number') posts = row.value;
+          if (row.kind === 'events' && typeof row.value === 'number') events = row.value;
         }
       })
       .catch(() => {});

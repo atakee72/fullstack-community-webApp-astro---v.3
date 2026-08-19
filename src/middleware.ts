@@ -51,6 +51,40 @@ export const onRequest = defineMiddleware(async (context, next) => {
       context.locals.session = null;
     }
 
+    // ── Login gate (Aug 2026 landing release) ──
+    // Member surfaces require a session. Marketplace deliberately stays
+    // public (SEO decision pending), /profile renders its own logged-out
+    // state, and the landing/blog/Kiez-Daten/legal/auth pages are public.
+    const GATED_PAGES = [
+      '/forum', '/topics', '/announcements', '/recommendations',
+      '/calendar', '/events', '/newsboard',
+      '/bookmarks', '/search', '/steckbrief', '/nachbarn',
+    ];
+    // List/read APIs of gated surfaces — without this the page gate is
+    // cosmetic (data stays scrapable). Write endpoints already self-gate.
+    const GATED_APIS = [
+      '/api/topics', '/api/announcements', '/api/recommendations',
+      '/api/events', '/api/news', '/api/comments',
+    ];
+    // The daily news cron is a GET from Vercel with its own CRON_SECRET
+    // Bearer gate — it must keep working without a session.
+    const API_ALLOWLIST = ['/api/news/fetch-daily'];
+
+    if (!context.locals.user) {
+      const hit = (prefixes: string[]) =>
+        prefixes.some((p) => pathname === p || pathname.startsWith(p + '/'));
+      if (hit(GATED_APIS) && !API_ALLOWLIST.some((p) => pathname.startsWith(p))) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (hit(GATED_PAGES)) {
+        const target = encodeURIComponent(pathname + context.url.search);
+        return context.redirect(`/login?redirect=${target}`);
+      }
+    }
+
     // Protected routes configuration
     // "/profile" is deliberately NOT here — logged-out /profile renders its own
     // in-page state (§10 "sign in" card) instead of a hard redirect.
