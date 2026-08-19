@@ -1,0 +1,36 @@
+---
+// Minimal public layout for `/` (Das Schaufenster) and the legal pages.
+// Sibling of AuthLayout: no KioskNav, no tour, no splash, no avatar.
+// The page content (incl. its own date line + footer) comes from the slot.
+import { ViewTransitions } from 'astro:transitions';
+
+export interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = 'Mahalle — der Ort für den Schillerkiez. Reden, tauschen, treffen.',
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <ViewTransitions />
+  </head>
+  <body class="min-h-screen k-paper-bg text-ink font-bricolage antialiased" data-page="landing">
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  @import '../styles/global.css';
+</style>
