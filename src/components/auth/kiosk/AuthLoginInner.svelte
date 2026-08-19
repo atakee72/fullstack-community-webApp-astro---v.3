@@ -6,18 +6,17 @@
   import AuthField from './primitives/AuthField.svelte';
   import AuthPrimaryBtn from './primitives/AuthPrimaryBtn.svelte';
   import AuthBanner from './primitives/AuthBanner.svelte';
+  import { safeInternalPath } from '../../../lib/auth/safeRedirect';
 
-  // Post-login destination: honor ?redirect= from the middleware gate, but
-  // only same-origin paths (open-redirect guard: must start with exactly
-  // one '/'). Anything else falls back to the forum.
+  // Post-login destination: honor ?redirect= from the middleware gate.
+  // Validation lives in safeInternalPath (URL-normalization based — see
+  // that file for why startsWith checks are not enough).
   function postLoginTarget(): string {
     try {
-      const r = new URLSearchParams(window.location.search).get('redirect');
-      // exactly one leading slash; reject '//' (protocol-relative) and '/\'
-      // (browsers normalize backslash to slash — same open-redirect vector)
-      if (r && r.startsWith('/') && !r.startsWith('//') && !r.startsWith('/\\')) return r;
-    } catch { /* fall through */ }
-    return '/forum';
+      return safeInternalPath(new URLSearchParams(window.location.search).get('redirect'), '/forum');
+    } catch {
+      return '/forum';
+    }
   }
 
   let email = $state('');

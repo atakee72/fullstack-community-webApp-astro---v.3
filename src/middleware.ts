@@ -11,6 +11,7 @@ import { defineMiddleware } from "astro:middleware";
 // when a page chunk also imports it.
 import '../sentry.server.config';
 import * as Sentry from '@sentry/astro';
+import { safeInternalPath } from './lib/auth/safeRedirect';
 
 export const onRequest = defineMiddleware(async (context, next) => {
   try {
@@ -51,6 +52,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
       context.locals.session = null;
     }
 
+    // NOTE: this gate runs only for SSR requests — the isPrerendered early
+    // return above bypasses it. Gated routes must stay SSR (they all are);
+    // adding `export const prerender = true` to one would silently un-gate it.
     // ── Login gate (Aug 2026 landing release) ──
     // Member surfaces require a session. Marketplace deliberately stays
     // public (SEO decision pending), /profile renders its own logged-out
@@ -73,7 +77,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (!context.locals.user) {
       const hit = (prefixes: string[]) =>
         prefixes.some((p) => pathname === p || pathname.startsWith(p + '/'));
-      if (hit(GATED_APIS) && !API_ALLOWLIST.some((p) => pathname.startsWith(p))) {
+      if (hit(GATED_APIS) && !API_ALLOWLIST.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
           headers: { 'Content-Type': 'application/json' },
@@ -105,15 +109,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     if (isAuthRoute && context.locals.user) {
       // Redirect to home if trying to access auth routes while logged in.
-      // Only follow same-origin paths: "/x" yes, but not "//evil.com"
-      // (protocol-relative) or "/\evil.com" (backslash variant some browsers
-      // normalize to "//") — otherwise /login?redirect= is an open redirect.
       const redirectTo = new URL(context.request.url).searchParams.get("redirect");
-      const safeTarget =
-        redirectTo && redirectTo.startsWith("/") && !/^\/[/\\]/.test(redirectTo)
-          ? redirectTo
-          : "/";
-      return context.redirect(safeTarget);
+      // URL-normalization-based validation (see src/lib/auth/safeRedirect.ts) —
+      // the old startsWith/regex guard was bypassable via tab/newline stripping.
+      return context.redirect(safeInternalPath(redirectTo, "/"));
     }
 
     return await next();
