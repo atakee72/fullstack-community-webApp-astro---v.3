@@ -218,9 +218,13 @@ export async function processReviewAction(
         // comments (it points at the parent page). Drives Beitrag/Kommentar copy.
         contentKind: flaggedContent.contentType,
         // CD copy renders „{n}. Verwarnung" — the strike NUMBER, not a flag.
-        // newStrikeCount is populated by the strike block above (every
-        // rejection increments strikes, so it is ≥1 here).
-        ...(isRejection ? { strikeCount: newStrikeCount } : {}),
+        // newStrikeCount is populated by the strike block above: ≥1 when the
+        // author doc was found and updated, 0 if the lookup missed (stale/
+        // legacy authorId) — hence the > 0 guard below.
+        // Omit strikeCount when the strike update found no user doc
+        // (newStrikeCount stays 0 on stale/legacy authorIds) — the client
+        // falls back to a generic „1. Verwarnung" rather than rendering „0.".
+        ...(isRejection && newStrikeCount > 0 ? { strikeCount: newStrikeCount } : {}),
       },
     });
   }
