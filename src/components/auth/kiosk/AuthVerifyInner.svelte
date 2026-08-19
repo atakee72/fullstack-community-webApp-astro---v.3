@@ -28,7 +28,7 @@
         // JWT still says unverified until re-login; the banner live-checks the
         // DB, so landing on / immediately shows NO nag. Login-less browsers
         // (link opened elsewhere) go to /login instead.
-        setTimeout(() => { window.location.href = hasSession ? '/' : '/login'; }, 2500);
+        setTimeout(() => { window.location.href = hasSession ? '/forum' : '/login'; }, 2500);
       } catch {
         stage = 'invalid';
       }

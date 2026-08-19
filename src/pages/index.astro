@@ -1,49 +1,39 @@
 ---
-// Forum index — Editorial Kiosk shell (replaces dark-glass on this branch).
-// SSR pre-fetches all three forum collections (topics, announcements,
-// recommendations) in parallel and merges them into a single date-desc
-// feed so first paint shows the full kind-mix of cards. Each item is
-// decorated with `kind` so ForumPostCard can apply its three-treatment
-// switch (discussion = paper-warm flat / announcement = ink + teal
-// strap / recommendation = paper-warm + moss strap + serif italic).
-//
-// URL move (`/` → `/forum`) is deferred until the dashboard page exists.
-// For now the forum stays at `/`, which is what KioskNav points its Forum
-// pill at.
-
-import KioskLayout from '../layouts/KioskLayout.astro';
-import ForumIndex from '../components/forum/kiosk/ForumIndex.svelte';
+// Das Schaufenster — public landing at `/`. Members never see this page:
+// SSR redirects any session straight to /forum before render (§00).
+// All data comes lib-direct (1h Mongo cache) — never self-fetch our own API.
+import LandingLayout from '../layouts/LandingLayout.astro';
+import LandingPage from '../components/landing/LandingPage.svelte';
 import { getSession } from 'auth-astro/server';
-import { fetchForumItemsForSSR } from '../lib/topicsQuery';
+import { getCollection } from 'astro:content';
+import { getLandingData } from '../lib/landing';
 
 const session = await getSession(Astro.request);
-const userId = session?.user?.id;
+if (session?.user) return Astro.redirect('/forum');
 
-// Promise.allSettled (not Promise.all) so one collection's failure
-// doesn't blank the whole feed — partial render beats empty grid.
-const results = await Promise.allSettled([
-  fetchForumItemsForSSR('topics', userId),
-  fetchForumItemsForSSR('announcements', userId),
-  fetchForumItemsForSSR('recommendations', userId),
-]);
-const collections = ['topics', 'announcements', 'recommendations'] as const;
-const [topics, announcements, recommendations] = results.map((r, i) => {
-  if (r.status === 'fulfilled') return r.value as any[];
-  console.error(`[index.astro] ${collections[i]} SSR prefetch failed:`, r.reason);
-  return [] as any[];
-});
+const data = await getLandingData();
 
-const initialItems = [
-  ...topics.map((t) => ({ ...t, kind: 'discussion' as const })),
-  ...announcements.map((a) => ({ ...a, kind: 'announcement' as const })),
-  ...recommendations.map((r) => ({ ...r, kind: 'recommendation' as const })),
-].sort((a, b) => +new Date(b.date ?? 0) - +new Date(a.date ?? 0));
+// Blog teaser: newest two non-draft posts (build-time content collection —
+// no caching needed). Fail-soft: an empty collection renders an empty slot.
+let blog: { slug: string; title: string; description: string; pubDateISO: string }[] = [];
+try {
+  const entries = (await getCollection('blog', ({ data: d }) => !d.draft))
+    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+    .slice(0, 2);
+  blog = entries.map((e) => ({
+    slug: e.id,
+    title: e.data.title,
+    description: e.data.description ?? '',
+    pubDateISO: e.data.pubDate.toISOString(),
+  }));
+} catch (err) {
+  console.error('[landing] blog teaser failed:', err);
+}
 ---
 
-<KioskLayout title="Mahalle · Forum" description="Diskussionen aus deinem Kiez." page="forum">
-  <ForumIndex
-    client:only="svelte"
-    initialItems={initialItems}
-    currentUserId={userId ?? null}
-  />
-</KioskLayout>
+<LandingLayout
+  title="Mahalle — Der Ort für den Schillerkiez"
+  description="Der Kiez hat einen Ort. Reden, tauschen, treffen — hier, wo du wohnst. Community-Plattform für den Schillerkiez, Berlin-Neukölln."
+>
+  <LandingPage client:load {data} {blog} />
+</LandingLayout>

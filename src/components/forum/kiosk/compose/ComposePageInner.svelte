@@ -228,12 +228,12 @@
       kind: values.kind,
       tags: values.tags
     });
-    if (typeof window !== 'undefined') window.location.href = '/';
+    if (typeof window !== 'undefined') window.location.href = '/forum';
   }
 
   function onDiscard() {
     topicDraft.clearDraft();
-    if (typeof window !== 'undefined') window.location.href = '/';
+    if (typeof window !== 'undefined') window.location.href = '/forum';
   }
 </script>
 

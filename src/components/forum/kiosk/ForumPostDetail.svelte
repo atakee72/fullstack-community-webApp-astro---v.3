@@ -322,7 +322,7 @@
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Löschen fehlgeschlagen.');
       }
-      if (typeof window !== 'undefined') window.location.href = '/';
+      if (typeof window !== 'undefined') window.location.href = '/forum';
     } catch (err) {
       editError = err instanceof Error ? err.message : 'Löschen fehlgeschlagen.';
       deleting = false;

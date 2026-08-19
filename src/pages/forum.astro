@@ -1,0 +1,48 @@
+---
+// Forum index — Editorial Kiosk shell (replaces dark-glass on this branch).
+// SSR pre-fetches all three forum collections (topics, announcements,
+// recommendations) in parallel and merges them into a single date-desc
+// feed so first paint shows the full kind-mix of cards. Each item is
+// decorated with `kind` so ForumPostCard can apply its three-treatment
+// switch (discussion = paper-warm flat / announcement = ink + teal
+// strap / recommendation = paper-warm + moss strap + serif italic).
+//
+// Lives at /forum since the landing release (Aug 2026): `/` is the public
+// landing (Das Schaufenster), which SSR-redirects logged-in members here.
+
+import KioskLayout from '../layouts/KioskLayout.astro';
+import ForumIndex from '../components/forum/kiosk/ForumIndex.svelte';
+import { getSession } from 'auth-astro/server';
+import { fetchForumItemsForSSR } from '../lib/topicsQuery';
+
+const session = await getSession(Astro.request);
+const userId = session?.user?.id;
+
+// Promise.allSettled (not Promise.all) so one collection's failure
+// doesn't blank the whole feed — partial render beats empty grid.
+const results = await Promise.allSettled([
+  fetchForumItemsForSSR('topics', userId),
+  fetchForumItemsForSSR('announcements', userId),
+  fetchForumItemsForSSR('recommendations', userId),
+]);
+const collections = ['topics', 'announcements', 'recommendations'] as const;
+const [topics, announcements, recommendations] = results.map((r, i) => {
+  if (r.status === 'fulfilled') return r.value as any[];
+  console.error(`[index.astro] ${collections[i]} SSR prefetch failed:`, r.reason);
+  return [] as any[];
+});
+
+const initialItems = [
+  ...topics.map((t) => ({ ...t, kind: 'discussion' as const })),
+  ...announcements.map((a) => ({ ...a, kind: 'announcement' as const })),
+  ...recommendations.map((r) => ({ ...r, kind: 'recommendation' as const })),
+].sort((a, b) => +new Date(b.date ?? 0) - +new Date(a.date ?? 0));
+---
+
+<KioskLayout title="Mahalle · Forum" description="Diskussionen aus deinem Kiez." page="forum">
+  <ForumIndex
+    client:only="svelte"
+    initialItems={initialItems}
+    currentUserId={userId ?? null}
+  />
+</KioskLayout>

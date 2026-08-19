@@ -105,7 +105,7 @@
         return;
       }
       status = 'success';
-      window.location.href = '/';
+      window.location.href = '/forum';
     } catch {
       credErr = true;
       status = 'idle';
