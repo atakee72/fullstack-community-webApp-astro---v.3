@@ -52,7 +52,7 @@ export function buildPushPayload(
   let body: string;
   switch (type) {
     case 'comment':
-      // ‚ / ' = German single quotes (‚…') — written as escape
+      // \u201A / \u2018 = German single quotes — written as escape
       // sequences so no editor/tool Unicode normalization can corrupt them.
       body = `Neue Antwort auf \u201A${t}\u2018`;
       break;
