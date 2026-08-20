@@ -63,6 +63,7 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^3.4.0",
     "typewriter-editor": "^0.12.9",
+    "web-push": "^3.6.7",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -74,6 +75,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "@types/web-push": "^3.6.4",
     "bits-ui": "^2.15.4",
     "dotenv": "^17.2.3",
     "exceljs": "^4.4.0",

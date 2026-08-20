@@ -248,6 +248,15 @@ export async function runDeletionPipeline(
     fail('notifications', err);
   }
 
+  // Push subscriptions are device credentials for this account — dead weight
+  // (and a stray-push risk) once the account tombstones.
+  try {
+    const delPushSubscriptions = await db.collection('pushSubscriptions').deleteMany({ userId });
+    steps.pushSubscriptions = delPushSubscriptions.deletedCount ?? 0;
+  } catch (err) {
+    fail('pushSubscriptions', err);
+  }
+
   // Step 3: pull this user's OWN RSVPs from every event. Other users' RSVPs
   // on events this user authored are KEPT (their data, event stays).
   try {

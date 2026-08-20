@@ -68,6 +68,17 @@ async function main() {
     expireAfterSeconds: 7776000, // 90 days
   });
 
+  // R2: push subscriptions. Endpoint is the natural key (one row per browser
+  // subscription; re-subscribe/account-switch upserts take it over).
+  await ensureIndex(db, 'pushSubscriptions', { endpoint: 1 }, {
+    name: 'push_endpoint_unique',
+    unique: true,
+  });
+  // Send-time fan-in: sendPushToUsers queries { userId: { $in: [...] } }.
+  await ensureIndex(db, 'pushSubscriptions', { userId: 1 }, {
+    name: 'push_user',
+  });
+
   console.log(`Done (db: ${dbName}).`);
   await client.close();
 }
