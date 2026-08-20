@@ -13,6 +13,7 @@
 import { ObjectId } from 'mongodb';
 import * as Sentry from '@sentry/astro';
 import { connectDB } from './mongodb';
+import { buildPushPayload, sendPushToAllExcept, sendPushToUsers } from './push';
 import type {
   NotificationDoc,
   NotificationItem,
@@ -51,6 +52,7 @@ export async function notify(input: NotifyInput): Promise<void> {
       createdAt: new Date(),
       readAt: null,
     });
+    await sendPushToUsers([input.userId], buildPushPayload(input.type, input.target, input.meta));
   } catch (err) {
     await capture(err);
   }
@@ -71,6 +73,7 @@ export async function notifyAllMembers(input: Omit<NotifyInput, 'userId'>): Prom
       .map((userId) => ({ userId, ...input, createdAt: now, readAt: null }));
     if (!docs.length) return;
     await db.collection<NotificationDoc>('notifications').insertMany(docs, { ordered: false });
+    await sendPushToAllExcept(input.actorId, buildPushPayload(input.type, input.target, input.meta));
   } catch (err) {
     await capture(err);
   }
