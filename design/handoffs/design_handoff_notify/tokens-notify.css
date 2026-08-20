@@ -1,0 +1,61 @@
+/* tokens-notify.css · Spec, kein Drop-in — als .nc-*-Regeln in global.css verdrahten (Nested-Island-Regel).
+   Grundfläche = Kiosk-System (paper #f3ead8 · ink #1b1a17 · rule #c9bea3). */
+:root {
+  /* Glocke */
+  --nc-bell-size: 36px;            /* Umriss-Disc, paperWarm #f7f0de, 1.5px Ink-Rand — Geschwister des Avatar-Discs */
+  --nc-bell-glyph: 19px;           /* Umriss-Bell, Ink, strokeWidth 1.7 */
+  --nc-tap-min: 44px;              /* unsichtbarer Hit-Bereich */
+  /* Badge — Wein-Zähler, cap „9+", verschwindet bei 0 (nie „0") */
+  --nc-badge-bg: #b23a5b;
+  --nc-badge-fg: #f3ead8;
+  --nc-badge-border: 1px solid #1b1a17;
+  --nc-badge-minw: 17px;
+  --nc-badge-h: 17px;
+  --nc-badge-font: 9px/1 'DM Mono', monospace;  /* 700 */
+  --nc-badge-offset: -5px -6px;    /* top right, überlappend */
+  /* KEINE Motion an Glocke/Badge — kein Puls, kein Pop, auch beim Eintreffen. */
+
+  /* Panel */
+  --nc-panel-w: 324px;
+  --nc-panel-radius: 12px;
+  --nc-panel-border: 1.5px solid #1b1a17;
+  --nc-panel-shadow: 3px 3px 0 #1b1a17;   /* Druckschatten, kein Blur */
+  --nc-caret: 12px;                /* 45°-Quadrat, zeigt zur Glocke */
+
+  /* Kopf — Mono-Zeile + Ink-Rule, kein Strap */
+  --nc-head-bg: #f7f0de;
+  --nc-head-font: 700 10px 'DM Mono', monospace;  /* letter-spacing 0.16em */
+  --nc-head-new: #b23a5b;          /* „n NEU" — Wein, nur bei n > 0 */
+
+  /* Zeile */
+  --nc-row-pad: 11px 14px 11px 11px;      /* mobil big: 13px 16px 13px 13px */
+  --nc-row-min-mobile: 44px;
+  --nc-glyph-col: 16px;            /* Mono 13 (mobil 15) */
+  --nc-body-size: 12.5px;          /* mobil 13.5 · Bricolage · lh 1.4 */
+  --nc-time-font: 9.5px 'DM Mono', monospace;     /* relativ, beim Öffnen berechnet */
+  --nc-divider: 1px dashed #c9bea3;
+  --nc-hover: #ebe1c7;             /* paperSoft */
+
+  /* Frisch / Gelesen — Kurier-Verblassen */
+  --nc-fresh-edge: 3px solid #1b1a17;     /* INK-Kante, nicht Wein — Wein bleibt beim Badge */
+  --nc-fresh-weight: 600;
+  --nc-read-fg: #7a7264;           /* inkMute, Gewicht 500 */
+  --nc-read-glyph-opacity: 0.45;
+
+  /* Typ-Akzente — NUR auf der Glyphe, Hybrid-Regel */
+  --nc-type-comment: #1b1a17;      /* ✎ Tinte */
+  --nc-type-market: #1b1a17;       /* ⇄ Tinte (NICHT ◈ — das ist „Gespeichert") */
+  --nc-type-moderation: #6f2f59;   /* § Pflaume */
+  --nc-type-official: #3f8f9f;     /* ◉ Teal */
+
+  /* Leere — eine warme Zeile, Instrument Serif kursiv 14.5/1.5, inkSoft, zentriert */
+  --nc-empty-fg: #3a362e;
+
+  /* Fuß-Slot — ab R1 strukturell reserviert (Ink-Rule + paperWarm-Zone), rendert R1 NICHTS */
+  --nc-foot-bg: #f7f0de;
+
+  /* Mobil-Sheet */
+  --nc-sheet-radius: 16px 16px 0 0;
+  --nc-scrim: rgba(27, 26, 23, 0.5);
+  --nc-grabber: 44px;              /* × 4px, ink 25% */
+}

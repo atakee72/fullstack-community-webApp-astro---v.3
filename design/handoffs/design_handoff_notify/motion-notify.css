@@ -1,0 +1,29 @@
+/* motion-notify.css · Das Panel ERBT die Avatar-Menü-Mechanik verbatim — nichts Neues erfinden.
+   VERBOTEN: jede Motion an Glocke oder Badge (kein Puls, kein Pop, kein Shake — auch beim
+   Eintreffen neuer Zähler über das 90s-Polling). Der Zähler selbst ist die Nachricht. */
+
+/* Desktop-Dropdown — Stamp-in 220ms SETTLE, transform-origin oben rechts (zur Glocke) */
+@keyframes ncStampIn {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.nc-panel { animation: ncStampIn 220ms cubic-bezier(.2,.7,.3,1) both; transform-origin: top right; }
+
+/* Mobil-Sheet — von unten, gleiche Kurve, Geschwister der Tour-Sheets */
+@keyframes ncSheetIn {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.nc-sheet { animation: ncSheetIn 220ms cubic-bezier(.2,.7,.3,1) both; }
+
+/* Scrim-Fade */
+@keyframes ncScrimIn { from { opacity: 0; } to { opacity: 1; } }
+.nc-scrim { animation: ncScrimIn 140ms cubic-bezier(.4,0,.2,1) both; }
+
+/* Schließen: kein Exit-Theater — sofort weg (Avatar-Menü-Muster). */
+
+/* Reduced motion: sofort, ohne Stamp-in — Glocke/Badge sind ohnehin statisch.
+   Source-order-Guard wie im Avatar-Menü (Regel NACH den Animationen). */
+@media (prefers-reduced-motion: reduce) {
+  .nc-panel, .nc-sheet, .nc-scrim { animation: none; }
+}

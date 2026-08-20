@@ -8,7 +8,7 @@
 
 **Tech Stack:** MongoDB driver (direct), Astro API routes, Svelte 5 runes, kiosk i18n (`t`/`tStr`), Tailwind + kiosk CSS vars, Sentry.
 
-**Spec:** `docs/superpowers/specs/2026-08-18-notification-center-design.md` — the binding authority. This plan implements its Release 1 only (PWA/push is Release 2, out of scope here).
+**Spec:** `docs/superpowers/specs/2026-08-18-notification-center-design.md` — binding authority for mechanics/data/API. **Visual layer:** `design/handoffs/design_handoff_notify/` (NOTIFY_CC_ANSWERS.md + tokens-notify.css + motion-notify.css + jsx/kiosk-notify.jsx) — CD's handoff, 2026-08-19; where it deviates from this plan's earlier provisional visuals, **the handoff wins**. This plan implements Release 1 only (PWA/push is Release 2). *Revised 2026-08-19 after the CD handoff + the landing release (`/`→`/forum` move).*
 
 ## Global Constraints
 
@@ -21,6 +21,9 @@
 - **Self-notification suppressed** at write time (`actorId === userId` → skip); broadcasts exclude the actor and `anonymized: true` users.
 - **Panel styles live in `src/styles/global.css`** under an `.nc-*` prefix — NEVER in a component `<style>` block (nested-island CSS orphan rule; the components are reachable only through the `KioskNav` island).
 - **Mobile sheet mechanics copied from `AvatarMenu`:** dual html+body scroll-lock with inline-style save/restore; scrim `z-49`; header z-bump to 50 while open; `prefers-reduced-motion` block LAST in the `.nc-*` CSS with the source-order guard comment.
+- **CD visual rules (NOTIFY_CC_ANSWERS, non-negotiable):** NO motion on bell or badge ever — no pulse/pop, also not when the 90s poll raises the count; panel opens with the 220ms stamp-in, **closes INSTANTLY** (no exit fade — CD ruling; deliberate deviation from the avatar menu's 140ms fade); type accents sit ONLY on the glyph (comment ✎ ink, market ⇄ ink — NOT ◈, that glyph means „Gespeichert" in the avatar menu —, moderation § plum, official ◉ teal); fresh rows get a 3px **INK** left edge + weight 600, read rows fade (ink-mute 500, glyph 45% opacity) — wine appears ONLY on the badge and the head's „n NEU" counter; zero unread = NO badge (never „0"); bell = 36px paper-warm outline disc with a ≥44px invisible hit area, sits LEFT of the avatar; foot slot (ink rule + paper-warm zone) is part of the anatomy from R1 but renders nothing; panel 324px desktop.
+- **Copy = CD's NC_L table** (already transcribed into Task 3 Step 1) with per-contentType key variants; German rows use ‚single German quotes', EN uses '…' typographic. **Typographic-quote transcription warning** (landing lesson): the Edit tool may normalize Unicode quotes and silently no-op — after writing the i18n keys, BYTE-VERIFY one German line (`od -c`) and use a python heredoc if Edit misbehaves.
+- **Swipe-down close on the mobile sheet is DEFERRED** (CD listed it; scrim-tap + Escape cover the job in R1 — record as deferred minor in the ledger).
 - **Do not touch port 3000** (user's dev server). Browser checks: port 4655 only after `ss -tlnp | grep 4655` shows it free; tear down by PID if `pkill -f "astro dev --port 4655"` misses.
 - **Test cycle** (no component-test framework): `pnpm type-check 2>&1 | grep -c "error"` must equal the pre-existing baseline (record in Task 1 Step 1) + `pnpm build` green + Task 4 browser verification against the seeded dev DB (`mahalle-dev` — NEVER prod `mahalle`).
 - **Commit style:** simple/concise message, NO AI signature, NO Co-Authored-By footer. Stage only the named files.
@@ -68,7 +71,12 @@ export interface NotificationTarget {
 
 export interface NotificationMeta {
   outcome?: 'approved' | 'warned' | 'rejected';
-  strike?: boolean;
+  /** Strike NUMBER after this rejection (CD copy: „{n}. Verwarnung") — set on rejections only. */
+  strikeCount?: number;
+  /** What was moderated ('topic' | 'comment' | …) — target.contentType can't carry this
+   *  for comments (it points at the PARENT page the row links to). Drives the
+   *  „Beitrag" vs „Kommentar" copy variants. */
+  contentKind?: string;
 }
 
 /** DB shape — one doc per recipient per event. */
@@ -217,7 +225,9 @@ export function moderationTarget(
       return { contentType: 'news', contentId, title, href: '/newsboard' };
     default:
       // 'comment' without a resolvable parent, or anything unknown → forum index
-      return { contentType: 'forum', contentId, title, href: '/' };
+      // (which lives at /forum since the Aug 2026 landing release — '/' is the
+      // public landing and would bounce members through an extra redirect).
+      return { contentType: 'forum', contentId, title, href: '/forum' };
   }
 }
 
@@ -512,8 +522,8 @@ import { notify, commentTarget, moderationTarget } from './notifications';
 
 ```ts
   // Notify the author of the decision — every reviewed item, including clean
-  // approvals (silent rejection was the dark pattern this feature fixes; a
-  // reviewed-and-approved reported item reads as "geprüft und freigegeben").
+  // approvals (silent rejection was the dark pattern this feature fixes; an
+  // approved item reads as „ist veröffentlicht" per the CD copy).
   if (flaggedContent.contentId && flaggedContent.contentType && flaggedContent.authorId) {
     const excerpt = (flaggedContent.title ?? flaggedContent.body ?? '').slice(0, 80);
     const flaggedAny = flaggedContent as any;
@@ -530,13 +540,19 @@ import { notify, commentTarget, moderationTarget } from './notifications';
       target,
       meta: {
         outcome: isRejection ? 'rejected' : hasWarning ? 'warned' : 'approved',
-        ...(isRejection ? { strike: true } : {}),
+        // The moderated thing itself — target.contentType can't carry this for
+        // comments (it points at the parent page). Drives Beitrag/Kommentar copy.
+        contentKind: flaggedContent.contentType,
+        // CD copy renders „{n}. Verwarnung" — the strike NUMBER, not a flag.
+        // newStrikeCount is populated by the strike block above (every
+        // rejection increments strikes, so it is ≥1 here).
+        ...(isRejection ? { strikeCount: newStrikeCount } : {}),
       },
     });
   }
 ```
 
-(No `actorId` — the reviewer stays anonymous; every rejection increments strikes, hence `strike: true` on rejection.)
+(No `actorId` — the reviewer stays anonymous. This block sits AFTER the strike block, so `newStrikeCount` — declared `let newStrikeCount = 0` at the top of the function — is already populated on the rejection path.)
 
 - [ ] **Step 3: Hook — official announcement broadcast**
 
@@ -615,44 +631,58 @@ git commit -m "feat: notification write hooks (comments, moderation, official br
 - Consumes: `GET /api/notifications` (`?count=1` → `{ unreadCount }`; full → `{ items: NotificationItem[], unreadCount }`), `POST /api/notifications/read`; `t`, `tStr` from `src/lib/kiosk-i18n`.
 - Produces: nothing later tasks build on (Task 4 verifies in the browser).
 
-- [ ] **Step 1: Add the i18n keys**
+- [ ] **Step 1: Add the i18n keys (CD's NC_L copy — authoritative)**
 
-In `src/lib/kiosk-i18n.ts`, next to the existing `'nav.menu.*'` keys in the **DE** block (~line 82), add:
+Copy source: the `NC_L` table in `design/handoffs/design_handoff_notify/jsx/kiosk-notify.jsx` + per-contentType variants CD delegated („DE-Artikel je contentType löst ihr als Key-Varianten"). German rows use ‚single German quotes', EN '…' typographic — BYTE-VERIFY after writing (see Global Constraints).
+
+In `src/lib/kiosk-i18n.ts`, in the **DE** block directly after the `'nav.menu.*'` group (~line 88, just before the `'lnd.*'` landing keys), add:
 
 ```ts
   'nav.bell.aria': 'Mitteilungen',
   'nc.title': 'MITTEILUNGEN',
-  'nc.empty': 'Noch nichts — wenn im Kiez etwas für dich passiert, steht es hier.',
+  'nc.neu': 'NEU',
+  'nc.empty': 'Alles gelesen — der Kiez meldet sich, wenn’s was Neues gibt.',
   'nc.error': 'Konnte nicht geladen werden.',
   'nc.tombstone': 'Ehemaliges Mitglied',
-  'nc.row.comment': '{actor} hat auf „{title}" geantwortet',
-  'nc.row.official': 'Offizielle Ankündigung: „{title}"',
-  'nc.row.market_contact': 'Neue Anfrage zu deinem Inserat „{title}"',
-  'nc.row.moderation.approved': 'Dein Beitrag „{title}" wurde geprüft und freigegeben',
-  'nc.row.moderation.warned': 'Dein Beitrag „{title}" wurde freigegeben — mit einem Hinweis versehen',
-  'nc.row.moderation.rejected': 'Dein Beitrag „{title}" wurde abgelehnt',
-  'nc.row.moderation.rejectedStrike': 'Dein Beitrag „{title}" wurde abgelehnt — eine Verwarnung wurde vermerkt',
+  'nc.comment.topic': '{actor} hat auf dein Thema geantwortet: ‚{title}‘',
+  'nc.comment.announcement': '{actor} hat auf deine Ankündigung geantwortet: ‚{title}‘',
+  'nc.comment.recommendation': '{actor} hat auf deine Empfehlung geantwortet: ‚{title}‘',
+  'nc.comment.event': '{actor} hat auf deinen Termin geantwortet: ‚{title}‘',
+  'nc.market': 'Neue Anfrage zu deinem Angebot ‚{title}‘',
+  'nc.official': 'Amtliche Mitteilung: {title}',
+  'nc.mod.approved': 'Dein Beitrag ‚{title}‘ ist veröffentlicht',
+  'nc.mod.approvedComment': 'Dein Kommentar ist veröffentlicht',
+  'nc.mod.warned': 'Dein Beitrag ‚{title}‘ ist veröffentlicht — mit Hinweis. Details in deinem Profil',
+  'nc.mod.warnedComment': 'Dein Kommentar ist veröffentlicht — mit Hinweis. Details in deinem Profil',
+  'nc.mod.rejected': 'Dein Beitrag wurde abgelehnt — {n}. Verwarnung. Details in deinem Profil',
+  'nc.mod.rejectedComment': 'Dein Kommentar wurde abgelehnt — {n}. Verwarnung. Details in deinem Profil',
   'nc.time.now': 'jetzt',
   'nc.time.m': 'vor {n} Min.',
   'nc.time.h': 'vor {n} Std.',
   'nc.time.d': 'vor {n} Tg.',
 ```
 
-And next to `'nav.menu.*'` in the **EN** block (~line 1869), add:
+And in the **EN** block directly after the `'nav.menu.*'` group (~line 1919, just before the `'lnd.*'` keys), add:
 
 ```ts
   'nav.bell.aria': 'Notifications',
   'nc.title': 'NOTIFICATIONS',
-  'nc.empty': 'Nothing yet — when something happens for you in the Kiez, it shows up here.',
+  'nc.neu': 'NEW',
+  'nc.empty': 'All caught up — the kiez will let you know when there’s news.',
   'nc.error': 'Could not load.',
   'nc.tombstone': 'Former member',
-  'nc.row.comment': '{actor} replied to "{title}"',
-  'nc.row.official': 'Official announcement: "{title}"',
-  'nc.row.market_contact': 'New inquiry about your listing "{title}"',
-  'nc.row.moderation.approved': 'Your post "{title}" was reviewed and approved',
-  'nc.row.moderation.warned': 'Your post "{title}" was approved — with a notice attached',
-  'nc.row.moderation.rejected': 'Your post "{title}" was rejected',
-  'nc.row.moderation.rejectedStrike': 'Your post "{title}" was rejected — a strike was recorded',
+  'nc.comment.topic': '{actor} replied to your topic ‘{title}’',
+  'nc.comment.announcement': '{actor} replied to your announcement ‘{title}’',
+  'nc.comment.recommendation': '{actor} replied to your recommendation ‘{title}’',
+  'nc.comment.event': '{actor} replied to your event ‘{title}’',
+  'nc.market': 'New inquiry about your listing ‘{title}’',
+  'nc.official': 'Official notice: {title}',
+  'nc.mod.approved': 'Your post ‘{title}’ is published',
+  'nc.mod.approvedComment': 'Your comment is published',
+  'nc.mod.warned': 'Your post ‘{title}’ is published — with a note. Details in your profile',
+  'nc.mod.warnedComment': 'Your comment is published — with a note. Details in your profile',
+  'nc.mod.rejected': 'Your post was rejected — warning no. {n}. Details in your profile',
+  'nc.mod.rejectedComment': 'Your comment was rejected — warning no. {n}. Details in your profile',
   'nc.time.now': 'now',
   'nc.time.m': '{n} min ago',
   'nc.time.h': '{n} h ago',
@@ -718,6 +748,9 @@ And next to `'nav.menu.*'` in the **EN** block (~line 1869), add:
 </script>
 
 <div class="relative">
+  <!-- CD: 36px paper-warm outline disc (sibling of the avatar disc) inside a
+       44px invisible hit area; badge = wine counter, NO badge at zero, NO
+       motion ever (not even on count arrival). Glyph path from kiosk-notify.jsx. -->
   <button
     bind:this={bellEl}
     type="button"
@@ -725,15 +758,17 @@ And next to `'nav.menu.*'` in the **EN** block (~line 1869), add:
     aria-haspopup="dialog"
     aria-expanded={open}
     aria-label={$t['nav.bell.aria']}
-    class="relative w-9 h-9 rounded-full border-2 border-ink flex items-center justify-center bg-transparent text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
+    class="nc-bell"
   >
-    <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M6 9a6 6 0 0 1 12 0c0 5 1.8 6.5 1.8 6.5H4.2S6 14 6 9" />
-      <path d="M10.3 19.5a2 2 0 0 0 3.4 0" />
-    </svg>
-    {#if unreadCount > 0}
-      <span class="nc-badge font-dmmono">{unreadCount > 9 ? '9+' : unreadCount}</span>
-    {/if}
+    <span class="nc-bell-disc">
+      <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 4.4c-3.3 0-4.9 2.5-4.9 5.9v3.5L5.3 16.1h13.4l-1.8-2.3v-3.5c0-3.4-1.6-5.9-4.9-5.9z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+        <path d="M9.7 18.6a2.3 2.3 0 004.6 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+      </svg>
+      {#if unreadCount > 0}
+        <span class="nc-badge font-dmmono">{unreadCount > 9 ? '9+' : unreadCount}</span>
+      {/if}
+    </span>
   </button>
   {#if open}
     <NotificationPanel onClose={closePanel} />
@@ -750,9 +785,9 @@ And next to `'nav.menu.*'` in the **EN** block (~line 1869), add:
 ```svelte
 <script lang="ts">
   // Notification list panel — desktop dropdown / mobile bottom sheet.
-  // Structural sibling of AvatarMenu.svelte: same close semantics (140ms
-  // fade, instant under reduced motion), outside-click a tick late,
-  // Escape, and the dual html+body scroll-lock on mobile.
+  // Structural sibling of AvatarMenu.svelte (outside-click a tick late,
+  // Escape, dual html+body scroll-lock on mobile) with ONE deliberate
+  // deviation per CD's motion spec: close is INSTANT — no 140ms exit fade.
   import { t, tStr } from '../../../lib/kiosk-i18n';
   import type { NotificationItem } from '../../../types/notification';
 
@@ -762,6 +797,9 @@ And next to `'nav.menu.*'` in the **EN** block (~line 1869), add:
   let failed = $state(false);
   // Ids that were unread at fetch time — POST /read marks them server-side,
   // but this session still renders them as fresh so nothing feels swallowed.
+  // Also feeds the head's „n NEU" counter; capped at the 30-item list by
+  // design (the bell badge shows the TRUE unread count — beyond 30 unread
+  // the two can differ; deliberate, don't "sync" them).
   let freshIds = $state<Set<string>>(new Set());
 
   $effect(() => {
@@ -785,19 +823,12 @@ And next to `'nav.menu.*'` in the **EN** block (~line 1869), add:
     };
   });
 
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let closing = $state(false);
   let menuEl = $state<HTMLElement | null>(null);
 
+  // CD motion spec: „Schließen: kein Exit-Theater — sofort weg."
   function close(fromEscape = false) {
-    if (closing) return;
     const restoreFocus = fromEscape || (menuEl?.contains(document.activeElement) ?? false);
-    if (reduced) {
-      onClose(restoreFocus);
-      return;
-    }
-    closing = true;
-    setTimeout(() => onClose(restoreFocus), 140);
+    onClose(restoreFocus);
   }
 
   function onDocPointerDown(e: PointerEvent) {
@@ -835,33 +866,39 @@ And next to `'nav.menu.*'` in the **EN** block (~line 1869), add:
     };
   });
 
-  const ICON: Record<string, string> = {
-    comment: '✎',
-    moderation: '§',
-    official: '◉',
-    market_contact: '◈',
+  // CD hybrid rule: accents ONLY on the glyph, only where the SYSTEM speaks.
+  // ⇄ for market — NOT ◈, which means „Gespeichert" in the avatar menu.
+  const GLYPH: Record<string, { g: string; c: string }> = {
+    comment: { g: '✎', c: 'var(--k-ink)' },
+    market_contact: { g: '⇄', c: 'var(--k-ink)' },
+    moderation: { g: '§', c: 'var(--k-plum, #6f2f59)' },
+    official: { g: '◉', c: 'var(--k-teal, #3f8f9f)' },
   };
 
   function rowText(it: NotificationItem): string {
     const title = it.target?.title || '…';
-    const actor = it.actorName ?? $t['nc.tombstone'];
     switch (it.type) {
-      case 'comment':
-        return tStr($t['nc.row.comment'], { actor, title });
+      case 'comment': {
+        const actor = it.actorName ?? $t['nc.tombstone'];
+        // Per-contentType variants (CD: „DE-Artikel je contentType als Key-Varianten").
+        const key = `nc.comment.${it.target?.contentType}`;
+        return tStr($t[key] ?? $t['nc.comment.topic'], { actor, title });
+      }
       case 'official':
-        return tStr($t['nc.row.official'], { title });
+        return tStr($t['nc.official'], { title });
       case 'market_contact':
-        return tStr($t['nc.row.market_contact'], { title });
+        return tStr($t['nc.market'], { title });
       case 'moderation': {
+        const isComment = it.meta?.contentKind === 'comment';
         const o = it.meta?.outcome;
         if (o === 'rejected') {
-          return tStr(
-            $t[it.meta?.strike ? 'nc.row.moderation.rejectedStrike' : 'nc.row.moderation.rejected'],
-            { title },
-          );
+          const n = String(it.meta?.strikeCount ?? 1);
+          return tStr($t[isComment ? 'nc.mod.rejectedComment' : 'nc.mod.rejected'], { n });
         }
-        if (o === 'warned') return tStr($t['nc.row.moderation.warned'], { title });
-        return tStr($t['nc.row.moderation.approved'], { title });
+        if (o === 'warned') {
+          return isComment ? $t['nc.mod.warnedComment'] : tStr($t['nc.mod.warned'], { title });
+        }
+        return isComment ? $t['nc.mod.approvedComment'] : tStr($t['nc.mod.approved'], { title });
       }
       default:
         return title;
@@ -878,11 +915,17 @@ And next to `'nav.menu.*'` in the **EN** block (~line 1869), add:
   }
 </script>
 
-<div class="nc-scrim" class:nc-closing={closing} aria-hidden="true"></div>
-<div bind:this={menuEl} class="nc-menu" class:nc-closing={closing} role="dialog" aria-label={$t['nc.title']}>
+<div class="nc-scrim" aria-hidden="true"></div>
+<div bind:this={menuEl} class="nc-menu" role="dialog" aria-label={$t['nc.title']}>
   <div class="nc-caret"></div>
   <div class="nc-card">
-    <div class="nc-head font-dmmono">{$t['nc.title']}</div>
+    <div class="nc-grabber" aria-hidden="true"></div>
+    <div class="nc-head">
+      <span class="nc-head-title font-dmmono">{$t['nc.title']}</span>
+      {#if freshIds.size > 0}
+        <span class="nc-head-neu font-dmmono">{freshIds.size} {$t['nc.neu']}</span>
+      {/if}
+    </div>
     {#if failed}
       <div class="nc-empty font-instrument">{$t['nc.error']}</div>
     {:else if items === null}
@@ -892,14 +935,17 @@ And next to `'nav.menu.*'` in the **EN** block (~line 1869), add:
     {:else}
       <div class="nc-list">
         {#each items as it (it.id)}
-          <a href={it.target?.href || '/'} class="nc-row" class:nc-fresh={freshIds.has(it.id)}>
-            <span class="nc-icon font-dmmono" aria-hidden="true">{ICON[it.type] ?? '•'}</span>
+          <a href={it.target?.href || '/forum'} class="nc-row" class:nc-fresh={freshIds.has(it.id)}>
+            <span class="nc-glyph font-dmmono" style="color: {GLYPH[it.type]?.c ?? 'var(--k-ink)'}" aria-hidden="true">{GLYPH[it.type]?.g ?? '•'}</span>
             <span class="nc-text font-bricolage">{rowText(it)}</span>
             <span class="nc-time font-dmmono">{relTime(it.createdAt)}</span>
           </a>
         {/each}
       </div>
     {/if}
+    <!-- Foot slot: part of the anatomy from R1, renders NOTHING (CD §6) —
+         R2's push opt-in moves in here without head/rows shifting. -->
+    <div class="nc-foot" aria-hidden="true"></div>
   </div>
 </div>
 
@@ -942,48 +988,76 @@ Insert directly AFTER the `.am-*` block's closing reduced-motion rules (after th
 /* ─── Notification bell + panel (KioskNav) ─────────────────────────────
    Same escape hatch as .am-*: NotificationBell/NotificationPanel are
    reachable only through the KioskNav island, so component <style> would
-   be orphaned in prod builds. Structure mirrors the avatar menu. */
+   be orphaned in prod builds. Visual values from CD's handoff
+   (design_handoff_notify/tokens-notify.css). NO motion on bell or badge,
+   ever; close is INSTANT (CD ruling — no .nc-closing state exists). */
+.nc-bell {
+  position: relative; width: 44px; height: 44px; /* invisible ≥44px hit area */
+  /* Negative margin keeps the LAYOUT box at 36px (the hit area overlaps the
+     header's padding) — without it the 44px button out-grows the 40px brand
+     disc and stretches the sticky header by 4px on every page. */
+  margin: -4px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; padding: 0; cursor: pointer; color: var(--k-ink);
+}
+.nc-bell-disc {
+  position: relative; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--k-paper-warm); border: 1.5px solid var(--k-ink);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 180ms ease-out; /* hover feedback only — sibling of the avatar disc */
+}
+.nc-bell:hover .nc-bell-disc, .nc-bell:focus-visible .nc-bell-disc { transform: scale(1.05); }
+.nc-bell:focus-visible { outline: none; }
 .nc-badge {
-  position: absolute; top: -4px; right: -4px;
-  min-width: 16px; height: 16px; padding: 0 3px;
+  position: absolute; top: -5px; right: -6px;
+  min-width: 17px; height: 17px; padding: 0 4px; box-sizing: border-box;
   border-radius: 9999px; background: var(--k-wine); color: var(--k-paper);
-  font-size: 9px; font-weight: 700; line-height: 13px; text-align: center;
-  border: 1.5px solid var(--k-paper);
+  font-size: 9px; font-weight: 700; line-height: 15px; text-align: center;
+  border: 1px solid var(--k-ink);
 }
 .nc-menu {
-  position: absolute; top: calc(100% + 10px); right: 0; width: 300px; z-index: 50;
+  position: absolute; top: calc(100% + 10px); right: 0; width: 324px; z-index: 50;
   transform-origin: top right;
   animation: amStampIn 220ms cubic-bezier(0.2, 0.7, 0.3, 1);
 }
-.nc-menu.nc-closing { animation: none; transition: opacity 140ms cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; }
 .nc-caret {
   position: absolute; top: -7px; right: 16px; width: 12px; height: 12px;
-  background: var(--k-paper); border: 1.5px solid var(--k-ink);
+  background: var(--k-paper-warm); border: 1.5px solid var(--k-ink);
   border-right: none; border-bottom: none; transform: rotate(45deg);
 }
 .nc-card {
   background: var(--k-paper); border: 1.5px solid var(--k-ink);
-  border-radius: var(--k-radius-md); box-shadow: 3px 3px 0 var(--k-ink);
+  border-radius: 12px; box-shadow: 3px 3px 0 var(--k-ink);
   overflow: hidden; position: relative;
 }
+.nc-grabber { display: none; } /* mobile-only, see media block */
 .nc-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
   padding: 10px 14px; border-bottom: 1.5px solid var(--k-ink);
-  background: var(--k-paper-warm); font-size: 10px; font-weight: 700;
-  letter-spacing: 0.14em; color: var(--k-ink);
+  background: var(--k-paper-warm);
 }
+.nc-head-title { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; color: var(--k-ink); }
+.nc-head-neu { font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; color: var(--k-wine); }
 .nc-list { max-height: 60vh; overflow-y: auto; }
-.nc-empty { padding: 18px 14px; font-size: 13px; font-style: italic; color: var(--k-ink-mute); }
+.nc-empty { padding: 18px 16px; font-size: 14.5px; line-height: 1.5; font-style: italic; color: var(--k-ink-soft); text-align: center; }
 .nc-row {
   display: flex; align-items: baseline; gap: 8px;
-  padding: 10px 14px; text-decoration: none; cursor: pointer;
+  padding: 11px 14px 11px 11px; text-decoration: none; cursor: pointer;
   border-bottom: 1px dashed var(--k-rule);
+  border-left: 3px solid transparent; /* fresh edge slot — keeps text aligned */
 }
 .nc-row:last-child { border-bottom: none; }
 .nc-row:hover, .nc-row:focus-visible { background: var(--k-paper-soft); outline: none; }
-.nc-row.nc-fresh { border-left: 3px solid var(--k-wine); padding-left: 11px; }
-.nc-icon { font-size: 12px; color: var(--k-ink-mute); flex-shrink: 0; }
-.nc-text { font-size: 12.5px; font-weight: 500; line-height: 1.4; color: var(--k-ink); flex: 1; }
-.nc-time { font-size: 9px; color: var(--k-ink-mute); letter-spacing: 0.06em; flex-shrink: 0; }
+.nc-glyph { width: 16px; font-size: 13px; flex-shrink: 0; opacity: 0.45; } /* read default */
+.nc-text { font-size: 12.5px; font-weight: 500; line-height: 1.4; color: var(--k-ink-mute); flex: 1; } /* read default */
+.nc-time { font-size: 9.5px; color: var(--k-ink-mute); letter-spacing: 0.06em; flex-shrink: 0; }
+/* Kurier-Verblassen: fresh = full ink 600 + 3px INK edge (wine stays on
+   badge + „n NEU" only); read = the muted defaults above. */
+.nc-row.nc-fresh { border-left-color: var(--k-ink); }
+.nc-row.nc-fresh .nc-glyph { opacity: 1; }
+.nc-row.nc-fresh .nc-text { color: var(--k-ink); font-weight: 600; }
+/* Foot slot — anatomy from R1, renders nothing (R2: push opt-in). */
+.nc-foot { border-top: 1.5px solid var(--k-ink); background: var(--k-paper-warm); height: 10px; }
 
 /* Scrim behind the mobile bottom sheet (hidden on desktop — dropdown has
    no scrim by design, matching the avatar menu). */
@@ -991,10 +1065,9 @@ Insert directly AFTER the `.am-*` block's closing reduced-motion rules (after th
 @media (max-width: 1023px) {
   .nc-scrim {
     display: block; position: fixed; inset: 0; z-index: 49;
-    background: rgba(27, 26, 23, 0.45);
+    background: rgba(27, 26, 23, 0.5);
     animation: amScrimIn 180ms ease-out;
   }
-  .nc-scrim.nc-closing { animation: none; transition: opacity 140ms ease-out; opacity: 0; }
 
   /* Bottom sheet: same DOM as the dropdown, repositioned. */
   .nc-menu {
@@ -1004,30 +1077,36 @@ Insert directly AFTER the `.am-*` block's closing reduced-motion rules (after th
   }
   .nc-caret { display: none; }
   .nc-card {
-    border-radius: var(--k-radius-md) var(--k-radius-md) 0 0;
+    border-radius: 16px 16px 0 0;
     border-bottom: none; box-shadow: 0 -3px 0 var(--k-ink);
     max-height: 80vh; overflow-y: auto;
     padding-bottom: env(safe-area-inset-bottom, 0px);
     max-width: 28rem; margin-inline: auto;
   }
+  .nc-grabber {
+    display: block; width: 44px; height: 4px; border-radius: 999px;
+    background: color-mix(in srgb, var(--k-ink) 25%, transparent);
+    margin: 8px auto 0;
+  }
   .nc-list { max-height: none; }
-  .nc-row { min-height: 44px; }
+  .nc-row { min-height: 44px; padding: 13px 16px 13px 13px; }
+  .nc-glyph { font-size: 15px; }
+  .nc-text { font-size: 13.5px; }
 }
 
 /* MUST stay AFTER the max-width:1023px block above and remain the LAST
-   .nc-* animation/transition rules in this file — media queries add no
-   specificity, so source order is the ONLY thing letting `none` beat the
-   mobile `animation: amSheetIn`. Reordering silently re-enables motion
-   for prefers-reduced-motion users. */
+   .nc-* animation rules in this file — media queries add no specificity,
+   so source order is the ONLY thing letting `none` beat the mobile
+   `animation: amSheetIn`. Reordering silently re-enables motion for
+   prefers-reduced-motion users. */
 @media (prefers-reduced-motion: reduce) {
   .nc-menu { animation: none; }
-  .nc-menu.nc-closing { transition: none; }
   .nc-scrim { animation: none; }
-  .nc-scrim.nc-closing { transition: none; }
+  .nc-bell-disc { transition: none; }
 }
 ```
 
-(The keyframes `amStampIn`, `amSheetIn`, `amScrimIn` are reused from the `.am-*` block — do not redefine them.)
+(The keyframes `amStampIn`, `amSheetIn`, `amScrimIn` are reused from the `.am-*` block — CD's `ncStampIn`/`ncSheetIn`/`ncScrimIn` in motion-notify.css have identical values, so do not redefine them.)
 
 - [ ] **Step 6: Verify**
 
@@ -1065,19 +1144,19 @@ Run: `npx tsx scripts/seed-dev-db.ts` — it targets `mahalle-dev` (interlock re
 
 playwright-cli flow:
 1. Open `http://localhost:4655/login`, log in as `ayse@mahalle-dev.test`.
-2. Open a forum topic authored by `admin` (seeded data has admin-authored topics; pick one on `/`), post a comment ("Schöner Beitrag!").
+2. Open a forum topic authored by `admin` (seeded data has admin-authored topics; pick one on `/forum`), post a comment ("Schöner Beitrag!").
 3. Log out (avatar menu → Abmelden), log in as `admin@mahalle-dev.test`.
-4. Expect: bell in the nav shows a badge (≥1). Click the bell → panel opens with a row "Ayşe … hat auf „<topic title>" geantwortet" + relative time. (If moderation flagged the comment as pending, it notifies only after review — post a blander comment or approve it via `/admin/moderation`, then recheck.)
-5. Click elsewhere (outside-click closes), reopen → badge is gone (marked read), row no longer shows the fresh left-border.
-6. Click the row → navigates to the topic detail page.
+4. Expect: bell disc (paper-warm, LEFT of the avatar) shows the wine counter badge (≥1). Click the bell → panel opens with head „MITTEILUNGEN" + wine „n NEU" counter, and a fresh row (ink left edge, full-ink text, ✎ glyph): „Ayşe hat auf dein Thema geantwortet: ‚<topic title>‘" + relative time. (If moderation flagged the comment as pending, it notifies only after review — post a blander comment or approve it via `/admin/moderation`, then recheck.)
+5. Click elsewhere (outside-click closes INSTANTLY — no exit fade), reopen → badge gone (marked read), „n NEU" gone, row now renders in the read state (muted text, glyph at reduced opacity, no ink edge).
+6. Click the row → navigates to the topic detail page. Also confirm the empty foot zone renders (thin paper-warm band under an ink rule).
 
 - [ ] **Step 4: Broadcast + badge polling check**
 
-Still as admin: go to `/admin/announcements`, publish a short official announcement. Log out, log in as `ayse@mahalle-dev.test`: bell badge ≥1, panel shows "Offizielle Ankündigung: „<title>"", row links to `/announcements/<id>`. Confirm admin's own panel does NOT contain the broadcast (actor excluded).
+Still as admin: go to `/admin/announcements`, publish a short official announcement. Log out, log in as `ayse@mahalle-dev.test`: bell badge ≥1, panel shows „Amtliche Mitteilung: <title>" with a TEAL ◉ glyph, row links to `/announcements/<id>`. Confirm admin's own panel does NOT contain the broadcast (actor excluded). If a moderation notification is present from Step 3's review, confirm its § glyph renders PLUM.
 
 - [ ] **Step 5: Mobile sheet spot-check (390×844)**
 
-As ayse with the panel open: sheet rises from the bottom, scrim covers the page, bottom nav is covered/darkened (not tappable above the scrim), page behind does not scroll while open (actually attempt to scroll — scrollY must not move), body scroll restores on close. Toggle EN via the locale pill: panel copy switches ("Official announcement: …").
+As ayse with the panel open: sheet rises from the bottom (16px top radius, grabber visible), scrim (ink 0.5) covers the page, bottom nav is covered/darkened (not tappable above the scrim), page behind does not scroll while open (actually attempt to scroll — scrollY must not move), body scroll restores on close, rows ≥44px tall. Toggle EN via the locale pill: panel copy switches ("Official notice: …"). With everything read: empty state shows „Alles gelesen — der Kiez meldet sich, wenn's was Neues gibt." (serif italic, centered) and NO badge on the bell.
 
 - [ ] **Step 6: Teardown**
 
@@ -1089,7 +1168,7 @@ As ayse with the panel open: sheet rises from the bottom, scrim covers the page,
 ```markdown
 - `notifications` - In-app notification center docs, one per recipient per event (`{ userId, type: 'comment'|'moderation'|'official'|'market_contact', actorId?, target: { contentType, contentId, title, href }, meta?, createdAt, readAt }`). Fan-out on write (broadcasts insertMany one doc per member); actor names are a read-time join, never stored; no rendered copy stored (client renders DE/EN from kiosk-i18n by type). Real Mongo TTL index on `createdAt` (90d) + `{userId, createdAt}` compound (`scripts/create-notification-indexes.ts`). Write helpers in `src/lib/notifications.ts` are never-throw (Sentry capture + flush). See `src/components/forum/kiosk/CLAUDE.md` "Notification bell + panel".
 ```
-2. `src/components/forum/kiosk/CLAUDE.md` — add a "### Notification bell + panel" section after the avatar-menu section covering: bell in KioskNav's right cluster (logged-in only) with 90s visible-tab count polling (`?count=1`); panel = structural sibling of AvatarMenu (same close semantics, outside-click a tick late, Escape, dual html+body scroll-lock on mobile, header z-50 bump via `bellOpen`, styles in `global.css` `.nc-*` — orphan rule); open marks all read (`POST /api/notifications/read`) while `freshIds` keeps this session's unread rows visually fresh; mutual exclusion with the avatar menu is free via each other's outside-click handlers; copy rendered client-side from `nc.*` i18n keys so the locale toggle works retroactively; write side + hooks documented in root CLAUDE.md + spec (`docs/superpowers/specs/2026-08-18-notification-center-design.md`).
+2. `src/components/forum/kiosk/CLAUDE.md` — add a "### Notification bell + panel" section after the avatar-menu section covering: bell in KioskNav's right cluster left of the avatar (logged-in only) with 90s visible-tab count polling (`?count=1`); panel = structural sibling of AvatarMenu (outside-click a tick late, Escape, dual html+body scroll-lock on mobile, header z-50 bump via `bellOpen`, styles in `global.css` `.nc-*` — orphan rule) with ONE deliberate deviation: close is INSTANT, no exit fade (CD ruling); visual layer from `design/handoffs/design_handoff_notify/` (hybrid glyph accents — § plum / ◉ teal, ⇄ not ◈; ink fresh-edge, Kurier-Verblassen read state; NO motion on bell/badge ever; foot slot reserved for R2 push opt-in); open marks all read (`POST /api/notifications/read`) while `freshIds` keeps this session's unread rows visually fresh + feeds the head's „n NEU" counter; mutual exclusion with the avatar menu is free via each other's outside-click handlers; copy rendered client-side from `nc.*` i18n keys (CD's NC_L copy, per-contentType variants) so the locale toggle works retroactively; deferred: swipe-down close on the sheet; write side + hooks documented in root CLAUDE.md + spec (`docs/superpowers/specs/2026-08-18-notification-center-design.md`).
 
 - [ ] **Step 8: Commit**
 
