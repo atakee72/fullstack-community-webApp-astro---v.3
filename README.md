@@ -205,7 +205,7 @@ Production (`mahalle`) and development (`mahalle-dev`) are separate databases on
 - **Onboarding tour („Die Führung")**: spotlight tour in seven per-surface chapters (Forum → Kalender → Marktplatz → Kurier → Kiez-Daten → Blog → Profil, 32 stops total) with ochre chrome, per-chapter seen-stamps on the user doc, and a „Hallo Kiez" post template handoff at the forum chapter's end
 - **Error monitoring**: Sentry (errors-only, EU region, GDPR-conscious: no PII, no replay/tracing) with silent-degradation alerts for swallowed provider failures and an admin errors widget on `/admin/moderation`
 - **Forum post images**: Up to 5 images per post (topics, announcements, recommendations) with Cloudinary upload, GPT-4o vision moderation, and scroll-snap carousel with arrow nav in the detail modal.
-- **Notification center** (Aug 2026, R1): bell + panel in the kiosk nav — neighbors get notified about replies to their posts, moderation decisions (incl. strike number), official announcements (broadcast), and marketplace inquiries. Fan-out on write into a `notifications` collection (90d TTL), read-time actor-name join (deletion-safe), copy rendered client-side from i18n (locale toggle works retroactively), 90s visible-tab polling. R2 (PWA shell + web push) planned separately.
+- **Notification center** (Aug 2026, R1 + R2): bell + panel in the kiosk nav — neighbors get notified about replies to their posts, moderation decisions (incl. strike number), official announcements (broadcast), and marketplace inquiries. Fan-out on write into a `notifications` collection (90d TTL), read-time actor-name join (deletion-safe), copy rendered client-side from i18n (locale toggle works retroactively), 90s visible-tab polling — plus optional web push (PWA — install Mahalle to the home screen on iOS) via a push-only service worker, no offline caching.
 - **Forum bookmarks**: Save/bookmark posts with server-side persistence (`savedPosts` collection) and optimistic UI updates. Same pattern for saved events (`savedEvents`).
 - **Forum search & tag filtering**: Client-side filtering by title, body, author name, and tags. Clickable tag pills set the search value.
 - **Splash screen**: One-per-session logo video intro (compressed to ~56 KB H.264). Skips on sub-pages, reduced-motion users, and subsequent visits. Dual-gate dismiss (video end + `window.load`) with 4s safety timeout and autoplay-blocked fallback for mobile Firefox.
@@ -411,6 +411,8 @@ Required environment variables:
 - `MSS_PERIOD` - MSS report period, e.g. "2023" (optional, sync script)
 - `MSS_SDI_URL` - MSS SDI XLSX URL (optional, sync script)
 - `MSS_BEZIRKE_XLSX_URL` - MSS Bezirke-level XLSX for the Berlin-Vergleich reference import (optional, sync script)
+- `VAPID_PRIVATE_KEY` - Web push VAPID private key, server-secret (optional; unset ⇒ push no-ops silently)
+- `PUBLIC_VAPID_PUBLIC_KEY` - Web push VAPID public key, ships to the client bundle (optional, pairs with `VAPID_PRIVATE_KEY`)
 
 ## 🐛 Debugging
 

@@ -82,10 +82,11 @@ paths were dead because the compute lived in onMount.)
 
 ### Notification bell + panel
 - Bell lives in `KioskNav`'s right cluster, left of the avatar (logged-in only), with 90s visible-tab count polling (`?count=1`). Panel is a structural sibling of `AvatarMenu` (outside-click a tick late, `Escape`, dual `html`+`body` scroll-lock on mobile, header z-50 bump via `bellOpen`, styles in `global.css` `.nc-*` — orphan rule) with ONE deliberate deviation: close is INSTANT, no exit fade (CD ruling).
-- Visual layer from `design/handoffs/design_handoff_notify/` (hybrid glyph accents — § plum / ◉ teal, ⇄ not ◈; ink fresh-edge, Kurier-Verblassen read state; NO motion on bell/badge ever; foot slot reserved for R2 push opt-in).
+- Visual layer from `design/handoffs/design_handoff_notify/` (hybrid glyph accents — § plum / ◉ teal, ⇄ not ◈; ink fresh-edge, Kurier-Verblassen read state; NO motion on bell/badge ever).
 - Open marks all read (`POST /api/notifications/read`) while `freshIds` keeps this session's unread rows visually fresh + feeds the head's „n NEU" counter.
 - Mutual exclusion with the avatar menu is free via each other's outside-click handlers.
 - Copy rendered client-side from `nc.*` i18n keys (CD's NC_L copy, per-contentType variants) so the locale toggle works retroactively.
+- **Foot slot hosts the push opt-in (R2, Aug 2026)**: drives through `src/lib/pushClient.ts`, five states — `hidden` (unsupported browser/no secure context), `ready` (not yet subscribed), `subscribed` (row exists in `pushSubscriptions`), `denied` (permission previously refused — no re-prompt, just copy pointing at browser settings), `ios-install` (Safari on iOS before the PWA is installed to the home screen — push requires the installed app, not the browser tab). Subscribe/unsubscribe failures surface via `showError` (`src/utils/toast.ts`), never a silent no-op.
 - Deferred: swipe-down close on the sheet.
 - Write side + hooks documented in root CLAUDE.md + spec (`docs/superpowers/specs/2026-08-18-notification-center-design.md`).
 
