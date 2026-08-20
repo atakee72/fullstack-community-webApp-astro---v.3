@@ -971,6 +971,33 @@ option:disabled {
 /* Foot slot — anatomy from R1, renders nothing (R2: push opt-in). */
 .nc-foot { border-top: 1.5px solid var(--k-ink); background: var(--k-paper-warm); height: 10px; }
 
+/* Foot slot with live content (R2 push opt-in). Base .nc-foot stays the
+   empty 10px strip for unsupported browsers. */
+.nc-foot--live {
+  height: auto; min-height: 0;
+  padding: 10px 14px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.nc-push-btn {
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--k-ink); background: var(--k-paper);
+  border: 1.5px solid var(--k-ink); border-radius: 8px;
+  padding: 6px 10px; cursor: pointer;
+  box-shadow: 2px 2px 0 var(--k-ochre, #e8a53a);
+}
+.nc-push-btn:disabled { opacity: 0.5; cursor: default; }
+.nc-push-link {
+  font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--k-wine, #b23a5b); background: none; border: none;
+  padding: 4px; cursor: pointer; text-decoration: underline;
+  text-underline-offset: 2px; white-space: nowrap;
+}
+.nc-push-link:disabled { opacity: 0.5; cursor: default; }
+.nc-push-note {
+  font-size: 12px; font-style: italic; color: var(--k-ink-mute, #7a7264);
+  line-height: 1.35;
+}
+
 /* Scrim behind the mobile bottom sheet (hidden on desktop — dropdown has
    no scrim by design, matching the avatar menu). */
 .nc-scrim { display: none; }

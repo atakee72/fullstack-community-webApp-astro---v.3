@@ -109,6 +109,12 @@ const de = {
   'nc.time.m': 'vor {n} Min.',
   'nc.time.h': 'vor {n} Std.',
   'nc.time.d': 'vor {n} Tg.',
+  'nc.push.enable': 'Push-Mitteilungen aktivieren',
+  'nc.push.active': 'Push aktiv auf diesem Gerät',
+  'nc.push.disable': 'deaktivieren',
+  'nc.push.denied': 'Push ist im Browser blockiert — in den Website-Einstellungen freigeben.',
+  'nc.push.ios': 'Für Push: „Teilen → Zum Home-Bildschirm“, dann hier aktivieren.',
+  'nc.push.error': 'Push konnte nicht aktiviert werden.',
 
 
   // Landing („Das Schaufenster")
@@ -1965,6 +1971,12 @@ const en: Dict = {
   'nc.time.m': '{n} min ago',
   'nc.time.h': '{n} h ago',
   'nc.time.d': '{n} d ago',
+  'nc.push.enable': 'Enable push notifications',
+  'nc.push.active': 'Push active on this device',
+  'nc.push.disable': 'disable',
+  'nc.push.denied': 'Push is blocked in your browser — allow it in the site settings.',
+  'nc.push.ios': 'For push: “Share → Add to Home Screen”, then enable it here.',
+  'nc.push.error': 'Could not enable push.',
 
 
   // Landing ("The shop window")

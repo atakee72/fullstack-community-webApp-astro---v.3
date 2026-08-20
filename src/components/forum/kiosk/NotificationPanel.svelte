@@ -5,8 +5,39 @@
   // deviation per CD's motion spec: close is INSTANT — no 140ms exit fade.
   import { t, tStr } from '../../../lib/kiosk-i18n';
   import type { NotificationItem } from '../../../types/notification';
+  import { detectPushState, subscribeToPush, unsubscribeFromPush, type PushUiState } from '../../../lib/pushClient';
+  import { showError } from '../../../utils/toast';
 
   let { onClose } = $props<{ onClose: (restoreFocus: boolean) => void }>();
+
+  let pushState = $state<PushUiState>('hidden');
+  let pushBusy = $state(false);
+
+  $effect(() => {
+    detectPushState().then((s) => (pushState = s));
+  });
+
+  async function enablePush() {
+    if (pushBusy) return;
+    pushBusy = true;
+    const ok = await subscribeToPush();
+    pushBusy = false;
+    if (ok) {
+      pushState = 'subscribed';
+    } else {
+      // Denied-during-prompt lands here too — re-detect to show the right state.
+      pushState = await detectPushState();
+      if (pushState !== 'denied') showError($t['nc.push.error']);
+    }
+  }
+
+  async function disablePush() {
+    if (pushBusy) return;
+    pushBusy = true;
+    await unsubscribeFromPush();
+    pushBusy = false;
+    pushState = 'ready';
+  }
 
   let items = $state<NotificationItem[] | null>(null);
   let failed = $state(false);
@@ -212,7 +243,26 @@
     {/if}
     <!-- Foot slot: part of the anatomy from R1, renders NOTHING (CD §6) —
          R2's push opt-in moves in here without head/rows shifting. -->
-    <div class="nc-foot" aria-hidden="true"></div>
+    {#if pushState === 'hidden'}
+      <div class="nc-foot" aria-hidden="true"></div>
+    {:else}
+      <div class="nc-foot nc-foot--live">
+        {#if pushState === 'ready'}
+          <button type="button" class="nc-push-btn font-dmmono" disabled={pushBusy} onclick={enablePush}>
+            {$t['nc.push.enable']}
+          </button>
+        {:else if pushState === 'subscribed'}
+          <span class="nc-push-note font-instrument">{$t['nc.push.active']}</span>
+          <button type="button" class="nc-push-link font-dmmono" disabled={pushBusy} onclick={disablePush}>
+            {$t['nc.push.disable']}
+          </button>
+        {:else if pushState === 'denied'}
+          <span class="nc-push-note font-instrument">{$t['nc.push.denied']}</span>
+        {:else if pushState === 'ios-install'}
+          <span class="nc-push-note font-instrument">{$t['nc.push.ios']}</span>
+        {/if}
+      </div>
+    {/if}
   </div>
 </div>
 
