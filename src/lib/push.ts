@@ -80,7 +80,14 @@ async function sendToSubs(db: Awaited<ReturnType<typeof connectDB>>, subs: SubDo
   const body = JSON.stringify(payload);
   const results = await Promise.allSettled(
     subs.map((s) =>
-      webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, body, { TTL: 3600 }),
+      // timeout is load-bearing: without it web-push registers no socket
+      // timeout, and an endpoint that accepts the connection but never
+      // responds would hang the awaited send past the never-throw envelope
+      // (Promise.allSettled never settles) until Vercel kills the function.
+      webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, body, {
+        TTL: 3600,
+        timeout: 10000,
+      }),
     ),
   );
   const dead: string[] = [];
