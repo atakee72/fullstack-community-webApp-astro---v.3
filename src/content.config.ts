@@ -11,6 +11,9 @@ const blog = defineCollection({
     author: z.string().default('Mahalle Team'),
     cover: image().optional(),
     coverAlt: z.string().optional(),
+    /** Photo credit shown under the cover (replaces the default "Foto: Mahalle-Team" line). Required for third-party/CC images. */
+    coverCredit: z.string().optional(),
+    coverCreditUrl: z.string().url().optional(),
     galleryImages: z.array(image()).optional(),
     postLayout: z.enum(['standard', 'hero', 'gallery']).default('standard'),
     tags: z.array(z.string()).default([]),
