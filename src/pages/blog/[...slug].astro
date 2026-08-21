@@ -23,6 +23,7 @@ const toMeta = (e: typeof entry): BeilagePost => ({
   minutes: readingMinutes(e.body ?? ''),
   cover: e.data.cover?.src,
   coverAlt: e.data.coverAlt,
+  coverPosition: e.data.coverPosition,
   coverCredit: e.data.coverCredit,
   coverCreditUrl: e.data.coverCreditUrl,
 });

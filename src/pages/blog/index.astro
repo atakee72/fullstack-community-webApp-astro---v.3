@@ -18,6 +18,7 @@ const posts: BeilagePost[] = entries
     minutes: readingMinutes(e.body ?? ''),
     cover: e.data.cover?.src,
     coverAlt: e.data.coverAlt,
+    coverPosition: e.data.coverPosition,
   }));
 ---
 

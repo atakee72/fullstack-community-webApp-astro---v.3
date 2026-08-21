@@ -21,6 +21,7 @@ const all: BeilagePost[] = entries
     minutes: readingMinutes(e.body ?? ''),
     cover: e.data.cover?.src,
     coverAlt: e.data.coverAlt,
+    coverPosition: e.data.coverPosition,
   }));
 const posts = all.filter((p) => p.tags.includes(tag));
 ---

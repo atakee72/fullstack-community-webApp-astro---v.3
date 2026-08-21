@@ -43,7 +43,7 @@
       <a href={`/blog/${p.id}`} class="block bl-card-in" style="text-decoration: none; color: inherit;">
         <div style="border: 1.5px solid var(--k-ink); border-radius: var(--k-radius-lg); overflow: hidden; box-shadow: 2px 2px 0 var(--k-ink);">
           {#if p.cover}
-            <img src={p.cover} alt={p.coverAlt ?? ''} class="w-full object-cover" style="height: 130px;" loading="lazy" />
+            <img src={p.cover} alt={p.coverAlt ?? ''} class="w-full object-cover" style="height: 130px; object-position: {p.coverPosition ?? 'center'};" loading="lazy" />
           {:else}
             <div class="w-full" style="height: 130px; background: var(--k-paper-soft);"></div>
           {/if}

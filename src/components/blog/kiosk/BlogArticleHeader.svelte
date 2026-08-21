@@ -95,7 +95,7 @@
 
     {#if variant === 'standard' && post.cover}
       <div style="margin: 18px 0 6px; border: 1.5px solid var(--k-ink); border-radius: var(--k-radius-lg); overflow: hidden; box-shadow: 2px 2px 0 var(--k-ink);">
-        <img src={post.cover} alt={post.coverAlt ?? ''} class="w-full object-cover h-[170px] lg:h-[330px]" />
+        <img src={post.cover} alt={post.coverAlt ?? ''} class="w-full object-cover h-[170px] lg:h-[330px]" style="object-position: {post.coverPosition ?? 'center'};" />
       </div>
       <div class="font-dmmono" style="font-size: 9.5px; color: var(--k-ink-mute); margin-bottom: 20px;">
         {#if post.coverCredit}

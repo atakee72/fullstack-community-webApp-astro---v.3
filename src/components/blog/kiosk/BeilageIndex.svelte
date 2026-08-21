@@ -167,7 +167,7 @@
   >
     {#if thumb && post.cover}
       <div style="border: 1.5px solid var(--k-ink); border-radius: var(--k-radius-md); overflow: hidden; margin-bottom: 10px;">
-        <img src={post.cover} alt={post.coverAlt ?? ''} class="w-full object-cover" style="height: 110px;" loading="lazy" />
+        <img src={post.cover} alt={post.coverAlt ?? ''} class="w-full object-cover" style="height: 110px; object-position: {post.coverPosition ?? 'center'};" loading="lazy" />
       </div>
     {/if}
     <div class="flex items-center" style="gap: 8px;">
@@ -339,7 +339,7 @@
               </div>
               <div style="border: 1.5px solid var(--k-ink); border-radius: var(--k-radius-lg); overflow: hidden; box-shadow: 2px 2px 0 var(--k-ink); align-self: start;">
                 {#if lead.cover}
-                  <img src={lead.cover} alt={lead.coverAlt ?? ''} class="w-full object-cover" style="height: 220px;" />
+                  <img src={lead.cover} alt={lead.coverAlt ?? ''} class="w-full object-cover" style="height: 220px; object-position: {lead.coverPosition ?? 'center'};" />
                 {:else}
                   <div class="w-full" style="height: 220px; background: var(--k-paper-warm);"></div>
                 {/if}
