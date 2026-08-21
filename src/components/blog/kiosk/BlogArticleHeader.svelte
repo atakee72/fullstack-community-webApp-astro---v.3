@@ -98,7 +98,15 @@
         <img src={post.cover} alt={post.coverAlt ?? ''} class="w-full object-cover h-[170px] lg:h-[330px]" />
       </div>
       <div class="font-dmmono" style="font-size: 9.5px; color: var(--k-ink-mute); margin-bottom: 20px;">
-        {$t['blog.photo.credit']}{post.coverAlt ? ' · ' + post.coverAlt.toUpperCase() : ''}
+        {#if post.coverCredit}
+          {#if post.coverCreditUrl}
+            FOTO: <a href={post.coverCreditUrl} target="_blank" rel="noopener license" style="text-decoration: underline; text-underline-offset: 2px;">{post.coverCredit.toUpperCase()}</a>
+          {:else}
+            FOTO: {post.coverCredit.toUpperCase()}
+          {/if}
+        {:else}
+          {$t['blog.photo.credit']}
+        {/if}{post.coverAlt ? ' · ' + post.coverAlt.toUpperCase() : ''}
       </div>
     {/if}
   </div>

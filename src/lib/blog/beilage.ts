@@ -15,6 +15,8 @@ export interface BeilagePost {
   minutes: number;               // Lesezeit, precomputed at serialization
   cover?: string;                // processed asset URL (image().src)
   coverAlt?: string;
+  coverCredit?: string;
+  coverCreditUrl?: string;
 }
 
 /** Lesezeit: word count / 200 wpm, minimum 1 (novel §01). */
