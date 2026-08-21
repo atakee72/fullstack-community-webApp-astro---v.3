@@ -168,10 +168,10 @@ synchronous, not `onMount`).
 ## Gallery grid is dormant in the shipped content
 
 `BlogGalleryGrid.svelte` renders nothing (`{#if images.length > 0}`) when
-`galleryImages` is empty — and every shipped post, including
-`neighborhood-gallery.mdx` (the `postLayout: 'gallery'` example), ships zero
-`galleryImages`; the gallery's actual pictures live in the MDX body like any
-other post. Don't treat an empty grid as a bug. When gallery images ARE
+`galleryImages` is empty — and no shipped post sets `galleryImages` (the
+former `postLayout: 'gallery'` example post is deleted); gallery pictures can
+also just live in the MDX body like any other post. Don't treat an empty grid
+as a bug. When gallery images ARE
 present, `GalleryLayout.astro` builds each `alt` from `coverAlt` — captions
 are `${post.data.coverAlt} (${i + 1})`, there's no per-image caption field in
 the content schema.
@@ -198,9 +198,34 @@ view.
 
 `postLayout: 'standard' | 'hero' | 'gallery'` (default `'standard'`),
 `draft: boolean` (default `false`), `cover`/`coverAlt`/`galleryImages`
-optional, `tags: string[]` (default `[]`). Six posts ship today: `standard` ×
-most, `hero` = `community-spotlight.mdx`, `gallery` =
-`neighborhood-gallery.mdx`.
+optional, `tags: string[]` (default `[]`). One post ships today
+(`das-mahalle-manifest.mdx`, `standard`); the old six stock-photo examples
+are gone.
+
+### Cover knobs (Aug 2026)
+
+Three optional frontmatter fields, all plumbed through `BlogPostCard` in
+`src/lib/blog/beilage.ts` and the three blog pages:
+
+- **`coverCredit` + `coverCreditUrl`** — attribution line under the article
+  cover. When set, `BlogArticleHeader.svelte` renders
+  `FOTO: <credit>` (linked, `rel="noopener license"`) instead of the default
+  i18n line `blog.photo.credit` („FOTO: MAHALLE-TEAM"). **Mandatory for any
+  third-party image** — the default line would misattribute it. Route for
+  third-party pictures is Wikimedia Commons CC (author, license, link to the
+  file page); press photos (Berliner Kurier etc.) are off-limits even with
+  credit.
+- **`coverPosition`** — CSS `object-position` for the crop (`"bottom"`,
+  `"center 80%"`…), default `center`. Applied at all four render sites
+  (article header, index lead, index cards, tag page).
+- **`coverFit: 'crop' | 'full'`** — article header only. `crop` (default) is
+  the fixed-height band (`h-[170px] lg:h-[330px]`, `object-cover`); `full`
+  drops the height and shows the whole image at native aspect. Index/tag
+  thumbnails always crop regardless.
+
+Cover images live next to the posts in `src/content/blog/images/` and go
+through Astro's `image()` pipeline (resize + WebP), so a ~1900px JPEG is fine
+as source.
 
 ## Tokens
 
