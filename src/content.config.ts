@@ -16,6 +16,8 @@ const blog = defineCollection({
     coverCreditUrl: z.string().url().optional(),
     /** CSS object-position for the cover crop (e.g. "bottom", "center 80%"). Default center. */
     coverPosition: z.string().optional(),
+    /** Article-header cover sizing: 'crop' (fixed-height band, default) or 'full' (whole image, native aspect). Index thumbnails always crop. */
+    coverFit: z.enum(['crop', 'full']).optional(),
     galleryImages: z.array(image()).optional(),
     postLayout: z.enum(['standard', 'hero', 'gallery']).default('standard'),
     tags: z.array(z.string()).default([]),

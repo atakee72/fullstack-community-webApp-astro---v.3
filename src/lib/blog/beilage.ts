@@ -18,6 +18,7 @@ export interface BeilagePost {
   coverCredit?: string;
   coverCreditUrl?: string;
   coverPosition?: string;
+  coverFit?: 'crop' | 'full';
 }
 
 /** Lesezeit: word count / 200 wpm, minimum 1 (novel §01). */
