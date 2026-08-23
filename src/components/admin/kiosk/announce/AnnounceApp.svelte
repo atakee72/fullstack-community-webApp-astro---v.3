@@ -11,6 +11,7 @@
   import { t, tStr, locale } from '../../../../lib/kiosk-i18n';
   import { showToast, showError } from '../../../../utils/toast';
   import { isPinned, fmtKickerDate, truncate, type AnnLang } from './annFormat';
+  import { MAX_PINS, pickDisplaced } from '../../../../lib/announcements/pinRules';
   import AnnCard from './AnnCard.svelte';
   import AnnComposer from './AnnComposer.svelte';
   import AdmModalShell from '../AdmModalShell.svelte';
@@ -86,8 +87,17 @@
     if (initialItems.length === 0) void loadItems();
   });
 
-  const pinnedItem = $derived(items.find((it) => isPinned(it)) ?? null);
+  // Up to MAX_PINS pinned officials; newest pin first (pinnedUntil desc —
+  // fixed 7-day duration means a later expiry is a later pin).
+  const pinnedItems = $derived(
+    items
+      .filter((it) => isPinned(it))
+      .slice()
+      .sort((a, b) => new Date(b.pinnedUntil).getTime() - new Date(a.pinnedUntil).getTime())
+  );
   const archiveItems = $derived(items.filter((it) => !isPinned(it)));
+  // The pin that would be displaced by a NEW pin right now (null = room).
+  const nextDisplaced = $derived(pickDisplaced(pinnedItems));
 
   // Live clock — re-derives the kicker every minute (mirrors AdmTitleBlock).
   let now = $state(new Date());
@@ -101,7 +111,7 @@
   // every minute — fmtKickerDate itself always uses `new Date()` internally
   // (it has no date param per spec) so nothing else here depends on `now`.
   const kicker = $derived(`${$t['admin.ann.kicker']} · ${now && fmtKickerDate(lang)}`);
-  const counter = $derived(tStr($t['admin.ann.counter'], { n: items.length, p: pinnedItem ? 1 : 0 }));
+  const counter = $derived(tStr($t['admin.ann.counter'], { n: items.length, p: pinnedItems.length, max: MAX_PINS }));
 
   // Mobile card sizing — AnnCard's `compact` prop tracks the same md
   // breakpoint AdminLayout uses for its own desktop/mobile masthead split.
@@ -165,7 +175,8 @@
   async function handleCreateSubmit(title: string, body: string) {
     composeError = false;
     const prevItems = [...items];
-    const displaced = pinnedItem;
+    const displaced = nextDisplaced;
+    let createdId: string | null = null; // set after the server confirms
     const displacedUntilISO = displaced ? new Date(displaced.pinnedUntil).toISOString() : null;
     const tempId = 'tmp-' + crypto.randomUUID();
 
@@ -190,15 +201,20 @@
     saving = true;
 
     async function undoDisplacement() {
-      if (!displaced || !displacedUntilISO) return;
+      if (!displaced || !displacedUntilISO || !createdId) return;
       try {
-        const res = await fetch(`/api/admin/announcements/${displaced._id}`, {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pinnedUntil: displacedUntilISO }),
-        });
-        if (!res.ok) throw new Error(String(res.status));
+        const patch = (id: string, pinnedUntil: string | null) =>
+          fetch(`/api/admin/announcements/${id}`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pinnedUntil }),
+          });
+        // 1) the new post gives its pin back, 2) the displaced one returns.
+        const r1 = await patch(createdId, null);
+        if (!r1.ok) throw new Error(String(r1.status));
+        const r2 = await patch(displaced._id, displacedUntilISO);
+        if (!r2.ok) throw new Error(String(r2.status));
         await refetch({ animate: true });
         showToast($t['admin.ann.toast.undone'], { type: 'success' });
       } catch {
@@ -215,6 +231,7 @@
       });
       if (!res.ok) throw new Error(String(res.status));
       const json = await res.json();
+      createdId = String(json.announcement._id);
 
       items = items.map((it) => (it._id === tempId ? json.announcement : it));
       composerTitle = '';
@@ -272,10 +289,10 @@
   // ── Re-pin ───────────────────────────────────────────────────────────────
   async function handleRepin(item: any) {
     const prevItems = [...items];
-    const other = pinnedItem;
+    const other = pickDisplaced(pinnedItems, item._id);
     const thatISO = new Date(Date.now() + 7 * 864e5).toISOString();
     await withMove(() => {
-      if (other && other._id !== item._id) {
+      if (other) {
         items = items.map((it) => (it._id === other._id ? { ...it, pinnedUntil: null } : it));
       }
       items = items.map((it) => (it._id === item._id ? { ...it, pinnedUntil: thatISO } : it));
@@ -418,7 +435,7 @@
               mode={editing ? 'edit' : 'create'}
               initialTitle={editing ? composerTitle : ''}
               initialBody={editing ? composerBody : ''}
-              currentPinTitle={pinnedItem?.title ?? null}
+              currentPinTitle={nextDisplaced?.title ?? null}
               {saving}
               errorState={composeError}
               onSubmit={editing ? handleEditSubmit : handleCreateSubmit}
@@ -451,26 +468,28 @@
           </div>
         </div>
       {:else}
-        {#if pinnedItem}
+        {#if pinnedItems.length > 0}
           <div class="font-dmmono text-[10px] text-ink-mute tracking-[0.12em] md:hidden">{$t['admin.ann.mobile.board']}</div>
           <div class="font-dmmono text-[10px] text-ink-mute tracking-[0.12em] hidden md:block">{$t['admin.ann.section.board']}</div>
-          <div style:view-transition-name={'ann-' + pinnedItem._id}>
-            <AnnCard
-              item={pinnedItem}
-              compact={compactCards}
-              pending={!!pinnedItem._pending}
-              onEdit={handleEditClick}
-              onUnpin={handleUnpin}
-              onRepin={handleRepin}
-              onDelete={handleDeleteClick}
-            />
-          </div>
+          {#each pinnedItems as pinned (pinned._id)}
+            <div style:view-transition-name={'ann-' + pinned._id}>
+              <AnnCard
+                item={pinned}
+                compact={compactCards}
+                pending={!!pinned._pending}
+                onEdit={handleEditClick}
+                onUnpin={handleUnpin}
+                onRepin={handleRepin}
+                onDelete={handleDeleteClick}
+              />
+            </div>
+          {/each}
         {/if}
         {#if archiveItems.length > 0}
-          <div class="font-dmmono text-[10px] text-ink-mute tracking-[0.12em] md:hidden" style="margin-top: {pinnedItem ? '10px' : '0'};">
+          <div class="font-dmmono text-[10px] text-ink-mute tracking-[0.12em] md:hidden" style="margin-top: {pinnedItems.length > 0 ? '10px' : '0'};">
             {$t['admin.ann.mobile.archive']}
           </div>
-          <div class="font-dmmono text-[10px] text-ink-mute tracking-[0.12em] hidden md:block" style="margin-top: {pinnedItem ? '10px' : '0'};">
+          <div class="font-dmmono text-[10px] text-ink-mute tracking-[0.12em] hidden md:block" style="margin-top: {pinnedItems.length > 0 ? '10px' : '0'};">
             {$t['admin.ann.section.archive']}
           </div>
           {#each archiveItems as item (item._id)}
