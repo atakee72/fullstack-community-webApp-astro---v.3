@@ -11,9 +11,8 @@
 
 export type AnnLang = 'DE' | 'EN';
 
-/** True while the item's pin is live. At most one item satisfies this at
- * any time (server invariant enforced by the displacement update on
- * create/PATCH) — callers render that one under the "board" section and
+/** True while the item's pin is live. At most MAX_PINS (3) items satisfy this at
+ * any time (see src/lib/announcements/pinRules.ts) — callers render those under the "board" section and
  * everything else under "archive". */
 export function isPinned(item: { pinnedUntil?: string | Date | null }): boolean {
   return !!item.pinnedUntil && new Date(item.pinnedUntil).getTime() > Date.now();

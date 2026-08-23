@@ -3,7 +3,7 @@
    * Announcement card — ink treatment while pinned (teal "AM BRETT" strap,
    * paper-on-ink footer actions), paper treatment in the archive. Pinned-
    * ness is derived internally via `isPinned(item)` (server invariant: at
-   * most one item ever satisfies it) rather than passed in, so callers
+   * most MAX_PINS (3) items satisfy it) rather than passed in, so callers
    * just hand over the raw item. Transcribed from
    * design/handoffs/design_handoff_announce/jsx/kiosk-admin-announce.jsx:122-163.
    *
