@@ -5,6 +5,7 @@ import { requireAdminSession } from '../../../../lib/auth';
 import { AdminAnnouncementUpdateSchema } from '../../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../../schemas/validation.utils';
 import { populateAuthors } from '../../../../lib/topicsQuery';
+import { displaceForPin } from '../../../../lib/announcements/pin';
 
 // Admin-only PATCH (edit + pin/unpin) and DELETE for official
 // announcements. Both ops validate the target is `isOfficial: true` so
@@ -48,17 +49,11 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       );
     }
 
-    // If pinning (pinnedUntil set to a future date), displace any OTHER
-    // currently-pinned official so the single-pinned invariant holds.
-    if (typeof data.pinnedUntil === 'string') {
-      await collection.updateMany(
-        {
-          _id: { $ne: new ObjectId(id) },
-          isOfficial: true,
-          pinnedUntil: { $gt: new Date() } as any
-        },
-        { $set: { pinnedUntil: null } }
-      );
+    // If pinning (pinnedUntil set to a FUTURE date), make room under the
+    // MAX_PINS cap — the item being pinned is never its own victim. A past
+    // date is just an expired pin and displaces nothing.
+    if (typeof data.pinnedUntil === 'string' && new Date(data.pinnedUntil).getTime() > Date.now()) {
+      await displaceForPin(db, id);
     }
 
     // Build $set: pinnedUntil string → Date, null → null, undefined → omit.

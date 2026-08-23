@@ -6,6 +6,7 @@ import { AnnouncementCreateSchema } from '../../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../../schemas/validation.utils';
 import type { Announcement } from '../../../../types';
 import { notifyAllMembers } from '../../../../lib/notifications';
+import { displaceForPin } from '../../../../lib/announcements/pin';
 
 // Pin duration for new official announcements: 7 days from creation.
 // After expiry the doc slips into the regular feed (still official-
@@ -30,14 +31,9 @@ export const POST: APIRoute = async ({ request }) => {
     const db = await connectDB();
     const announcementsCollection = db.collection<Announcement>('announcements');
 
-    // Atomic-ish displacement: any currently-pinned official loses
-    // its pin so the new one takes the slot. Runs before insert so
-    // the brief window where two officials have pinnedUntil > now
-    // is sub-millisecond. Single-admin app — race is negligible.
-    await announcementsCollection.updateMany(
-      { isOfficial: true, pinnedUntil: { $gt: new Date() } as any },
-      { $set: { pinnedUntil: null } }
-    );
+    // Cap enforcement: up to MAX_PINS officials may be pinned; at the cap
+    // the oldest pin is cleared so the new one fits (src/lib/announcements/pin.ts).
+    await displaceForPin(db);
 
     const now = new Date();
     const newAnnouncement: Announcement = {
