@@ -17,6 +17,7 @@
   import { createQuery } from '@tanstack/svelte-query';
   import { t, locale } from '../../../lib/kiosk-i18n';
   import { online } from '../../../lib/onlineStore';
+  import { MAX_PINS } from '../../../lib/announcements/pinRules';
   import ForumPostCard from './ForumPostCard.svelte';
   import TagBar, { type Filter } from './TagBar.svelte';
   import ForumIndexSkeleton from './states/ForumIndexSkeleton.svelte';
@@ -90,20 +91,22 @@
 
   const items = $derived((query.data ?? []) as any[]);
 
-  // Pinned official announcement — at most one in the feed at a time
-  // (server displaces older officials on create; see
-  // /api/admin/announcements/create). After the 7-day pinnedUntil
-  // expires, the card slips into the regular feed and this find()
-  // returns undefined → top slot disappears.
-  const pinnedOfficial = $derived(
-    items.find(
-      (it: any) =>
-        it.kind === 'announcement' &&
-        it.isOfficial === true &&
-        it.pinnedUntil &&
-        new Date(it.pinnedUntil).getTime() > Date.now()
-    )
+  // Pinned official announcements — up to MAX_PINS, newest pin first
+  // (server enforces the cap; see src/lib/announcements/pin.ts). After a
+  // pin's 7-day pinnedUntil expires the card slips into the regular feed.
+  const pinnedOfficials = $derived(
+    items
+      .filter(
+        (it: any) =>
+          it.kind === 'announcement' &&
+          it.isOfficial === true &&
+          it.pinnedUntil &&
+          new Date(it.pinnedUntil).getTime() > Date.now()
+      )
+      .sort((a: any, b: any) => new Date(b.pinnedUntil).getTime() - new Date(a.pinnedUntil).getTime())
+      .slice(0, MAX_PINS)
   );
+  const pinnedIds = $derived(new Set(pinnedOfficials.map((it: any) => it._id)));
 
   // Filter state — Phase 4a applies tag filters locally only; type/saved/mine
   // filters toggle the active pill but don't reshape the data yet.
@@ -120,9 +123,9 @@
   //   4. tag filter (if any tag pill is active).
   const filteredRest = $derived(
     items
-      // Pinned official renders separately at the top; exclude from
-      // the regular feed so it doesn't appear twice.
-      .filter((it: any) => it._id !== pinnedOfficial?._id)
+      // Pinned officials render separately at the top; exclude from
+      // the regular feed so they don't appear twice.
+      .filter((it: any) => !pinnedIds.has(it._id))
       .filter((it: any) => {
         if (activeFilter === 'all') return true;
         if (activeFilter === 'mine')
@@ -415,26 +418,29 @@
         !$online ? 'k-grayscale-cached' : ''
       }`}
     >
-      <!-- Pinned official announcement (real DB doc). Hidden when the
-           user narrows by a kind that wouldn't include announcements,
-           and when no current official has pinnedUntil > now. -->
-      {#if pinnedOfficial && (activeFilter === 'all' || activeFilter === 'announcement')}
-        <div class="md:col-span-2 lg:col-span-3">
-          <a
-            href={detailHref(pinnedOfficial)}
-            class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
-            aria-label="Offizielle Ankündigung"
-          >
-            <ForumPostCard
-              topic={pinnedOfficial}
-              kind="announcement"
-              featured
-              pinned
-              isOfficial
-              team={pinnedOfficial.author?.role === 'admin'}
-            />
-          </a>
-        </div>
+      <!-- Pinned official announcements (real DB docs, up to MAX_PINS).
+           First one gets the full-width featured treatment; the rest
+           render as regular-width cards with the pinned strap. Hidden
+           when the kind filter wouldn't include announcements. -->
+      {#if activeFilter === 'all' || activeFilter === 'announcement'}
+        {#each pinnedOfficials as pinnedOfficial, i (pinnedOfficial._id)}
+          <div class={i === 0 ? 'md:col-span-2 lg:col-span-3' : ''}>
+            <a
+              href={detailHref(pinnedOfficial)}
+              class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+              aria-label="Offizielle Ankündigung"
+            >
+              <ForumPostCard
+                topic={pinnedOfficial}
+                kind="announcement"
+                featured={i === 0}
+                pinned
+                isOfficial
+                team={pinnedOfficial.author?.role === 'admin'}
+              />
+            </a>
+          </div>
+        {/each}
       {/if}
 
       <!-- Regular feed. Per-topic moderation status drives placement:
