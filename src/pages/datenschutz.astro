@@ -3,6 +3,10 @@
 // flows of the app (processors: MongoDB Atlas Frankfurt, Vercel, Cloudinary,
 // Resend EU, Sentry EU, OpenAI moderation). User reviews before launch.
 import LandingLayout from '../layouts/LandingLayout.astro';
+import ObfuscatedText from '../components/legal/ObfuscatedText.astro';
+
+const street = import.meta.env.IMPRESSUM_STREET || '[Anschrift nicht konfiguriert]';
+const zipCity = import.meta.env.IMPRESSUM_ZIP_CITY || 'Berlin';
 ---
 
 <LandingLayout title="Datenschutz | Mahalle" description="Datenschutzerklärung der Mahalle-Plattform.">
@@ -11,7 +15,7 @@ import LandingLayout from '../layouts/LandingLayout.astro';
     <h1 class="font-bricolage">Datenschutzerklärung</h1>
 
     <h2 class="font-bricolage">1. Verantwortlicher</h2>
-    <p>Ercan Atak, [Anschrift wie im Impressum] · <a href="mailto:admin@mahalle.digital">admin@mahalle.digital</a></p>
+    <p><ObfuscatedText text={`Ercan Atak, ${street}, ${zipCity}`} /> · <a href="mailto:admin@mahalle.digital">admin@mahalle.digital</a></p>
 
     <h2 class="font-bricolage">2. Welche Daten wir verarbeiten</h2>
     <p>

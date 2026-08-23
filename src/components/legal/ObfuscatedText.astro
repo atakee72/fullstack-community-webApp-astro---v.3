@@ -1,0 +1,27 @@
+---
+/**
+ * Renders text that is NOT present in the HTML as plain characters — the
+ * server emits the char codes in a data attribute and an inline script
+ * decodes them on the client. Humans see the text; naive scrapers (address
+ * harvesters, search-engine snippets) see the fallback. Same pattern as the
+ * portfolio's Impressum. Not encryption: anyone running JS can read it, which
+ * is exactly what a legally required Impressum must allow.
+ */
+interface Props {
+  text: string;
+  class?: string;
+  fallback?: string;
+}
+const { text, class: cls = '', fallback = '[ JavaScript erforderlich ]' } = Astro.props;
+const encoded = Array.from(text).map((c) => c.charCodeAt(0)).join(',');
+---
+
+<span data-ob-text data-c={encoded} class={cls} style="white-space: pre-line;">{fallback}</span>
+
+<script is:inline data-astro-rerun>
+  document.querySelectorAll('[data-ob-text]').forEach((el) => {
+    const codes = (el.getAttribute('data-c') || '').split(',').filter(Boolean).map(Number);
+    el.textContent = String.fromCharCode(...codes);
+    el.removeAttribute('data-c');
+  });
+</script>

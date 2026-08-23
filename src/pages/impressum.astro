@@ -1,8 +1,15 @@
 ---
 // Impressum — static legal page on the landing's minimal layout.
-// ⚠ ADDRESS PLACEHOLDER: user must supply the ladungsfähige Anschrift
-// before this is legally complete (flagged in the release summary).
+// The ladungsfähige Anschrift comes from env (IMPRESSUM_STREET /
+// IMPRESSUM_ZIP_CITY) so it never lands in the public repo, and is rendered
+// through ObfuscatedText so it isn't plain text in the HTML for harvesters.
+// Unset env → visible placeholder (the page is SSR, so Vercel env applies).
 import LandingLayout from '../layouts/LandingLayout.astro';
+import ObfuscatedText from '../components/legal/ObfuscatedText.astro';
+
+const street = import.meta.env.IMPRESSUM_STREET || '[Anschrift nicht konfiguriert]';
+const zipCity = import.meta.env.IMPRESSUM_ZIP_CITY || 'Berlin';
+const addressBlock = `Ercan Atak\n${street}\n${zipCity}`;
 ---
 
 <LandingLayout title="Impressum | Mahalle" description="Impressum der Mahalle-Plattform.">
@@ -11,11 +18,7 @@ import LandingLayout from '../layouts/LandingLayout.astro';
     <h1 class="font-bricolage">Impressum</h1>
 
     <h2 class="font-bricolage">Angaben gemäß § 5 DDG</h2>
-    <p>
-      Ercan Atak<br />
-      [Straße Hausnummer]<br />
-      [PLZ] Berlin
-    </p>
+    <p><ObfuscatedText text={addressBlock} /></p>
     <p>E-Mail: <a href="mailto:admin@mahalle.digital">admin@mahalle.digital</a></p>
 
     <h2 class="font-bricolage">Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
