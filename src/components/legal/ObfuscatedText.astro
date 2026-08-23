@@ -20,7 +20,9 @@ const encoded = Array.from(text).map((c) => c.charCodeAt(0)).join(',');
 
 <script is:inline data-astro-rerun>
   document.querySelectorAll('[data-ob-text]').forEach((el) => {
-    const codes = (el.getAttribute('data-c') || '').split(',').filter(Boolean).map(Number);
+    const raw = el.getAttribute('data-c');
+    if (!raw) return;
+    const codes = raw.split(',').filter(Boolean).map(Number);
     el.textContent = String.fromCharCode(...codes);
     el.removeAttribute('data-c');
   });

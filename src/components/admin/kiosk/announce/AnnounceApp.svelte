@@ -219,6 +219,7 @@
         showToast($t['admin.ann.toast.undone'], { type: 'success' });
       } catch {
         showError($t['admin.ann.toast.actionError']);
+        await refetch({ animate: true });
       }
     }
 
