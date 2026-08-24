@@ -226,7 +226,7 @@ SENTRY_PROJECT=          # Sentry project slug
 PUBLIC_VERCEL_ENV=       # Optional; set per Vercel scope (production/preview) so CLIENT Sentry events tag their true environment (server gets VERCEL_ENV for free). Not needed locally.
 VAPID_PRIVATE_KEY=      # Web push VAPID private key. SERVER-SECRET, never exposed to the client. Unset ⇒ push send no-ops silently (preview deploys have no keys — expected).
 PUBLIC_VAPID_PUBLIC_KEY= # Web push VAPID public key. PUBLIC_-prefixed — ships to the client bundle (src/lib/pushClient.ts). Pairs with VAPID_PRIVATE_KEY; generate both together, never mix pairs.
-IMPRESSUM_STREET=       # Ladungsfähige Anschrift, Straße + Hausnummer. SSR-only (read at request time in impressum/datenschutz.astro — changing it needs NO redeploy), rendered via src/components/legal/ObfuscatedText.astro (char-code obfuscation, JS-decoded — keeps the address out of the repo and away from naive scrapers). Unset ⇒ visible "[Anschrift nicht konfiguriert]" placeholder.
+IMPRESSUM_STREET=       # Ladungsfähige Anschrift, Straße + Hausnummer. SSR-only (read at request time in impressum/datenschutz.astro — but Vercel injects env at DEPLOY time, so changing the value still needs one redeploy; verified 2026-08-24), rendered via src/components/legal/ObfuscatedText.astro (char-code obfuscation, JS-decoded — keeps the address out of the repo and away from naive scrapers). Unset ⇒ visible "[Anschrift nicht konfiguriert]" placeholder.
 IMPRESSUM_ZIP_CITY=     # e.g. "12049 Berlin" — same handling as IMPRESSUM_STREET.
 ```
 
