@@ -59,12 +59,19 @@ export async function findValidVerifyToken(rawToken: string): Promise<string | n
   return row ? String(row.userId) : null;
 }
 
+export type VerifyEmailResult =
+  | { ok: false }
+  | { ok: true; welcome: { email: string; name: string } | null };
+
 /**
  * Atomically claim the token (single-use) and set the user's emailVerified flag.
- * Returns true on success; false for invalid/expired/already-used tokens.
+ * Returns { ok: true, welcome } on success — `welcome` carries the user's
+ * email + display name ONLY on the first false→true transition (so the
+ * caller can send the one-time welcome mail), else null.
+ * Returns { ok: false } for invalid/expired/already-used tokens.
  */
-export async function verifyEmailWithToken(rawToken: string): Promise<boolean> {
-  if (!rawToken) return false;
+export async function verifyEmailWithToken(rawToken: string): Promise<VerifyEmailResult> {
+  if (!rawToken) return { ok: false };
   const db = await connectDB();
   const tokens = db.collection('emailVerifyTokens');
 
@@ -73,13 +80,20 @@ export async function verifyEmailWithToken(rawToken: string): Promise<boolean> {
     { tokenHash: hashToken(rawToken), usedAt: null, expiresAt: { $gt: new Date() } },
     { $set: { usedAt: new Date() } }
   );
-  if (!claimed) return false;
+  if (!claimed) return { ok: false };
 
+  let welcome: { email: string; name: string } | null = null;
   try {
-    await db.collection('users').updateOne(
+    // returnDocument 'before' → we see the PRE-update emailVerified value,
+    // which is what makes the welcome mail exactly-once.
+    const before = await db.collection('users').findOneAndUpdate(
       { _id: claimed.userId as ObjectId },
-      { $set: { emailVerified: true, updatedAt: new Date().toISOString() } }
+      { $set: { emailVerified: true, updatedAt: new Date().toISOString() } },
+      { returnDocument: 'before' }
     );
+    if (before && before.emailVerified !== true && typeof before.email === 'string') {
+      welcome = { email: before.email, name: typeof before.name === 'string' && before.name ? before.name : 'Nachbar:in' };
+    }
   } catch (err) {
     // The user write failed AFTER the token was claimed — roll the claim back
     // so the link stays usable and the user isn't stuck unverified.
@@ -88,7 +102,7 @@ export async function verifyEmailWithToken(rawToken: string): Promise<boolean> {
         console.error('verifyEmailWithToken: rollback ALSO failed — token may be permanently burnt:', rollbackErr);
       });
     console.error('verifyEmailWithToken: user write failed, rolled back claim:', err);
-    return false;
+    return { ok: false };
   }
 
   // Flag is already flipped — clear any other unused tokens for this user.
@@ -97,5 +111,5 @@ export async function verifyEmailWithToken(rawToken: string): Promise<boolean> {
     .catch((cleanupErr) => {
       console.error('verifyEmailWithToken: sibling-token cleanup failed (verify still succeeded):', cleanupErr);
     });
-  return true;
+  return { ok: true, welcome };
 }
