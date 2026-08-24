@@ -108,6 +108,21 @@
   );
   const pinnedIds = $derived(new Set(pinnedOfficials.map((it: any) => it._id)));
 
+  // Short German relative time for the slim pin bars — same logic as
+  // ForumPostCard's relTime (that one is component-scoped; duplicating
+  // 10 lines beats exporting a card internal).
+  function pinBarTime(d?: string | number): string {
+    if (!d) return '';
+    const min = Math.floor((Date.now() - new Date(d).getTime()) / 60_000);
+    if (min < 1) return 'gerade eben';
+    if (min < 60) return `vor ${min} min`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `vor ${hr} std`;
+    const day = Math.floor(hr / 24);
+    if (day < 7) return `vor ${day} t`;
+    return new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
+  }
+
   // Filter state — Phase 4a applies tag filters locally only; type/saved/mine
   // filters toggle the active pill but don't reshape the data yet.
   let activeFilter = $state<Filter>('all');
@@ -419,26 +434,43 @@
       }`}
     >
       <!-- Pinned official announcements (real DB docs, up to MAX_PINS).
-           First one gets the full-width featured treatment; the rest
-           render as regular-width cards with the pinned strap. Hidden
-           when the kind filter wouldn't include announcements. -->
+           Variant B (Aug 2026 design canvas): the NEWEST pin keeps the
+           full-width featured card; older pins render as slim one-line
+           pin bars — title + relative time, click-through to the post.
+           Hidden when the kind filter wouldn't include announcements. -->
       {#if activeFilter === 'all' || activeFilter === 'announcement'}
         {#each pinnedOfficials as pinnedOfficial, i (pinnedOfficial._id)}
-          <div class={i === 0 ? 'md:col-span-2 lg:col-span-3' : ''}>
-            <a
-              href={detailHref(pinnedOfficial)}
-              class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
-              aria-label="Offizielle Ankündigung"
-            >
-              <ForumPostCard
-                topic={pinnedOfficial}
-                kind="announcement"
-                featured={i === 0}
-                pinned
-                isOfficial
-                team={pinnedOfficial.author?.role === 'admin'}
-              />
-            </a>
+          <div class="md:col-span-2 lg:col-span-3">
+            {#if i === 0}
+              <a
+                href={detailHref(pinnedOfficial)}
+                class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+                aria-label="Offizielle Ankündigung"
+              >
+                <ForumPostCard
+                  topic={pinnedOfficial}
+                  kind="announcement"
+                  featured
+                  pinned
+                  isOfficial
+                  team={pinnedOfficial.author?.role === 'admin'}
+                />
+              </a>
+            {:else}
+              <!-- #7fc2ce is deliberate: teal legible on ink (no on-ink teal
+                   token exists — same reason the blog has --k-rust-on-ink).
+                   Don't "fix" it to text-teal, which vanishes on the ink bg. -->
+              <a
+                href={detailHref(pinnedOfficial)}
+                class="flex items-center gap-3 min-h-[44px] px-4 py-[9px] bg-ink text-paper border-[1.5px] border-teal rounded-lg shadow-[2px_2px_0_var(--k-teal)] focus:outline-none focus:ring-2 focus:ring-ink transition-all duration-[180ms] ease-out hover:-translate-x-px hover:-translate-y-px"
+              >
+                <span aria-hidden="true" class="text-[12px]">📌</span>
+                <span class="shrink-0 font-dmmono text-[9px] uppercase tracking-[0.12em] text-[#7fc2ce]">{$t['pinned.bar.label']}</span>
+                <span class="min-w-0 truncate font-bricolage text-[14px] font-bold tracking-[-0.01em]">{pinnedOfficial.title}</span>
+                <span class="ml-auto shrink-0 font-dmmono text-[9.5px] text-paper/55">{pinBarTime(pinnedOfficial.date)}</span>
+                <span aria-hidden="true" class="shrink-0 text-[#7fc2ce] font-bold">→</span>
+              </a>
+            {/if}
           </div>
         {/each}
       {/if}

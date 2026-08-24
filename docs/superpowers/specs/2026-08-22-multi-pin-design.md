@@ -45,6 +45,12 @@ publishing, displacement notifications.
    `pinned` strap marker, before the regular feed. All three are excluded
    from the regular feed. Hidden when the kind filter excludes announcements
    (existing behaviour).
+
+   **Variant B addendum (2026-08-24, user-picked from the "Angepinnte
+   Mitteilungen" design canvas):** only the newest pin renders as the
+   full-width featured card; older pins render as slim one-line pin bars
+   (ink bg, 1.5px teal border, teal print shadow, 📌 + AMTLICH label +
+   truncated title + relative time + →), each spanning the full grid row.
 4. **Docs** — `src/components/admin/CLAUDE.md` invariant + root `CLAUDE.md`
    `announcements` entry and "Admin official announcements" line.
 
