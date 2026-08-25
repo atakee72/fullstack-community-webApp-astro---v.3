@@ -25,8 +25,11 @@ export const POST: APIRoute = async ({ request }) => {
       // a send failure must never fail the verification itself.
       try {
         const base = getTrustedBaseUrl(request);
-        await sendWelcomeEmail(result.welcome.email, result.welcome.name, `${base}/forum`);
-        console.log('[welcome-email] sent');
+        if (!base) {
+          console.error('[welcome-email] skipped: no trusted base URL');
+        } else {
+          await sendWelcomeEmail(result.welcome.email, result.welcome.name, `${base}/forum`);
+        }
       } catch (err) {
         console.error('[welcome-email] send failed (verify still ok):', err);
       }

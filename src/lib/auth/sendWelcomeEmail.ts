@@ -17,4 +17,5 @@ export async function sendWelcomeEmail(to: string, name: string, forumLink: stri
   }
   const html = await render(React.createElement(WelcomeEmail, { name, forumLink }));
   await sendMail({ to, subject: 'Mahalle — Schön, dass du da bist!', html });
+  console.log('[welcome-email] sent');
 }
