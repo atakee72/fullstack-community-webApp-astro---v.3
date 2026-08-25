@@ -83,10 +83,10 @@ src/
 ### Landing + login gating (Aug 2026)
 - `/` is the public landing page; any request with a session is SSR-redirected to `/forum` before render (members never see the landing). Logged-out visitors get the landing, `/forum` and the other member surfaces bounce to login.
 - **Gate lives in `src/middleware.ts`**, runs only for SSR (non-prerendered) requests, ahead of the pre-existing protected-routes block:
-  - `GATED_PAGES` (prefix match, → `302 /login?redirect=<path+search>`): `/forum`, `/topics`, `/announcements`, `/recommendations`, `/calendar`, `/events`, `/newsboard`, `/bookmarks`, `/search`, `/steckbrief`, `/nachbarn`.
-  - `GATED_APIS` (prefix match, → `401 { error: 'Unauthorized' }`): `/api/topics`, `/api/announcements`, `/api/recommendations`, `/api/events`, `/api/news`, `/api/comments`.
+  - `GATED_PAGES` (prefix match, → `302 /login?redirect=<path+search>`): `/forum`, `/topics`, `/announcements`, `/recommendations`, `/calendar`, `/events`, `/newsboard`, `/marketplace`, `/bookmarks`, `/search`, `/steckbrief`, `/nachbarn`.
+  - `GATED_APIS` (prefix match, → `401 { error: 'Unauthorized' }`): `/api/topics`, `/api/announcements`, `/api/recommendations`, `/api/events`, `/api/news`, `/api/comments`, `/api/listings`.
   - `API_ALLOWLIST`: `/api/news/fetch-daily` — the daily news cron authenticates via its own `CRON_SECRET` Bearer header and must keep working without a session.
-- **Marketplace is deliberately public** (not in either gated list) — an SEO decision, still pending a final call; `/profile` is also ungated (it renders its own logged-out state rather than redirecting).
+- **Marketplace gated since 2026-08-25** (user decision: inner-community, not a public market — this closed the formerly pending "keep it public for SEO" question); `/profile` stays ungated (it renders its own logged-out state rather than redirecting).
 - **`?redirect=` login flow**: both the middleware's post-login bounce and `AuthLoginInner`'s post-login navigation validate the target through the shared, dependency-pure `safeInternalPath()` (`src/lib/auth/safeRedirect.ts`) — it parses the candidate against a fixed private base origin via `URL` and accepts it only if the parsed origin didn't escape that base, returning the re-serialized `pathname + search + hash` (never the raw string). This replaced an earlier `startsWith('//')`-style character-enumeration guard, which WHATWG URL normalization can bypass (e.g. tab/CR/LF stripped before resolution turns `/\t/evil.com` into `//evil.com`).
 - **`/landing` → `/` (301)**: the old `/landing` route is a redirect-only fossil kept for any stale bookmarks/links from before the route swap.
 

@@ -56,19 +56,20 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // return above bypasses it. Gated routes must stay SSR (they all are);
     // adding `export const prerender = true` to one would silently un-gate it.
     // ── Login gate (Aug 2026 landing release) ──
-    // Member surfaces require a session. Marketplace deliberately stays
-    // public (SEO decision pending), /profile renders its own logged-out
+    // Member surfaces require a session. /profile renders its own logged-out
     // state, and the landing/blog/Kiez-Daten/legal/auth pages are public.
+    // Marketplace gated since 2026-08-25 (user decision: inner-community,
+    // not a public market — closed the pending SEO question).
     const GATED_PAGES = [
       '/forum', '/topics', '/announcements', '/recommendations',
-      '/calendar', '/events', '/newsboard',
+      '/calendar', '/events', '/newsboard', '/marketplace',
       '/bookmarks', '/search', '/steckbrief', '/nachbarn',
     ];
     // List/read APIs of gated surfaces — without this the page gate is
     // cosmetic (data stays scrapable). Write endpoints already self-gate.
     const GATED_APIS = [
       '/api/topics', '/api/announcements', '/api/recommendations',
-      '/api/events', '/api/news', '/api/comments',
+      '/api/events', '/api/news', '/api/comments', '/api/listings',
       '/api/users', // profiles batch-read: only consumer is the gated calendar modal
     ];
     // The daily news cron is a GET from Vercel with its own CRON_SECRET
