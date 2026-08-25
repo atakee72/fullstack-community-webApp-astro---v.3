@@ -1,0 +1,46 @@
+---
+// Global 404 — Astro serves this page for any unmatched route.
+// Prerendered: static content, no session/DB, renders instantly and
+// cannot itself fail. Middleware skips prerendered routes (isPrerendered).
+import LandingLayout from '../layouts/LandingLayout.astro';
+
+export const prerender = true;
+---
+
+<LandingLayout
+  title="Seite nicht gefunden | Mahalle"
+  description="Diese Seite steht nicht in der Ausgabe."
+>
+  <main class="err-wrap">
+    <p class="err-kicker font-dmmono">AUSGABE · SEITE NICHT GEFUNDEN</p>
+    <h1 class="err-code font-bricolage">404</h1>
+    <p class="err-lead">Diese Seite steht nicht in der Ausgabe.</p>
+    <p class="err-sub">
+      Der Link führt ins Leere — vielleicht ein Tippfehler, ein veralteter
+      Verweis oder eine Seite, die es nicht mehr gibt.
+    </p>
+
+    <p class="err-kicker err-kicker--links font-dmmono">WEITER GEHT ES HIER</p>
+    <ul class="err-links">
+      <li><a href="/">Startseite</a></li>
+      <li><a href="/forum">Forum</a></li>
+      <li><a href="/calendar">Kalender</a></li>
+      <li><a href="/marketplace">Marktplatz</a></li>
+    </ul>
+
+    <p class="err-muted"><em>English:</em> This page doesn't exist — the link may be stale or mistyped. Try the links above.</p>
+  </main>
+</LandingLayout>
+
+<style>
+  .err-wrap { max-width: 680px; margin: 0 auto; padding: 64px 22px 80px; }
+  .err-kicker { font-size: 11px; letter-spacing: 0.18em; color: var(--k-ink-mute); margin: 0 0 10px; }
+  .err-kicker--links { margin: 40px 0 12px; }
+  .err-code { font-size: clamp(88px, 18vw, 160px); font-weight: 800; letter-spacing: -0.05em; line-height: 0.9; margin: 0 0 18px; color: var(--k-ink); }
+  .err-lead { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 8px; color: var(--k-ink); }
+  .err-sub { font-size: 14px; line-height: 1.65; color: var(--k-ink-soft); margin: 0; max-width: 460px; }
+  .err-links { list-style: none; display: flex; flex-wrap: wrap; gap: 10px 18px; padding: 0; margin: 0; }
+  .err-links a { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; color: var(--k-ink); text-decoration: underline; text-decoration-style: dashed; text-underline-offset: 4px; }
+  .err-links a:hover { color: var(--k-wine, #b23a5b); }
+  .err-muted { font-size: 12px; line-height: 1.5; color: var(--k-ink-mute); margin: 40px 0 0; }
+</style>
