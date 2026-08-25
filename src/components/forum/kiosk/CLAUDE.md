@@ -27,6 +27,9 @@ paths were dead because the compute lived in onMount.)
 - `/topics/[id].astro` (existing) + `/announcements/[id].astro` + `/recommendations/[id].astro` (new). All three pass a `collectionType` prop to `ForumPostDetail.svelte`, which threads it into the edit/delete fetch URLs (`/api/${collectionType}/edit/[id]`) and the comment-create body. **Don't hardcode `'topics'` anywhere in `ForumPostDetail`** — the same component serves all three.
 - Card link routing in `ForumIndexInner.svelte` uses a `detailHref(item)` helper that returns the right route per `item.kind`.
 
+### URL auto-linking in post bodies (Aug 2026)
+- `ForumPostDetail.svelte` renders body paragraphs through `linkifySegments()` from `src/lib/linkify.ts` (dependency-pure — safe for client islands): plain text is split into text/link segments rendered as real `<a target="_blank" rel="noopener noreferrer">` elements WITHOUT `@html` (Svelte escapes each segment — XSS-safe). Only `http(s)` URLs match, so `javascript:`/`data:` URIs can never become hrefs; trailing sentence punctuation is excluded (balanced-paren aware). Serves all three detail kinds (topics/announcements/recommendations). Cards/comments still render plain text — extend deliberately, reusing the helper.
+
 ### Moderation visibility (author-facing banners + non-author marks)
 - `OwnStatusBanner.svelte` is **author-only by design** (matches the `state.own.*` i18n namespace). `ownStatusFor()` in `ForumIndexInner.svelte` returns `'pending'` / `'rejected'` / `'reported'` ONLY when `isAuthor === true`. Non-authors get `null` → fall through to the default render branch.
 - **Three render branches in the loop** wrap the author's own card in a dashed-color border + the banner above it: pending → `border-warn`, reported → `border-plum`, rejected → `border-danger`. All sized to a normal grid card slot (no col-span-3).
