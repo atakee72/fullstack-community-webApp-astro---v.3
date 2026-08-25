@@ -56,11 +56,11 @@
   ]);
 
   const bottomNav = $derived([
-    { href: '/forum',        label: $t['nav.short.forum'],       match: FORUM_MATCH },
-    { href: '/calendar',     label: $t['nav.short.calendar'],    match: CALENDAR_MATCH },
-    { href: '/newsboard',    label: $t['nav.short.news'],        match: ['/newsboard'] },
-    { href: '/marketplace',  label: $t['nav.short.marketplace'], match: ['/marketplace'] },
-    { href: '/schillerkiez', label: $t['nav.short.kiez'],        match: ['/schillerkiez'] }
+    { href: '/forum',        label: $t['nav.short.forum'],       match: FORUM_MATCH,      accent: 'var(--k-wine)' },
+    { href: '/calendar',     label: $t['nav.short.calendar'],    match: CALENDAR_MATCH,   accent: 'var(--k-teal)' },
+    { href: '/newsboard',    label: $t['nav.short.news'],        match: ['/newsboard'],   accent: 'var(--k-ink)' },
+    { href: '/marketplace',  label: $t['nav.short.marketplace'], match: ['/marketplace'], accent: 'var(--k-wine)' },
+    { href: '/schillerkiez', label: $t['nav.short.kiez'],        match: ['/schillerkiez'], accent: 'var(--k-moss)' }
   ]);
 
   function isActive(matches: string[]): boolean {
@@ -201,17 +201,19 @@
 
 <!-- ─── Bottom mobile nav (fixed, hidden on lg+) ──────────────────────── -->
 <nav
-  class="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t-2 border-ink k-paper-bg"
+  class="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t-2 border-ink"
+  style="background: var(--k-ochre);"
   aria-label="Primary"
 >
   <div class="flex items-stretch justify-around max-w-md mx-auto">
     {#each bottomNav as item (item.href)}
       <a
         href={item.href}
+        style="color: {item.accent};"
         class="flex-1 py-3 font-dmmono text-[10px] uppercase tracking-[0.12em] text-center transition-colors {
           isActive(item.match)
-            ? 'text-ink font-bold bg-paper-warm'
-            : 'text-ink-mute hover:text-ink'
+            ? 'font-bold bg-paper-warm'
+            : 'opacity-80 hover:opacity-100'
         }"
         aria-current={isActive(item.match) ? 'page' : undefined}
       >
