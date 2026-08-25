@@ -57,6 +57,13 @@ publishing, displacement notifications.
    collapses the previously featured pin to a bar (one maximized at a time).
    View-only, per-visit state; the featured card still navigates to detail.
    Bars end in ▾ (expand affordance) instead of →.
+
+   **Accordion addendum (2026-08-25 evening, user-revised — SUPERSEDES the
+   swap addendum above):** pins keep their fixed newest-first positions;
+   clicking a bar expands that pin in its own row into the featured card
+   (slide transition, 180ms, 0 under prefers-reduced-motion) and collapses
+   the previously open one to a bar in ITS row — one expanded at a time,
+   nothing changes position. The expanded card still navigates to detail.
 4. **Docs** — `src/components/admin/CLAUDE.md` invariant + root `CLAUDE.md`
    `announcements` entry and "Admin official announcements" line.
 

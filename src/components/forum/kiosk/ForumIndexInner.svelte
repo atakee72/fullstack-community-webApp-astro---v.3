@@ -15,6 +15,7 @@
   // admin role from the database.
 
   import { tick } from 'svelte';
+  import { slide } from 'svelte/transition';
   import { createQuery } from '@tanstack/svelte-query';
   import { t, locale } from '../../../lib/kiosk-i18n';
   import { online } from '../../../lib/onlineStore';
@@ -109,25 +110,33 @@
   );
   const pinnedIds = $derived(new Set(pinnedOfficials.map((it: any) => it._id)));
 
-  // Variant B+ swap (user-decided 2026-08-25): clicking a slim pin bar
-  // expands that announcement into the featured slot and collapses the
-  // previous one to a bar — exactly one pin maximized at a time. Pure
-  // per-visit VIEW state: never persisted, never reorders pins for
-  // anyone else, and the newest pin is featured again on next load.
+  // Pin accordion (user-decided 2026-08-25, v2 — supersedes the same-day
+  // position-swap): pins keep their newest-first positions; exactly one
+  // is EXPANDED in place as the full featured card, the rest are slim
+  // bars. Clicking a bar expands it in its own row (slide) and collapses
+  // the open one. Pure per-visit VIEW state: never persisted, never
+  // reordered — the newest pin is expanded again on next load.
   let expandedPinId = $state<string | null>(null);
-  const featuredPin = $derived(
+  const expandedPin = $derived(
     pinnedOfficials.find((p: any) => p._id === expandedPinId) ?? pinnedOfficials[0]
   );
-  const barPins = $derived(pinnedOfficials.filter((p: any) => p !== featuredPin));
 
-  // Focus management: the clicked bar button disappears from the DOM on
-  // swap (it becomes the featured card), which would drop keyboard focus
-  // to <body>. Move focus to the featured card link instead.
-  let featuredLinkEl = $state<HTMLAnchorElement | null>(null);
+  // Slide duration for the row swap — 0 under prefers-reduced-motion
+  // (instant, no animation). Island is client:only, but guard anyway.
+  const pinSlideMs =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ? 0
+      : 180;
+
+  // Focus management: the clicked bar button is replaced in place by the
+  // expanded card, which would drop keyboard focus to <body>. Move focus
+  // to the expanded card's link instead.
+  let expandedLinkEl = $state<HTMLAnchorElement | null>(null);
   async function expandPin(id: string) {
     expandedPinId = id;
     await tick();
-    featuredLinkEl?.focus();
+    expandedLinkEl?.focus();
   }
 
   // Short German relative time for the slim pin bars — same logic as
@@ -456,48 +465,55 @@
       }`}
     >
       <!-- Pinned official announcements (real DB docs, up to MAX_PINS).
-           Variant B + swap (Aug 2026): exactly ONE pin renders as the
-           full-width featured card (newest by default); the others render
-           as slim one-line pin bars. Clicking a bar expands it into the
-           featured slot (view-only swap); clicking the featured card
-           navigates to the detail page as before. Hidden when the kind
-           filter wouldn't include announcements. -->
+           Accordion (Aug 2026 v2): pins keep their newest-first order;
+           exactly ONE is expanded in place as the full featured card,
+           the others are slim one-line pin bars. Clicking a bar expands
+           it in its own row and collapses the open one — both branches
+           carry transition:slide so the row height interpolates smoothly
+           (bar 44px ↔ card height; two rows animating in opposite
+           directions keep the page height near-constant). The expanded
+           card navigates to the detail page. Hidden when the kind filter
+           wouldn't include announcements. -->
       {#if activeFilter === 'all' || activeFilter === 'announcement'}
-        {#if featuredPin}
+        {#each pinnedOfficials as pin (pin._id)}
           <div class="md:col-span-2 lg:col-span-3">
-            <a
-              bind:this={featuredLinkEl}
-              href={detailHref(featuredPin)}
-              class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
-              aria-label="Offizielle Ankündigung"
-            >
-              <ForumPostCard
-                topic={featuredPin}
-                kind="announcement"
-                featured
-                pinned
-                isOfficial
-                team={featuredPin.author?.role === 'admin'}
-              />
-            </a>
-          </div>
-        {/if}
-        {#each barPins as pin (pin._id)}
-          <div class="md:col-span-2 lg:col-span-3">
-            <!-- #7fc2ce is deliberate: teal legible on ink (no on-ink teal
-                 token exists — same reason the blog has --k-rust-on-ink).
-                 Don't "fix" it to text-teal, which vanishes on the ink bg. -->
-            <button
-              type="button"
-              onclick={() => expandPin(pin._id)}
-              class="w-full text-left flex items-center gap-3 min-h-[44px] px-4 py-[9px] bg-ink text-paper border-[1.5px] border-teal rounded-lg shadow-[2px_2px_0_var(--k-teal)] focus:outline-none focus:ring-2 focus:ring-ink transition-all duration-[180ms] ease-out hover:-translate-x-px hover:-translate-y-px"
-            >
-              <span aria-hidden="true" class="text-[12px]">📌</span>
-              <span class="shrink-0 font-dmmono text-[9px] uppercase tracking-[0.12em] text-[#7fc2ce]">{$t['pinned.bar.label']}</span>
-              <span class="min-w-0 truncate font-bricolage text-[14px] font-bold tracking-[-0.01em]">{pin.title}</span>
-              <span class="ml-auto shrink-0 font-dmmono text-[9.5px] text-paper/55">{pinBarTime(pin.date)}</span>
-              <span aria-hidden="true" class="shrink-0 text-[#7fc2ce] font-bold">▾</span>
-            </button>
+            {#if pin === expandedPin}
+              <div transition:slide={{ duration: pinSlideMs }}>
+                <a
+                  bind:this={expandedLinkEl}
+                  href={detailHref(pin)}
+                  class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+                  aria-label="Offizielle Ankündigung"
+                >
+                  <ForumPostCard
+                    topic={pin}
+                    kind="announcement"
+                    featured
+                    pinned
+                    isOfficial
+                    team={pin.author?.role === 'admin'}
+                  />
+                </a>
+              </div>
+            {:else}
+              <!-- #7fc2ce is deliberate: teal legible on ink (no on-ink teal
+                   token exists — same reason the blog has --k-rust-on-ink).
+                   Don't "fix" it to text-teal, which vanishes on the ink bg. -->
+              <div transition:slide={{ duration: pinSlideMs }}>
+                <button
+                  type="button"
+                  aria-expanded="false"
+                  onclick={() => expandPin(pin._id)}
+                  class="w-full text-left flex items-center gap-3 min-h-[44px] px-4 py-[9px] bg-ink text-paper border-[1.5px] border-teal rounded-lg shadow-[2px_2px_0_var(--k-teal)] focus:outline-none focus:ring-2 focus:ring-ink transition-all duration-[180ms] ease-out hover:-translate-x-px hover:-translate-y-px"
+                >
+                  <span aria-hidden="true" class="text-[12px]">📌</span>
+                  <span class="shrink-0 font-dmmono text-[9px] uppercase tracking-[0.12em] text-[#7fc2ce]">{$t['pinned.bar.label']}</span>
+                  <span class="min-w-0 truncate font-bricolage text-[14px] font-bold tracking-[-0.01em]">{pin.title}</span>
+                  <span class="ml-auto shrink-0 font-dmmono text-[9.5px] text-paper/55">{pinBarTime(pin.date)}</span>
+                  <span aria-hidden="true" class="shrink-0 text-[#7fc2ce] font-bold">▾</span>
+                </button>
+              </div>
+            {/if}
           </div>
         {/each}
       {/if}
