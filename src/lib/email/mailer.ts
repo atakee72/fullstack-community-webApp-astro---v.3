@@ -27,8 +27,9 @@ const SMTP_PASS = import.meta.env.SMTP_PASS || '';
 const RESEND_API_KEY = import.meta.env.RESEND_API_KEY || '';
 // For SMTP this MUST be overridden via env to the alias registered at the
 // SMTP provider (mailbox.org refuses unregistered From addresses). The
-// default only preserves legacy Resend behavior.
-const SENDING_FROM = import.meta.env.SENDING_FROM_EMAIL || 'Mahalle <noreply@mahalle.berlin>';
+// fallback is only a safety net for a missing env var — every real env
+// (prod, local dev) sets SENDING_FROM_EMAIL explicitly.
+const SENDING_FROM = import.meta.env.SENDING_FROM_EMAIL || 'Mahalle <noreply@mahalle.digital>';
 
 const smtpConfigured = Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS);
 
