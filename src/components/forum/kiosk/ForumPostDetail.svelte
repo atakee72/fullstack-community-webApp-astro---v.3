@@ -14,6 +14,7 @@
   // forum, no new dialog.
 
   import { t, tStr, locale } from '../../../lib/kiosk-i18n';
+  import { linkifySegments } from '../../../lib/linkify';
   import KioskAvatar from './KioskAvatar.svelte';
   import KioskBtn from './KioskBtn.svelte';
   import PostTypeChip from './PostTypeChip.svelte';
@@ -633,11 +634,11 @@
             {#if i === 0}
               <p
                 class="font-bricolage text-[17px] leading-[1.55] text-ink whitespace-pre-line"
-              >{para}</p>
+              >{#each linkifySegments(para) as seg}{#if seg.type === 'link'}<a href={seg.value} target="_blank" rel="noopener noreferrer" class="underline underline-offset-2 decoration-[1.5px] break-all hover:text-wine">{seg.value}</a>{:else}{seg.value}{/if}{/each}</p>
             {:else}
               <p
                 class="font-bricolage text-[16px] leading-[1.55] text-ink-soft whitespace-pre-line"
-              >{para}</p>
+              >{#each linkifySegments(para) as seg}{#if seg.type === 'link'}<a href={seg.value} target="_blank" rel="noopener noreferrer" class="underline underline-offset-2 decoration-[1.5px] break-all hover:text-wine">{seg.value}</a>{:else}{seg.value}{/if}{/each}</p>
             {/if}
           {/each}
         </div>
