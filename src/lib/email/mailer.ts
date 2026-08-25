@@ -43,6 +43,22 @@ export interface MailInput {
   replyTo?: string;
 }
 
+// The Resend SDK rides a bare fetch with no timeout — a hung provider would
+// hold the awaited send (and the caller's request, e.g. verify-email) open
+// until Vercel kills the function. Same lesson as web-push's timeout: 10000.
+// The raced-out fetch keeps running in the background; we only stop waiting.
+const RESEND_TIMEOUT_MS = 10_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    }),
+  ]).finally(() => clearTimeout(timer));
+}
+
 // Lazy module-level singleton — reused on warm serverless instances.
 // Pooling stays off (nodemailer default): one connection per send, no
 // half-dead pooled sockets surviving a freeze/thaw cycle.
@@ -79,13 +95,17 @@ export async function sendMail(input: MailInput): Promise<void> {
     }
     if (RESEND_API_KEY) {
       const resend = new Resend(RESEND_API_KEY);
-      const { error } = await resend.emails.send({
-        from: SENDING_FROM,
-        to: input.to,
-        subject: input.subject,
-        html: input.html,
-        ...(input.replyTo ? { replyTo: input.replyTo } : {}),
-      });
+      const { error } = await withTimeout(
+        resend.emails.send({
+          from: SENDING_FROM,
+          to: input.to,
+          subject: input.subject,
+          html: input.html,
+          ...(input.replyTo ? { replyTo: input.replyTo } : {}),
+        }),
+        RESEND_TIMEOUT_MS,
+        'Resend send'
+      );
       if (error) {
         throw new Error(`Resend send failed: ${error.name}: ${error.message}`);
       }
