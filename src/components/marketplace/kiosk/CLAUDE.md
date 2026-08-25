@@ -1,5 +1,7 @@
 # Marketplace (kiosk) notes
 
+> **Whole surface login-gated since 2026-08-25** (`src/middleware.ts`: `/marketplace` in `GATED_PAGES`, `/api/listings` in `GATED_APIS`) — user decision: inner-community, not a public market; this closed the "keep public for SEO" question from the landing release. "Public" in the notes below means *visible to logged-in non-owners*, not anonymous visitors.
+
 > **A5 superseded May 2026** — see "Bump — no rate limit" and "Freshness decay
 > & public visibility" sections below. The original A5 (7-day cooldown +
 > altpapier strap that bump didn't clear + 60d hide) was replaced by a single
