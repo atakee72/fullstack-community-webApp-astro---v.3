@@ -51,6 +51,12 @@ publishing, displacement notifications.
    full-width featured card; older pins render as slim one-line pin bars
    (ink bg, 1.5px teal border, teal print shadow, 📌 + AMTLICH label +
    truncated title + relative time + →), each spanning the full grid row.
+
+   **Swap addendum (2026-08-25, user-decided):** a pin bar is a button, not
+   a link — clicking it expands that announcement into the featured slot and
+   collapses the previously featured pin to a bar (one maximized at a time).
+   View-only, per-visit state; the featured card still navigates to detail.
+   Bars end in ▾ (expand affordance) instead of →.
 4. **Docs** — `src/components/admin/CLAUDE.md` invariant + root `CLAUDE.md`
    `announcements` entry and "Admin official announcements" line.
 
