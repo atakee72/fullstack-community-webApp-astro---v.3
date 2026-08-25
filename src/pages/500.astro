@@ -1,0 +1,46 @@
+---
+// SSR error page — Astro renders this when server rendering throws in
+// production (dev mode shows the overlay instead; that's expected).
+// MUST stay dependency-free: no getSession, no DB, no src/lib imports —
+// it renders exactly when those are broken. Must NOT be prerendered
+// (Astro requires the 500 page to be server-rendered).
+// Sentry capture already happened in src/middleware.ts before the rethrow,
+// hence "ist schon gemeldet" in the copy.
+import LandingLayout from '../layouts/LandingLayout.astro';
+---
+
+<LandingLayout
+  title="Technische Störung | Mahalle"
+  description="Kleine Störung in der Druckerei."
+>
+  <main class="err-wrap">
+    <p class="err-kicker font-dmmono">STÖRUNG · TECHNISCHER FEHLER</p>
+    <h1 class="err-code font-bricolage">500</h1>
+    <p class="err-lead">Kleine Störung in der Druckerei.</p>
+    <p class="err-sub">
+      Bei uns ist etwas schiefgegangen — der Fehler ist schon gemeldet.
+      Meistens hilft es, die Seite gleich noch einmal zu laden.
+    </p>
+
+    <p class="err-actions">
+      <button type="button" class="err-btn font-bricolage" onclick="location.reload()">Neu laden</button>
+      <a href="/" class="err-home">Zur Startseite</a>
+    </p>
+
+    <p class="err-muted"><em>English:</em> Something went wrong on our side — it's already been reported. Reloading usually helps.</p>
+  </main>
+</LandingLayout>
+
+<style>
+  .err-wrap { max-width: 680px; margin: 0 auto; padding: 64px 22px 80px; }
+  .err-kicker { font-size: 11px; letter-spacing: 0.18em; color: var(--k-ink-mute); margin: 0 0 10px; }
+  .err-code { font-size: clamp(88px, 18vw, 160px); font-weight: 800; letter-spacing: -0.05em; line-height: 0.9; margin: 0 0 18px; color: var(--k-ink); }
+  .err-lead { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 8px; color: var(--k-ink); }
+  .err-sub { font-size: 14px; line-height: 1.65; color: var(--k-ink-soft); margin: 0; max-width: 460px; }
+  .err-actions { display: flex; align-items: center; gap: 18px; margin: 32px 0 0; }
+  .err-btn { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; color: var(--k-paper, #f3ead8); background: var(--k-ink, #1b1a17); border: 1.5px solid var(--k-ink, #1b1a17); border-radius: 999px; padding: 10px 22px; cursor: pointer; }
+  .err-btn:hover { opacity: 0.85; }
+  .err-home { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; color: var(--k-ink); text-decoration: underline; text-decoration-style: dashed; text-underline-offset: 4px; }
+  .err-home:hover { color: var(--k-wine, #b23a5b); }
+  .err-muted { font-size: 12px; line-height: 1.5; color: var(--k-ink-mute); margin: 40px 0 0; }
+</style>

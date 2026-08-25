@@ -53,6 +53,8 @@ src/
 │   │   └── kiez-heartbeat.ts # Public landing-page heartbeat wrapper (getLandingData())
 │   ├── index.astro   # `/` — public landing page (SSR redirect to /forum for members)
 │   ├── forum.astro   # `/forum` — forum index (gated)
+│   ├── 404.astro     # Global not-found page (prerendered, kiosk-styled, LandingLayout)
+│   ├── 500.astro     # SSR error page (dependency-free by design — no session/DB imports ever)
 │   └── *.astro       # Page components
 ├── hooks/
 │   └── api/          # TanStack Query hooks
