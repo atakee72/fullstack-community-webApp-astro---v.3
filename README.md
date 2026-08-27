@@ -58,7 +58,7 @@ src/
 
 The app has completed its migration (July 2026) from a **dark-glass** aesthetic (deep indigo `#0e1033` + purple radial gradient + glass surfaces) to a **kiosk** aesthetic (paper-warm surfaces, ink borders, print shadows, carved-italic title accents, DM Mono kickers, Instrument italic copy).
 
-### Migration status — complete, all 10 surfaces
+### Migration status — complete, all 11 surfaces
 
 | Surface | State |
 |---|---|
