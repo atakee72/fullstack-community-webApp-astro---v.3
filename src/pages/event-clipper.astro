@@ -1,0 +1,77 @@
+---
+// /event-clipper — Termin-Clipper bookmarklet page.
+//
+// Deliberately NOT login-gated (instructions are harmless; the compose
+// target /events/create is gated and its ?redirect= bounce preserves the
+// prefill query). The bookmarklet href is built client-side from
+// location.origin so the same page works on dev and prod.
+import KioskLayout from '../layouts/KioskLayout.astro';
+---
+
+<KioskLayout
+  title="Termin-Clipper | Mahalle"
+  description="Veranstaltungen von anderen Webseiten mit einem Klick in den Mahalle-Kalender übernehmen."
+  page="calendar"
+>
+  <main class="clip-wrap">
+    <p class="clip-kicker font-dmmono">WERKZEUG · KALENDER</p>
+    <h1 class="clip-title font-bricolage">Der Termin-Clipper</h1>
+    <p class="clip-lead">
+      Du findest im Netz eine Veranstaltung, die in den Kiez gehört? Mit dem
+      Termin-Clipper übernimmst du sie mit einem Klick in den
+      Mahalle-Kalender — Titel, Datum und Quelle inklusive.
+    </p>
+
+    <p class="clip-kicker clip-kicker--steps font-dmmono">SO GEHT ES</p>
+    <ol class="clip-steps">
+      <li><strong>Einmalig:</strong> Zieh den Knopf unten in deine Lesezeichen-Leiste (Bookmarks-Bar).</li>
+      <li>Auf einer Veranstaltungsseite: markiere optional den Beschreibungstext, dann klicke das Lesezeichen.</li>
+      <li>Der Mahalle-Termin öffnet sich vorausgefüllt — prüfen, ergänzen, veröffentlichen. Fertig.</li>
+    </ol>
+
+    <p class="clip-drag">
+      <a id="clipper-link" href="#" class="clip-btn font-bricolage" draggable="true">📎 Zu Mahalle clippen</a>
+    </p>
+    <p class="clip-note">
+      Titel und (wenn die Seite sie maschinenlesbar angibt) das Datum werden
+      automatisch übernommen; markierter Text wird zur Beschreibung, die
+      Quelle wird verlinkt. Auf dem Handy funktionieren Lesezeichen-Skripte
+      leider nur eingeschränkt — der Clipper ist ein Desktop-Werkzeug.
+    </p>
+  </main>
+</KioskLayout>
+
+<script is:inline data-astro-rerun>
+  (function () {
+    // Bookmarklet source. __ORIGIN__ is replaced with this page's origin so
+    // dev and prod each clip into themselves. Collected: og:title/document
+    // title, text selection, page URL, best-effort schema.org Event dates.
+    var SRC = "(function(){function q(s){var m=document.querySelector(s);return m?m.getAttribute('content'):null}var t=q('meta[property=\\\"og:title\\\"]')||document.title||'';var sel='';try{sel=String(window.getSelection())}catch(e){}var url=location.href;var from='',to='';try{var sc=document.querySelectorAll('script[type=\\\"application/ld+json\\\"]');outer:for(var i=0;i<sc.length;i++){var d=JSON.parse(sc[i].textContent);var arr=Array.isArray(d)?d:(d&&d['@graph']?d['@graph']:[d]);for(var j=0;j<arr.length;j++){var n=arr[j];if(n&&/Event/.test(String(n['@type']))&&n.startDate){from=String(n.startDate).slice(0,10);if(n.endDate){to=String(n.endDate).slice(0,10)}break outer}}}}catch(e){}var body=(sel?sel+'\\n\\n':'')+'Quelle: '+url;var p=new URLSearchParams();if(t){p.set('title',t.slice(0,200))}p.set('body',body.slice(0,3000));if(from){p.set('from',from)}if(to){p.set('to',to)}window.open('__ORIGIN__/events/create?'+p.toString(),'_blank')})();";
+    var link = document.getElementById('clipper-link');
+    if (link) {
+      link.setAttribute(
+        'href',
+        'javascript:' + encodeURIComponent(SRC.replace('__ORIGIN__', location.origin))
+      );
+      // A click on the page itself shouldn't run the clipper here (it would
+      // clip the clipper page) — nudge to drag instead.
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        alert('Zieh den Knopf in deine Lesezeichen-Leiste — von dort aus clippt er jede Seite.');
+      });
+    }
+  })();
+</script>
+
+<style>
+  .clip-wrap { max-width: 680px; margin: 0 auto; padding: 48px 22px 80px; }
+  .clip-kicker { font-size: 11px; letter-spacing: 0.18em; color: var(--k-ink-mute); margin: 0 0 10px; }
+  .clip-kicker--steps { margin: 36px 0 10px; }
+  .clip-title { font-size: clamp(34px, 7vw, 52px); font-weight: 800; letter-spacing: -0.03em; margin: 0 0 14px; color: var(--k-ink); }
+  .clip-lead { font-size: 16px; line-height: 1.6; color: var(--k-ink-soft); margin: 0; max-width: 520px; }
+  .clip-steps { margin: 0; padding-left: 22px; font-size: 14px; line-height: 1.7; color: var(--k-ink-soft); }
+  .clip-steps li { margin-bottom: 6px; }
+  .clip-drag { margin: 30px 0 0; }
+  .clip-btn { display: inline-block; font-size: 15px; font-weight: 700; letter-spacing: 0.02em; color: var(--k-paper, #f3ead8); background: var(--k-ink, #1b1a17); border: 1.5px solid var(--k-ink, #1b1a17); border-radius: 999px; padding: 12px 24px; text-decoration: none; box-shadow: 2px 2px 0 var(--k-teal, #3f8f9f); cursor: grab; }
+  .clip-note { font-size: 12.5px; line-height: 1.6; color: var(--k-ink-mute); margin: 26px 0 0; max-width: 520px; }
+</style>
