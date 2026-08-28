@@ -84,20 +84,25 @@
     const from = search.get('from');
     const to = search.get('to');
     const allDayParam = search.get('allDay') === '1';
+    // Event-clipper / external prefill (Aug 2026): title/body/location can
+    // arrive alongside (or without) the drag-select date params. ANY prefill
+    // param present → the URL wins over the draft store, same rule as `from`.
+    // Length caps are defensive — URL values are caller-controlled.
+    const titleParam = search.get('title');
+    const bodyParam = search.get('body');
+    const locationParam = search.get('location');
 
     let saved: EventDraftValues | null = null;
     eventDraft.subscribe((v) => (saved = v))();
 
-    if (from) {
-      // URL params win — drag-select just landed on this page.
+    if (from || titleParam !== null || bodyParam !== null || locationParam !== null) {
       return {
-        title: '',
-        body: '',
+        title: (titleParam ?? '').slice(0, 200),
+        body: (bodyParam ?? '').slice(0, 3000),
         category: 'kiez',
-        startDate: from,
-        endDate: to ?? from,
+        ...(from ? { startDate: from, endDate: to ?? from } : {}),
         allDay: allDayParam,
-        location: '',
+        location: (locationParam ?? '').slice(0, 200),
         capacity: null,
         visibility: 'public',
         tags: []
