@@ -91,6 +91,11 @@
     const titleParam = search.get('title');
     const bodyParam = search.get('body');
     const locationParam = search.get('location');
+    // Clipper v2: optional HH:MM times (e.g. from <time datetime> fallback).
+    // Invalid values are dropped so the form's next-full-hour defaults apply.
+    const HHMM = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
+    const startTimeParam = search.get('startTime');
+    const endTimeParam = search.get('endTime');
 
     let saved: EventDraftValues | null = null;
     eventDraft.subscribe((v) => (saved = v))();
@@ -101,6 +106,8 @@
         body: (bodyParam ?? '').slice(0, 3000),
         category: 'kiez',
         ...(from ? { startDate: from, endDate: to ?? from } : {}),
+        ...(startTimeParam && HHMM.test(startTimeParam) ? { startTime: startTimeParam } : {}),
+        ...(endTimeParam && HHMM.test(endTimeParam) ? { endTime: endTimeParam } : {}),
         allDay: allDayParam,
         location: (locationParam ?? '').slice(0, 200),
         capacity: null,
