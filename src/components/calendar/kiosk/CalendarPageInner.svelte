@@ -185,8 +185,13 @@
     queryFn: fetchEvents,
     initialData:
       initialEvents.length > 0 ? (initialEvents as EventDoc[]) : undefined,
-    initialDataUpdatedAt:
-      initialEvents.length > 0 ? Date.now() : undefined
+    // Stamped STALE (epoch), not Date.now(): initialData seeds EVERY month
+    // key on navigation, and the SSR snapshot is (a) from page-load time and
+    // (b) fetched for the initial range — stamping it fresh made just-published
+    // events vanish for staleTime (60s) per visited month (flip-flop bug,
+    // 2026-08-30). Epoch keeps the instant SSR paint but triggers an
+    // immediate background refetch that reconciles the list.
+    initialDataUpdatedAt: initialEvents.length > 0 ? 0 : undefined
   }));
 
   const events = $derived(eventsQuery.data ?? []);
