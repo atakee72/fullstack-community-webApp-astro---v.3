@@ -427,9 +427,11 @@ land after a user is captured as due but before their turn arrives.
 re-verifying `deletionScheduledAt <= now` and `anonymized !== true` at
 claim time, stamping `deletionClaimedAt`; a non-match returns `{ ok: true,
 skipped: true, steps: {} }` before any destructive step runs.
-`deletionClaimedAt` is kept on the tombstone as a forensic breadcrumb but
-`$unset` by `cancelDeletion()` so a cancelled account carries no stale
-claim marker.
+`deletionClaimedAt` is `$unset` by `cancelDeletion()` on the cancel path
+and — since the 2026-08-30 hardening batch — also by the tombstone itself,
+so neither outcome leaves a stale claim marker. The claim's projection also
+captures `email` (normalized) alongside `userPicture`: the email-keyed
+sweeps below need it, and step 6 `$unset`s it.
 
 Ordered steps (each counted into `steps: Record<string, number>`;
 per-step try/catch — a failing step is recorded as `-1` and flips the
@@ -490,6 +492,28 @@ overall `ok` to `false`, but does NOT stop the remaining steps):
    never anything a URL string could otherwise point at. No-op (not an
    error) if there was no avatar or the URL doesn't match the expected
    shape.
+
+**Hardening batch additions (2026-08-30)** — four gaps closed, all before
+the tombstone in the step order: (a) **likedBy prune** (after the RSVP
+step): `$pull likedBy + $inc likes: -1` across
+topics/announcements/recommendations/events — the like endpoints keep the
+counter in lockstep, so a bare `$pull` would have drifted it; (b)
+**listingContacts sweeps** — seller side inside step 1 (`$or` on collected
+listingIds + `sellerId`), buyer side as its own step keyed on the
+claim-captured email (`buyerEmail` is stored lowercased — rows are
+plaintext buyer name+email, NOT hashed as older docs claimed); the manual
+`listings/delete/[id]` endpoint now cascades its listing's contact rows
+too; (c) **email-keyed rateLimits**: the `$regex userId` delete gained an
+exact-`$in` arm for `login:`/`banflag:`/`fp:email:` built from the captured
+email (exact match, never regex — emails contain metacharacters); (d)
+**tombstone `$unset` extended** with `tours`, `tourHelloDismissedAt`,
+`deletionClaimedAt`. Users tombstoned BEFORE this batch keep `tours`/
+`deletionClaimedAt` residue (non-PII; no backfill run — acceptable).
+Integration-tested end-to-end via `scripts/verify-deletion-pipeline.ts`
+(dev-only, 3 modes: `--seed` → cron curl → `--assert`, then `--cleanup`).
+Known residue: contact rows a user sent under a DIFFERENT email than their
+account's survive deletion (the form field is free-form) — unattributable
+by design.
 
 **E2E-verified** (Task 11, tmp fixture users, cron called directly with the
 real `CRON_SECRET`): listing gone + its `flaggedContent` row kept with
