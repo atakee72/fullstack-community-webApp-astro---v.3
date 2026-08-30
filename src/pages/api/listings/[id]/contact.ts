@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { createHash } from 'crypto';
 import { ObjectId } from 'mongodb';
+import { hashContactEmail } from '../../../../lib/listings/contactHash';
 import React from 'react';
 import { render } from '@react-email/render';
 import { connectDB } from '../../../../lib/mongodb';
@@ -108,6 +109,12 @@ export const POST: APIRoute = async ({ request, params, clientAddress }) => {
     'unknown';
   const senderIpHash = hashIp(ip);
 
+  // Buyer identity is stored HASHED only (Option C, 2026-08-31): same
+  // salt+construction as senderIpHash, shared with the deletion pipeline
+  // via hashContactEmail. The plaintext email still flows transiently
+  // through the relay emails (replyTo + confirmation) — never to Mongo.
+  const buyerEmailHash = hashContactEmail(email, IP_SALT);
+
   try {
     const db = await connectDB();
     const listingsCol = db.collection<Listing>('listings');
@@ -131,7 +138,7 @@ export const POST: APIRoute = async ({ request, params, clientAddress }) => {
 
     // 8. Per-sender hourly rate limit (5/hour)
     const senderHourlyCount = await contactsCol.countDocuments({
-      buyerEmail: email,
+      buyerEmailHash,
       sentAt: { $gt: oneHourAgo },
     });
     if (senderHourlyCount >= 5) {
@@ -140,7 +147,7 @@ export const POST: APIRoute = async ({ request, params, clientAddress }) => {
 
     // 9. Per-sender-to-owner daily limit (3/day)
     const senderDailyToOwnerCount = await contactsCol.countDocuments({
-      buyerEmail: email,
+      buyerEmailHash,
       sellerId: listing.sellerId.toString(),
       sentAt: { $gt: oneDayAgo },
     });
@@ -223,14 +230,13 @@ export const POST: APIRoute = async ({ request, params, clientAddress }) => {
       console.log(`[contact] (dev) owner mail to ${seller.email} (replyTo ${email}) for listing "${safeTitle}"`);
     }
 
-    // (b) Metadata-only record (no message body — GDPR A6). Insert BEFORE the
+    // (b) Metadata-only record (no message body, hashed buyer identity — GDPR A6/Option C). Insert BEFORE the
     // confirmation send so a flaky confirmation can't be retried to bypass
     // rate limits (the owner email already went; we must count this attempt).
     await contactsCol.insertOne({
       listingId: id,
       sellerId: listing.sellerId.toString(),
-      buyerName: name,
-      buyerEmail: email,
+      buyerEmailHash,
       senderIpHash,
       sentAt: now,
     });
