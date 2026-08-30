@@ -113,5 +113,13 @@
     </div>
   </div>
 
-  <CalendarSidebar visibleMonth={selectedDay} {events} />
+  <CalendarSidebar
+    visibleMonth={selectedDay}
+    {events}
+    {selectedDay}
+    onPickDay={(d) => {
+      selectedDay = d;
+      onDayChange?.(d);
+    }}
+  />
 </div>

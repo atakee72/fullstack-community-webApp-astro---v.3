@@ -36,10 +36,17 @@
 
   let {
     visibleMonth = new Date(),
-    events = []
+    events = [],
+    selectedDay,
+    onPickDay
   } = $props<{
     visibleMonth?: Date;
     events?: EventDoc[];
+    // Day view passes both: cells become buttons that jump the view to
+    // the picked day, with the current day ring-highlighted. Agenda view
+    // passes neither — the mini month stays a static reference there.
+    selectedDay?: Date;
+    onPickDay?: (day: Date) => void;
   }>();
 
   const dateLocale = $derived($locale === 'de' ? deLocale : enUS);
@@ -78,11 +85,19 @@
       {#each cells as d (d.toISOString())}
         {@const inMonth = isSameMonth(d, visibleMonth)}
         {@const today = isTodayDate(d)}
+        {@const selected = selectedDay != null && isSameDay(d, selectedDay)}
         {@const dotClass = eventDotColor(d)}
-        <div
+        <svelte:element
+          this={onPickDay ? 'button' : 'div'}
+          type={onPickDay ? 'button' : undefined}
+          onclick={onPickDay ? () => onPickDay(d) : undefined}
           class={`relative py-1 text-center ${
-            today ? 'bg-wine text-paper border border-ink rounded-[4px] font-bold' : 'text-ink'
-          } ${inMonth ? '' : 'opacity-30'}`}
+            today
+              ? 'bg-wine text-paper border border-ink rounded-[4px] font-bold'
+              : selected
+              ? 'border border-wine rounded-[4px] font-bold text-wine'
+              : 'text-ink'
+          } ${inMonth ? '' : 'opacity-30'} ${onPickDay ? 'cursor-pointer hover:bg-wine/10 rounded-[4px]' : ''}`}
         >
           {d.getDate()}
           {#if dotClass && !today}
@@ -91,7 +106,7 @@
               aria-hidden="true"
             ></div>
           {/if}
-        </div>
+        </svelte:element>
       {/each}
     </div>
   </div>
