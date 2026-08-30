@@ -19,13 +19,18 @@
     onPickEvent,
     onRsvp,
     currentUserId = null,
-    initialDay
+    initialDay,
+    onDayChange
   } = $props<{
     events?: EventDoc[];
     onPickEvent?: (ev: EventDoc) => void;
     onRsvp?: (ev: EventDoc) => void;
     currentUserId?: string | null;
     initialDay?: Date;
+    // Fired on every internal day step so the parent can keep the header
+    // month stepper (and the events query range) in sync when the user
+    // crosses a month boundary day-by-day.
+    onDayChange?: (day: Date) => void;
   }>();
 
   let selectedDay = $state(initialDay ?? new Date());
@@ -35,12 +40,15 @@
 
   function goPrev() {
     selectedDay = subDays(selectedDay, 1);
+    onDayChange?.(selectedDay);
   }
   function goNext() {
     selectedDay = addDays(selectedDay, 1);
+    onDayChange?.(selectedDay);
   }
   function goToday() {
     selectedDay = new Date();
+    onDayChange?.(selectedDay);
   }
 
   const isOnToday = $derived(isTodayDate(selectedDay));

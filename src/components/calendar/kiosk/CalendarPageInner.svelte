@@ -17,7 +17,8 @@
     startOfMonth,
     endOfMonth,
     addMonths,
-    subMonths
+    subMonths,
+    isSameMonth
   } from 'date-fns';
   import { de as deLocale, enUS } from 'date-fns/locale';
 
@@ -155,14 +156,33 @@
   // walk through months. Defaults to today.
   let visibleMonth = $state(new Date());
 
+  // In Tag view the header month stepper must also move the shown day —
+  // the day view snapshots initialDay, so dayViewDate (keyed remount)
+  // carries the jump. Lands on today when stepping into the current
+  // month, on the 1st otherwise.
+  function dayForMonth(month: Date): Date {
+    const today = new Date();
+    return isSameMonth(month, today) ? today : startOfMonth(month);
+  }
+
   function goPrevMonth() {
     visibleMonth = subMonths(visibleMonth, 1);
+    if (view === 'day') dayViewDate = dayForMonth(visibleMonth);
   }
   function goNextMonth() {
     visibleMonth = addMonths(visibleMonth, 1);
+    if (view === 'day') dayViewDate = dayForMonth(visibleMonth);
   }
   function goToday() {
     visibleMonth = new Date();
+    if (view === 'day') dayViewDate = new Date();
+  }
+
+  // Reverse sync: day-by-day stepping inside the Tag view crossing a
+  // month boundary recenters the header + query range. Deliberately does
+  // NOT touch dayViewDate — that would remount the day view mid-step.
+  function onDayViewDayChange(day: Date) {
+    if (!isSameMonth(day, visibleMonth)) visibleMonth = day;
   }
 
   // Show the "Heute" snap-back button only when the user has navigated
@@ -425,6 +445,7 @@
         onRsvp={onPickEvent}
         {currentUserId}
         initialDay={dayViewDate ?? undefined}
+        onDayChange={onDayViewDayChange}
       />
     {/key}
   {/if}
