@@ -476,10 +476,6 @@ const de = {
   'cal.private': 'privat',
 
   'cal.agenda.live.kicker': 'GERADE LIVE',
-  'cal.agenda.quick.kicker': 'SCHNELL HINZUFÜGEN',
-  'cal.agenda.quick.parse': 'Tippe natürlich:',
-  'cal.agenda.quick.example': '„Brunch Sonntag 11 Uhr bei mir“',
-  'cal.agenda.quick.hint': 'wir parsen Tag, Uhrzeit & Ort.',
   'cal.agenda.quote': '„Im Kiez heißt Termin haben: man weiß, wo man hingehen kann.“',
   'cal.agenda.past.show': '{n} vergangene anzeigen',
   'cal.agenda.past.hide': 'vergangene ausblenden',
@@ -2320,10 +2316,6 @@ const en: Dict = {
   'cal.private': 'private',
 
   'cal.agenda.live.kicker': 'LIVE NOW',
-  'cal.agenda.quick.kicker': 'QUICK ADD',
-  'cal.agenda.quick.parse': 'Type naturally:',
-  'cal.agenda.quick.example': '“Brunch Sunday 11am at mine”',
-  'cal.agenda.quick.hint': 'we parse day, time & place.',
   'cal.agenda.quote': '“In the Kiez, having a date means knowing where you can go.”',
   'cal.agenda.past.show': 'show {n} past',
   'cal.agenda.past.hide': 'hide past',

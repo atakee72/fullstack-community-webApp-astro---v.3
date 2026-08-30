@@ -1,10 +1,7 @@
 <script lang="ts">
   // Right rail for the agenda view: mini month nav + "GERADE LIVE"
-  // card + "SCHNELL HINZUFÜGEN" placeholder + italic kiez quote.
+  // card + italic kiez quote.
   // Per `kiosk-calendar-views.jsx:230–342`.
-  //
-  // Quick-add NLP parser is purely visual placeholder for v1; no real
-  // parser wired in (see plan "out of scope").
 
   import {
     startOfMonth,
@@ -144,22 +141,6 @@
       </div>
     </div>
   {/if}
-
-  <!-- Quick add (v1 visual placeholder) -->
-  <div class="mb-5 pl-4 pr-8">
-    <div class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-teal mb-2">
-      ◆ {$t['cal.agenda.quick.kicker']}
-    </div>
-    <div
-      class="bg-paper border-[1.5px] border-ink rounded-md px-3 py-2 font-bricolage text-[12.5px] text-ink-mute leading-[1.5] min-h-[60px]"
-    >
-      <span class="font-instrument italic">{$t['cal.agenda.quick.parse']}</span><br />
-      <span class="text-ink">{$t['cal.agenda.quick.example']}</span>
-    </div>
-    <div class="font-dmmono text-[9.5px] text-ink-mute mt-1 leading-[1.4]">
-      {$t['cal.agenda.quick.hint']}
-    </div>
-  </div>
 
   <!-- Quote -->
   <div
