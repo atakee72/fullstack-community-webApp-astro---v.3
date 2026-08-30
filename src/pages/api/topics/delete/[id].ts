@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../../lib/mongodb';
+import { invalidateKiezKontext } from '../../../../lib/kiez/kontext';
 import { ObjectId } from 'mongodb';
 
 export const DELETE: APIRoute = async ({ params, request }) => {
@@ -65,6 +66,10 @@ export const DELETE: APIRoute = async ({ params, request }) => {
     // Also delete related comments
     const commentsCollection = db.collection('comments');
     await commentsCollection.deleteMany({ relevantPostId: new ObjectId(id) });
+
+    // Kiez-Daten Anwohner-Kontext chips freeze topic titles/links for 24h —
+    // drop the cache so a deleted topic never serves a 404 chip.
+    await invalidateKiezKontext();
 
     return new Response(JSON.stringify({
       message: 'Topic deleted successfully',

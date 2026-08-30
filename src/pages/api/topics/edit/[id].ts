@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../../../lib/mongodb';
+import { invalidateKiezKontext } from '../../../../lib/kiez/kontext';
 import { ObjectId } from 'mongodb';
 import type { Topic, EditHistory, FlaggedContent } from '../../../../types';
 import { TopicCreateSchema } from '../../../../schemas/forum.schema';
@@ -171,6 +172,9 @@ export const PUT: APIRoute = async ({ request, params }) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
+    // Invalidate Kiez-Daten Anwohner-Kontext cache in case the topic title changed
+    await invalidateKiezKontext();
 
     // Construct author object from session
     const author = {

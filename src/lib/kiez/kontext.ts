@@ -68,3 +68,18 @@ export async function getKiezKontext(): Promise<KiezKontext> {
   );
   return result;
 }
+
+/**
+ * Drop the cached chip payload. Call after any topic delete/edit that could
+ * invalidate a frozen chip title/link — next read recomputes. Best-effort by
+ * contract: callers MUST NOT fail their request on invalidation errors (a
+ * stale chip for up to 24h beats failing a delete).
+ */
+export async function invalidateKiezKontext(): Promise<void> {
+  try {
+    const db = await connectDB();
+    await db.collection('kiezKontextCache').deleteOne({ key: CACHE_KEY });
+  } catch {
+    // swallowed — see contract above
+  }
+}
