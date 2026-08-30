@@ -319,6 +319,21 @@
   const weekEvents = $derived(
     countEventsThisWeek(displayedEvents, weekStart, weekEnd)
   );
+  // Range label disambiguating „diese Woche" — the stat always talks
+  // about the REAL current week, even while another month is browsed.
+  // DE „24.–30. Aug." / „31. Aug.–6. Sep."; EN „Aug 24–30" / „Aug 31–Sep 6".
+  const weekRange = $derived.by(() => {
+    const loc = $locale === 'de' ? deLocale : enUS;
+    const sameMonth = weekStart.getMonth() === weekEnd.getMonth();
+    if ($locale === 'de') {
+      return sameMonth
+        ? `${format(weekStart, 'd.')}–${format(weekEnd, 'd. MMM', { locale: loc })}`
+        : `${format(weekStart, 'd. MMM', { locale: loc })}–${format(weekEnd, 'd. MMM', { locale: loc })}`;
+    }
+    return sameMonth
+      ? `${format(weekStart, 'MMM d', { locale: loc })}–${format(weekEnd, 'd', { locale: loc })}`
+      : `${format(weekStart, 'MMM d', { locale: loc })}–${format(weekEnd, 'MMM d', { locale: loc })}`;
+  });
   const liveNow = $derived(countLiveNow(displayedEvents));
   const goingToday = $derived.by(() => {
     const today = new Date();
@@ -360,6 +375,7 @@
       {monthLabel}
       {visibleMonthLabel}
       {weekEvents}
+      {weekRange}
       {liveNow}
       {goingToday}
       onPrevMonth={goPrevMonth}

@@ -12,6 +12,7 @@
     monthLabel = '',
     visibleMonthLabel = '',
     weekEvents = 0,
+    weekRange = '',
     liveNow = 0,
     goingToday = 0,
     onPrevMonth,
@@ -22,6 +23,7 @@
     monthLabel?: string;
     visibleMonthLabel?: string;
     weekEvents?: number;
+    weekRange?: string;
     liveNow?: number;
     goingToday?: number;
     onPrevMonth?: () => void;
@@ -55,7 +57,12 @@
 
   <div class="mt-4 lg:mt-2.5 flex flex-wrap items-end justify-between gap-x-5 gap-y-5 lg:gap-y-3">
     <div class="flex flex-wrap gap-x-4 gap-y-1 font-dmmono text-[11px] text-ink-mute">
-      <span><b class="text-ink">{weekEvents}</b> {$t['cal.stat.weekEvents']}</span>
+      <span
+        ><b class="text-ink">{weekEvents}</b>
+        {$t['cal.stat.weekEvents']}{#if weekRange}<span class="opacity-70 ml-1"
+            >· {weekRange}</span
+          >{/if}</span
+      >
       <span><b class="text-ochre">{liveNow}</b> {$t['cal.stat.liveNow']}</span>
       <span><b class="text-ink">{goingToday}</b> {$t['cal.stat.goingToday']}</span>
     </div>
