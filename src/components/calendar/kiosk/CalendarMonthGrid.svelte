@@ -25,7 +25,8 @@
     isToday as isTodayDate,
     getDay,
     format,
-    isSameDay
+    isSameDay,
+    startOfDay
   } from 'date-fns';
 
   import EventPill from './EventPill.svelte';
@@ -148,6 +149,8 @@
 
   function onCellPointerDown(e: PointerEvent, day: Date, isInMonth: boolean) {
     if (!isInMonth) return; // greyed cells are inert
+    // No creating events in the past: past cells don't start a selection.
+    if (day < startOfDay(new Date())) return;
     if (e.pointerType === 'touch') {
       // Long-press to disambiguate scroll from drag-select on touch.
       longPressTimer = setTimeout(() => activate(day, e), 400);
@@ -159,7 +162,10 @@
   function onCellPointerMove(e: PointerEvent) {
     if (!dragging) return;
     const day = getDateFromPointer(e);
-    if (day) dragEnd = day;
+    if (!day) return;
+    // A drag can't extend into the past — clamp at today.
+    const today = startOfDay(new Date());
+    dragEnd = day < today ? today : day;
   }
 
   function onCellPointerUp(e: PointerEvent) {
