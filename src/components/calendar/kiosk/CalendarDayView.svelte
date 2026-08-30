@@ -52,17 +52,7 @@
     selectedDay = addDays(selectedDay, 1);
     onDayChange?.(selectedDay);
   }
-  function goToday() {
-    selectedDay = new Date();
-    onDayChange?.(selectedDay);
-  }
-
   const isOnToday = $derived(isTodayDate(selectedDay));
-  // The jump-to-today button is labeled with its target date only
-  // ("30.8.2026") — a date link takes you to that date.
-  const todayLabel = $derived(
-    format($now, $locale === 'de' ? 'd.M.yyyy' : 'MMM d, yyyy', { locale: dateLocale })
-  );
   const liveCount = $derived(dayEvents.filter((e) => isLiveNow(e, $now)).length);
   const termLabel = $derived(
     dayEvents.length === 1 ? $t['cal.agenda.term.one'] : $t['cal.agenda.term.many']
@@ -145,7 +135,9 @@
       </div>
     {/if}
 
-    <!-- Day-nav footer: prev / today (when off today) / next. -->
+    <!-- Day-nav footer: prev / next. (A jump-to-today shortcut lived in
+         the middle until Aug 2026 — removed, it read like a caption for
+         the viewed day; the mini-calendar covers getting back.) -->
     <div
       class="mt-6 pt-3 flex justify-between items-center font-dmmono text-[10px] uppercase tracking-[0.05em] text-ink-mute border-t border-dashed border-rule"
     >
@@ -156,15 +148,6 @@
       >
         ← {prevLabel}
       </button>
-      {#if !isOnToday}
-        <button
-          type="button"
-          onclick={goToday}
-          class="text-wine hover:text-ink transition-colors"
-        >
-          {todayLabel}
-        </button>
-      {/if}
       <button
         type="button"
         onclick={goNext}
