@@ -104,3 +104,20 @@ Same shape as forum's deferred SEO gap: the calendar surfaces mount Svelte islan
 ## Dev-seed caveat: string user `_id`s break author populate
 
 Seeded dev users have STRING `_id`s, so `populateAuthors`' ObjectId `$in` misses them → list APIs return `author: null` → every dev event/topic shows „anonym" and owner-only UI (edit/delete) never appears for seeded accounts. Browser-gate owner flows on dev by REGISTERING a fresh user via `POST /api/auth/register` (field is `name`, not `userName`; real ObjectId `_id`). Prod is unaffected. Seed-script fix belongs to the hardening batch.
+
+## Day-view navigation sync + clickable mini-calendar (2026-08-30)
+
+Four pieces shipped the same afternoon (`9d28b90b`, `e6f7ed9c`, `ddc8ff49`, `b43dc7c1`) — together they make the Tag view a first-class citizen of the month stepper:
+
+- **Month-grid overflow chip is a button**: the desktop `+ N weitere` chip (day cell caps at 3 pills) opens the Tag view on that exact day via `onOpenDay` → `CalendarPageInner.openDay()`. It mirrors EventPill's `onpointerdown` `stopPropagation` so cell drag-select doesn't fire. Mobile untouched (dot-grid day tap already shows everything).
+- **`dayViewDate` state in `CalendarPageInner`** is the single carrier for "which day should the Tag view show": `CalendarDayView` snapshots its `initialDay` prop at init, so the day view is wrapped in `{#key dayViewDate}` — setting the state remounts it on the target day. Manual tab switches (`switchView`) seed it from the header month via `dayForMonth()` (today when the header is on the current month, the 1st otherwise); the month stepper updates it the same way while in day view.
+- **Reverse sync via `onDayChange`**: the day view fires it on every internal day step (prev/next/today AND mini-calendar picks); the parent recenters `visibleMonth` (header + query range) only when the month actually changed — deliberately WITHOUT touching `dayViewDate`, which would remount the view mid-step.
+- **Mini-calendar (`CalendarSidebar`) day cells become buttons** only when `onPickDay` is passed (day view); the current day gets a wine outline (`selectedDay` prop). Agenda view passes neither — its mini month stays a static reference. Spillover days of adjacent months are clickable too and recenter everything.
+
+## Event description linkify (2026-08-30)
+
+`EventDetailModal` renders `event.body` through `linkifySegments()` (`src/lib/linkify.ts`) — same XSS-safe segment pattern as `ForumPostDetail`, teal hover accent. AgendaRow's 2-line teaser stays plain text (row itself is the click target). Same commit fixed the helper's paren edge: `…wiki/Foo_(Bar).` now keeps the closing `)` (restore loop counts paren balance instead of requiring the raw match to end with `)`).
+
+## Dev-seed caveat #2: legacy category labels blank out whole months
+
+Seed data carried capitalized legacy categories (`"Markt"`, `"Nachbarschaft"`) that aren't in the kiosk `EventCategory` enum (`kiez`/`markt`/…). `displayedEvents` drops any event whose category isn't in the active set, and the page-level branch then replaces the ENTIRE view (grid/agenda/day alike) with `CalendarFilteredEmpty` — a month full of seeded events renders as "Nichts Passendes diese Woche". Normalized in `mahalle-dev` by hand 2026-08-30; the seed-script fix (valid categories + ObjectId `_id`s, see caveat above) belongs to the hardening batch. Prod unaffected (kiosk compose only writes enum values).
