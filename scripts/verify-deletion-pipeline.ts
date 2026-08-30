@@ -7,12 +7,15 @@
  *   pnpm tsx scripts/verify-deletion-pipeline.ts --cleanup
  *
  * SAFETY INTERLOCK: refuses any DB whose name lacks "dev" (same rule as
- * seed-dev-db.ts). Deliberately imports nothing from src/ — those modules
- * read import.meta.env (Vite-only); the pipeline itself runs inside the
- * dev server via the cron endpoint, exercising the real code path.
+ * seed-dev-db.ts). Imports nothing from src/ except the dependency-pure
+ * src/lib/listings/contactHash (no env reads, no imports beyond
+ * node:crypto) — every other src/ module reads import.meta.env (Vite-only);
+ * the pipeline itself runs inside the dev server via the cron endpoint,
+ * exercising the real code path.
  */
 import 'dotenv/config';
 import { MongoClient, ObjectId } from 'mongodb';
+import { hashContactEmail } from '../src/lib/listings/contactHash';
 
 const DOOMED_EMAIL = 'doomed@mahalle-dev.test';
 const MARK = 'verify-deletion-pipeline';
@@ -54,6 +57,10 @@ async function main(): Promise<void> {
   const db = client.db(dbName);
 
   if (mode === '--seed') {
+    if (!process.env.CONTACT_IP_SALT) {
+      console.error('CONTACT_IP_SALT is required for --seed (a saltless seed would create rows the pipeline can\'t match).');
+      process.exit(1);
+    }
     await cleanup(db);
 
     const uid = new ObjectId();
@@ -84,13 +91,13 @@ async function main(): Promise<void> {
     } as any);
     await db.collection('listingContacts').insertOne({
       listingId: String(listing.insertedId), sellerId: userId,
-      buyerName: 'Käufer', buyerEmail: 'buyer@mahalle-dev.test',
+      buyerEmailHash: hashContactEmail('buyer@mahalle-dev.test', process.env.CONTACT_IP_SALT || ''),
       senderIpHash: 'x', sentAt: new Date(), [MARK]: true,
     } as any);
     // Artifact 3: a contact row where the doomed user was the BUYER.
     await db.collection('listingContacts').insertOne({
       listingId: 'someotherlisting', sellerId: 'someoneelse',
-      buyerName: 'Doomed', buyerEmail: DOOMED_EMAIL,
+      buyerEmailHash: hashContactEmail(DOOMED_EMAIL, process.env.CONTACT_IP_SALT || ''),
       senderIpHash: 'x', sentAt: new Date(), [MARK]: true,
     } as any);
     // Artifact 4: email-keyed + userId-keyed rateLimit buckets.
