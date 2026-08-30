@@ -8,9 +8,11 @@
  *
  * Seeds: 3 users (1 admin), topics/events/announcements/recommendations/
  * listings (mostly approved, one pending for moderation-queue testing).
- * Field shapes mirror production docs: users._id is a hex24 STRING (legacy
- * from the Mongoose era — auth.config.ts stringifies it either way), and
- * author/sellerId store that string.
+ * Field shapes mirror production docs: users._id is a REAL ObjectId
+ * (registration never sets _id; ~20 lookups do `new ObjectId(id)` and
+ * silently miss string _ids — banGuard, tour, profile, author-badge joins).
+ * author/sellerId on content docs stay the stringified form, matching what
+ * the session provides at write time.
  *
  * The seed password is RANDOM per run and printed at the end (override with
  * DEV_SEED_PASSWORD=... for a stable local one). Never hardcode it here — a
@@ -45,13 +47,17 @@ async function main(): Promise<void> {
   const now = new Date();
   const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000);
   const daysAhead = (n: number) => new Date(Date.now() + n * 86_400_000);
-  const uid = () => new ObjectId().toHexString(); // hex24 string, matching prod's string _ids
+  // users._id is a REAL ObjectId (registration never sets _id; ~20 lookups
+  // do `new ObjectId(id)` and silently miss string _ids — banGuard, tour,
+  // profile, author-badge joins). author/sellerId on content docs stay the
+  // stringified form, matching what the session provides at write time.
+  const [adminId, ayseId, jonasId] = [new ObjectId(), new ObjectId(), new ObjectId()];
+  const [admin, ayse, jonas] = [adminId, ayseId, jonasId].map(String);
 
-  const [admin, ayse, jonas] = [uid(), uid(), uid()];
   const users = [
-    { _id: admin, name: 'Dev Admin', handle: 'dev_admin', email: 'admin@mahalle-dev.test', password: hash, role: 'admin', emailVerified: true, createdAt: daysAgo(90), updatedAt: now },
-    { _id: ayse, name: 'Ayşe Test', handle: 'ayse_test', email: 'ayse@mahalle-dev.test', password: hash, emailVerified: true, createdAt: daysAgo(60), updatedAt: now },
-    { _id: jonas, name: 'Jonas Test', handle: 'jonas_test', email: 'jonas@mahalle-dev.test', password: hash, emailVerified: false, createdAt: daysAgo(30), updatedAt: now },
+    { _id: adminId, name: 'Dev Admin', handle: 'dev_admin', email: 'admin@mahalle-dev.test', password: hash, role: 'admin', emailVerified: true, image: '', roleBadge: 'resident', hobbies: [], createdAt: daysAgo(90).toISOString(), updatedAt: now.toISOString() },
+    { _id: ayseId, name: 'Ayşe Test', handle: 'ayse_test', email: 'ayse@mahalle-dev.test', password: hash, emailVerified: true, image: '', roleBadge: 'resident', hobbies: [], createdAt: daysAgo(60).toISOString(), updatedAt: now.toISOString() },
+    { _id: jonasId, name: 'Jonas Test', handle: 'jonas_test', email: 'jonas@mahalle-dev.test', password: hash, emailVerified: false, image: '', roleBadge: 'resident', hobbies: [], createdAt: daysAgo(30).toISOString(), updatedAt: now.toISOString() },
   ];
 
   const post = (author: string, title: string, body: string, tags: string[], extra: Record<string, unknown> = {}) => ({
@@ -70,9 +76,9 @@ async function main(): Promise<void> {
   ];
 
   const events = [
-    { ...post(ayse, 'Dev-Kiezfest', 'Testevent in der Zukunft.', ['fest']), startDate: daysAhead(7), endDate: daysAhead(7), location: 'Herrfurthplatz (Test)', category: 'Nachbarschaft', capacity: null, allDay: false, rsvps: {} },
-    { ...post(jonas, 'Flohmarkt (Testdaten)', 'Noch ein Testevent.', ['markt']), startDate: daysAhead(14), endDate: daysAhead(14), location: 'Schillerpromenade (Test)', category: 'Markt', capacity: null, allDay: true, rsvps: {} },
-    { ...post(admin, 'Vergangenes Event', 'Liegt in der Vergangenheit — testet die Vergangenheits-Ansicht.', ['test']), startDate: daysAgo(10), endDate: daysAgo(10), location: 'Kiezraum (Test)', category: 'Nachbarschaft', capacity: null, allDay: false, rsvps: {} },
+    { ...post(ayse, 'Dev-Kiezfest', 'Testevent in der Zukunft.', ['fest']), startDate: daysAhead(7), endDate: daysAhead(7), location: 'Herrfurthplatz (Test)', category: 'kiez', capacity: null, allDay: false, rsvps: { going: [], maybe: [] }, visibility: 'public' },
+    { ...post(jonas, 'Flohmarkt (Testdaten)', 'Noch ein Testevent.', ['markt']), startDate: daysAhead(14), endDate: daysAhead(14), location: 'Schillerpromenade (Test)', category: 'markt', capacity: null, allDay: true, rsvps: { going: [], maybe: [] }, visibility: 'public' },
+    { ...post(admin, 'Vergangenes Event', 'Liegt in der Vergangenheit — testet die Vergangenheits-Ansicht.', ['test']), startDate: daysAgo(10), endDate: daysAgo(10), location: 'Kiezraum (Test)', category: 'sonstiges', capacity: null, allDay: false, rsvps: { going: [], maybe: [] }, visibility: 'public' },
   ];
 
   const announcements = [
@@ -81,7 +87,7 @@ async function main(): Promise<void> {
   ];
 
   const recommendations = [
-    { ...post(jonas, 'Café-Empfehlung (Test)', 'Fake-Empfehlung für die Dev-Datenbank.', ['café']), category: 'Essen & Trinken', description: 'Test' },
+    { ...post(jonas, 'Café-Empfehlung (Test)', 'Fake-Empfehlung für die Dev-Datenbank.', ['café']), category: 'restaurant', description: 'Test' },
   ];
 
   const listing = (sellerId: string, title: string, extra: Record<string, unknown> = {}) => ({
