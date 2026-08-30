@@ -10,6 +10,8 @@ export interface BeilagePost {
   title: string;
   description: string;
   pubDateISO: string;            // ISO 8601
+  updatedDateISO?: string;       // ISO 8601
+  author?: string;
   tags: string[];
   layout: 'standard' | 'hero' | 'gallery';
   minutes: number;               // Lesezeit, precomputed at serialization

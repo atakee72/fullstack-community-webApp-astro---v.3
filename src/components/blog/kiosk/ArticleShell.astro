@@ -30,9 +30,45 @@ const qrSvg = await QRCode.toString(articleUrl, {
   color: { dark: '#1b1a17', light: '#0000' },
 });
 const standDate = fmtDate(post.pubDateISO, 'de'); // print sheet is DE-only, like both existing print surfaces
+
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? 'https://mahalle.digital').href;
+const ogImage = post.cover ?? '/og-image.png'; // post.cover is already the processed asset path string
+const authorName = post.author ?? 'Mahalle Team'; // schema default, for safety
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: post.title,
+  description: post.description,
+  datePublished: post.pubDateISO,
+  ...(post.updatedDateISO ? { dateModified: post.updatedDateISO } : {}),
+  author: { '@type': 'Person', name: authorName },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Mahalle',
+    url: 'https://mahalle.digital',
+    logo: { '@type': 'ImageObject', url: 'https://mahalle.digital/icons/icon-512.png' },
+  },
+  mainEntityOfPage: canonicalUrl,
+  inLanguage: 'de',
+  ...(post.cover ? { image: new URL(post.cover, Astro.site ?? 'https://mahalle.digital').href } : {}),
+  ...(post.tags.length ? { keywords: post.tags.join(', ') } : {}),
+};
 ---
 
-<KioskLayout title={post.title} description={post.description} page="blog">
+<KioskLayout
+  title={post.title}
+  description={post.description}
+  page="blog"
+  type="article"
+  image={ogImage}
+  article={{
+    publishedTime: post.pubDateISO,
+    ...(post.updatedDateISO ? { modifiedTime: post.updatedDateISO } : {}),
+    author: authorName,
+  }}
+  jsonLd={jsonLd}
+>
   <BlogReadBar client:only="svelte" title={post.title} minutes={post.minutes} />
   <div class="bl-sheet">
     <div class="bl-print-head hidden">
