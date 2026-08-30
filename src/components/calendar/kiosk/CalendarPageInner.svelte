@@ -111,7 +111,9 @@
   }
 
   function switchView(v: View) {
-    dayViewDate = null;
+    // Entering Tag view follows the header month — today when the header
+    // is on the current month, the 1st otherwise (dayForMonth below).
+    dayViewDate = v === 'day' ? dayForMonth(visibleMonth) : null;
     view = v;
   }
   let active = $state<Set<EventCategory>>(new Set(CATEGORY_ORDER));
