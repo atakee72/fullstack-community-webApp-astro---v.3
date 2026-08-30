@@ -21,12 +21,16 @@ import { ObjectId } from 'mongodb';
 import { v2 as cloudinary } from 'cloudinary';
 import { connectDB } from '../mongodb';
 import * as Sentry from '@sentry/astro';
+import { hashContactEmail } from '../listings/contactHash';
 
 cloudinary.config({
   cloud_name: import.meta.env.CLOUD_NAME,
   api_key: import.meta.env.CLOUDINARY_API_KEY,
   api_secret: import.meta.env.CLOUDINARY_API_SECRET,
 });
+
+// Same salt contact.ts hashes with — needed to match buyerEmailHash rows.
+const CONTACT_SALT = import.meta.env.CONTACT_IP_SALT || '';
 
 export const GRACE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -364,7 +368,14 @@ export async function runDeletionPipeline(
     if (claimedEmail) {
       const delContactsBuyer = await db
         .collection('listingContacts')
-        .deleteMany({ buyerEmail: claimedEmail });
+        .deleteMany({
+          // Hash-first (rows written since Option C, 2026-08-31), plaintext
+          // second (belt for any row the migration missed).
+          $or: [
+            { buyerEmailHash: hashContactEmail(claimedEmail, CONTACT_SALT) },
+            { buyerEmail: claimedEmail },
+          ]
+        });
       steps.listingContactsByBuyer = delContactsBuyer.deletedCount ?? 0;
     } else {
       steps.listingContactsByBuyer = 0;
