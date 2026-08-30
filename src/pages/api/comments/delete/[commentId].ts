@@ -64,7 +64,7 @@ export const DELETE: APIRoute = async ({ params, request }) => {
 
     // Remove comment reference from the parent post
     // We need to check all collections since we don't know the parent type
-    const collections = ['topics', 'announcements', 'recommendations'];
+    const collections = ['topics', 'announcements', 'recommendations', 'events'];
     for (const coll of collections) {
       await db.collection(coll).updateMany(
         { comments: new ObjectId(commentId) },

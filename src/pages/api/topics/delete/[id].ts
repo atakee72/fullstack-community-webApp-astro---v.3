@@ -64,7 +64,7 @@ export const DELETE: APIRoute = async ({ params, request }) => {
 
     // Also delete related comments
     const commentsCollection = db.collection('comments');
-    await commentsCollection.deleteMany({ topic: new ObjectId(id) });
+    await commentsCollection.deleteMany({ relevantPostId: new ObjectId(id) });
 
     return new Response(JSON.stringify({
       message: 'Topic deleted successfully',
