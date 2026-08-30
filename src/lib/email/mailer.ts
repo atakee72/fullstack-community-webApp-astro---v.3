@@ -19,6 +19,7 @@ import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import { Resend } from 'resend';
 import * as Sentry from '@sentry/astro';
+import { punycodeEmailDomain } from './idn';
 
 const SMTP_HOST = import.meta.env.SMTP_HOST || '';
 const SMTP_PORT = Number(import.meta.env.SMTP_PORT || '587');
@@ -84,13 +85,18 @@ function getTransporter(): Transporter {
 
 export async function sendMail(input: MailInput): Promise<void> {
   try {
+    // IDN addresses (admitted by register's structural regex) must reach the
+    // transports with an ASCII domain — Resend hard-rejects ümläüts.
+    const to = punycodeEmailDomain(input.to);
+    const replyTo = input.replyTo ? punycodeEmailDomain(input.replyTo) : undefined;
+
     if (smtpConfigured) {
       await getTransporter().sendMail({
         from: SENDING_FROM,
-        to: input.to,
+        to,
         subject: input.subject,
         html: input.html,
-        ...(input.replyTo ? { replyTo: input.replyTo } : {}),
+        ...(replyTo ? { replyTo } : {}),
       });
       return;
     }
@@ -99,10 +105,10 @@ export async function sendMail(input: MailInput): Promise<void> {
       const { error } = await withTimeout(
         resend.emails.send({
           from: SENDING_FROM,
-          to: input.to,
+          to,
           subject: input.subject,
           html: input.html,
-          ...(input.replyTo ? { replyTo: input.replyTo } : {}),
+          ...(replyTo ? { replyTo } : {}),
         }),
         RESEND_TIMEOUT_MS,
         'Resend send'
