@@ -1,0 +1,51 @@
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  budgets:
+    runs-on: ubuntu-latest
+    env:
+      # Ratchet-only error budgets: lower them as errors get fixed, never raise.
+      # tsc baseline recorded 2026-08-30; svelte-check baseline same day
+      # (includes 5 unfixable errors from auth-astro via tsconfig's include glob).
+      TSC_ERROR_BUDGET: "27"
+      SVELTE_CHECK_ERROR_BUDGET: "94"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Generates astro:* module types; needs no secrets but tolerate failure —
+      # without it a handful of TS2305/TS2307 errors appear, absorbed by budget.
+      - run: pnpm astro sync || true
+      - name: tsc budget
+        run: |
+          pnpm exec tsc --noEmit > tsc.log 2>&1 || true
+          errors=$(grep -c 'error TS' tsc.log || true)
+          echo "tsc errors: $errors (budget $TSC_ERROR_BUDGET)"
+          if [ "$errors" -gt "$TSC_ERROR_BUDGET" ]; then
+            grep 'error TS' tsc.log | tail -30
+            exit 1
+          fi
+      - name: svelte-check budget
+        run: |
+          # No pipes around svelte-check (a pipe would mask its exit code);
+          # we parse the machine-readable COMPLETED line instead.
+          pnpm exec svelte-check --output machine > svelte-check.log 2>&1 || true
+          line=$(grep ' COMPLETED ' svelte-check.log | tail -1)
+          if [ -z "$line" ]; then
+            echo "could not parse svelte-check output:"; tail -20 svelte-check.log; exit 1
+          fi
+          errors=$(echo "$line" | awk '{print $5}')
+          echo "svelte-check errors: $errors (budget $SVELTE_CHECK_ERROR_BUDGET)"
+          if [ "$errors" -gt "$SVELTE_CHECK_ERROR_BUDGET" ]; then
+            grep ' ERROR ' svelte-check.log | tail -30
+            exit 1
+          fi
