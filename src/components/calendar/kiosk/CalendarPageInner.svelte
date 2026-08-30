@@ -97,6 +97,22 @@
   type View = 'month' | 'agenda' | 'day';
 
   let view = $state<View>('month');
+
+  // Day the Tag view should open on — set by the month grid's "+ N weitere"
+  // overflow chip, cleared on manual tab switches so the Tag tab itself
+  // still lands on today. {#key} below remounts CalendarDayView when it
+  // changes (the component snapshots initialDay into its own state).
+  let dayViewDate = $state<Date | null>(null);
+
+  function openDay(day: Date) {
+    dayViewDate = day;
+    view = 'day';
+  }
+
+  function switchView(v: View) {
+    dayViewDate = null;
+    view = v;
+  }
   let active = $state<Set<EventCategory>>(new Set(CATEGORY_ORDER));
   let myRsvps = $state(false);
   let saved = $state(false);
@@ -327,7 +343,7 @@
       onPrevMonth={goPrevMonth}
       onNextMonth={goNextMonth}
       {view}
-      onView={(v) => (view = v)}
+      onView={switchView}
     />
 
     <CalCategoryRail
@@ -373,7 +389,7 @@
         onMyRsvps={() => (myRsvps = !myRsvps)}
         onSaved={() => (saved = !saved)}
         {view}
-        onView={(v) => (view = v)}
+        onView={switchView}
       />
     </div>
     <!-- Desktop month: full grid with event pills + drag-select. -->
@@ -382,6 +398,7 @@
         {visibleMonth}
         events={displayedEvents}
         onPickEvent={onPickEvent}
+        onOpenDay={openDay}
         onPrevMonth={goPrevMonth}
         onNextMonth={goNextMonth}
         {prevMonthLabel}
@@ -401,12 +418,15 @@
       {currentUserId}
     />
   {:else}
-    <CalendarDayView
-      events={displayedEvents}
-      onPickEvent={onPickEvent}
-      onRsvp={onPickEvent}
-      {currentUserId}
-    />
+    {#key dayViewDate}
+      <CalendarDayView
+        events={displayedEvents}
+        onPickEvent={onPickEvent}
+        onRsvp={onPickEvent}
+        {currentUserId}
+        initialDay={dayViewDate ?? undefined}
+      />
+    {/key}
   {/if}
 
   <EventDetailModal

@@ -18,15 +18,17 @@
     events = [],
     onPickEvent,
     onRsvp,
-    currentUserId = null
+    currentUserId = null,
+    initialDay
   } = $props<{
     events?: EventDoc[];
     onPickEvent?: (ev: EventDoc) => void;
     onRsvp?: (ev: EventDoc) => void;
     currentUserId?: string | null;
+    initialDay?: Date;
   }>();
 
-  let selectedDay = $state(new Date());
+  let selectedDay = $state(initialDay ?? new Date());
 
   const dateLocale = $derived($locale === 'de' ? deLocale : enUS);
   const dayEvents = $derived(events.filter((ev) => eventCoversDay(ev, selectedDay)));

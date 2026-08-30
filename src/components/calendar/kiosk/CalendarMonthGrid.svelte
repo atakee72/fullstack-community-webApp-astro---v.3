@@ -46,6 +46,7 @@
     visibleMonth = new Date(),
     events = [],
     onPickEvent,
+    onOpenDay,
     onSelectionConfirmed,
     onPrevMonth,
     onNextMonth,
@@ -57,6 +58,7 @@
     visibleMonth?: Date;
     events?: EventDoc[];
     onPickEvent?: (ev: EventDoc) => void;
+    onOpenDay?: (day: Date) => void;
     onSelectionConfirmed?: (from: Date, to: Date) => void;
     onPrevMonth?: () => void;
     onNextMonth?: () => void;
@@ -333,9 +335,14 @@
             />
           {/each}
           {#if overflow > 0}
-            <span class="font-dmmono text-[9.5px] text-ink-mute px-1">
+            <button
+              type="button"
+              class="font-dmmono text-[9.5px] text-ink-mute px-1 text-left cursor-pointer hover:text-ink hover:underline underline-offset-2"
+              onclick={() => onOpenDay?.(cell)}
+              onpointerdown={(e) => e.stopPropagation()}
+            >
               + {overflow} {$t['cal.events.more']}
-            </span>
+            </button>
           {/if}
         </div>
       </div>
