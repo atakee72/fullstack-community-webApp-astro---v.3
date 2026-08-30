@@ -121,3 +121,19 @@ Four pieces shipped the same afternoon (`9d28b90b`, `e6f7ed9c`, `ddc8ff49`, `b43
 ## Dev-seed caveat #2: legacy category labels blank out whole months
 
 Seed data carried capitalized legacy categories (`"Markt"`, `"Nachbarschaft"`) that aren't in the kiosk `EventCategory` enum (`kiez`/`markt`/…). `displayedEvents` drops any event whose category isn't in the active set, and the page-level branch then replaces the ENTIRE view (grid/agenda/day alike) with `CalendarFilteredEmpty` — a month full of seeded events renders as "Nichts Passendes diese Woche". Normalized in `mahalle-dev` by hand 2026-08-30; the seed-script fix (valid categories + ObjectId `_id`s, see caveat above) belongs to the hardening batch. Prod unaffected (kiosk compose only writes enum values).
+
+## Export row + event deep link (2026-08-30 PM)
+
+The detail modal's EXPORT pills are wired (`01e895eb`): **.ics** and **Google** reuse the legacy `src/utils/calendarExport.ts` helpers untouched (VCALENDAR blob download; `calendar.google.com/render?action=TEMPLATE` URL). **teilen** uses `navigator.share` where available; the desktop fallback copies a deep link — and since a toast can NEVER paint over the native `<dialog>` (top layer beats any z-index), the copy feedback lives IN the button: label flips to „kopiert ✓" for 2s (`4ab29fb9`). Remember this for any future toast-from-inside-a-dialog idea.
+
+**Deep link** `/calendar?event=<id>&d=<yyyy-MM-dd>`: parsed synchronously at `CalendarPageInner` init (client:only — same pattern as compose prefill); `d` seeds `visibleMonth` so the events query fetches the right range, an effect opens the modal once the id appears in the list (keeps waiting while `isPending/isFetching`; settled-and-missing → info toast), then cleans the URL. The login gate's `?redirect=` bounce preserves the query for logged-out recipients. No single-event GET endpoint exists — the deep link deliberately rides the list query instead.
+
+**Map tile** (`ae7c082d`): the striped „KARTE" placeholder is now an `<a>` to `openstreetmap.org/search?query=<Ort>, Berlin` — symbolic on purpose. Real embedded mini-map (OSM iframe + Nominatim geocode + Mongo cache + Datenschutz line) is a queued feature in memory `open-follow-up-tickets-cross-feature`.
+
+**Week-stat range label** (`82bcaec9`): the title block's „N Termine diese Woche" carries a dimmed `· 24.–30. Aug.` range (locale-aware, cross-month weeks show both months) because the stat always means the REAL current week even while another month is browsed.
+
+## Categories: „Sonstiges" replaced „Privat"; visibility select hidden (2026-08-30)
+
+`EventCategory` is now `kiez/oeffentlich/markt/kultur/sport/sonstiges` (`952adeb4`; „Sonstiges" keeps Privat's ◇ ink-soft style; enum swap in types + `categories.ts` + `forum.schema.ts` + i18n; safe — zero `privat` events ever existed in prod/dev). Everything renders from `CATEGORY_ORDER`, so rails/pickers updated automatically.
+
+⚠ **Half-built private-events discovery**: compose had a separate „Sichtbarkeit" public/private select; create/edit persist `visibility` and `landing.ts` filters it — but `fetchEventsWithAuthors` (main calendar API + SSR) NEVER filtered it, so a „privat" event was visible to every member. The select is HIDDEN in `EventComposeForm.svelte` (plumbing kept; everything composes `'public'`). Don't re-show it before adding the `visibility` filter (+ author exception) to EVERY event read path — full feature sketch in memory `open-follow-up-tickets-cross-feature` („private personal events", undecided).
