@@ -39,7 +39,7 @@ jobs:
           # No pipes around svelte-check (a pipe would mask its exit code);
           # we parse the machine-readable COMPLETED line instead.
           pnpm exec svelte-check --output machine > svelte-check.log 2>&1 || true
-          line=$(grep ' COMPLETED ' svelte-check.log | tail -1)
+          line=$(grep ' COMPLETED ' svelte-check.log | tail -1) || true
           if [ -z "$line" ]; then
             echo "could not parse svelte-check output:"; tail -20 svelte-check.log; exit 1
           fi
