@@ -90,7 +90,8 @@ export const POST: APIRoute = async ({ request, params }) => {
       status: { $ne: 'draft' }
     });
 
-    if (todayCount >= 5) {
+    // Admins are exempt from the daily limit (they post official content in bursts).
+    if (session.user.role !== 'admin' && todayCount >= 5) {
       return new Response(JSON.stringify({
         error: 'Daily listing limit reached',
         message: 'You can publish up to 5 listings per day. Please try again tomorrow.',

@@ -24,11 +24,13 @@ export const GET: APIRoute = async ({ request }) => {
       status: { $ne: 'draft' }
     });
 
+    // Admins are exempt from the daily limit — mirror the create endpoint's gate.
+    const isAdmin = session.user.role === 'admin';
     return new Response(JSON.stringify({
       count: todayCount,
       limit: 5,
-      remaining: Math.max(0, 5 - todayCount),
-      canCreate: todayCount < 5
+      remaining: isAdmin ? 5 : Math.max(0, 5 - todayCount),
+      canCreate: isAdmin || todayCount < 5
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }

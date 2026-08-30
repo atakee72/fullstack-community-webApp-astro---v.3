@@ -32,7 +32,8 @@ export const POST: APIRoute = async ({ request }) => {
       source: 'user_submitted',
       createdAt: { $gte: dayAgo },
     });
-    if (todayCount >= 5) {
+    // Admins are exempt from the daily limit (they post official content in bursts).
+    if (session.user.role !== 'admin' && todayCount >= 5) {
       return new Response(JSON.stringify({
         error: 'Daily submission limit reached',
         message: 'You can submit up to 5 news items per day. Please try again tomorrow.',

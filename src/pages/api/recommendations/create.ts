@@ -35,7 +35,8 @@ export const POST: APIRoute = async ({ request }) => {
       createdAt: { $gte: dayAgo }
     });
 
-    if (todayCount >= 5) {
+    // Admins are exempt from the daily limit (they post official content in bursts).
+    if (session.user.role !== 'admin' && todayCount >= 5) {
       return new Response(JSON.stringify({
         error: 'Daily recommendation limit reached',
         message: 'You can create up to 5 recommendations per day. Please try again tomorrow.',

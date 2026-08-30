@@ -17,7 +17,9 @@ export const GET: APIRoute = async ({ request }) => {
       author: session.user.id,
       createdAt: { $gte: dayAgo },
     });
-    return new Response(JSON.stringify({ count, limit: 5, remaining: Math.max(0, 5 - count), canCreate: count < 5 }), {
+    // Admins are exempt from the daily limit — mirror the create endpoint's gate.
+    const isAdmin = session.user.role === 'admin';
+    return new Response(JSON.stringify({ count, limit: 5, remaining: isAdmin ? 5 : Math.max(0, 5 - count), canCreate: isAdmin || count < 5 }), {
       status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });
   } catch {
