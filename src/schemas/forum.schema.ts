@@ -115,7 +115,7 @@ export const RecommendationUpdateSchema = RecommendationCreateSchema.partial().r
 );
 
 // Event Schema (Calendar) — kiosk redesign uses 6 categories
-// (kiez/oeffentlich/markt/kultur/sport/privat). Capacity + allDay
+// (kiez/oeffentlich/markt/kultur/sport/sonstiges). Capacity + allDay
 // are optional in v1; recurring/visibility/isOfficial deferred to v1.1+.
 const EventBaseSchema = z.object({
   title: z.string()
@@ -135,7 +135,7 @@ const EventBaseSchema = z.object({
     'markt',
     'kultur',
     'sport',
-    'privat'
+    'sonstiges'
   ]).optional().default('kiez'),
   capacity: z.number().int().min(1).max(10000).nullish(),
   allDay: z.boolean().optional().default(false),

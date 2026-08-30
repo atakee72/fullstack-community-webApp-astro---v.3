@@ -9,7 +9,7 @@
 //   markt       ochre  ●   text-ink   on fill (ochre is bright)
 //   kultur      plum   ✦   text-paper on fill
 //   sport       moss   ▶   text-paper on fill
-//   privat      ink-soft ◇ text-paper on fill
+//   sonstiges   ink-soft ◇ text-paper on fill
 
 import type { EventCategory } from '../../types';
 
@@ -19,7 +19,7 @@ export const CATEGORY_ORDER: EventCategory[] = [
   'markt',
   'kultur',
   'sport',
-  'privat'
+  'sonstiges'
 ];
 
 export interface CategoryStyle {
@@ -66,7 +66,7 @@ export const CATEGORIES: Record<EventCategory, CategoryStyle> = {
     borderClass: 'border-moss',
     textOnFill: 'text-paper'
   },
-  privat: {
+  sonstiges: {
     glyph: '◇',
     bgClass: 'bg-ink-soft',
     textClass: 'text-ink-soft',

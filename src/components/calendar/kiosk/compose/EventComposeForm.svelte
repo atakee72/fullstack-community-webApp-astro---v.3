@@ -351,18 +351,12 @@
           class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
         />
       </label>
-      <label class="block">
-        <span class="block font-dmmono text-[9px] uppercase tracking-[0.1em] text-ink-mute mb-0.5">
-          {$t['cal.compose.field.visibility']}
-        </span>
-        <select
-          bind:value={visibility}
-          class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
-        >
-          <option value="public">{$t['cal.compose.field.visibility.public']}</option>
-          <option value="private">{$t['cal.compose.field.visibility.private']}</option>
-        </select>
-      </label>
+      <!-- Sichtbarkeit select HIDDEN 2026-08-30 (was public/private): the
+           read paths never filtered `visibility`, so „privat" events were
+           visible to every member — the toggle lied. The field plumbing
+           (state, payload, schema, landing filter) stays for the queued
+           private-events feature; until the query-side enforcement is
+           built, everything composes as 'public'. -->
     </div>
   </div>
 
