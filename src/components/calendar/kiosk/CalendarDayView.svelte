@@ -10,9 +10,11 @@
   import AgendaRow from './AgendaRow.svelte';
   import CalendarSidebar from './CalendarSidebar.svelte';
 
-  import { eventCoversDay } from '../../../lib/calendar/eventTime';
+  import { eventCoversDay, isLiveNow } from '../../../lib/calendar/eventTime';
+  import { now } from '../../../lib/calendar/nowTicker';
+  import { CATEGORIES } from '../../../lib/calendar/categories';
   import { t, locale } from '../../../lib/kiosk-i18n';
-  import type { Event as EventDoc } from '../../../types';
+  import type { Event as EventDoc, EventCategory } from '../../../types';
 
   let {
     events = [],
@@ -56,6 +58,10 @@
   }
 
   const isOnToday = $derived(isTodayDate(selectedDay));
+  const liveCount = $derived(dayEvents.filter((e) => isLiveNow(e, $now)).length);
+  const termLabel = $derived(
+    dayEvents.length === 1 ? $t['cal.agenda.term.one'] : $t['cal.agenda.term.many']
+  );
   const prevLabel = $derived(
     format(subDays(selectedDay, 1), $locale === 'de' ? 'd. MMM' : 'MMM d', {
       locale: dateLocale
@@ -69,29 +75,68 @@
 </script>
 
 <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] lg:gap-0">
-  <!-- Day list -->
+  <!-- Day list — same card treatment as the agenda view: today gets the
+       dark ink block, other days get the date column + per-event paper
+       cards with the category border. -->
   <div class="px-4 md:px-9 lg:px-10 py-3">
-    <AgendaDayHeader day={selectedDay} />
-
-    {#if dayEvents.length === 0}
-      <div class="py-10 text-center">
-        <p class="font-instrument italic text-[16px] text-ink-mute">
-          {$t['cal.state.empty.title']}
-        </p>
+    {#if isOnToday}
+      <div
+        class="bg-ink rounded-md shadow-[3px_3px_0_var(--k-wine,#b23a5b)] mb-4 px-4 py-1 flex flex-col gap-1 lg:grid lg:grid-cols-[140px_1fr] lg:gap-4 lg:items-stretch"
+      >
+        <AgendaDayHeader day={selectedDay} eventCount={dayEvents.length} />
+        <div class="border-t border-dashed border-paper/30 pt-2 lg:border-t-0 lg:border-l lg:pl-4 lg:pt-0 self-stretch">
+          {#if dayEvents.length === 0}
+            <p class="font-instrument italic text-[15px] text-paper/70 py-6">
+              {$t['cal.state.empty.title']}
+            </p>
+          {:else}
+            <div class="font-dmmono text-[10px] uppercase tracking-[0.1em] text-paper/60 pb-1 lg:pt-2">
+              {dayEvents.length} {termLabel}{#if liveCount > 0}
+                <span class="text-ochre"> · {liveCount} {$t['cal.agenda.today.running']}</span>
+              {/if}
+            </div>
+            {#each dayEvents as ev (String(ev._id))}
+              {@const eventId = String(ev._id)}
+              <AgendaRow
+                {ev}
+                onPick={onPickEvent}
+                {onRsvp}
+                today
+                {currentUserId}
+                isSaved={savedIds.has(eventId)}
+                onToggleSave={onToggleSave ? () => onToggleSave(eventId) : undefined}
+              />
+            {/each}
+          {/if}
+        </div>
       </div>
     {:else}
-      <div>
-        {#each dayEvents as ev (String(ev._id))}
-          {@const eventId = String(ev._id)}
-          <AgendaRow
-            {ev}
-            onPick={onPickEvent}
-            {onRsvp}
-            {currentUserId}
-            isSaved={savedIds.has(eventId)}
-            onToggleSave={onToggleSave ? () => onToggleSave(eventId) : undefined}
-          />
-        {/each}
+      <div class="flex flex-col gap-2 mb-4 lg:grid lg:grid-cols-[140px_1fr] lg:gap-5 lg:items-start">
+        <AgendaDayHeader day={selectedDay} eventCount={dayEvents.length} />
+        {#if dayEvents.length === 0}
+          <p class="font-instrument italic text-[16px] text-ink-mute py-6">
+            {$t['cal.state.empty.title']}
+          </p>
+        {:else}
+          <div class="flex flex-col gap-3">
+            {#each dayEvents as ev (String(ev._id))}
+              {@const eventId = String(ev._id)}
+              {@const catStyle = CATEGORIES[(ev.category ?? 'kiez') as EventCategory]}
+              <div
+                class={`bg-paper border-[1.5px] ${catStyle.borderClass} rounded-md shadow-sm overflow-hidden`}
+              >
+                <AgendaRow
+                  {ev}
+                  onPick={onPickEvent}
+                  {onRsvp}
+                  {currentUserId}
+                  isSaved={savedIds.has(eventId)}
+                  onToggleSave={onToggleSave ? () => onToggleSave(eventId) : undefined}
+                />
+              </div>
+            {/each}
+          </div>
+        {/if}
       </div>
     {/if}
 
