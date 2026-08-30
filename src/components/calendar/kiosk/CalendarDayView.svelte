@@ -58,10 +58,10 @@
   }
 
   const isOnToday = $derived(isTodayDate(selectedDay));
-  // Concrete date on the jump-to-today button so it reads as a target,
-  // not a mystery link ("HEUTE · 30.8.2026").
+  // The jump-to-today button is labeled with its target date only
+  // ("30.8.2026") — a date link takes you to that date.
   const todayLabel = $derived(
-    `${$t['cal.cell.today']} · ${format($now, $locale === 'de' ? 'd.M.yyyy' : 'MMM d, yyyy', { locale: dateLocale })}`
+    format($now, $locale === 'de' ? 'd.M.yyyy' : 'MMM d, yyyy', { locale: dateLocale })
   );
   const liveCount = $derived(dayEvents.filter((e) => isLiveNow(e, $now)).length);
   const termLabel = $derived(
