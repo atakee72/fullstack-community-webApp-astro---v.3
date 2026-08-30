@@ -6,6 +6,7 @@
 import { ObjectId, type Db } from 'mongodb';
 import type { FlaggedContent, User } from '../types';
 import { notify, commentTarget, moderationTarget } from './notifications';
+import { invalidateKiezKontext } from './kiez/kontext';
 
 const MAX_STRIKES = 3;
 
@@ -92,6 +93,13 @@ export async function processReviewAction(
           $unset: { isUserReported: '' }
         }
       );
+
+      // A rejected topic drops out of public view — same dead-chip hazard
+      // as topic delete/edit, so drop the Kiez-Daten Anwohner-Kontext
+      // cache (best-effort by contract, never fails the review).
+      if (isRejection && flaggedContent.contentType === 'topic') {
+        await invalidateKiezKontext();
+      }
 
       // Handle comment array updates for parent posts
       if (flaggedContent.contentType === 'comment') {
