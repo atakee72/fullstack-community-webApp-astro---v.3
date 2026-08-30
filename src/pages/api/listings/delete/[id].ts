@@ -56,6 +56,12 @@ export const DELETE: APIRoute = async ({ request, params }) => {
 
     await listingsCollection.deleteOne({ _id: new ObjectId(id) });
 
+    // Contact-relay rows for this listing hold buyer PII (plaintext
+    // name+email) — cascade them with the listing. listingAuditTrail is
+    // deliberately KEPT here (seller's own snapshots, no third-party PII;
+    // the account-deletion pipeline removes it wholesale later).
+    await db.collection('listingContacts').deleteMany({ listingId: id });
+
     return new Response(
       JSON.stringify({ message: 'Listing deleted successfully' }),
       {

@@ -170,7 +170,7 @@ See `src/pages/api/news/CLAUDE.md` — full notes load when working in that subt
 - `recommendations` - User recommendations (includes `moderationStatus`, `isUserReported`, `rejectionReason`, `images` fields)
 - `comments` - Comments on posts (includes `moderationStatus` field)
 - `listings` - Marketplace listings (includes `moderationStatus`, `listingType`, `status`, `listingKind` (`sell`/`exchange`/`gift`), `category`, `delivery`, `specs`, `reservedAt`, `lastBumpedAt`, `bundleId` fields)
-- `listingContacts` - Contact-relay metadata for buyer→seller emails (metadata-only per GDPR A6: `{ listingId, senderEmailHash, timestamp }` — no message bodies stored)
+- `listingContacts` - Contact-relay metadata for buyer→seller emails (`{ listingId, sellerId, buyerName, buyerEmail (plaintext, lowercased), senderIpHash, sentAt }` — no message bodies stored). Deleted with the listing (manual delete cascade) and by the account-deletion pipeline (seller side via listingId/sellerId, buyer side via captured email).
 - `news` - Newsboard articles (AI-fetched and user-submitted, includes `moderationStatus`, `aiRelevanceScore`, `fetchDate`, `sourceName`, `sourceUrl` fields)
 - `savedNews` - User bookmarks for news (userId + newsId pairs, server-side persistence)
 - `savedPosts` - User bookmarks for forum posts (userId + postId pairs, server-side persistence)

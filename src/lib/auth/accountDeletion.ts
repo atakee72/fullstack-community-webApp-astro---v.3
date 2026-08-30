@@ -183,7 +183,7 @@ export async function runDeletionPipeline(
   const claimed = await db.collection('users').findOneAndUpdate(
     { _id: uid, deletionScheduledAt: { $lte: new Date() }, anonymized: { $ne: true } },
     { $set: { deletionClaimedAt: new Date() } },
-    { returnDocument: 'after', projection: { userPicture: 1 } }
+    { returnDocument: 'after', projection: { userPicture: 1, email: 1 } }
   );
   if (!claimed) {
     return { ok: true, skipped: true, steps: {} };
@@ -191,6 +191,14 @@ export async function runDeletionPipeline(
 
   const userPicture: string | null =
     typeof (claimed as any).userPicture === 'string' ? (claimed as any).userPicture : null;
+
+  // Email captured at claim time — needed by the email-keyed rateLimits and
+  // buyer-side listingContacts sweeps below, and gone after step 6's $unset.
+  // Stored normalized (register.ts lowercases); trim().toLowerCase() is belt.
+  const claimedEmail: string | null =
+    typeof (claimed as any).email === 'string'
+      ? (claimed as any).email.trim().toLowerCase()
+      : null;
 
   // Step 1: listings (collect ids first) + their audit-trail rows +
   // $unset authorName/authorEmail on their flaggedContent rows (rows kept
@@ -215,6 +223,14 @@ export async function runDeletionPipeline(
       { $unset: { authorName: '', authorEmail: '' } }
     );
     steps.flaggedContentListings = unsetListingFlags.modifiedCount ?? 0;
+
+    // Contact-relay rows carry buyer PII (plaintext name+email). Seller side:
+    // rows for this user's listings (by listingId) or keyed to them directly
+    // (sellerId — covers rows whose listing was already manually deleted).
+    const delContactsSeller = await db.collection('listingContacts').deleteMany({
+      $or: [{ listingId: { $in: listingIds } }, { sellerId: userId }],
+    });
+    steps.listingContactsBySeller = delContactsSeller.deletedCount ?? 0;
   } catch (err) {
     fail('listings', err);
   }
@@ -272,6 +288,24 @@ export async function runDeletionPipeline(
     fail('rsvps', err);
   }
 
+  // Pull this user's likes from all four likeable collections. The
+  // denormalized `likes` counter is $inc'd in lockstep by the like
+  // endpoints — a bare $pull here would drift it, so decrement together.
+  try {
+    let pulled = 0;
+    const likePullOp: Record<string, any> = {
+      $pull: { likedBy: userId },
+      $inc: { likes: -1 },
+    };
+    for (const coll of ['topics', 'announcements', 'recommendations', 'events']) {
+      const res = await db.collection(coll).updateMany({ likedBy: userId }, likePullOp);
+      pulled += res.modifiedCount ?? 0;
+    }
+    steps.likedByPulled = pulled;
+  } catch (err) {
+    fail('likedBy', err);
+  }
+
   // Step 4: authored content (topics/comments/announcements/recommendations/
   // events/news) STAYS — rendered as "Ehemaliges Mitglied" via the
   // tombstone (step 6). flaggedContent by authorId: unset name/email only.
@@ -302,12 +336,41 @@ export async function runDeletionPipeline(
   try {
     // Safety assumption: userId is a 24-char hex ObjectId string (no regex
     // metacharacters) — safe to use unescaped as a $regex operand here.
+    // Email-keyed families use EXACT $in match, never $regex — an email
+    // legally contains regex metacharacters ('.', '+').
+    const rateLimitFilters: Record<string, any>[] = [{ baseKey: { $regex: userId } }];
+    if (claimedEmail) {
+      rateLimitFilters.push({
+        baseKey: {
+          $in: [
+            `login:${claimedEmail}`,
+            `banflag:${claimedEmail}`,
+            `fp:email:${claimedEmail}`,
+          ],
+        },
+      });
+    }
     const delRateLimits = await db
       .collection('rateLimits')
-      .deleteMany({ baseKey: { $regex: userId } });
+      .deleteMany({ $or: rateLimitFilters });
     steps.rateLimits = delRateLimits.deletedCount ?? 0;
   } catch (err) {
     fail('rateLimits', err);
+  }
+
+  // Buyer side of the contact relay: rows where THIS user wrote to some
+  // seller are keyed only by their plaintext email.
+  try {
+    if (claimedEmail) {
+      const delContactsBuyer = await db
+        .collection('listingContacts')
+        .deleteMany({ buyerEmail: claimedEmail });
+      steps.listingContactsByBuyer = delContactsBuyer.deletedCount ?? 0;
+    } else {
+      steps.listingContactsByBuyer = 0;
+    }
+  } catch (err) {
+    fail('listingContactsByBuyer', err);
   }
 
   try {
@@ -345,6 +408,9 @@ export async function runDeletionPipeline(
           pendingEmail: '',
           dankeCrossedAt: '',
           deletionScheduledAt: '',
+          tours: '',
+          tourHelloDismissedAt: '',
+          deletionClaimedAt: '',
         },
       }
     );
