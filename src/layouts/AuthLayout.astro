@@ -5,6 +5,7 @@
 import AuthLangToggle from '../components/auth/kiosk/AuthLangToggle.svelte';
 import KiezHeartbeat from '../components/auth/kiosk/KiezHeartbeat.svelte';
 import KioskSplash from '../components/auth/kiosk/KioskSplash.astro';
+import SeoHead from '../components/SeoHead.astro';
 import { ViewTransitions } from 'astro:transitions';
 
 export interface Props {
@@ -14,7 +15,7 @@ export interface Props {
 
 const {
   title,
-  description = 'Mahalle — a community web app for local neighborhoods.',
+  description = 'Mahalle — die digitale Nachbarschaft für den Schillerkiez.',
 } = Astro.props;
 ---
 
@@ -30,6 +31,7 @@ const {
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <meta name="generator" content={Astro.generator} />
     <title>{title} | Mahalle</title>
+    <SeoHead title={`${title} | Mahalle`} description={description} noindex={true} />
     <ViewTransitions />
   </head>
 
