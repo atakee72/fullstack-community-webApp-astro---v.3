@@ -26,7 +26,7 @@
 
   import { CATEGORIES } from '../../../lib/calendar/categories';
   import { generateGoogleCalendarUrl, downloadIcsFile } from '../../../utils/calendarExport';
-  import { confirmAction, showError, showSuccess } from '../../../utils/toast';
+  import { confirmAction, showError } from '../../../utils/toast';
   import { isLiveNow } from '../../../lib/calendar/eventTime';
   import { now } from '../../../lib/calendar/nowTicker';
   import { t, tStr, locale } from '../../../lib/kiosk-i18n';
@@ -268,6 +268,18 @@
     if (event) window.open(generateGoogleCalendarUrl(event), '_blank', 'noopener');
   }
 
+  // Copy feedback lives IN the button („kopiert ✓" for 2s) — the modal
+  // is a native <dialog> in the browser top layer, which paints above
+  // any z-index, so a toast can never appear over it.
+  let shareState = $state<'idle' | 'copied' | 'error'>('idle');
+  let shareResetTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function flashShareState(s: 'copied' | 'error') {
+    shareState = s;
+    clearTimeout(shareResetTimer);
+    shareResetTimer = setTimeout(() => (shareState = 'idle'), 2000);
+  }
+
   async function handleShare() {
     if (!event) return;
     const url = shareUrl();
@@ -281,9 +293,9 @@
     }
     try {
       await navigator.clipboard.writeText(url);
-      showSuccess($t['cal.detail.share.copied'] as string);
+      flashShareState('copied');
     } catch {
-      showError($t['cal.detail.share.error'] as string);
+      flashShareState('error');
     }
   }
 </script>
@@ -533,20 +545,26 @@
             class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-ink-mute mb-1.5"
           >{$t['cal.detail.export']}</div>
           <!-- Solid ink-filled pills per CD's design (was ghost-outlined). -->
+          {#snippet exportPill(label: string, onclick: () => void)}
+            <button
+              type="button"
+              {onclick}
+              class="inline-flex items-center px-3 py-1 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-semibold text-[12px] hover:scale-[1.02] transition-transform duration-[180ms] ease-out"
+            >
+              {label}
+            </button>
+          {/snippet}
           <div class="flex gap-1.5">
-            {#each [
-              { label: '.ics', onclick: handleIcs },
-              { label: 'Google', onclick: handleGoogle },
-              { label: $t['cal.detail.export.share'], onclick: handleShare }
-            ] as btn (btn.label)}
-              <button
-                type="button"
-                onclick={btn.onclick}
-                class="inline-flex items-center px-3 py-1 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-semibold text-[12px] hover:scale-[1.02] transition-transform duration-[180ms] ease-out"
-              >
-                {btn.label}
-              </button>
-            {/each}
+            {@render exportPill('.ics', handleIcs)}
+            {@render exportPill('Google', handleGoogle)}
+            {@render exportPill(
+              shareState === 'copied'
+                ? ($t['cal.detail.share.done'] as string)
+                : shareState === 'error'
+                ? ($t['cal.detail.share.failed'] as string)
+                : ($t['cal.detail.export.share'] as string),
+              handleShare
+            )}
           </div>
           <div
             class="mt-4 pt-2.5 border-t border-dashed border-rule flex justify-between font-dmmono text-[10px] text-ink-mute"
