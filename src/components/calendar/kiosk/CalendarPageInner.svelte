@@ -134,6 +134,7 @@
   }
   let active = $state<Set<EventCategory>>(new Set(CATEGORY_ORDER));
   let myRsvps = $state(false);
+  let myMaybes = $state(false);
   let saved = $state(false);
 
   // Desktop category rail uses single-select-with-all-reset semantics:
@@ -163,9 +164,10 @@
   }
 
   function clearFilters() {
-    // Re-enable all categories + drop "Meine RSVPs" + "Gespeichert"
+    // Re-enable all categories + drop "Zugesagt"/"Vielleicht"/"Gespeichert"
     active = new Set(CATEGORY_ORDER);
     myRsvps = false;
+    myMaybes = false;
     saved = false;
   }
 
@@ -313,13 +315,12 @@
   const displayedEvents = $derived(
     events.filter((ev) => {
       if (ev.category && !active.has(ev.category as EventCategory)) return false;
-      if (myRsvps && currentUserId) {
-        const going = ev.rsvps?.going ?? [];
-        const maybe = ev.rsvps?.maybe ?? [];
-        const inRsvps =
-          going.some((id) => String(id) === currentUserId) ||
-          maybe.some((id) => String(id) === currentUserId);
-        if (!inRsvps) return false;
+      if ((myRsvps || myMaybes) && currentUserId) {
+        // "Zugesagt" means committed (going only); "Vielleicht" covers
+        // maybe-RSVPs. Both active = OR (an RSVP is one or the other).
+        const inGoing = (ev.rsvps?.going ?? []).some((id) => String(id) === currentUserId);
+        const inMaybe = (ev.rsvps?.maybe ?? []).some((id) => String(id) === currentUserId);
+        if (!((myRsvps && inGoing) || (myMaybes && inMaybe))) return false;
       }
       // Skip the saved filter until the savedEvents query hydrates —
       // otherwise the list flashes empty before resolving.
@@ -429,8 +430,10 @@
       onSelectAll={selectAll}
       onSelectOnly={selectOnly}
       {myRsvps}
+      {myMaybes}
       {saved}
       onMyRsvps={() => (myRsvps = !myRsvps)}
+      onMyMaybes={() => (myMaybes = !myMaybes)}
       onSaved={() => (saved = !saved)}
       {view}
       showToday={!isOnTodayMonth}
@@ -462,8 +465,10 @@
         showToday={!isOnTodayMonth}
         onToday={goToday}
         {myRsvps}
+        {myMaybes}
         {saved}
         onMyRsvps={() => (myRsvps = !myRsvps)}
+        onMyMaybes={() => (myMaybes = !myMaybes)}
         onSaved={() => (saved = !saved)}
         {view}
         onView={switchView}

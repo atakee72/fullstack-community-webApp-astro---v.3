@@ -83,8 +83,10 @@
     showToday = false,
     onToday,
     myRsvps = false,
+    myMaybes = false,
     saved = false,
     onMyRsvps,
+    onMyMaybes,
     onSaved,
     view = 'month',
     onView
@@ -101,8 +103,10 @@
     showToday?: boolean;
     onToday?: () => void;
     myRsvps?: boolean;
+    myMaybes?: boolean;
     saved?: boolean;
     onMyRsvps?: () => void;
+    onMyMaybes?: () => void;
     onSaved?: () => void;
     view?: View;
     onView?: (v: View) => void;
@@ -510,6 +514,17 @@
       }`}
     >
       {$t['cal.filter.myRsvps']}
+    </button>
+
+    <button
+      type="button"
+      onclick={onMyMaybes}
+      aria-pressed={myMaybes}
+      class={`inline-flex items-center px-2 py-0.5 rounded-full font-bricolage font-semibold text-[11px] border-[1.5px] border-ink transition-colors flex-shrink-0 ${
+        myMaybes ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
+      }`}
+    >
+      {$t['cal.filter.myMaybes']}
     </button>
 
     <button
