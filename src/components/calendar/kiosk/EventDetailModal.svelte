@@ -14,6 +14,7 @@
   import { format, differenceInHours } from 'date-fns';
   import { de as deLocale, enUS } from 'date-fns/locale';
 
+  import { linkifySegments } from '../../../lib/linkify';
   import RsvpButtons from './RsvpButtons.svelte';
   import CapacityBar from './CapacityBar.svelte';
   import AttendeeStack from './AttendeeStack.svelte';
@@ -392,9 +393,7 @@
         {#if event.body}
           <div
             class="font-instrument text-[15px] leading-[1.6] text-ink pt-3 border-t border-dashed border-rule whitespace-pre-line"
-          >
-            {event.body}
-          </div>
+          >{#each linkifySegments(event.body) as seg}{#if seg.type === 'link'}<a href={seg.value} target="_blank" rel="noopener noreferrer" class="underline underline-offset-2 decoration-[1.5px] break-all hover:text-teal">{seg.value}</a>{:else}{seg.value}{/if}{/each}</div>
         {/if}
 
         <!-- Practical info chips (rendered from event.tags). -->

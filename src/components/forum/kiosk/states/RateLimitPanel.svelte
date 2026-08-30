@@ -23,7 +23,7 @@
 </script>
 
 <div
-  class="my-10 mx-auto max-w-2xl px-9 py-10 bg-ochre border-2 border-ink rounded-2xl shadow-[3px_3px_0_var(--k-ink)]"
+  class="my-10 mx-4 md:mx-auto max-w-2xl px-6 md:px-9 py-10 bg-ochre border-2 border-ink rounded-2xl shadow-[3px_3px_0_var(--k-ink)]"
 >
   <p class="font-dmmono text-[11px] uppercase tracking-[0.15em] text-ink">
     {$t['state.rate.kicker']}
