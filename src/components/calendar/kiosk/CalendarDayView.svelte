@@ -18,6 +18,8 @@
     events = [],
     onPickEvent,
     onRsvp,
+    savedIds = new Set<string>(),
+    onToggleSave,
     currentUserId = null,
     initialDay,
     onDayChange
@@ -25,6 +27,8 @@
     events?: EventDoc[];
     onPickEvent?: (ev: EventDoc) => void;
     onRsvp?: (ev: EventDoc) => void;
+    savedIds?: Set<string>;
+    onToggleSave?: (eventId: string) => void;
     currentUserId?: string | null;
     initialDay?: Date;
     // Fired on every internal day step so the parent can keep the header
@@ -78,7 +82,15 @@
     {:else}
       <div>
         {#each dayEvents as ev (String(ev._id))}
-          <AgendaRow {ev} onPick={onPickEvent} {onRsvp} {currentUserId} />
+          {@const eventId = String(ev._id)}
+          <AgendaRow
+            {ev}
+            onPick={onPickEvent}
+            {onRsvp}
+            {currentUserId}
+            isSaved={savedIds.has(eventId)}
+            onToggleSave={onToggleSave ? () => onToggleSave(eventId) : undefined}
+          />
         {/each}
       </div>
     {/if}

@@ -500,6 +500,8 @@
         events={displayedEvents}
         onPickEvent={onPickEvent}
         onRsvp={onPickEvent}
+        savedIds={savedIds.ids}
+        onToggleSave={currentUserId ? onToggleSave : undefined}
         {currentUserId}
         initialDay={dayViewDate ?? undefined}
         onDayChange={onDayViewDayChange}
