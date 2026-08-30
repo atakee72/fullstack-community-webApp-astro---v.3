@@ -15,7 +15,7 @@ const initialProfile = userId ? await getProfileMe(userId) : null;
 const initialChronik = userId ? await getChronik(userId) : null;
 ---
 
-<KioskLayout title="Profil — Mahalle" page="profile">
+<KioskLayout title="Profil" page="profile" noindex={true}>
   <ProfileInner client:load initialProfile={initialProfile} initialChronik={initialChronik} loggedIn={!!userId} />
 </KioskLayout>
 <style is:global>@import '../styles/profile.css';</style>

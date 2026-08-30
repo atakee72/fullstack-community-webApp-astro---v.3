@@ -1,0 +1,18 @@
+User-agent: *
+Disallow: /forum
+Disallow: /topics
+Disallow: /announcements
+Disallow: /recommendations
+Disallow: /calendar
+Disallow: /events
+Disallow: /newsboard
+Disallow: /marketplace
+Disallow: /bookmarks
+Disallow: /search
+Disallow: /steckbrief
+Disallow: /nachbarn
+Disallow: /admin
+Disallow: /api/
+Disallow: /logout
+
+Sitemap: https://mahalle.digital/sitemap.xml

@@ -29,11 +29,30 @@ try {
 } catch (err) {
   console.error('[landing] blog teaser failed:', err);
 }
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Mahalle',
+    url: 'https://mahalle.digital',
+    logo: 'https://mahalle.digital/icons/icon-512.png',
+    description: 'Mahalle ist die digitale Nachbarschaft für den Schillerkiez in Berlin-Neukölln.',
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Mahalle',
+    url: 'https://mahalle.digital',
+    inLanguage: 'de',
+  },
+];
 ---
 
 <LandingLayout
   title="Mahalle — Der Ort für den Schillerkiez"
   description="Der Kiez hat einen Ort. Reden, tauschen, treffen — hier, wo du wohnst. Community-Plattform für den Schillerkiez, Berlin-Neukölln."
+  jsonLd={jsonLd}
 >
   <LandingPage client:load {data} {blog} />
 </LandingLayout>

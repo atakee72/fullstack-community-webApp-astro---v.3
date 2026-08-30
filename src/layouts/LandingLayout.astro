@@ -3,15 +3,24 @@
 // Sibling of AuthLayout: no KioskNav, no tour, no splash, no avatar.
 // The page content (incl. its own date line + footer) comes from the slot.
 import { ViewTransitions } from 'astro:transitions';
+import SeoHead from '../components/SeoHead.astro';
 
 export interface Props {
   title: string;
   description?: string;
+  image?: string;
+  noindex?: boolean;
+  canonicalPath?: string | null;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
   title,
   description = 'Mahalle — der Ort für den Schillerkiez. Reden, tauschen, treffen.',
+  image,
+  noindex,
+  canonicalPath,
+  jsonLd,
 } = Astro.props;
 ---
 
@@ -26,6 +35,14 @@ const {
     <meta name="theme-color" content="#f3ead8" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <meta name="generator" content={Astro.generator} />
+    <SeoHead
+      title={title}
+      description={description}
+      image={image}
+      noindex={noindex}
+      canonicalPath={canonicalPath}
+      jsonLd={jsonLd}
+    />
     <title>{title}</title>
     <ViewTransitions />
   </head>
