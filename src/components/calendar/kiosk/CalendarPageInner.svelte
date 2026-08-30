@@ -414,6 +414,11 @@
     open={!!liveSelected}
     currentUserId={currentUserId}
     onClose={() => (selectedEvent = null)}
+    onDeleted={() => {
+      selectedEvent = null;
+      queryClient.invalidateQueries({ queryKey: ['calendar', 'events'] });
+      showSuccess($t['cal.detail.delete.done'] as string);
+    }}
   />
 
   <!-- Floating add-event FAB (mobile-only, all views). Parked above

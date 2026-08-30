@@ -24,6 +24,7 @@
   import KioskReportModal from '../../forum/kiosk/KioskReportModal.svelte';
 
   import { CATEGORIES } from '../../../lib/calendar/categories';
+  import { confirmAction, showError } from '../../../utils/toast';
   import { isLiveNow } from '../../../lib/calendar/eventTime';
   import { now } from '../../../lib/calendar/nowTicker';
   import { t, tStr, locale } from '../../../lib/kiosk-i18n';
@@ -34,12 +35,14 @@
     event,
     open = false,
     currentUserId = null,
-    onClose
+    onClose,
+    onDeleted
   } = $props<{
     event: EventDoc | null;
     open?: boolean;
     currentUserId?: string | null;
     onClose: () => void;
+    onDeleted?: () => void;
   }>();
 
   let dialog: HTMLDialogElement | undefined = $state();
@@ -218,6 +221,31 @@
   function onReportClick() {
     if (!currentUserId || isAuthor) return;
     reportOpen = true;
+  }
+
+  // Author-only delete — confirm dialog, then the pre-existing (but
+  // previously UI-less) DELETE /api/events/delete/[id] endpoint, which
+  // enforces authorship server-side. Success bubbles to the parent via
+  // onDeleted (query invalidation + toast live there).
+  let deleting = $state(false);
+  async function handleDelete() {
+    if (!event || deleting) return;
+    const ok = await confirmAction($t['cal.detail.delete.confirm'] as string, {
+      title: $t['cal.detail.delete.title'] as string,
+      confirmLabel: $t['cal.detail.delete.cta'] as string,
+      variant: 'danger'
+    });
+    if (!ok) return;
+    deleting = true;
+    try {
+      const res = await fetch(`/api/events/delete/${event._id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`delete ${res.status}`);
+      onDeleted?.();
+    } catch {
+      showError($t['cal.detail.delete.error'] as string);
+    } finally {
+      deleting = false;
+    }
   }
 </script>
 
@@ -485,17 +513,27 @@
               {$t['cal.detail.back']}
             </button>
             {#if isAuthor}
-              <a
-                href={canEdit ? `/events/edit/${event._id}` : undefined}
-                title={canEdit ? $t['detail.edit.tooltip'] : $t['detail.edit.blocked']}
-                aria-disabled={!canEdit}
-                onclick={canEdit ? undefined : (e) => e.preventDefault()}
-                class={canEdit
-                  ? 'hover:text-wine'
-                  : 'text-ink-mute/50 cursor-not-allowed line-through'}
-              >
-                ✎ {$t['detail.edit.label']}
-              </a>
+              <span class="flex items-center gap-4">
+                <button
+                  type="button"
+                  onclick={handleDelete}
+                  disabled={deleting}
+                  class="hover:text-danger disabled:opacity-50"
+                >
+                  🗑 {$t['cal.detail.delete.label']}
+                </button>
+                <a
+                  href={canEdit ? `/events/edit/${event._id}` : undefined}
+                  title={canEdit ? $t['detail.edit.tooltip'] : $t['detail.edit.blocked']}
+                  aria-disabled={!canEdit}
+                  onclick={canEdit ? undefined : (e) => e.preventDefault()}
+                  class={canEdit
+                    ? 'hover:text-wine'
+                    : 'text-ink-mute/50 cursor-not-allowed line-through'}
+                >
+                  ✎ {$t['detail.edit.label']}
+                </a>
+              </span>
             {/if}
             {#if currentUserId && !isAuthor}
               <button type="button" onclick={onReportClick} class="hover:text-danger">
