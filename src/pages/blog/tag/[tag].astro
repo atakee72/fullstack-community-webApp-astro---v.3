@@ -26,7 +26,7 @@ const all: BeilagePost[] = entries
 const posts = all.filter((p) => p.tags.includes(tag));
 ---
 
-<KioskLayout title={`Rubrik #${tag} — Die Beilage`} description={`Beiträge der Rubrik #${tag} in der Beilage.`} page="blog">
+<KioskLayout title={`Rubrik #${tag} — Die Beilage`} description={`Beiträge der Rubrik #${tag} in der Beilage.`} page="blog" noindex={posts.length === 0}>
   <BeilageTagPage client:only="svelte" tag={tag} posts={posts} allTags={tagCounts(all)} />
 </KioskLayout>
 

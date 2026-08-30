@@ -23,7 +23,9 @@ const {
 
 const base = Astro.site ?? new URL('https://mahalle.digital');
 const abs = (p: string) => new URL(p, base).href;
-const canonicalUrl = canonicalPath === null ? null : abs(canonicalPath);
+const normalizedPath =
+  canonicalPath === null ? null : canonicalPath.length > 1 ? canonicalPath.replace(/\/+$/, '') : canonicalPath;
+const canonicalUrl = normalizedPath === null ? null : abs(normalizedPath);
 const imageUrl = abs(image);
 const jsonLdBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 // </script> in content must not terminate the JSON-LD block early
