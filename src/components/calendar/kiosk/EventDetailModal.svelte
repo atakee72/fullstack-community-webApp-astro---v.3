@@ -25,7 +25,8 @@
   import KioskReportModal from '../../forum/kiosk/KioskReportModal.svelte';
 
   import { CATEGORIES } from '../../../lib/calendar/categories';
-  import { confirmAction, showError } from '../../../utils/toast';
+  import { generateGoogleCalendarUrl, downloadIcsFile } from '../../../utils/calendarExport';
+  import { confirmAction, showError, showSuccess } from '../../../utils/toast';
   import { isLiveNow } from '../../../lib/calendar/eventTime';
   import { now } from '../../../lib/calendar/nowTicker';
   import { t, tStr, locale } from '../../../lib/kiosk-i18n';
@@ -246,6 +247,43 @@
       showError($t['cal.detail.delete.error'] as string);
     } finally {
       deleting = false;
+    }
+  }
+
+  // ─── Export row (.ics / Google / teilen) ──────────────────────────
+  // .ics + Google reuse the legacy helpers in utils/calendarExport.ts.
+  // „teilen" shares /calendar?event=<id>&d=<yyyy-MM-dd> — the `d` lets
+  // CalendarPageInner land on the right month before finding the event
+  // in the fetched range (events have no detail page, modal-only).
+  function shareUrl(): string {
+    const d = format(new Date(event.startDate), 'yyyy-MM-dd');
+    return `${window.location.origin}/calendar?event=${event._id}&d=${d}`;
+  }
+
+  function handleIcs() {
+    if (event) downloadIcsFile(event);
+  }
+
+  function handleGoogle() {
+    if (event) window.open(generateGoogleCalendarUrl(event), '_blank', 'noopener');
+  }
+
+  async function handleShare() {
+    if (!event) return;
+    const url = shareUrl();
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: event.title, url });
+      } catch {
+        // user dismissed the sheet — not an error
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      showSuccess($t['cal.detail.share.copied'] as string);
+    } catch {
+      showError($t['cal.detail.share.error'] as string);
     }
   }
 </script>
@@ -496,12 +534,17 @@
           >{$t['cal.detail.export']}</div>
           <!-- Solid ink-filled pills per CD's design (was ghost-outlined). -->
           <div class="flex gap-1.5">
-            {#each ['.ics', 'Google', $t['cal.detail.export.share']] as label, i (i)}
+            {#each [
+              { label: '.ics', onclick: handleIcs },
+              { label: 'Google', onclick: handleGoogle },
+              { label: $t['cal.detail.export.share'], onclick: handleShare }
+            ] as btn (btn.label)}
               <button
                 type="button"
+                onclick={btn.onclick}
                 class="inline-flex items-center px-3 py-1 rounded-full bg-ink text-paper border-2 border-ink font-bricolage font-semibold text-[12px] hover:scale-[1.02] transition-transform duration-[180ms] ease-out"
               >
-                {label}
+                {btn.label}
               </button>
             {/each}
           </div>

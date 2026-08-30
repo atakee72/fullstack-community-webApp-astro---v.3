@@ -97,6 +97,22 @@
 
   type View = 'month' | 'agenda' | 'day';
 
+  // ─── Shared-event deep link (?event=<id>&d=<yyyy-MM-dd>) ──────────
+  // Written by the detail modal's „teilen" button. Parsed synchronously
+  // at script init (client:only island — window exists, same pattern as
+  // the compose prefill) so visibleMonth can seed from `d` and the
+  // events query fetches the right month range on first paint.
+  const deepLink = (() => {
+    if (typeof window === 'undefined') return null;
+    const p = new URLSearchParams(window.location.search);
+    const id = p.get('event');
+    if (!id) return null;
+    const d = p.get('d');
+    const date = d ? new Date(`${d}T12:00:00`) : null;
+    return { id, date: date && !isNaN(date.getTime()) ? date : null };
+  })();
+  let pendingEventId = $state<string | null>(deepLink?.id ?? null);
+
   let view = $state<View>('month');
 
   // Day the Tag view should open on — set by the month grid's "+ N weitere"
@@ -156,7 +172,7 @@
   // ─── Visible month + month navigation ─────────────────────────────
   // Tracked as $state so the bottom month-nav (← MÄRZ / MAI →) can
   // walk through months. Defaults to today.
-  let visibleMonth = $state(new Date());
+  let visibleMonth = $state(deepLink?.date ?? new Date());
 
   // In Tag view the header month stepper must also move the shown day —
   // the day view snapshots initialDay, so dayViewDate (keyed remount)
@@ -357,6 +373,29 @@
   function onPickEvent(ev: EventDoc) {
     selectedEvent = ev;
   }
+
+  // Deep-link opener: once the events for the seeded month are in, find
+  // the shared event and open its modal. While the query is still
+  // fetching (initialData is stamped stale → immediate reconcile) keep
+  // waiting; only give up with a toast when the fetch settled without it
+  // (deleted / moderated away).
+  $effect(() => {
+    if (!pendingEventId) return;
+    const found = events.find((e) => String(e._id) === pendingEventId);
+    if (found) {
+      selectedEvent = found as EventDoc;
+    } else if (eventsQuery.isPending || eventsQuery.isFetching) {
+      return; // still loading — keep the deep link pending
+    } else {
+      showToast($t['cal.deeplink.notFound'] as string, { type: 'info' });
+    }
+    pendingEventId = null;
+    const p = new URLSearchParams(window.location.search);
+    p.delete('event');
+    p.delete('d');
+    const qs = p.toString();
+    window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
+  });
 
   // Re-derive selected event from the live cache so RSVP optimistic
   // updates flow through to the open modal without re-opening it.
