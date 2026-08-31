@@ -41,7 +41,8 @@ function isVisibleTo(doc: any, contentType: TranslatableType, userId: string): b
   const approved = doc.moderationStatus === 'approved' || doc.moderationStatus == null;
   if (contentType === 'listing') {
     // Mirror marketplace detail visibility: publicly listed states, or the owner.
-    const publicStatus = doc.status == null || doc.status === 'active' || doc.status === 'reserved';
+    // Fail-closed for statusless docs — real values are 'available' | 'reserved' | 'sold' | 'draft'.
+    const publicStatus = doc.status === 'available' || doc.status === 'reserved';
     return (approved && publicStatus) || isAuthor(doc, userId);
   }
   return approved || isAuthor(doc, userId);
@@ -52,6 +53,17 @@ function extractFields(doc: any, contentType: TranslatableType): { title: string
     return { title: null, body: String(doc.body ?? doc.content ?? '') };
   }
   const title = typeof doc.title === 'string' ? doc.title : null;
+  if (contentType === 'listing') {
+    // description can be a Quill/typewriter Delta OBJECT (src/schemas/listing.schema.ts) —
+    // String(delta) would yield "[object Object]". Prefer the plain-text mirror field.
+    const body =
+      typeof doc.descriptionPlainText === 'string' && doc.descriptionPlainText.trim()
+        ? doc.descriptionPlainText
+        : typeof doc.description === 'string'
+          ? doc.description
+          : '';
+    return { title, body };
+  }
   const body = String(doc.body ?? doc.content ?? doc.description ?? '');
   return { title, body };
 }
@@ -75,7 +87,7 @@ export async function translateContent(input: {
     .collection(COLLECTION_FOR[contentType])
     .findOne(
       { _id: new ObjectId(contentId) },
-      { projection: { title: 1, body: 1, content: 1, description: 1, moderationStatus: 1, status: 1, author: 1, sellerId: 1 } }
+      { projection: { title: 1, body: 1, content: 1, description: 1, descriptionPlainText: 1, moderationStatus: 1, status: 1, author: 1, sellerId: 1 } }
     );
   if (!doc || !isVisibleTo(doc, contentType, userId)) return { status: 'not_found' };
 
