@@ -394,7 +394,7 @@
         sellerName={listing.sellerName}
         sellerImage={listing.sellerImage}
         listingCount={0}
-        isVerified={true}
+        isVerified={listing.sellerVerified === true}
       />
 
       <!-- Similar listings placeholder — out of v1 scope -->

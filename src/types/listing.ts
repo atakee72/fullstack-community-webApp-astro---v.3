@@ -84,6 +84,7 @@ export interface Listing {
   sellerId: ObjectId | string;
   sellerName?: string | null;
   sellerImage?: string | null;
+  sellerVerified?: boolean;
   status: ListingStatus;
   moderationStatus?: 'approved' | 'pending' | 'rejected';
   isUserReported?: boolean;

@@ -238,10 +238,10 @@
     topic.images?.[0]?.url ? optimizeCloudinary(topic.images[0].url) : null
   );
   const firstTag = $derived(topic.tags?.[0] ?? null);
-  // No verification pipeline yet — every signed-in kiez resident counts as
-  // "in kiez" for now. When real address-verification or onboarding ships,
-  // gate this on `topic.author?.verified === true`.
-  const isVerified = $derived(true);
+  // Kiez-verification pipeline (Aug 2026): the badge is earned (admin
+  // toggle), strictly on the author's flag. `topic.author` is populated
+  // server-side by populateAuthors() with `verified` in its projection.
+  const isVerified = $derived(topic.author?.verified === true);
   const editHistoryCount = $derived(topic.editHistory?.length ?? 0);
 
   // ─── Edit mode ──────────────────────────────────────────────────────

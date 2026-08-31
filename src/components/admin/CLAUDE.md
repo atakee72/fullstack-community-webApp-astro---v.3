@@ -85,3 +85,9 @@ Below `md`, the app is triage-only by design (per the design handoff's non-negot
 - **Bypass moderation**: admin officials skip the AI moderation pipeline entirely (admin is trusted). `moderationStatus: 'approved'` set directly. No flagged-content record created.
 - **Pinning lifecycle**: 7-day default duration, up to three concurrent pins, oldest displaced when a fourth is pinned (multi-pin shipped Aug 2026), client-side check `pinnedUntil > now` at render time so no DB-side TTL is needed.
 - **Known deviation from an early plan draft**: the create endpoint is `POST /api/admin/announcements/create` (not `/api/admin/announcements` with a bare POST) — the composer's mono echo line (`POST /api/admin/announcements/create`) documents this in the UI itself. Reviewed and upheld; don't "fix" it back.
+
+## Members list (`MitgliederApp.svelte` + `/admin/mitglieder`)
+Kiez-verification v1 (Aug 2026): `users.verified` is strict (`=== true`) and admin-toggled — the toggle IS the proof mechanism for now. Page self-gates like `moderation.astro` (302 → login when logged out, §09 state for non-admins), `AdminLayout` with `wordmark="mitglieder"`, `backHref="/admin/moderation"`. Reached by direct URL (same convention as `/admin/announcements` — no inbound nav link).
+- **`GET /api/admin/users`** — all non-tombstoned users (`anonymized: { $ne: true }`), ALLOWLIST projection `{ name, handle, createdAt, emailVerified, verified, role }`, createdAt desc, cap 1000. Never widen to a blocklist projection.
+- **`PATCH /api/admin/users/[id]`** — body strictly `{ verified: boolean }` (Zod `.strict()`), match excludes tombstones (404). This endpoint is the ONLY writer of `users.verified`.
+- Badge sites flipped to strict in the same feature: `getProfileMe`/`getPublicProfile` (`verified === true`), `ForumPostDetail` (`topic.author?.verified === true`), marketplace `populateSellers` → `sellerVerified` → `SellerCard`.
