@@ -1,6 +1,7 @@
 <!-- Styles live in global.css (.ktr-*) — this component is only imported by
      other islands, and nested-island <style> blocks get orphaned in prod. -->
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import { t, locale } from '../../../lib/kiosk-i18n';
   import { pickTargetLang, requestTranslation } from '../../../lib/translation/client';
 
@@ -24,6 +25,10 @@
   let phase = $state<'idle' | 'working' | 'shown'>('idle');
   let error = $state<string | null>(null);
   let cache: { title: string | null; body: string } | null = null;
+  let destroyed = false;
+  onDestroy(() => {
+    destroyed = true;
+  });
 
   async function toggle() {
     error = null;
@@ -40,6 +45,7 @@
     phase = 'working';
     const target = pickTargetLang($locale);
     const res = await requestTranslation(contentType, contentId, target);
+    if (destroyed) return;
     if (!res.ok) {
       phase = 'idle';
       const known = ['translate_unavailable', 'rate_limited', 'too_long'];
