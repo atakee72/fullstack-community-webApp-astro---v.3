@@ -1470,6 +1470,25 @@ const de = {
   'admin.errors.unreachable': 'Sentry nicht erreichbar — später erneut versuchen.',
   'admin.errors.count': '{n}×',
 
+  // ── Mitglieder (admin members list, /admin/mitglieder) ──
+  'admin.users.kicker': 'MITGLIEDER · KIEZ-VERIFIZIERUNG',
+  'admin.users.heading': 'Das Melderegister',
+  'admin.users.sub': 'Verifiziert wird von Hand — der Schalter ist der Nachweis (v1).',
+  'admin.users.count': '{n} Mitglieder',
+  'admin.users.search': 'Name oder @handle suchen …',
+  'admin.users.since': 'dabei seit {d}',
+  'admin.users.emailok': 'E-MAIL ✓',
+  'admin.users.emailno': 'E-MAIL —',
+  'admin.users.adminchip': 'ADMIN',
+  'admin.users.verifiedchip': '✓ VERIFIZIERT',
+  'admin.users.action.verify': 'Verifizieren',
+  'admin.users.action.unverify': 'Entziehen',
+  'admin.users.empty': 'Keine Mitglieder gefunden.',
+  'admin.users.loading': 'Melderegister wird geladen …',
+  'admin.users.error': 'Liste konnte nicht geladen werden.',
+  'admin.users.retry': '↻ neu laden',
+  'admin.users.toast.fail': 'Änderung fehlgeschlagen — bitte erneut versuchen.',
+
   // ── Profile (Task 5 scaffold) — "Meldebogen" ────────────────────────────
   'profile.eyebrow.own': 'PROFIL · @{h} · IM KIEZ SEIT {y}',
   'profile.heading.own': 'Dein <em>Meldebogen</em>',
@@ -3260,6 +3279,25 @@ const en: Dict = {
   'admin.errors.disabled': 'Error monitoring not configured (set the SENTRY_* env vars).',
   'admin.errors.unreachable': 'Sentry unreachable — try again later.',
   'admin.errors.count': '{n}×',
+
+  // ── Mitglieder (admin members list, /admin/mitglieder) ──
+  'admin.users.kicker': 'MEMBERS · KIEZ VERIFICATION',
+  'admin.users.heading': 'The member register',
+  'admin.users.sub': 'Verification is manual — the toggle is the proof (v1).',
+  'admin.users.count': '{n} members',
+  'admin.users.search': 'Search name or @handle …',
+  'admin.users.since': 'joined {d}',
+  'admin.users.emailok': 'EMAIL ✓',
+  'admin.users.emailno': 'EMAIL —',
+  'admin.users.adminchip': 'ADMIN',
+  'admin.users.verifiedchip': '✓ VERIFIED',
+  'admin.users.action.verify': 'Verify',
+  'admin.users.action.unverify': 'Revoke',
+  'admin.users.empty': 'No members found.',
+  'admin.users.loading': 'Loading the member register …',
+  'admin.users.error': 'Could not load the list.',
+  'admin.users.retry': '↻ reload',
+  'admin.users.toast.fail': 'Change failed — please try again.',
 
   // ── Profile (Task 5 scaffold) — "Meldebogen" ────────────────────────────
   'profile.eyebrow.own': 'PROFILE · @{h} · IN THE KIEZ SINCE {y}',
