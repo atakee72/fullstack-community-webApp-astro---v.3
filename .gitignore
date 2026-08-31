@@ -100,3 +100,4 @@ conversation-summary.md
 # private local docs (strategy notes etc.) — everything else in docs/ is tracked
 docs/local/
 .vercel
+.env*
