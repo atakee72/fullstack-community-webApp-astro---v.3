@@ -1925,6 +1925,16 @@ const de = {
   'tour.profil.s3.body': 'Deine Zeit im Kiez, als kleine Chronik: seit wann du dabei bist, dein erster Beitrag, dein hundertstes Danke.',
   'tour.profil.end.note': 'Das war die Führung — du kennst jetzt den ganzen Kiosk. Jederzeit neu: Avatar-Menü → „Führung starten“.',
   'nav.menu.tour': 'Führung starten',
+
+  // translation control
+  'tr.show': 'Übersetzung anzeigen',
+  'tr.working': 'Übersetzen …',
+  'tr.original': 'Original anzeigen',
+  'tr.label': 'Automatisch übersetzt',
+  'tr.err.unavailable': 'Übersetzung derzeit nicht verfügbar',
+  'tr.err.rate_limited': 'Zu viele Übersetzungen — bitte später erneut versuchen',
+  'tr.err.too_long': 'Beitrag zu lang für die Übersetzung',
+  'tr.err.generic': 'Übersetzung fehlgeschlagen',
 } as const;
 
 // Key parity between de/en stays type-enforced; literal-VALUE parity does
@@ -3716,6 +3726,16 @@ const en: Dict = {
   'tour.profil.s3.body': 'Your time in the Kiez, as a small chronicle: when you joined, your first post, your hundredth thanks.',
   'tour.profil.end.note': 'That’s the tour — you now know the whole kiosk. Any time again: avatar menu → ‘Start tour’.',
   'nav.menu.tour': 'Start tour',
+
+  // translation control
+  'tr.show': 'Show translation',
+  'tr.working': 'Translating …',
+  'tr.original': 'Show original',
+  'tr.label': 'Automatically translated',
+  'tr.err.unavailable': 'Translation is currently unavailable',
+  'tr.err.rate_limited': 'Too many translations — please try again later',
+  'tr.err.too_long': 'Post too long to translate',
+  'tr.err.generic': 'Translation failed',
 };
 
 export const dictionaries: Record<Locale, Dict> = { de, en };
