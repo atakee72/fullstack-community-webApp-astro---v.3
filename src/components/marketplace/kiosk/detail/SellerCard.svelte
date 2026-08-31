@@ -8,7 +8,7 @@
     sellerImage,
     listingCount = 0,
     memberSince,
-    isVerified = true,
+    isVerified = false,
     onReport,
   }: {
     sellerId: string;

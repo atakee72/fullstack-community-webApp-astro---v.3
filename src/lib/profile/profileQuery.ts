@@ -68,8 +68,9 @@ export async function getProfileMe(userId: string): Promise<ProfileMe | null> {
     email: String(user.email ?? ''),
     image: (user.userPicture || user.image || null) as string | null,
     hobbies: Array.isArray(user.hobbies) ? user.hobbies : [],
-    // Interim rule — mirrors ForumPostDetail.svelte:236 (no verification pipeline yet)
-    verified: user.verified ?? true,
+    // Strict since the Kiez-verification pipeline (Aug 2026): the badge is
+    // earned (admin toggle on /admin/mitglieder), absent/undefined = NOT verified.
+    verified: user.verified === true,
     memberSince: Number.isNaN(created.getTime()) ? new Date().getFullYear() : created.getFullYear(),
     isBanned: user.isBanned === true,
     stats: { posts: posts + ann + rec, listings, events, danke },

@@ -17,7 +17,11 @@ import type { Listing } from '../types/listing';
  * client-visible SSR props and JSON responses. Same narrowing rationale as
  * populateAuthors in topicsQuery.ts.
  */
-const SELLER_PROJECTION = { name: 1, image: 1, userPicture: 1 } as const;
+// Allowlist projection — widen only after auditing every client-visible
+// consumer (same discipline as populateAuthors in topicsQuery.ts).
+// `verified` is public-by-display: it drives the seller card's
+// "Verifiziert im Kiez" badge.
+const SELLER_PROJECTION = { name: 1, image: 1, userPicture: 1, verified: 1 } as const;
 
 /**
  * Resolve seller name + avatar for a batch of listings with ONE $in query.
@@ -77,6 +81,7 @@ export async function populateSellers<T extends Record<string, any>>(
       ...doc,
       sellerName: u?.name ?? null,
       sellerImage: u?.userPicture ?? u?.image ?? null,
+      sellerVerified: u?.verified === true,
     };
   });
 }

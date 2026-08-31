@@ -123,9 +123,9 @@ export async function getPublicProfile(handle: string): Promise<PublicProfile | 
     handle: String(user.handle ?? lower),
     image: (user.userPicture || user.image || null) as string | null,
     hobbies: Array.isArray(user.hobbies) ? user.hobbies : [],
-    // Interim rule — mirrors getProfileMe()/ForumPostDetail.svelte:236 (no
-    // verification pipeline yet).
-    verified: user.verified ?? true,
+    // Strict since the Kiez-verification pipeline (Aug 2026): earned via
+    // admin toggle on /admin/mitglieder, absent/undefined = NOT verified.
+    verified: user.verified === true,
     memberSince: Number.isNaN(created.getTime()) ? new Date().getFullYear() : created.getFullYear(),
     stats: { posts, listings, events, danke },
   };
