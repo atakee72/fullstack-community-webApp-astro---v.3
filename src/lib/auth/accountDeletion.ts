@@ -228,7 +228,7 @@ export async function runDeletionPipeline(
     );
     steps.flaggedContentListings = unsetListingFlags.modifiedCount ?? 0;
 
-    // Contact-relay rows carry buyer PII (plaintext name+email). Seller side:
+    // Contact-relay rows carry hashed buyer identity (buyerEmailHash — plaintext name+email until Option C, 2026-08-31). Seller side:
     // rows for this user's listings (by listingId) or keyed to them directly
     // (sellerId — covers rows whose listing was already manually deleted).
     const delContactsSeller = await db.collection('listingContacts').deleteMany({
@@ -363,7 +363,7 @@ export async function runDeletionPipeline(
   }
 
   // Buyer side of the contact relay: rows where THIS user wrote to some
-  // seller are keyed only by their plaintext email.
+  // seller are keyed by their hashed email (plaintext on pre-migration rows — the $or below covers both).
   try {
     if (claimedEmail) {
       const delContactsBuyer = await db
