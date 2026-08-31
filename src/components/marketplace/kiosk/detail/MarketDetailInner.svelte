@@ -17,6 +17,7 @@
   import BackfillBanner from '../states/BackfillBanner.svelte';
   import ListingRejectedPanel from '../states/ListingRejectedPanel.svelte';
   import KioskReportModal from '../../../forum/kiosk/KioskReportModal.svelte';
+  import TranslateControl from '../../../forum/kiosk/TranslateControl.svelte';
 
   // ─── Props ─────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,11 @@
   // svelte-ignore state_referenced_locally
   let listing = $state(initialListing);
   let reportOpen = $state(false);
+
+  // ─── Translation (Task 6, content-translation) ─────────────────────────────
+  // Host swaps displayed strings only — TranslateControl owns its own
+  // button/label/error rendering.
+  let translation = $state<{ title: string | null; body: string } | null>(null);
 
   // ─── Moderation state derivation ───────────────────────────────────────────
 
@@ -112,6 +118,9 @@
       ? listing.description
       : (listing.descriptionPlainText ?? ''),
   );
+
+  const displayDescription = $derived(translation?.body ?? bodyText);
+  const displayTitle = $derived(translation?.title ?? listing.title);
 
   // ─── Price+delivery row visibility ────────────────────────────────────────
 
@@ -255,8 +264,41 @@
           onDelete={handleDelete}
         />
       {:else}
-        <!-- Description body is rendered by the Astro SSR shell above;
-             removed here to avoid the duplicate that was hurting the page UX. -->
+        <!-- Description body is rendered by the Astro SSR shell above (SEO/
+             a11y — kept as the sole permanent copy, see kiosk CLAUDE.md);
+             removed here to avoid the duplicate that was hurting the page UX.
+             The translated variant below is client-only and additive: it
+             renders ONLY once a translation exists, so nothing duplicates
+             the SSR original in the default (untranslated) state. It
+             appears directly beneath the SSR description in page order. -->
+        {#if translation}
+          <div style="padding-top: 4px;">
+            {#if displayTitle !== listing.title}
+              <p
+                style="
+                  font-family: var(--k-font-display, sans-serif); font-weight: 700;
+                  font-size: 18px; color: var(--k-ink, #1b1a17); margin: 0 0 4px;
+                "
+              >{displayTitle}</p>
+            {/if}
+            <p
+              style="
+                font-family: var(--k-font-serif, Georgia, serif);
+                font-style: italic;
+                font-size: 16px;
+                line-height: 1.6;
+                color: var(--k-ink-soft, #4a4740);
+                margin: 0;
+              "
+            >{displayDescription}</p>
+          </div>
+        {/if}
+        <TranslateControl
+          contentType="listing"
+          contentId={String(listing._id)}
+          accent="var(--k-wine, #b23a5b)"
+          onTranslated={(t) => (translation = t)}
+        />
 
         <!-- SpecStrip (only when any spec is filled) -->
         <SpecStrip {listing} />

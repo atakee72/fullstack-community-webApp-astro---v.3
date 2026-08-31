@@ -15,6 +15,7 @@
   import { de as deLocale, enUS } from 'date-fns/locale';
 
   import { linkifySegments } from '../../../lib/linkify';
+  import TranslateControl from '../../forum/kiosk/TranslateControl.svelte';
   import RsvpButtons from './RsvpButtons.svelte';
   import CapacityBar from './CapacityBar.svelte';
   import AttendeeStack from './AttendeeStack.svelte';
@@ -67,6 +68,12 @@
   function onDialogClick(e: MouseEvent) {
     if (e.target === dialog) onClose();
   }
+
+  // ─── Translation (Task 6, content-translation) ───────────────────
+  // Host swaps displayed strings only — TranslateControl owns its own
+  // button/label/error rendering.
+  let translation = $state<{ title: string | null; body: string } | null>(null);
+  const displayEventBody = $derived(translation?.body ?? event?.body ?? '');
 
   // ─── Derived display ─────────────────────────────────────────────
   const dateLocale = $derived($locale === 'de' ? deLocale : enUS);
@@ -186,7 +193,7 @@
   // wine (matches CD's 'Straßenfest / Herrfurthplatz' treatment).
   // Longer / shorter titles fall through to the single-line render.
   const titleParts = $derived.by(() => {
-    const raw = (event?.title ?? '').trim();
+    const raw = (translation?.title ?? event?.title ?? '').trim();
     if (!raw) return { single: '', split: null as null | { lead: string; tail: string } };
     const parts = raw.split(/\s+/);
     if (parts.length === 2) {
@@ -204,6 +211,14 @@
   );
 
   const eventId = $derived(event?._id ? String(event._id) : '');
+
+  // Reset any active translation whenever the modal is pointed at a
+  // different event (this is a single long-lived modal instance reused
+  // across many events, not remounted per-event).
+  $effect(() => {
+    void eventId;
+    translation = null;
+  });
 
   // Live-now status, reactive on the shared minute-tick store so the
   // badge appears and disappears while the modal stays open.
@@ -445,11 +460,28 @@
         {/if}
 
         <!-- Description -->
-        {#if event.body}
+        {#if displayEventBody}
           <div
             class="font-instrument text-[15px] leading-[1.6] text-ink pt-3 border-t border-dashed border-rule whitespace-pre-line"
-          >{#each linkifySegments(event.body) as seg}{#if seg.type === 'link'}<a href={seg.value} target="_blank" rel="noopener noreferrer" class="underline underline-offset-2 decoration-[1.5px] break-all hover:text-teal">{seg.value}</a>{:else}{seg.value}{/if}{/each}</div>
+          >{#each linkifySegments(displayEventBody) as seg}{#if seg.type === 'link'}<a href={seg.value} target="_blank" rel="noopener noreferrer" class="underline underline-offset-2 decoration-[1.5px] break-all hover:text-teal">{seg.value}</a>{:else}{seg.value}{/if}{/each}</div>
         {/if}
+
+        <div class="mt-2">
+          <!-- Keyed on eventId: this modal is a single long-lived instance
+               reused across many events, so without a key, TranslateControl's
+               OWN internal phase/cache (not just our `translation` state)
+               would survive a switch to a different event — e.g. the button
+               could get stuck reading "original" for a newly-opened event
+               that was never translated. The key forces a full remount. -->
+          {#key eventId}
+            <TranslateControl
+              contentType="event"
+              contentId={eventId}
+              accent="var(--k-teal, #3f8f9f)"
+              onTranslated={(t) => (translation = t)}
+            />
+          {/key}
+        </div>
 
         <!-- Practical info chips (rendered from event.tags). -->
         {#if practicalChips.length > 0}
