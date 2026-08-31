@@ -16,6 +16,7 @@
   // Trash is visible whenever the viewer is the author (no time window).
 
   import KioskAvatar from './KioskAvatar.svelte';
+  import TranslateControl from './TranslateControl.svelte';
   import { t, tStr } from '../../../lib/kiosk-i18n';
 
   let {
@@ -71,7 +72,12 @@
   }
 
   // Different schemas use `body` vs `content` — accept both.
-  const body = $derived(comment.body ?? comment.content ?? '');
+  const originalBody = $derived(comment.body ?? comment.content ?? '');
+  // Translation overlay (Task 5) — null when no translation is showing.
+  // `enterEdit`/`saveEdit` below read `originalBody` directly, never this,
+  // so a translated string can never reach the edit form or a save path.
+  let translation = $state<{ title: string | null; body: string } | null>(null);
+  const body = $derived(translation?.body ?? originalBody);
   const likeCount = $derived(comment.likes ?? 0);
   const isEdited = $derived(!!comment.editedAt);
 
@@ -100,7 +106,7 @@
   let saving = $state(false);
 
   function enterEdit() {
-    draft = body;
+    draft = originalBody;
     editing = true;
   }
   function cancelEdit() {
@@ -108,11 +114,20 @@
     draft = '';
   }
 
+  // Edit-mode guard: a translated string must never reach the edit form
+  // or be saved back. enterEdit() already seeds `draft` from
+  // `originalBody` directly, but this also clears the displayed
+  // translation so re-entering read mode later doesn't show a stale
+  // overlay from before the edit.
+  $effect(() => {
+    if (editing) translation = null;
+  });
+
   async function saveEdit() {
     if (saving || !onEdit) return;
     const trimmed = draft.trim();
     if (trimmed.length === 0) return;
-    if (trimmed === body.trim()) {
+    if (trimmed === originalBody.trim()) {
       // No-op: skip the moderation API call entirely.
       cancelEdit();
       return;
@@ -279,6 +294,13 @@
       <p class="font-bricolage text-sm text-ink leading-relaxed whitespace-pre-line">
         {body}
       </p>
+      <div class="mt-1.5">
+        <TranslateControl
+          contentType="comment"
+          contentId={String(comment._id)}
+          onTranslated={(t) => (translation = t)}
+        />
+      </div>
     {/if}
   </div>
 </article>

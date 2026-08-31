@@ -17,6 +17,7 @@
   import { linkifySegments } from '../../../lib/linkify';
   import KioskAvatar from './KioskAvatar.svelte';
   import KioskBtn from './KioskBtn.svelte';
+  import TranslateControl from './TranslateControl.svelte';
   import PostTypeChip from './PostTypeChip.svelte';
   import StatusBadge from './StatusBadge.svelte';
   import ForumCommentList from './ForumCommentList.svelte';
@@ -134,8 +135,16 @@
     return Number.isFinite(y) ? ($locale === 'de' ? `seit ${y}` : `since ${y}`) : '';
   });
 
+  // Translation overlay (Task 5) — null when no translation is showing.
+  // Never feeds the edit form or any save path (see enterEdit / isDirty,
+  // which read `topic.title` / `topic.body` directly, and the
+  // reset-on-edit effect below).
+  let translation = $state<{ title: string | null; body: string } | null>(null);
+  const displayTitle = $derived(translation?.title ?? topic.title);
+  const displayBody = $derived(translation?.body ?? (topic.body ?? topic.description ?? ''));
+
   const paragraphs = $derived(
-    (topic.body ?? topic.description ?? '')
+    displayBody
       .split(/\n{2,}/)
       .map((p: string) => p.trim())
       .filter(Boolean)
@@ -263,6 +272,15 @@
     editError = null;
     editing = true;
   }
+
+  // Edit-mode guard: a translated string must never reach the edit form
+  // or be saved back. enterEdit() already seeds editTitle/editBody from
+  // the untranslated `topic` fields directly, but this also clears the
+  // displayed translation so re-entering read mode later doesn't show a
+  // stale overlay from before the edit.
+  $effect(() => {
+    if (editing) translation = null;
+  });
 
   async function cancelEdit(skipConfirm = false) {
     if (!skipConfirm && isDirty) {
@@ -554,7 +572,7 @@
         <h1
           class="font-bricolage font-extrabold text-3xl md:text-4xl tracking-tight leading-[1.05] text-ink mb-3.5 max-w-[760px] text-balance"
         >
-          {topic.title}
+          {displayTitle}
         </h1>
       {/if}
 
@@ -642,6 +660,12 @@
             {/if}
           {/each}
         </div>
+        <TranslateControl
+          contentType={reportContentType}
+          contentId={String(topic._id)}
+          onTranslated={(t) => (translation = t)}
+          accent="var(--k-wine, #b23a5b)"
+        />
       {/if}
 
       {#if !editing}
