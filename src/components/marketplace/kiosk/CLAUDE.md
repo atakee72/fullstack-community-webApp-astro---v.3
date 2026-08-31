@@ -106,7 +106,7 @@ CTA routes to `/marketplace/edit/{id}?from=backfill`. Edit page pre-populates wh
 - `Origin` header CSRF guard — must match `ALLOWED_ORIGINS` env var
 
 **GDPR / privacy design:**
-- No message bodies stored server-side. Metadata only: `{ listingId, senderEmail (hashed), timestamp }` in `listingContacts` collection.
+- No message bodies stored server-side. Metadata only: `{ listingId, sellerId, buyerEmailHash (sha256+CONTACT_IP_SALT, 32 hex), senderIpHash, sentAt }` (90d TTL index) in `listingContacts` collection.
 - Message lives only in the two outbound Resend emails (seller confirmation + buyer receipt).
 - `replyTo: senderEmail` on the seller email is the privacy mechanism — seller can reply directly to the buyer, but the seller's email never appears on any page the buyer sees.
 - Confirmation email to buyer has an "ignore if you didn't send this" footer for impersonation victims.

@@ -500,8 +500,7 @@ topics/announcements/recommendations/events — the like endpoints keep the
 counter in lockstep, so a bare `$pull` would have drifted it; (b)
 **listingContacts sweeps** — seller side inside step 1 (`$or` on collected
 listingIds + `sellerId`), buyer side as its own step keyed on the
-claim-captured email (`buyerEmail` is stored lowercased — rows are
-plaintext buyer name+email, NOT hashed as older docs claimed); the manual
+claim-captured email (rows store buyerEmailHash since Option C 2026-08-31 — the sweep matches hash-first with a plaintext-fallback arm); the manual
 `listings/delete/[id]` endpoint now cascades its listing's contact rows
 too; (c) **email-keyed rateLimits**: the `$regex userId` delete gained an
 exact-`$in` arm for `login:`/`banflag:`/`fp:email:` built from the captured

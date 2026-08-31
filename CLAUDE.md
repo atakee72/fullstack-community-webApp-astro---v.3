@@ -171,7 +171,7 @@ See `src/pages/api/news/CLAUDE.md` — full notes load when working in that subt
 - `recommendations` - User recommendations (includes `moderationStatus`, `isUserReported`, `rejectionReason`, `images` fields)
 - `comments` - Comments on posts (includes `moderationStatus` field)
 - `listings` - Marketplace listings (includes `moderationStatus`, `listingType`, `status`, `listingKind` (`sell`/`exchange`/`gift`), `category`, `delivery`, `specs`, `reservedAt`, `lastBumpedAt`, `bundleId` fields)
-- `listingContacts` - Contact-relay metadata for buyer→seller emails (`{ listingId, sellerId, buyerName, buyerEmail (plaintext, lowercased), senderIpHash, sentAt }` — no message bodies stored). Deleted with the listing (manual delete cascade) and by the account-deletion pipeline (seller side via listingId/sellerId, buyer side via captured email).
+- `listingContacts` - Contact-relay metadata for buyer→seller emails (`{ listingId, sellerId, buyerEmailHash (sha256+CONTACT_IP_SALT, 32 hex), senderIpHash, sentAt }` — no message bodies, no plaintext buyer identity since Option C 2026-08-31; 90d TTL index). Deleted with the listing (manual delete cascade) and by the account-deletion pipeline (seller side via listingId/sellerId, buyer side via hash of the captured email).
 - `news` - Newsboard articles (AI-fetched and user-submitted, includes `moderationStatus`, `aiRelevanceScore`, `fetchDate`, `sourceName`, `sourceUrl` fields)
 - `savedNews` - User bookmarks for news (userId + newsId pairs, server-side persistence)
 - `savedPosts` - User bookmarks for forum posts (userId + postId pairs, server-side persistence)
@@ -213,7 +213,7 @@ SMTP_USER=              # SMTP login (mailbox.org account, e.g. atakee@mailbox.o
 SMTP_PASS=              # mailbox.org APP password (not the account password). Secret. Keep double-quoted (contains #).
 RESEND_API_KEY=         # Resend.com API key — ACTIVE prod transport since 2026-08-09 (domain mahalle.digital verified at Resend, EU region). Set in Vercel Production (Sensitive).
 SENDING_FROM_EMAIL=     # Prod: "Mahalle <noreply@mahalle.digital>" (Resend). For SMTP sends the address MUST be registered at the provider (mailbox.org "Externes Alias") or sends are rejected. All app email (auth + contact relay) uses it.
-CONTACT_IP_SALT=        # 32+ chars, fixed across deploys (hashes IPs in contact rate-limit keys). Also used by auth rate limiting (src/lib/auth/rateLimit.ts).
+CONTACT_IP_SALT=        # 32+ chars, fixed across deploys (hashes IPs in contact rate-limit keys). Also used by auth rate limiting (src/lib/auth/rateLimit.ts). Also salts buyerEmailHash in listingContacts — the migration in scripts/create-listing-indexes.ts must run with the TARGET deployment's salt.
 ALLOWED_ORIGINS=        # CSV of allowed origins for contact relay + resend-verification CSRF guard. SET in Vercel prod since 2026-08-09: "https://mahalle.digital,https://mahalle-das-kiezgesichterbuch.vercel.app" — the guard is ARMED now.
 STATS_XLSX_URL=         # AfS demographics XLSX URL (sync script + GitHub Actions)
 STATS_PERIOD=           # AfS period, e.g. "2025h2" (sync script + GitHub Actions)
