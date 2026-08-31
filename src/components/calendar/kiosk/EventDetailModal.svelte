@@ -441,9 +441,11 @@
                 {:else}
                   <div class="font-bricolage font-semibold text-[13px]">{authorName}</div>
                 {/if}
-                <div class="font-dmmono text-[10px] text-ink-mute">
-                  {$t['cal.detail.verifiziert']}
-                </div>
+                {#if typeof event?.author === 'object' && event?.author !== null && (event.author as any).verified === true}
+                  <div class="font-dmmono text-[10px] text-ink-mute">
+                    {$t['cal.detail.verifiziert']}
+                  </div>
+                {/if}
               </div>
             </div>
           {/if}

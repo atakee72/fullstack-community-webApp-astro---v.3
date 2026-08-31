@@ -602,7 +602,7 @@ const de = {
   'detail.edit.blocked': 'Bearbeiten gesperrt während der Prüfung',
   'cal.detail.close': 'schließen',
   'cal.detail.loginPrompt': 'Anmelden, um zuzusagen.',
-  'cal.detail.verifiziert': 'verifiziert · seit 2024',
+  'cal.detail.verifiziert': 'verifiziert im Kiez',
 
   // ─── States ──────────────────────────────────────────────────────
   'cal.state.empty.title': 'Im Kiez ist gerade Pause.',
@@ -2472,7 +2472,7 @@ const en: Dict = {
   'detail.edit.blocked': 'Edits blocked during review',
   'cal.detail.close': 'close',
   'cal.detail.loginPrompt': 'Sign in to RSVP.',
-  'cal.detail.verifiziert': 'verified · since 2024',
+  'cal.detail.verifiziert': 'verified in the Kiez',
 
   // States
   'cal.state.empty.title': 'The Kiez is on a break.',
