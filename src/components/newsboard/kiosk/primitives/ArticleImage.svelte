@@ -29,13 +29,13 @@
     {alt}
     loading="lazy"
     class="w-full object-cover"
-    style="aspect-ratio:{ratio}; border:var(--k-border-ink); border-radius:var(--k-radius-md);"
+    style="aspect-ratio:var(--news-img-ratio, {ratio}); border:var(--k-border-ink); border-radius:var(--k-radius-md);"
   />
 {:else}
   <!-- First-class no-image placeholder: dashed border + source monogram -->
   <div
     class="w-full flex flex-col items-center justify-center"
-    style="aspect-ratio:{ratio}; border-radius:var(--k-radius-md);
+    style="aspect-ratio:var(--news-img-ratio, {ratio}); border-radius:var(--k-radius-md);
            border:var(--news-noimage-border); background:var(--news-noimage-bg);"
   >
     <div

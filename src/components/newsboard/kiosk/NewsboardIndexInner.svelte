@@ -203,7 +203,7 @@
     <NewsEmptyToday />
   {/if}
 {:else}
-  <div style="padding:20px 36px 40px; display:flex; flex-direction:column; gap:16px;">
+  <div class="px-4 pt-5 pb-10 md:px-9" style="display:flex; flex-direction:column; gap:16px;">
     {#if ownNonApproved.length}
       {#each ownNonApproved as a (a.id)}<NewsCard article={a} onSave={handleSave} canSave={isAuth} />{/each}
     {/if}
