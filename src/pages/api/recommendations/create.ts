@@ -57,26 +57,33 @@ export const POST: APIRoute = async ({ request }) => {
 
     const { title, body, tags, category, images } = validation.data;
 
-    // Run content moderation + spam check + image moderation in parallel
-    const contentText = `${title}\n\n${body}`;
-    const moderationChecks: Promise<any>[] = [
-      moderateText(contentText),
-      checkSpamWithGPT(contentText, 'neighborhood place/business recommendation')
-    ];
-    if (tags?.length) {
-      moderationChecks.push(moderateText(tags.join(' ')));
-    }
-    if (images?.length) {
-      moderationChecks.push(checkImagesWithGPT(images.map(img => img.url)));
-    }
+    // Admins are exempt from AI moderation (their content is auto-approved —
+    // they run the review queue). Skips the OpenAI calls entirely.
+    const skipModeration = session.user.role === 'admin';
 
-    const [mainModerationResult, spamResult, tagsModerationResult, imageModerationResult] = await Promise.all(moderationChecks);
+    let mergedResult: ReturnType<typeof mergeModerationResults> = null;
+    if (!skipModeration) {
+      // Run content moderation + spam check + image moderation in parallel
+      const contentText = `${title}\n\n${body}`;
+      const moderationChecks: Promise<any>[] = [
+        moderateText(contentText),
+        checkSpamWithGPT(contentText, 'neighborhood place/business recommendation')
+      ];
+      if (tags?.length) {
+        moderationChecks.push(moderateText(tags.join(' ')));
+      }
+      if (images?.length) {
+        moderationChecks.push(checkImagesWithGPT(images.map(img => img.url)));
+      }
 
-    // Merge all moderation results — returns null if all passed
-    const resultsToMerge = [mainModerationResult, spamResult];
-    if (tagsModerationResult) resultsToMerge.push(tagsModerationResult);
-    if (imageModerationResult) resultsToMerge.push(imageModerationResult);
-    const mergedResult = mergeModerationResults(...resultsToMerge);
+      const [mainModerationResult, spamResult, tagsModerationResult, imageModerationResult] = await Promise.all(moderationChecks);
+
+      // Merge all moderation results — returns null if all passed
+      const resultsToMerge = [mainModerationResult, spamResult];
+      if (tagsModerationResult) resultsToMerge.push(tagsModerationResult);
+      if (imageModerationResult) resultsToMerge.push(imageModerationResult);
+      mergedResult = mergeModerationResults(...resultsToMerge);
+    }
 
     // Determine moderation status
     const moderationStatus = mergedResult ? 'pending' : 'approved';

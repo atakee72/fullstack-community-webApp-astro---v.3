@@ -57,22 +57,29 @@ export const POST: APIRoute = async ({ request }) => {
 
     const { title, body, startDate, endDate, location, category, capacity, allDay, visibility, tags } = validation.data;
 
-    // Run content moderation + spam check in parallel (FAIL-SAFE: queues for review on any error)
-    const contentText = `${title}\n\n${body || ''}\n\n${location || ''}`;
-    const moderationChecks: Promise<any>[] = [
-      moderateText(contentText),
-      checkSpamWithGPT(contentText, 'neighborhood community event')
-    ];
-    if (tags?.length) {
-      moderationChecks.push(moderateText(tags.join(' ')));
+    // Admins are exempt from AI moderation (their content is auto-approved —
+    // they run the review queue). Skips the OpenAI calls entirely.
+    const skipModeration = session.user.role === 'admin';
+
+    let mergedResult: ReturnType<typeof mergeModerationResults> = null;
+    if (!skipModeration) {
+      // Run content moderation + spam check in parallel (FAIL-SAFE: queues for review on any error)
+      const contentText = `${title}\n\n${body || ''}\n\n${location || ''}`;
+      const moderationChecks: Promise<any>[] = [
+        moderateText(contentText),
+        checkSpamWithGPT(contentText, 'neighborhood community event')
+      ];
+      if (tags?.length) {
+        moderationChecks.push(moderateText(tags.join(' ')));
+      }
+
+      const [mainModerationResult, spamResult, tagsModerationResult] = await Promise.all(moderationChecks);
+
+      // Merge all moderation results — returns null if all passed
+      const resultsToMerge = [mainModerationResult, spamResult];
+      if (tagsModerationResult) resultsToMerge.push(tagsModerationResult);
+      mergedResult = mergeModerationResults(...resultsToMerge);
     }
-
-    const [mainModerationResult, spamResult, tagsModerationResult] = await Promise.all(moderationChecks);
-
-    // Merge all moderation results — returns null if all passed
-    const resultsToMerge = [mainModerationResult, spamResult];
-    if (tagsModerationResult) resultsToMerge.push(tagsModerationResult);
-    const mergedResult = mergeModerationResults(...resultsToMerge);
 
     // Determine moderation status
     const moderationStatus = mergedResult ? 'pending' : 'approved';
