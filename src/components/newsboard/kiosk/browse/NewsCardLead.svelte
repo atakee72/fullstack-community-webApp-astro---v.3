@@ -18,9 +18,9 @@
 </script>
 
 <article
-  class="news-card grid relative"
+  class="news-card grid relative grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-5 md:gap-7 p-5 md:p-7 [--news-img-ratio:3/2] md:[--news-img-ratio:4/5]"
   style="background:var(--k-paper-warm); border:var(--k-border-ink); border-radius:var(--k-radius-lg);
-         padding:28px; box-shadow:var(--k-shadow-md); grid-template-columns:1.1fr 1fr; gap:28px;"
+         box-shadow:var(--k-shadow-md);"
 >
   <div>
     <div class="flex items-center flex-wrap" style="gap:8px; margin-bottom:14px;">
@@ -31,7 +31,7 @@
     <a href={`/newsboard/${article.id}`} class="block no-underline">
       <h2
         class="font-bricolage"
-        style="font-weight:800; font-size:42px; line-height:1.02; letter-spacing:-0.035em;
+        style="font-weight:800; font-size:clamp(28px, 7.5vw, 42px); line-height:1.02; letter-spacing:-0.035em;
                margin:0 0 12px; color:var(--k-ink);"
       >{title}</h2>
     </a>
@@ -57,7 +57,7 @@
     </div>
   </div>
 
-  <div>
+  <div class="order-first md:order-none">
     <ArticleImage imageUrl={article.imageUrl} quelle={article.quelle} sektion={article.sektion} ratio="4/5" lead alt={title} />
   </div>
 </article>
