@@ -61,16 +61,25 @@ export const POST: APIRoute = async ({ request }) => {
     const finalPrice = (listingType === 'exchange' || listingType === 'gift') ? 0 : price;
     const finalOriginalPrice = (listingType === 'exchange' || listingType === 'gift') ? undefined : (originalPrice || undefined);
 
-    // Run all moderation checks in parallel: text safety, spam check, and image safety (GPT-4o vision)
-    const contentText = `${title}\n\n${descriptionPlainText}`;
-    const [moderationResult, spamResult, imageResult] = await Promise.all([
-      moderatePost(contentText, images),
-      checkSpamWithGPT(contentText, 'neighborhood marketplace listing'),
-      checkImagesWithGPT(images)
-    ]);
+    // Admins are exempt from AI moderation (their content is auto-approved —
+    // they run the review queue). Skips the OpenAI calls entirely.
+    const skipModeration = session.user.role === 'admin';
 
-    // All checks must pass for auto-approval
-    const moderationStatus = (moderationResult.canPublish && spamResult.canPublish && imageResult.canPublish) ? 'approved' : 'pending';
+    let mergedResult: ReturnType<typeof mergeModerationResults> = null;
+    let moderationStatus: 'approved' | 'pending' = 'approved';
+    if (!skipModeration) {
+      // Run all moderation checks in parallel: text safety, spam check, and image safety (GPT-4o vision)
+      const contentText = `${title}\n\n${descriptionPlainText}`;
+      const [moderationResult, spamResult, imageResult] = await Promise.all([
+        moderatePost(contentText, images),
+        checkSpamWithGPT(contentText, 'neighborhood marketplace listing'),
+        checkImagesWithGPT(images)
+      ]);
+
+      // All checks must pass for auto-approval
+      moderationStatus = (moderationResult.canPublish && spamResult.canPublish && imageResult.canPublish) ? 'approved' : 'pending';
+      mergedResult = mergeModerationResults(moderationResult, spamResult, imageResult);
+    }
 
     // Create new listing
     const newListing: Omit<Listing, '_id'> = {
@@ -98,7 +107,6 @@ export const POST: APIRoute = async ({ request }) => {
     const result = await listingsCollection.insertOne(newListing as Listing);
 
     // Create a single combined flagged content record if any check failed
-    const mergedResult = mergeModerationResults(moderationResult, spamResult, imageResult);
     if (mergedResult) {
       const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
       const authorInfo = {
@@ -125,7 +133,7 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(
         JSON.stringify({
           listing: createdListing,
-          message: moderationResult.userMessage,
+          message: mergedResult.userMessage,
           moderationStatus: 'pending'
         }),
         {

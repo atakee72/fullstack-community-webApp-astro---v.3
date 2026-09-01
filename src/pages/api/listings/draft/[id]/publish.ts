@@ -103,15 +103,24 @@ export const POST: APIRoute = async ({ request, params }) => {
       });
     }
 
-    // Run full moderation pipeline
-    const contentText = `${draft.title}\n\n${draft.descriptionPlainText}`;
-    const [moderationResult, spamResult, imageResult] = await Promise.all([
-      moderatePost(contentText, draft.images),
-      checkSpamWithGPT(contentText, 'neighborhood marketplace listing'),
-      checkImagesWithGPT(draft.images)
-    ]);
+    // Admins are exempt from AI moderation (their content is auto-approved —
+    // they run the review queue). Skips the OpenAI calls entirely.
+    const skipModeration = session.user.role === 'admin';
 
-    const moderationStatus = (moderationResult.canPublish && spamResult.canPublish && imageResult.canPublish) ? 'approved' : 'pending';
+    let mergedResult: ReturnType<typeof mergeModerationResults> = null;
+    let moderationStatus: 'approved' | 'pending' = 'approved';
+    if (!skipModeration) {
+      // Run full moderation pipeline
+      const contentText = `${draft.title}\n\n${draft.descriptionPlainText}`;
+      const [moderationResult, spamResult, imageResult] = await Promise.all([
+        moderatePost(contentText, draft.images),
+        checkSpamWithGPT(contentText, 'neighborhood marketplace listing'),
+        checkImagesWithGPT(draft.images)
+      ]);
+
+      moderationStatus = (moderationResult.canPublish && spamResult.canPublish && imageResult.canPublish) ? 'approved' : 'pending';
+      mergedResult = mergeModerationResults(moderationResult, spamResult, imageResult);
+    }
 
     // Update draft → published
     await listingsCollection.updateOne(
@@ -126,7 +135,6 @@ export const POST: APIRoute = async ({ request, params }) => {
     );
 
     // Create flagged content record if any check failed
-    const mergedResult = mergeModerationResults(moderationResult, spamResult, imageResult);
     if (mergedResult) {
       const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
       const authorInfo = {

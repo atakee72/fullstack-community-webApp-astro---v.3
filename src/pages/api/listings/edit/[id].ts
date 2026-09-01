@@ -134,23 +134,25 @@ export const PUT: APIRoute = async ({ request, params }) => {
       const title = updateData.title || existingListing.title;
       const plainText = updateData.descriptionPlainText || existingListing.descriptionPlainText || '';
       const images = updateData.images || existingListing.images;
-      const contentText = `${title}\n\n${plainText}`;
 
-      // Run all moderation checks in parallel: text safety, spam check, and image safety
-      const [moderationResult, spamResult, imageResult] = await Promise.all([
-        moderatePost(contentText, images),
-        checkSpamWithGPT(contentText, 'neighborhood marketplace listing'),
-        checkImagesWithGPT(images)
-      ]);
+      // Admins are exempt from AI moderation (their content is auto-approved —
+      // they run the review queue). Skips the OpenAI calls entirely; the audit
+      // snapshot above still runs (provenance, not moderation).
+      const skipModeration = session.user.role === 'admin';
 
-      const authorInfo = {
-        id: userId,
-        name: session.user.name || undefined,
-        email: session.user.email || undefined
-      };
-      const contentInfo = { title, body: plainText, imageUrls: images };
+      let mergedResult: ReturnType<typeof mergeModerationResults> = null;
+      if (!skipModeration) {
+        const contentText = `${title}\n\n${plainText}`;
 
-      const mergedResult = mergeModerationResults(moderationResult, spamResult, imageResult);
+        // Run all moderation checks in parallel: text safety, spam check, and image safety
+        const [moderationResult, spamResult, imageResult] = await Promise.all([
+          moderatePost(contentText, images),
+          checkSpamWithGPT(contentText, 'neighborhood marketplace listing'),
+          checkImagesWithGPT(images)
+        ]);
+
+        mergedResult = mergeModerationResults(moderationResult, spamResult, imageResult);
+      }
       if (mergedResult) {
         updateData.moderationStatus = 'pending';
         // Re-flagged: leave hasWarningLabel + warningText alone (old warning
@@ -160,6 +162,13 @@ export const PUT: APIRoute = async ({ request, params }) => {
         if (wasRejected) {
           updateData.rejectionReason = null;
         }
+
+        const authorInfo = {
+          id: userId,
+          name: session.user.name || undefined,
+          email: session.user.email || undefined
+        };
+        const contentInfo = { title, body: plainText, imageUrls: images };
 
         const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
         const flaggedRecord = createFlaggedContentRecord('marketplace', contentInfo, authorInfo, mergedResult);
