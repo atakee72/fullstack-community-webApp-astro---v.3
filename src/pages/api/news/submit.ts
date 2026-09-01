@@ -97,6 +97,11 @@ export const POST: APIRoute = async ({ request }) => {
       submittedBy: userId as any,
       submitterComment: submitterComment || undefined,
       moderationStatus,
+      // Admin-approved-on-submit items need the stamps processReviewAction
+      // would otherwise set on approval (reviewAction.ts) — without fetchDate
+      // the item sorts dead-last on the newsboard and the landing Kurier
+      // strip ($exists: true filter) drops it entirely.
+      ...(skipModeration ? { approvedAt: new Date(), fetchDate: new Date().toISOString().split('T')[0] } : {}),
       viewCount: 0,
       publishedAt: new Date(),
       fetchedAt: new Date(),

@@ -4,6 +4,9 @@
 import { readFileSync } from 'node:fs';
 
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
+if (!/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(BASE)) {
+  throw new Error(`refusing non-local BASE_URL "${BASE}" — this script posts profanity test content and must never run against prod`);
+}
 const PW = readFileSync(process.env.PW_FILE!, 'utf8').trim();
 
 // Pick the first entry of TURKISH_BLOCKLIST from source — a word-boundary hit
