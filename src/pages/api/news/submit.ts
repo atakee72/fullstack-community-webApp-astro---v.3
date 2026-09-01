@@ -63,20 +63,28 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Run content moderation on title + description + comment.
-    // Parity with all other content types (CLAUDE.md): the OpenAI safety scan
-    // (moderateText) runs in parallel with the GPT spam/ad/hate/harassment check
-    // (checkSpamWithGPT); merged → null when nothing flagged, else a combined result.
-    const textToModerate = `${title}\n\n${description}${submitterComment ? `\n\n${submitterComment}` : ''}`;
-    const [moderationResult, spamResult] = await Promise.all([
-      moderateText(textToModerate),
-      checkSpamWithGPT(textToModerate, 'neighborhood news submission'),
-    ]);
-    const mergedResult = mergeModerationResults(moderationResult, spamResult);
+    // Admins are exempt from AI moderation AND editorial review (the admin IS
+    // the editor) — their submissions go straight to the newsboard.
+    const skipModeration = session.user.role === 'admin';
+
+    let mergedResult: ReturnType<typeof mergeModerationResults> = null;
+    if (!skipModeration) {
+      // Run content moderation on title + description + comment.
+      // Parity with all other content types (CLAUDE.md): the OpenAI safety scan
+      // (moderateText) runs in parallel with the GPT spam/ad/hate/harassment check
+      // (checkSpamWithGPT); merged → null when nothing flagged, else a combined result.
+      const textToModerate = `${title}\n\n${description}${submitterComment ? `\n\n${submitterComment}` : ''}`;
+      const [moderationResult, spamResult] = await Promise.all([
+        moderateText(textToModerate),
+        checkSpamWithGPT(textToModerate, 'neighborhood news submission'),
+      ]);
+      mergedResult = mergeModerationResults(moderationResult, spamResult);
+    }
 
     // All user-submitted news goes to moderation queue regardless of AI result
-    // This ensures admin reviews every submission before it appears on the newsboard
-    const moderationStatus = 'pending';
+    // (admin reviews every submission before it appears on the newsboard);
+    // admin submissions publish immediately.
+    const moderationStatus = skipModeration ? 'approved' : 'pending';
 
     const newNewsItem: NewsItem = {
       source: 'user_submitted',
@@ -98,50 +106,54 @@ export const POST: APIRoute = async ({ request }) => {
 
     const result = await newsCollection.insertOne(newNewsItem);
 
-    // Create flagged content record for admin review
-    const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
+    if (!skipModeration) {
+      // Create flagged content record for admin review
+      const flaggedCollection = db.collection<FlaggedContent>('flaggedContent');
 
-    if (mergedResult) {
-      // Flagged by the safety scan and/or the GPT check — record merged details
-      const flaggedRecord = createFlaggedContentRecord(
-        'news',
-        { title, body: description },
-        {
-          id: userId,
-          name: session.user.name || undefined,
-          email: session.user.email || undefined
-        },
-        mergedResult
-      );
-      flaggedRecord.contentId = result.insertedId.toString();
-      await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
-    } else {
-      // Not AI-flagged, but still needs admin approval — create a simple pending record
-      await flaggedCollection.insertOne({
-        source: 'ai_moderation',
-        contentType: 'news',
-        contentId: result.insertedId.toString(),
-        title,
-        body: description,
-        authorId: userId,
-        authorName: session.user.name || undefined,
-        authorEmail: session.user.email || undefined,
-        decision: 'pending_review',
-        flaggedCategories: [],
-        scores: {},
-        highestCategory: 'user_submission',
-        maxScore: 0,
-        reviewStatus: 'pending',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      } as FlaggedContent);
+      if (mergedResult) {
+        // Flagged by the safety scan and/or the GPT check — record merged details
+        const flaggedRecord = createFlaggedContentRecord(
+          'news',
+          { title, body: description },
+          {
+            id: userId,
+            name: session.user.name || undefined,
+            email: session.user.email || undefined
+          },
+          mergedResult
+        );
+        flaggedRecord.contentId = result.insertedId.toString();
+        await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
+      } else {
+        // Not AI-flagged, but still needs admin approval — create a simple pending record
+        await flaggedCollection.insertOne({
+          source: 'ai_moderation',
+          contentType: 'news',
+          contentId: result.insertedId.toString(),
+          title,
+          body: description,
+          authorId: userId,
+          authorName: session.user.name || undefined,
+          authorEmail: session.user.email || undefined,
+          decision: 'pending_review',
+          flaggedCategories: [],
+          scores: {},
+          highestCategory: 'user_submission',
+          maxScore: 0,
+          reviewStatus: 'pending',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        } as FlaggedContent);
+      }
     }
 
     return new Response(
       JSON.stringify({
         news: { ...newNewsItem, _id: result.insertedId },
-        message: 'News submitted successfully. It will appear on the newsboard after admin approval.',
-        moderationStatus: 'pending'
+        message: skipModeration
+          ? 'News published to the newsboard.'
+          : 'News submitted successfully. It will appear on the newsboard after admin approval.',
+        moderationStatus
       }),
       {
         status: 201,
