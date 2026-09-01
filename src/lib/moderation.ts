@@ -121,26 +121,29 @@ const TURKISH_BLOCKLIST = [
   'orospu', 'oç', 'oc', 'oçlar',
   'siktir', 'sikeyim', 'sikerim', 'siktirgit', 'sik',
   'piç', 'pic', 'piçlik',
-  'göt', 'got', 'götün', 'gotun',
+  'götün', 'gotun',
   'yarak', 'yarrak', 'yarrağ',
   'taşak', 'tasak', 'taşşak',
-  'meme', // context-dependent but often offensive
   'ibne', 'ibné',
   'kahpe', 'kaltak',
   'bok', 'boktan',
-  'mal', 'gerizekalı', 'gerizekali', 'salak', 'aptal', 'dangalak',
+  'gerizekalı', 'gerizekali', 'salak', 'aptal', 'dangalak',
   'haysiyetsiz', 'şerefsiz', 'serefsiz', 'namussuz',
   'gavat', 'pezevenk',
-  'lan', // context-dependent, can be rude
+  // REMOVED cross-language collisions (2026-09-01): 'mal' (German „mal" —
+  // flagged virtually every German post), 'meme' (internet loanword),
+  // 'lan' (LAN-Party), bare 'göt'/'got' (English "got"; Turkish-char folding
+  // makes them identical — inflected forms above stay). Contextual abuse of
+  // these words is caught by the OpenAI + GPT checks.
 ];
 
 // English swear words and offensive terms
 const ENGLISH_BLOCKLIST = [
   'fuck', 'fucker', 'fucking', 'motherfucker', 'fck', 'fuk',
   'shit', 'shitty', 'bullshit',
-  'ass', 'asshole', 'arsehole', 'arse',
+  'asshole', 'arsehole', 'arse', // bare 'ass' removed: German „Ass" (ace)
   'bitch', 'bitches',
-  'dick', 'dickhead',
+  'dickhead', // bare 'dick' removed: German „dick" (thick/fat) is everyday German
   'cock', 'cocksucker',
   'cunt', 'cunts',
   'penis', 'vagina',
@@ -162,10 +165,10 @@ const GERMAN_BLOCKLIST = [
   'wichser', 'wichsen',
   'schwanz', 'schwanzlutscher',
   'missgeburt', 'miststück', 'miststueck',
-  'drecksau', 'dreckig', 'dreckschwein',
+  'drecksau', 'dreckschwein', // 'dreckig' removed: legit adjective („der Platz ist dreckig")
   'schlampe', 'tussi',
   'vollidiot', 'idiot', 'depp', 'trottel', 'dummkopf',
-  'spast', 'spasti', 'behindert',
+  'spast', 'spasti', // 'behindert' removed: blocks legit accessibility discussion; slur usage caught by AI
   'pisser', 'pisse',
   'kacke', 'kackbratze',
   'bastard', 'wixer',
