@@ -83,21 +83,28 @@ export const PUT: APIRoute = async ({ request, params }) => {
     const nextBody = body ?? existingEvent.body ?? '';
     const nextLocation = location ?? existingEvent.location ?? '';
     const nextTags = tags ?? existingEvent.tags ?? [];
-    const contentText = `${nextTitle}\n\n${nextBody}\n\n${nextLocation}`;
+    // Admins are exempt from AI moderation (their content is auto-approved —
+    // they run the review queue). Skips the OpenAI calls entirely.
+    const skipModeration = session.user.role === 'admin';
 
-    const moderationChecks: Promise<any>[] = [
-      moderateText(contentText),
-      checkSpamWithGPT(contentText, 'neighborhood community event')
-    ];
-    if (nextTags.length) {
-      moderationChecks.push(moderateText(nextTags.join(' ')));
+    let mergedResult: ReturnType<typeof mergeModerationResults> = null;
+    if (!skipModeration) {
+      const contentText = `${nextTitle}\n\n${nextBody}\n\n${nextLocation}`;
+
+      const moderationChecks: Promise<any>[] = [
+        moderateText(contentText),
+        checkSpamWithGPT(contentText, 'neighborhood community event')
+      ];
+      if (nextTags.length) {
+        moderationChecks.push(moderateText(nextTags.join(' ')));
+      }
+
+      const [mainModerationResult, spamResult, tagsModerationResult] =
+        await Promise.all(moderationChecks);
+      const resultsToMerge = [mainModerationResult, spamResult];
+      if (tagsModerationResult) resultsToMerge.push(tagsModerationResult);
+      mergedResult = mergeModerationResults(...resultsToMerge);
     }
-
-    const [mainModerationResult, spamResult, tagsModerationResult] =
-      await Promise.all(moderationChecks);
-    const resultsToMerge = [mainModerationResult, spamResult];
-    if (tagsModerationResult) resultsToMerge.push(tagsModerationResult);
-    const mergedResult = mergeModerationResults(...resultsToMerge);
 
     const editHistoryEntry: EditHistory = {
       originalTitle: existingEvent.title,

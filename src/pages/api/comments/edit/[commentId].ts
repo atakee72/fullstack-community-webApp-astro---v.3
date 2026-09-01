@@ -80,12 +80,19 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
-    const [textModerationResult, spamResult] = await Promise.all([
-      moderateText(body),
-      checkSpamWithGPT(body, 'community forum comment')
-    ]);
+    // Admins are exempt from AI moderation (their content is auto-approved —
+    // they run the review queue). Skips the OpenAI calls entirely.
+    const skipModeration = session.user.role === 'admin';
 
-    const mergedResult = mergeModerationResults(textModerationResult, spamResult);
+    let mergedResult: ReturnType<typeof mergeModerationResults> = null;
+    if (!skipModeration) {
+      const [textModerationResult, spamResult] = await Promise.all([
+        moderateText(body),
+        checkSpamWithGPT(body, 'community forum comment')
+      ]);
+
+      mergedResult = mergeModerationResults(textModerationResult, spamResult);
+    }
     const newModerationStatus = mergedResult ? 'pending' : 'approved';
 
     const updateResult = await commentsCollection.findOneAndUpdate(

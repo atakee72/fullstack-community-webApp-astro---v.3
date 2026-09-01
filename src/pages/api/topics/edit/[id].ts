@@ -82,30 +82,34 @@ export const PUT: APIRoute = async ({ request, params }) => {
       });
     }
 
-    // Run content moderation on edited content (FAIL-SAFE: queues for review on any error).
-    // Mirrors the create-path checks: moderateText + checkSpamWithGPT + tag moderation + image moderation.
-    const contentText = `${title}\n\n${body}`;
-    const moderationChecks: Promise<any>[] = [
-      moderateText(contentText),
-      checkSpamWithGPT(contentText, 'neighborhood community forum post')
-    ];
-    if (tags?.length) {
-      moderationChecks.push(moderateText(tags.join(' ')));
+    // Admins are exempt from AI moderation (their content is auto-approved —
+    // they run the review queue). Skips the OpenAI calls entirely.
+    const skipModeration = session.user.role === 'admin';
+
+    let mergedModerationResult: ReturnType<typeof mergeModerationResults> = null;
+    if (!skipModeration) {
+      // Run content moderation on edited content (FAIL-SAFE: queues for review on any error).
+      // Mirrors the create-path checks: moderateText + checkSpamWithGPT + tag moderation + image moderation.
+      const contentText = `${title}\n\n${body}`;
+      const moderationChecks: Promise<any>[] = [
+        moderateText(contentText),
+        checkSpamWithGPT(contentText, 'neighborhood community forum post')
+      ];
+      if (tags?.length) {
+        moderationChecks.push(moderateText(tags.join(' ')));
+      }
+      if (images?.length) {
+        moderationChecks.push(checkImagesWithGPT(images.map(img => img.url)));
+      }
+
+      const [mainModerationResult, spamResult, tagsModerationResult, imageModerationResult] = await Promise.all(moderationChecks);
+
+      // Merge all moderation results
+      const resultsToMerge = [mainModerationResult, spamResult];
+      if (tagsModerationResult) resultsToMerge.push(tagsModerationResult);
+      if (imageModerationResult) resultsToMerge.push(imageModerationResult);
+      mergedModerationResult = mergeModerationResults(...resultsToMerge);
     }
-    if (images?.length) {
-      moderationChecks.push(checkImagesWithGPT(images.map(img => img.url)));
-    }
-
-    const [mainModerationResult, spamResult, tagsModerationResult, imageModerationResult] = await Promise.all(moderationChecks);
-
-    // Merge all moderation results
-    const resultsToMerge = [mainModerationResult, spamResult];
-    if (tagsModerationResult) resultsToMerge.push(tagsModerationResult);
-    if (imageModerationResult) resultsToMerge.push(imageModerationResult);
-    const mergedModerationResult = mergeModerationResults(...resultsToMerge);
-
-    // Use merged result for moderation decision
-    const moderationResult = mergedModerationResult || mainModerationResult;
 
     // Determine new moderation status
     const newModerationStatus = mergedModerationResult
@@ -160,7 +164,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
           name: session.user.name || undefined,
           email: session.user.email || undefined
         },
-        moderationResult
+        mergedModerationResult
       );
       flaggedRecord.contentId = topicId;
       await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
@@ -195,7 +199,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
       return new Response(
         JSON.stringify({
           topic: updatedTopic,
-          message: moderationResult.userMessage,
+          message: mergedModerationResult.userMessage,
           moderationStatus: 'pending'
         }),
         {
