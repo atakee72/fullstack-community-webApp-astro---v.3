@@ -21,11 +21,10 @@
 </script>
 
 <article
-  class="news-card grid items-start"
+  class={`news-card grid items-start grid-cols-1 [--news-img-ratio:16/9] sm:[--news-img-ratio:4/3] ${noImage ? '' : 'sm:grid-cols-[1fr_220px]'}`}
   data-read-state={article.archived ? 'archived' : article.read ? 'seen' : 'fresh'}
   style="background:var(--k-paper); border:var(--k-border-hair); border-radius:var(--k-radius-md);
-         padding:18px; gap:22px; opacity:{decay};
-         grid-template-columns:{noImage ? '1fr' : '1fr 220px'};"
+         padding:18px; gap:22px; opacity:{decay};"
 >
   <div>
     <div class="flex items-center flex-wrap" style="gap:6px; margin-bottom:8px;">
@@ -79,6 +78,6 @@
   </div>
 
   {#if !noImage}
-    <div><ArticleImage imageUrl={article.imageUrl} quelle={article.quelle} sektion={article.sektion} ratio="4/3" alt={title} /></div>
+    <div class="order-first sm:order-none"><ArticleImage imageUrl={article.imageUrl} quelle={article.quelle} sektion={article.sektion} ratio="4/3" alt={title} /></div>
   {/if}
 </article>
