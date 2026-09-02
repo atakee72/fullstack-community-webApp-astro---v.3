@@ -209,7 +209,7 @@
     {#each bottomNav as item (item.href)}
       <a
         href={item.href}
-        class="flex-1 py-3 font-dmmono text-[10px] uppercase tracking-[0.12em] text-center transition-colors text-ink {
+        class="flex-1 py-3.5 font-dmmono text-[10px] uppercase tracking-[0.12em] text-center transition-colors text-ink {
           isActive(item.match)
             ? 'font-bold bg-paper-warm'
             : 'opacity-70 hover:opacity-100'
