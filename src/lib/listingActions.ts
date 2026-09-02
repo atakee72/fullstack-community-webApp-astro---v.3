@@ -17,6 +17,7 @@ export interface CanMutateOptions {
   allowOnReserved?: boolean;     // status endpoint allows reserved→sold transition
   allowOnRejected?: boolean;     // delete-from-rejected is legit
   allowOnWarningLabel?: boolean; // bump + status: warning-labeled = approved-with-caveat
+  allowOnSold?: boolean;         // status endpoint allows sold→available (un-mark)
 }
 
 export function canMutateListing(
@@ -35,6 +36,6 @@ export function canMutateListing(
   if (listing.status === 'reserved' && !opts.allowOnReserved) {
     return { ok: false, reason: 'reserved' };
   }
-  if (listing.status === 'sold')                  return { ok: false, reason: 'sold' };
+  if (listing.status === 'sold' && !opts.allowOnSold) return { ok: false, reason: 'sold' };
   return { ok: true };
 }

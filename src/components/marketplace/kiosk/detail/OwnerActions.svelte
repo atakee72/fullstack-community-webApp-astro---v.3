@@ -223,6 +223,17 @@
         >{$t['market.owner.markSold']}</button>
       {/if}
 
+      <!-- Verkauft rückgängig: sold→available un-mark. Without this a sold
+           listing has NO status control (reserve + sold toggles both hide on
+           sold), so the owner could never re-list, edit, or delete it. -->
+      {#if listing.status === 'sold'}
+        <button
+          class="owner-btn owner-btn--outline"
+          onclick={() => handleStatusChange('available')}
+          disabled={busy}
+        >{$t['market.owner.clearSold']}</button>
+      {/if}
+
     </div>
     <!-- END 2×2 grid -->
 

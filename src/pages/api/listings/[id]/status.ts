@@ -47,12 +47,16 @@ export const POST: APIRoute = async ({ params, request }) => {
     return new Response(JSON.stringify({ error: 'not_found' }), { status: 404 });
   }
 
-  // allowOnReserved: true — status transitions are HOW owners exit reserved.
+  // allowOnReserved / allowOnSold: true — status transitions are HOW owners
+  // exit reserved AND un-mark a sold listing (sold→available in the matrix
+  // below). Without allowOnSold the guard rejected every sold listing before
+  // the transition matrix ran, making sold→available dead code.
   // allowOnWarningLabel: true — warning-labeled listings are publicly visible
   // (blurred); status transitions (reserve/sold) don't change content.
   const guard = canMutateListing(listing as any, userId, {
     allowOnReserved: true,
     allowOnWarningLabel: true,
+    allowOnSold: true,
   });
   if (!guard.ok) {
     const httpStatus = guard.reason === 'not_owner' ? 403 : 409;
