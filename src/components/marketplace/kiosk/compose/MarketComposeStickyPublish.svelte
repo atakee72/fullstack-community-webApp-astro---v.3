@@ -24,15 +24,16 @@
 </script>
 
 <!-- Mobile-only: lg:hidden. Fixed above bottom-nav (bottom-16 = 64px). -->
+<!-- display via classes, not inline style: inline `display: flex` would override
+     `lg:hidden` and leak this bar onto desktop (that bug shipped; fixed here). -->
 <div
-  class="lg:hidden"
+  class="flex lg:hidden"
   style="
     position: fixed;
     bottom: 64px;
     left: 0;
     right: 0;
     z-index: 30;
-    display: flex;
     gap: 10px;
     padding: 10px 16px;
     background: var(--k-paper-warm);
@@ -40,9 +41,11 @@
     box-shadow: 0 -2px 0 var(--k-ink);
   "
 >
-  <!-- Preview button (ghost) -->
+  <!-- Preview button (ghost). Hidden below sm: its scroll-to-top target (the
+       inline preview column) is desktop-only, and the 3-button row overflows 375px. -->
   <button
     type="button"
+    class="hidden sm:block"
     onclick={onPreview}
     style="
       flex: 0 0 auto;
