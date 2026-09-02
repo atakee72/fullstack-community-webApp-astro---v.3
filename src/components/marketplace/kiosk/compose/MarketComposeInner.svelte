@@ -403,7 +403,9 @@
     class="lg:grid-cols-[1.6fr_1fr] lg:items-start lg:pb-8"
   >
     <!-- ── Form column ────────────────────────────────────────────────── -->
-    <div style="display: flex; flex-direction: column; gap: 24px;">
+    <!-- min-w-0: grid items default to min-width:auto, so any wide child would
+         force this column (and every width:100% input in it) past the viewport. -->
+    <div class="min-w-0" style="display: flex; flex-direction: column; gap: 24px;">
 
       <!-- Page header -->
       <div>

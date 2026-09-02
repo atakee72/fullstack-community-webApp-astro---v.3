@@ -45,7 +45,9 @@
   ];
 </script>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+<!-- Stacked below sm: three 1fr columns can't shrink under the cards' min-content
+     (min-width:auto) and force the whole form column past a 375px viewport. -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
   {#each kinds as k (k.id)}
     {@const active = value === k.id}
     <button
