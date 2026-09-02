@@ -9,6 +9,7 @@ import { parseRequestBody } from '../../../../schemas/validation.utils';
 import { isOwner } from '../../../../utils/authHelpers';
 import { moderateText, checkSpamWithGPT, checkImagesWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../../lib/moderation';
 import { rejectIfBanned } from '../../../../lib/auth/banGuard';
+import { alertModerationFlagged } from '../../../../lib/adminAlerts';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
@@ -168,6 +169,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
       );
       flaggedRecord.contentId = topicId;
       await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
+      await alertModerationFlagged({ contentType: 'topic', title, authorName: session.user.name });
     }
 
     if (!updateResult) {

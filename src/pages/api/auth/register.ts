@@ -7,6 +7,7 @@ import { sendVerifyEmail } from "../../../lib/auth/sendVerifyEmail";
 import { getTrustedBaseUrl } from "../../../lib/auth/baseUrl";
 import { consumeRateLimit, hashIp, clientIpFrom } from "../../../lib/auth/rateLimit";
 import { slugifyHandle } from "../../../lib/profile/handle";
+import { alertNewMember } from "../../../lib/adminAlerts";
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
     try {
@@ -150,6 +151,15 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
                 { status: 500, headers: { 'Content-Type': 'application/json' } }
             );
         }
+
+        // Operational admin alert (never-throw; no-op without env). The final
+        // handle is whatever the retry loop landed on — recompute is not
+        // possible here, so re-derive from the last loop state: re-read it.
+        const createdUser = await db.collection('users').findOne(
+            { _id: result.insertedId },
+            { projection: { name: 1, handle: 1 } }
+        );
+        await alertNewMember({ name: createdUser?.name ?? name, handle: createdUser?.handle ?? '' });
 
         // Send the verification email (best-effort — registration must succeed
         // even if this fails; the user can resend from /verify-email).

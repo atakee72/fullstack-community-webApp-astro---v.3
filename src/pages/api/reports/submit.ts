@@ -7,6 +7,7 @@ import type { Listing } from '../../../types/listing';
 import { ReportContentSchema, REPORT_REASON_LABELS } from '../../../schemas/moderation.schema';
 import { parseRequestBody } from '../../../schemas/validation.utils';
 import { rejectIfBanned } from '../../../lib/auth/banGuard';
+import { alertReport } from '../../../lib/adminAlerts';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -178,6 +179,10 @@ export const POST: APIRoute = async ({ request }) => {
         }
       );
 
+      if (session.user.role !== 'admin') {
+        await alertReport({ contentType, title: contentSnapshot.title, reason });
+      }
+
       return new Response(JSON.stringify({
         success: true,
         message: 'Thank you for reporting. Our team will review this content.',
@@ -226,6 +231,10 @@ export const POST: APIRoute = async ({ request }) => {
     };
 
     await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
+
+    if (session.user.role !== 'admin') {
+      await alertReport({ contentType, title: contentSnapshot.title, reason });
+    }
 
     // Mark the original content as pending review
     const collectionMap: Record<string, any> = {

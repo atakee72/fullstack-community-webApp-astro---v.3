@@ -13,6 +13,7 @@ import MarketplaceContactEmail from '../../../../emails/MarketplaceContactEmail'
 import ContactConfirmationEmail from '../../../../emails/ContactConfirmationEmail';
 import type { Listing } from '../../../../types/listing';
 import { notify } from '../../../../lib/notifications';
+import { alertContactRelay } from '../../../../lib/adminAlerts';
 
 // ─── Env ─────────────────────────────────────────────────────────────────────
 
@@ -240,6 +241,9 @@ export const POST: APIRoute = async ({ request, params, clientAddress }) => {
       senderIpHash,
       sentAt: now,
     });
+
+    // Admin alert: fact of contact only, never message content (GDPR stance).
+    await alertContactRelay({ listingTitle: safeTitle });
 
     // In-app mirror of the owner email. No actorId — the buyer is anonymous
     // by design (metadata-only GDPR stance of listingContacts).

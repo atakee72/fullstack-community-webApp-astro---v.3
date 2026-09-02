@@ -9,6 +9,7 @@ import { parseRequestBody, isValidObjectId } from '../../../../schemas/validatio
 import { moderatePost, checkSpamWithGPT, checkImagesWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../../lib/moderation';
 import { canMutateListing } from '../../../../lib/listingActions';
 import { rejectIfBanned } from '../../../../lib/auth/banGuard';
+import { alertModerationFlagged } from '../../../../lib/adminAlerts';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
@@ -174,6 +175,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
         const flaggedRecord = createFlaggedContentRecord('marketplace', contentInfo, authorInfo, mergedResult);
         flaggedRecord.contentId = id;
         await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
+        await alertModerationFlagged({ contentType: 'marketplace', title, authorName: session.user.name });
       } else {
         updateData.moderationStatus = 'approved';
         // Clean re-moderation. isUserReported is INTENTIONALLY not cleared in

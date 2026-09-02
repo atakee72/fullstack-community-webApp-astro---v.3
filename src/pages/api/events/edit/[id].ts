@@ -13,6 +13,7 @@ import {
   mergeModerationResults
 } from '../../../../lib/moderation';
 import { rejectIfBanned } from '../../../../lib/auth/banGuard';
+import { alertModerationFlagged } from '../../../../lib/adminAlerts';
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {
@@ -170,6 +171,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
       );
       flaggedRecord.contentId = eventId;
       await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
+      await alertModerationFlagged({ contentType: 'event', title: nextTitle, authorName: session.user.name });
     }
 
     // Construct author object from session

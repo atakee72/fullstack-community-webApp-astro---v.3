@@ -8,6 +8,7 @@ import { parseRequestBody } from '../../../../schemas/validation.utils';
 import { isOwner } from '../../../../utils/authHelpers';
 import { moderateText, checkSpamWithGPT, mergeModerationResults } from '../../../../lib/moderation';
 import { rejectIfBanned } from '../../../../lib/auth/banGuard';
+import { alertModerationFlagged } from '../../../../lib/adminAlerts';
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
@@ -113,6 +114,10 @@ export const PUT: APIRoute = async ({ request, params }) => {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
+    }
+
+    if (mergedResult) {
+      await alertModerationFlagged({ contentType: 'comment', title: body.slice(0, 80), authorName: session.user.name });
     }
 
     // Populate author info to match the create endpoint's response shape.
