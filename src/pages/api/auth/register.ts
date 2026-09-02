@@ -116,11 +116,13 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         // useless for branching and garbage in logs.
         const baseHandle = slugifyHandle(name);
         let result: { insertedId: any } | null = null;
+        let finalHandle = '';
         let emailTaken = false;
         for (let attempt = 0; attempt < 6 && !result; attempt++) {
             const suffix = attempt === 0 ? '' : String(attempt + 1);
             const handle = baseHandle.slice(0, 20 - suffix.length) + suffix;
             try {
+                finalHandle = handle;
                 result = await db.collection('users').insertOne({
                     name,
                     email: emailNorm,
@@ -152,15 +154,6 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
             );
         }
 
-        // Operational admin alert (never-throw; no-op without env). The final
-        // handle is whatever the retry loop landed on — recompute is not
-        // possible here, so re-derive from the last loop state: re-read it.
-        const createdUser = await db.collection('users').findOne(
-            { _id: result.insertedId },
-            { projection: { name: 1, handle: 1 } }
-        );
-        await alertNewMember({ name: createdUser?.name ?? name, handle: createdUser?.handle ?? '' });
-
         // Send the verification email (best-effort — registration must succeed
         // even if this fails; the user can resend from /verify-email).
         try {
@@ -178,6 +171,12 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         } catch (err) {
             console.error('register: verification email failed (registration still succeeded):', err);
         }
+
+        // Operational admin alert (never-throw; no-op without env). After the
+        // verification mail so a slow Telegram can't delay the user's own
+        // signup email. finalHandle is captured in the retry loop above — no
+        // extra DB read (a failing read would 500 a succeeded registration).
+        await alertNewMember({ name, handle: finalHandle });
 
         return new Response(
             JSON.stringify({

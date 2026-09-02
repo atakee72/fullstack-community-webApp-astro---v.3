@@ -24,7 +24,11 @@ const ALERT_BASE_URL = 'https://mahalle.digital';
 const MOD_QUEUE_URL = `${ALERT_BASE_URL}/admin/moderation`;
 
 function trunc(s: string, n = 80): string {
-  return s.length > n ? s.slice(0, n - 1) + '…' : s;
+  // Coerce: builders run OUTSIDE sendAdminAlert's try, so a null/undefined
+  // title (e.g. a title-less draft reaching listings/edit) must not throw
+  // here and break the caller's request.
+  const str = String(s ?? '');
+  return str.length > n ? str.slice(0, n - 1) + '…' : str;
 }
 
 export async function sendAdminAlert(alert: { kind: AdminAlertKind; text: string }): Promise<void> {

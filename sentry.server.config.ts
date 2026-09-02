@@ -25,4 +25,17 @@ Sentry.init({
     if (TRANSIENT_PATTERNS.some((re) => re.test(msg))) return null;
     return event;
   },
+  // The SDK's outgoing-fetch instrumentation records request URLs as
+  // breadcrumbs (path kept by getSanitizedUrlString). The admin-alerts
+  // Telegram send hits api.telegram.org/bot<TOKEN>/sendMessage, so an
+  // unredacted breadcrumb would ship the bot token to Sentry — and the
+  // alert module's own captureMessage fires right after a non-2xx TG
+  // response, attaching that breadcrumb. Redact the token before it lands.
+  beforeBreadcrumb(breadcrumb) {
+    const url = breadcrumb.data?.url;
+    if (typeof url === 'string' && url.includes('api.telegram.org')) {
+      breadcrumb.data!.url = url.replace(/\/bot[^/]+\//, '/bot[REDACTED]/');
+    }
+    return breadcrumb;
+  },
 });

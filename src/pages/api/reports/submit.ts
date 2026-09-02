@@ -180,7 +180,7 @@ export const POST: APIRoute = async ({ request }) => {
       );
 
       if (session.user.role !== 'admin') {
-        await alertReport({ contentType, title: contentSnapshot.title, reason });
+        await alertReport({ contentType, title: contentSnapshot.title, reason: REPORT_REASON_LABELS[reason] || reason });
       }
 
       return new Response(JSON.stringify({
@@ -232,10 +232,6 @@ export const POST: APIRoute = async ({ request }) => {
 
     await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
 
-    if (session.user.role !== 'admin') {
-      await alertReport({ contentType, title: contentSnapshot.title, reason });
-    }
-
     // Mark the original content as pending review
     const collectionMap: Record<string, any> = {
       topic: topicsCollection,
@@ -257,6 +253,12 @@ export const POST: APIRoute = async ({ request }) => {
           }
         }
       );
+    }
+
+    // Admin alert after the content is marked pending (never-throw, no-op
+    // without env). Self-reports by an admin don't alert.
+    if (session.user.role !== 'admin') {
+      await alertReport({ contentType, title: contentSnapshot.title, reason: REPORT_REASON_LABELS[reason] || reason });
     }
 
     return new Response(JSON.stringify({
