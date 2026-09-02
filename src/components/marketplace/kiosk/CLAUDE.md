@@ -228,6 +228,8 @@ const API_TO_RAIL = { sell: 'verkaufen', exchange: 'tausch', gift: 'verschenken'
 
 Compose flow uses the same convention: the category/kind pickers emit German keys → the submit handler translates before posting to the API. **Don't bypass these maps** by writing English kind values directly into URLs or filter state.
 
+**`price` is optional at the schema base** (`ListingCreateSchema`, since 2026-09-02) — exchange/gift listings carry no price and `MarketComposeInner` sends `price: undefined` for them. A `superRefine` enforces that only `sell` listings must have a price (> 0.01) and that exchange/gift must NOT. **Don't make base `price` required again** — it rejected every exchange/gift publish with `price: Required` before the refine ever ran (silent 400 in the compose UI). `listings/create.ts` reads `finalPrice = (exchange|gift) ? 0 : (price ?? 0)` — the `?? 0` is a never-hit tsc narrow (sell always has a price by then).
+
 ### `canMutateListing` guard
 Located at `src/lib/listingActions.ts`. Central guard called by all listing mutation endpoints (edit, delete, bump, status-change).
 
@@ -236,6 +238,7 @@ Located at `src/lib/listingActions.ts`. Central guard called by all listing muta
 **Override flags** (pass as second arg object):
 - `{ allowOnRejected: true }` — delete endpoint. Owners need to be able to clean up rejected listings.
 - `{ allowOnReserved: true }` — status endpoint. `reserved → sold` is a one-click intended path.
+- `{ allowOnSold: true }` — status endpoint (added 2026-09-02). Without it the unconditional sold-block dead-coded the `sold → available` transition in `VALID_TRANSITIONS`, so a sold listing could never be un-marked, edited, or deleted (delete defers to the status endpoint to "back out"). The status endpoint passes it; the `VALID_TRANSITIONS` matrix is then the real guard for what a sold listing may do (only → available). The un-mark UI is the "wieder verfügbar" button in `OwnerActions.svelte` (renders `{#if listing.status === 'sold'}` — the reserve/sold toggles hide on sold, so without this button a sold listing had NO status control at all).
 
 **The bump endpoint uses default** (no overrides) — bumping a reserved/rejected listing makes no semantic sense.
 
