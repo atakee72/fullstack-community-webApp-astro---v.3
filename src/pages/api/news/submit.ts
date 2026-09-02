@@ -6,6 +6,7 @@ import { NewsSubmitSchema } from '../../../schemas/news.schema';
 import { parseRequestBody } from '../../../schemas/validation.utils';
 import { moderateText, checkSpamWithGPT, mergeModerationResults, createFlaggedContentRecord } from '../../../lib/moderation';
 import { rejectIfBanned } from '../../../lib/auth/banGuard';
+import { alertModerationFlagged } from '../../../lib/adminAlerts';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -150,6 +151,8 @@ export const POST: APIRoute = async ({ request }) => {
           updatedAt: new Date()
         } as FlaggedContent);
       }
+
+      await alertModerationFlagged({ contentType: 'news', title, authorName: session.user.name });
     }
 
     return new Response(

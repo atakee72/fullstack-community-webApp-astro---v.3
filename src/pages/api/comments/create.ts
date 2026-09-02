@@ -8,6 +8,7 @@ import { parseRequestBody } from '../../../schemas/validation.utils';
 import { moderateText, checkSpamWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../lib/moderation';
 import { rejectIfBanned } from '../../../lib/auth/banGuard';
 import { notify, commentTarget } from '../../../lib/notifications';
+import { alertComment, alertModerationFlagged } from '../../../lib/adminAlerts';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -97,6 +98,7 @@ export const POST: APIRoute = async ({ request }) => {
       (flaggedRecord as any).parentPostId = topicId;
       (flaggedRecord as any).parentCollection = parentCollection;
       await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
+      await alertModerationFlagged({ contentType: 'comment', title: body.slice(0, 80), authorName: session.user.name });
     } else {
       // Only add to parent's comments array if approved immediately.
       // findOneAndUpdate (not updateOne) so the parent's author + title come
@@ -118,6 +120,10 @@ export const POST: APIRoute = async ({ request }) => {
           actorId: userId,
           target: commentTarget(parentCollection, topicId, parentDoc.title ?? ''),
         });
+      }
+
+      if (!skipModeration) {
+        await alertComment({ authorName: session.user.name, parentTitle: parentDoc?.title ?? '' });
       }
     }
 

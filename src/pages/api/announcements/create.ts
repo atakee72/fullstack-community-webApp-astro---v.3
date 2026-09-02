@@ -7,6 +7,7 @@ import { AnnouncementCreateSchema } from '../../../schemas/forum.schema';
 import { parseRequestBody } from '../../../schemas/validation.utils';
 import { moderateText, checkSpamWithGPT, checkImagesWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../lib/moderation';
 import { rejectIfBanned } from '../../../lib/auth/banGuard';
+import { alertContentNew, alertModerationFlagged } from '../../../lib/adminAlerts';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -122,6 +123,16 @@ export const POST: APIRoute = async ({ request }) => {
       );
       flaggedRecord.contentId = result.insertedId.toString();
       await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
+    }
+
+    // Operational admin alert (never-throw, no-op without env). Admin's own
+    // posts are exempt from moderation AND from self-alerting.
+    if (!skipModeration) {
+      if (mergedResult) {
+        await alertModerationFlagged({ contentType: 'announcement', title, authorName: session.user.name });
+      } else {
+        await alertContentNew({ type: 'announcement', title, authorName: session.user.name, pending: false });
+      }
     }
 
     // Fetch author info to return with the created announcement

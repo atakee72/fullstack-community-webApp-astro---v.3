@@ -7,6 +7,7 @@ import type { FlaggedContent } from '../../../../../types';
 import { isValidObjectId } from '../../../../../schemas/validation.utils';
 import { moderatePost, checkSpamWithGPT, checkImagesWithGPT, createFlaggedContentRecord, mergeModerationResults } from '../../../../../lib/moderation';
 import { rejectIfBanned } from '../../../../../lib/auth/banGuard';
+import { alertContentNew, alertModerationFlagged } from '../../../../../lib/adminAlerts';
 
 export const POST: APIRoute = async ({ request, params }) => {
   try {
@@ -146,6 +147,16 @@ export const POST: APIRoute = async ({ request, params }) => {
       const flaggedRecord = createFlaggedContentRecord('marketplace', contentInfo, authorInfo, mergedResult);
       flaggedRecord.contentId = id;
       await flaggedCollection.insertOne(flaggedRecord as FlaggedContent);
+    }
+
+    // Operational admin alert (never-throw, no-op without env). Admin's own
+    // posts are exempt from moderation AND from self-alerting.
+    if (!skipModeration) {
+      if (mergedResult) {
+        await alertModerationFlagged({ contentType: 'marketplace', title: draft.title, authorName: session.user.name });
+      } else {
+        await alertContentNew({ type: 'marketplace', title: draft.title, authorName: session.user.name, pending: moderationStatus === 'pending' });
+      }
     }
 
     return new Response(
