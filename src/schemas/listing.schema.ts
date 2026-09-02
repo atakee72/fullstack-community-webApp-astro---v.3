@@ -104,10 +104,16 @@ export const ListingCreateSchema = z.object({
   // A4 + Task 4.1 OptionalDetails — condition lives in the "Details (optional)"
   // section of compose. Keep it top-level (not nested under specs) but optional.
   condition: ListingConditionSchema.optional(),
+  // Optional at the base: exchange/gift listings carry no price and the
+  // compose form sends none (MarketComposeInner passes undefined). The
+  // superRefine below enforces that 'sell' listings DO have a price — making
+  // this required here rejected every exchange/gift publish with
+  // `price: Required` before the refine ever ran.
   price: z
     .number()
     .min(0)
-    .max(100000, 'Price must be less than 100,000'),
+    .max(100000, 'Price must be less than 100,000')
+    .optional(),
   originalPrice: z
     .number()
     .min(0)

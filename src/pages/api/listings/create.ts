@@ -57,8 +57,11 @@ export const POST: APIRoute = async ({ request }) => {
 
     const { title, description, descriptionPlainText, listingType, exchangeFor, category, condition, price, originalPrice, images, delivery, specs } = validation.data;
 
-    // Force price=0 for exchange and gift listings
-    const finalPrice = (listingType === 'exchange' || listingType === 'gift') ? 0 : price;
+    // Force price=0 for exchange and gift listings. For 'sell' the schema's
+    // superRefine guarantees a price, but it's typed optional now — `?? 0` is a
+    // never-hit fallback that satisfies the type (a sell without price is
+    // rejected upstream).
+    const finalPrice = (listingType === 'exchange' || listingType === 'gift') ? 0 : (price ?? 0);
     const finalOriginalPrice = (listingType === 'exchange' || listingType === 'gift') ? undefined : (originalPrice || undefined);
 
     // Admins are exempt from AI moderation (their content is auto-approved —
