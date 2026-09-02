@@ -233,6 +233,10 @@ VAPID_PRIVATE_KEY=      # Web push VAPID private key. SERVER-SECRET, never expos
 PUBLIC_VAPID_PUBLIC_KEY= # Web push VAPID public key. PUBLIC_-prefixed — ships to the client bundle (src/lib/pushClient.ts). Pairs with VAPID_PRIVATE_KEY; generate both together, never mix pairs.
 IMPRESSUM_STREET=       # Ladungsfähige Anschrift, Straße + Hausnummer. SSR-only (read at request time in impressum/datenschutz.astro — but Vercel injects env at DEPLOY time, so changing the value still needs one redeploy; verified 2026-08-24), rendered via src/components/legal/ObfuscatedText.astro (char-code obfuscation, JS-decoded — keeps the address out of the repo and away from naive scrapers). Unset ⇒ visible "[Anschrift nicht konfiguriert]" placeholder.
 IMPRESSUM_ZIP_CITY=     # e.g. "12049 Berlin" — same handling as IMPRESSUM_STREET.
+TELEGRAM_BOT_TOKEN=     # BotFather token for the admin-alerts bot. SERVER-ONLY secret (Vercel Sensitive). Unset ⇒ Telegram alerts silently no-op (dev/preview default).
+TELEGRAM_ADMIN_CHAT_ID= # Numeric chat id of the admin↔bot DM (from getUpdates after /start). Server-only.
+ADMIN_ALERT_EMAIL=      # Email mirror recipient for admin-action alerts (member/moderation/report). Unset ⇒ email leg no-op.
+SENTRY_WEBHOOK_SECRET=  # Random 32+ chars guarding POST /api/hooks/sentry. Unset ⇒ endpoint fail-closed 401.
 ```
 
 ## Component Patterns
