@@ -74,7 +74,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     ];
     // The daily news cron is a GET from Vercel with its own CRON_SECRET
     // Bearer gate — it must keep working without a session.
-    const API_ALLOWLIST = ['/api/news/fetch-daily'];
+    const API_ALLOWLIST = ['/api/news/fetch-daily', '/api/hooks/sentry']; // sentry webhook: authenticates via its own secret
 
     if (!context.locals.user) {
       const hit = (prefixes: string[]) =>
