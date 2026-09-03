@@ -21,6 +21,12 @@ Sentry.init({
   tracesSampleRate: 0,
   sendDefaultPii: false,
   beforeSend(event, hint) {
+    // Local dev (pnpm dev) keeps SENTRY_DSN active for diagnostics, so its
+    // server-side errors — including unhandled rejections from throwaway
+    // worktree dev servers — otherwise land on the prod board and burn the
+    // monthly cap. Drop them. Preview + production still report (preview is
+    // where the silent-degradation tripwires legitimately fire).
+    if (event.environment === 'development') return null;
     const msg = `${event.exception?.values?.[0]?.type ?? ''} ${event.exception?.values?.[0]?.value ?? ''} ${String((hint?.originalException as Error | undefined)?.message ?? '')}`;
     if (TRANSIENT_PATTERNS.some((re) => re.test(msg))) return null;
     return event;
