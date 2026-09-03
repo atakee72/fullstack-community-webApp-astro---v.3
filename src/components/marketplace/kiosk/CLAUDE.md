@@ -31,6 +31,15 @@ Loaded lazily when Claude reads/edits files in `src/components/marketplace/kiosk
   button → `POST /api/listings/draft`. Returned `draftId` is held in `$state`;
   subsequent saves update the same row. localStorage autosave is the per-device
   fallback; server drafts are explicit + cross-device.
+- **Durable draft-saved confirmation (I3 fix, 2026-09-03, `74697b8a`).** A
+  successful save fires the standard `showSuccess` toast AND sets `draftSaved`
+  `$state` → renders a persistent inline "✓ Entwurf gespeichert" banner (all
+  viewports, outside the `hidden lg:flex` desktop action row) with a link to
+  `?view=mine`. A dedicated `$effect` subscribing to every form field clears
+  `draftSaved` on the next edit; `handleSaveDraft` changes no subscribed field, so
+  the banner survives the save itself. Why: unlike publish (which redirects with a
+  flash param), draft-save stays on an unchanged-looking form, so the transient
+  toast alone was a weak signal — the banner is the durable one.
 - **Resume**: `/marketplace/create?draft=<id>` → `create.astro` owner-gates +
   loads the draft via `fetchListingForSSR`, passes it as `initialListing`
   (mode stays `create`). The compose detects `status:'draft'` → tracks `draftId`.
@@ -180,6 +189,7 @@ Still un-gated by the same rules (pre-existing, distinguishable codes for missin
   - **Owner's direct URL**: full detail page renders normally (owner bypass via `fetchListingDetailForSSR`'s `isOwner` branch).
 - **No auto-archive, no hard cutoff.** Past-21d listings live indefinitely in the author's private view until they bump or delete.
 - **`altpapier` / `altbestand` straps**: kinds + CSS retained in `MarketStrap.svelte` + `tokens.css` for defense; never rendered by `ListingCard` after May 2026.
+- **`verkauft` / `reserviert` straps ARE rendered (I1 fix, 2026-09-03, `74697b8a`).** The `verkauft` MarketStrap variant existed but was never wired up, so a sold listing showed no indicator. Now `ListingCard` (browse grid) renders `verkauft` when `status === 'sold'` (priority over `reserviert`), and `DetailGallery`'s hero strap stack renders `verkauft`/`reserviert` (updates live — the detail's `listing` is `$state`, reassigned on status change). Since sold listings are owner-only (table below; non-owners `not_found`), this only affects the owner's own view — there was never buyer-facing confusion, just a missing honest signal.
 - **`isPubliclyHidden: boolean`** is a server-computed virtual on the `Listing` type. Always `false` for any listing a non-owner receives (server filter excludes them); variable for the owner's own. No privacy leak — boolean only, not a timestamp.
 
 ### Status visibility (A7)

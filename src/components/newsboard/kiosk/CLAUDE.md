@@ -85,6 +85,19 @@ detail page `/newsboard/${id}` (same tab). The detail page's `weiterlesen bei �
 button is what links to the external `sourceUrl` (`target="_blank"`) — the
 Newsboard never renders the full article inline.
 
+**Mobile bottom-nav clearance (F1 fix, 2026-09-03, `6c7014f8`).** `[id].astro`'s
+content wrapper is `pb-28 lg:pb-[50px]` — 112px bottom padding below `lg`, the
+original 50px at `lg+`. Reason: on a short article the `weiterlesen bei …` CTA
+(the only offsite link) landed under the fixed mobile bottom-nav. **Known
+limitation (accepted):** bottom padding only guarantees clearance ONCE SCROLLED —
+it cannot make the CTA visible on first paint, because at `scrollY=0` the CTA's
+position is set by the content ABOVE it, which padding below can't move. First-
+paint visibility on short articles would need a design change (source block above
+body on mobile, or a scroll cue); deliberately NOT done — this "short page +
+fixed bottom nav hides the last element" is a global pattern, fix app-wide if it
+ever matters. Don't drop the `pb-28` thinking `KioskFooter` covers it — the footer
+scrolls into view but sits BELOW the CTA, so it doesn't lift the CTA on first paint.
+
 ## No-image placeholder is first-class
 
 `ArticleImage` renders a dashed-border source monogram + "kein bild" when
@@ -148,6 +161,20 @@ Plan: `docs/superpowers/plans/2026-06-20-newsboard-kiosk-redesign-phase2.md`.
   + stores the chosen section as `aiCategory` (the index resolver round-trips it);
   `GET /api/news/daily-count` feeds the indicator; `sektion` added to
   `NewsSubmitSchema`.
+- **Submit success toast fires on the DESTINATION (F3 fix, 2026-09-03, `7feca439`).**
+  `NewsSubmitInner.submit()` navigates to `/newsboard?just_submitted=1` (NOT a
+  toast + synchronous `window.location.href`, which died in the page teardown
+  before rendering). `NewsboardIndexInner`'s `onMount` reads the param, shows the
+  success toast, and strips it via `history.replaceState` — the marketplace
+  `?just_posted` flash pattern. Reuse this pattern for any submit-then-redirect flow.
+- **`SaveToggle` tap target (F2 fix, 2026-09-03, `5e48854d`).** The visible box
+  stays small (22px `mini` / 26px); an invisible absolutely-positioned child span
+  (`inset:-11px` mini / `-9px` large) extends the HIT area to ~44px without growing
+  the visual box. The insets are deliberately fitted INSIDE the flex gaps of the
+  card rows it lives in (12px `NewsCard`, 14px `NewsCardLead`) so the halo never
+  eats the neighbouring "readmore" tap — if you change those gaps or the insets,
+  re-check the overlap. `shrink-0` on the button prevents a flex squeeze in tight
+  meta rows. Inline styles only (no `<style>` — avoids the nested-island orphan trap).
 - **Own-submission straps** — the feed shows the author's own pending/rejected
   items with an `IN PRÜFUNG`/`ABGELEHNT` strap + reason (states 08/09); `NewsVM`
   carries `moderationStatus` + `warningText`. **Gotcha (fixed 2026-06-22):**
