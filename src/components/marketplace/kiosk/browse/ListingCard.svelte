@@ -63,6 +63,7 @@
   // freshness clock. Owners viewing their own „Meine Anzeigen" see past-21d
   // listings as grayed + warning chip via the isHiddenFromPublic path below.
   const reserved = $derived(listing.status === 'reserved');
+  const sold = $derived(listing.status === 'sold');
   const draft = $derived(listing.status === 'draft');
 
   // Owner-facing: this listing is past 21d → public can't see it; the author
@@ -149,7 +150,9 @@
       {#if bumped}
         <MarketStrap kind="bump" small={true} />
       {/if}
-      {#if reserved}
+      {#if sold}
+        <MarketStrap kind="verkauft" small={true} />
+      {:else if reserved}
         <MarketStrap kind="reserviert" small={true} />
       {/if}
       <!-- Author-only moderation status badge in strap stack -->

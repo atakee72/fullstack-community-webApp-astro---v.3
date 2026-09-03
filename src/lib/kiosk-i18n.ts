@@ -854,6 +854,8 @@ const de = {
   'market.compose.draft.saved': 'Entwurf gespeichert',
   'market.compose.draft.needTitle': 'Bitte zuerst einen Titel eingeben.',
   'market.compose.draft.error': 'Entwurf konnte nicht gespeichert werden.',
+  'market.compose.draft.savedHint': 'Entwurf gespeichert — liegt unter „Meine Anzeigen“ → Entwürfe.',
+  'market.compose.draft.viewLink': 'Zu Meine Anzeigen →',
   'market.compose.draft.incomplete': 'Entwurf unvollständig — es fehlt noch:',
 
   // Live preview pane.
@@ -2696,6 +2698,8 @@ const en: Dict = {
   'market.compose.draft.saved': 'Draft saved',
   'market.compose.draft.needTitle': 'Please enter a title first.',
   'market.compose.draft.error': 'Could not save draft.',
+  'market.compose.draft.savedHint': 'Draft saved — it’s under “My listings” → Drafts.',
+  'market.compose.draft.viewLink': 'Go to My listings →',
   'market.compose.draft.incomplete': 'Draft incomplete — still missing:',
 
   'market.compose.preview.waiting': '★ PREVIEW WAITING',

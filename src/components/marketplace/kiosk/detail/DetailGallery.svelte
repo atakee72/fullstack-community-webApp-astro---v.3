@@ -7,7 +7,7 @@
   let {
     listing,
   }: {
-    listing: Pick<Listing, 'images' | 'category' | 'isBumped'>;
+    listing: Pick<Listing, 'images' | 'category' | 'isBumped' | 'status'>;
   } = $props();
 
   let currentIndex = $state(0);
@@ -91,12 +91,21 @@
       >📷 {currentIndex + 1} / {count}</span>
     {/if}
 
-    <!-- Bump strap — top-left (only bump on detail hero per spec) -->
-    {#if listing.isBumped === true}
+    <!-- Status strap stack — top-left. Sold/reserved take priority as the
+         lifecycle signal (sold detail is owner-only; reserved is visible to
+         buyers too), then bump. -->
+    {#if listing.status === 'sold' || listing.status === 'reserved' || listing.isBumped === true}
       <div
         style="position: absolute; top: 14px; left: 14px; display: flex; flex-direction: column; gap: 4px; pointer-events: none;"
       >
-        <MarketStrap kind="bump" small={true} />
+        {#if listing.status === 'sold'}
+          <MarketStrap kind="verkauft" small={true} />
+        {:else if listing.status === 'reserved'}
+          <MarketStrap kind="reserviert" small={true} />
+        {/if}
+        {#if listing.isBumped === true}
+          <MarketStrap kind="bump" small={true} />
+        {/if}
       </div>
     {/if}
 

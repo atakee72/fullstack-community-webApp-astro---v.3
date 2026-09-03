@@ -107,6 +107,12 @@
       : null,
   );
 
+  // Durable "draft saved" confirmation — set true after a successful
+  // server-draft save, cleared on the next form edit (see the reset $effect
+  // below). Backs the persistent inline banner so the positive signal doesn't
+  // vanish with the transient toast (I3).
+  let draftSaved = $state(false);
+
   // ── Draft storage key ─────────────────────────────────────────────────
   // svelte-ignore state_referenced_locally
   const DRAFT_KEY = `marketplace-compose-draft-${mode}`;
@@ -192,6 +198,16 @@
     }, 500);
   });
 
+  // Any edit after a draft save invalidates the "saved" confirmation. Runs
+  // once on mount (draftSaved already false → no-op); handleSaveDraft changes
+  // no subscribed field, so the confirmation survives the save itself.
+  $effect(() => {
+    // Subscribe to every form field.
+    void [kindRail, category, title, descriptionPlainText, price, originalPrice,
+      delivery, condition, specs, images];
+    draftSaved = false;
+  });
+
   // ── Mount: restore draft from localStorage (create mode only) ─────────
   onMount(() => {
     if (mode !== 'create' || initialListing) return;
@@ -258,6 +274,7 @@
       // Persisted server-side — drop the localStorage autosave copy.
       try { localStorage.removeItem(DRAFT_KEY); } catch {}
       showSuccess($t['market.compose.draft.saved']);
+      draftSaved = true;
     } catch (e: any) {
       showError(e.message || $t['market.compose.draft.error']);
     } finally {
@@ -942,6 +959,39 @@
           {/if}
         </button>
       </div>
+
+      <!-- Durable draft-saved confirmation (all viewports). Persists until the
+           next edit so the positive signal outlives the transient toast (I3).
+           Mobile draft-save lives in the sticky bar; this in-flow banner is the
+           shared confirmation regardless of which button was used. -->
+      {#if mode === 'create' && draftSaved}
+        <div
+          role="status"
+          style="
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            margin-top: 4px; padding: 10px 14px;
+            background: var(--k-paper-soft, #f3efe6);
+            border: 1.5px solid var(--k-ink);
+            border-radius: var(--k-radius-md);
+            box-shadow: 2px 2px 0 var(--k-moss, #6b8a4a);
+          "
+        >
+          <span
+            style="
+              font-family: var(--k-font-display); font-size: 13.5px; font-weight: 600;
+              color: var(--k-ink); flex: 1; min-width: 0;
+            "
+          >✓ {$t['market.compose.draft.savedHint']}</span>
+          <a
+            href="/marketplace?view=mine"
+            style="
+              font-family: var(--k-font-mono); font-size: 12px; font-weight: 700;
+              letter-spacing: 0.03em; color: var(--k-wine, #b23a5b);
+              text-decoration: underline; white-space: nowrap;
+            "
+          >{$t['market.compose.draft.viewLink']}</a>
+        </div>
+      {/if}
     </div>
 
     <!-- ── Preview column (sticky on desktop) ────────────────────────── -->
