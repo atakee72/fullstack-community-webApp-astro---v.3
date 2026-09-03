@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { t } from '../../../lib/kiosk-i18n';
   import { showToast } from '../../../utils/toast';
   import {
@@ -119,6 +120,18 @@
   // C1: when the server seeded articles, skip the initial client fetch (the seed
   // matches the default `week` window). A logged-in user still needs a follow-up
   // fetch to resolve `saved` state, so only skip for anonymous visitors.
+  // Flash toast from the submit flow (?just_submitted=1) — the submit page
+  // navigates here immediately, so its own toast never renders; we show it on
+  // arrival instead and strip the param (marketplace just_posted pattern).
+  onMount(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('just_submitted') === '1') {
+      showToast($t['news.submit.success'], { type: 'success' });
+      url.searchParams.delete('just_submitted');
+      window.history.replaceState({}, '', url.toString());
+    }
+  });
+
   let firstRun = true;
   $effect(() => {
     activeZeitraum; isAuth;

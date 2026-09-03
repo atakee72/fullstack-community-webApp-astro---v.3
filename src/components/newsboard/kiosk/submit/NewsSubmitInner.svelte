@@ -56,8 +56,9 @@
       });
       if (res.status === 429) { quotaReached = true; throw new Error($t['news.submit.quotaReached']); }
       if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.error || 'submit failed'); }
-      showToast($t['news.submit.success'], { type: 'success' });
-      window.location.href = '/newsboard';
+      // Toast fires on the DESTINATION page (flash param): a toast shown here
+      // dies in the immediate full-page navigation before it can render.
+      window.location.href = '/newsboard?just_submitted=1';
     } catch (e) {
       showToast((e as Error).message || $t['news.submit.error'], { type: 'error' });
       submitting = false;
