@@ -35,7 +35,9 @@ const quelleMarkStyle = `background:var(${QUELLE_META[quelle].token}); color:var
     <a href="/newsboard" style="color:var(--k-ink-soft); text-decoration:underline dashed; text-underline-offset:3px;">← zurück zum Feed</a>
   </div>
 
-  <div class="px-4 md:px-9" style="padding-top:30px; padding-bottom:50px;">
+  <!-- pb-28 below lg: the fixed mobile bottom nav (~45px + shadow) covers the
+       source CTA on short articles at first paint; lg+ keeps the original 50px. -->
+  <div class="px-4 md:px-9 pb-28 lg:pb-[50px]" style="padding-top:30px;">
     <div class="news-detail-grid">
       <!-- MAIN COLUMN — static SSR HTML for SEO -->
       <article>
