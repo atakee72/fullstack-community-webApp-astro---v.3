@@ -2,6 +2,7 @@
   import type { Listing } from '../../../../types/listing';
   import { showSuccess, showToast, showError, confirmAction } from '../../../../utils/toast';
   import { resolveCategory } from '../../../../lib/marketplaceResolvers';
+  import { linkifySegments } from '../../../../lib/linkify';
   import { bumpListing } from '../../../../hooks/api/useBumpListingMutation';
   import { setListingStatus } from '../../../../hooks/api/useListingStatusMutation';
 
@@ -290,7 +291,7 @@
                 color: var(--k-ink-soft, #4a4740);
                 margin: 0;
               "
-            >{displayDescription}</p>
+            >{#each linkifySegments(displayDescription) as seg}{#if seg.type === 'link'}<a href={seg.value} target="_blank" rel="noopener noreferrer" class="underline underline-offset-2 decoration-[1.5px] break-all hover:text-wine">{seg.value}</a>{:else}{seg.value}{/if}{/each}</p>
           </div>
         {/if}
         <TranslateControl
