@@ -228,6 +228,10 @@ Hidden on pagination (`offset > 0`) and on any filtered view (kind/cat/search/vi
 
 **GOTCHA — the description body has TWO render sites.** The DEFAULT visible description is the **SSR shell in `[id].astro`** (plain `{bodyText}`); `MarketDetailInner`'s description `<p>` is inside `{#if translation}` and renders ONLY the translated variant (deliberate dedup — see the comment there). So any change to how the body renders (linkify, `pre-line`, truncation, …) MUST be applied to the `[id].astro` shell — editing only the island silently does nothing in the normal, untranslated view. (Bit us 2026-09-05: a linkify fix went into the island first and shipped as a no-op.)
 
+**Translation block sits at the TOP of the island** (`0d4e6a62`, 2026-09-05): the `TranslateControl` + `{#if translation}` block render before `<DetailGallery/>`, so the page reads SSR original → translate toggle → translation, co-located. They used to render after the gallery, stranding the translation screens away from the original. Guarded `{#if !(isOwner && moderationStatus === 'rejected')}` (an owner's rejected listing shows `ListingRejectedPanel` instead — no translate control); keep that guard if you move the block again.
+
+**Mobile sticky contact bar — keep `display` in CLASSES, never inline** (`df97454b`, 2026-09-05): the `{#if !isOwner}` sticky "↑ Nachricht senden" bar is `lg:hidden` (mobile-only; on desktop the sidebar form's "→ senden" is the CTA). It had an inline `style="display:flex"`, and **an inline `display` always beats a class**, so `lg:hidden` never hid it — the bar showed on desktop, doubling the CTA and covering the page. Fixed by moving `display/align/gap` to `flex items-center gap-2.5` classes. Do NOT put `display` back in the style attribute — it silently re-breaks the responsive hide.
+
 ### Kind-key bridge (rail vs API)
 `MarketFilterRail.svelte` and the URL bar speak German keys: `verkaufen`, `tausch`, `verschenken`.
 The data layer, DB, and API speak English enum values: `sell`, `exchange`, `gift`.
