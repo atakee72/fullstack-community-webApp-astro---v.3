@@ -16,6 +16,10 @@ CLAUDE.md — not repeated here.
 
 ## Dev server
 - Run your OWN on **port 3001**. Port 3000 is the main checkout, not your changes.
+- **Reuse an existing :3001 server if one is already running — never spawn a second.**
+  A second `pnpm dev --port 3001` falls back to :3002 and strays (HMR still works on
+  the original :3001, so the duplicate is pure waste + confusion). Only needed while
+  browser-gating; fine to leave down when idle.
 
 ## Scope & guardrails
 - UI / visual / responsive polish only, scoped to the task brief.
