@@ -204,10 +204,12 @@
 
       topicDraft.clearDraft();
       modalOpen = false;
-      // Navigate to home with marker so ForumIndexInner can show the
-      // 'live' footer + slide-in for the just-created card.
+      // Navigate to the forum index with a marker so ForumIndexInner can
+      // show a success toast on arrival (the compose page unmounts before its
+      // own toast could render). Target /forum, NOT / — the landing gate
+      // redirects logged-in members off / to /forum and drops the query.
       if (typeof window !== 'undefined') {
-        window.location.href = '/?just_posted=1';
+        window.location.href = '/forum?just_posted=1';
       }
     } catch (caught) {
       modalOpen = false;

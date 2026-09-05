@@ -171,6 +171,7 @@ const de = {
   'forum.title.suffix': 'wir heute?',
   'forum.cta.newTopic': '+ neues thema',
   'forum.cta.readMore': 'mehr laden',
+  'forum.compose.success': '✓ Dein Beitrag wurde eingestellt',
 
   // forum stats — counters above the filter bar
   'forum.stats.topics': 'Themen',
@@ -2071,6 +2072,7 @@ const en: Dict = {
   'forum.title.suffix': 'about today?',
   'forum.cta.newTopic': '+ new topic',
   'forum.cta.readMore': 'load more',
+  'forum.compose.success': '✓ Your post has been submitted',
 
   'forum.stats.topics': 'topics',
   'forum.stats.new': 'new since yesterday',

@@ -14,8 +14,9 @@
   // marker shows in the strap. Phase 5 reads a real `pinned` boolean +
   // admin role from the database.
 
-  import { tick } from 'svelte';
+  import { tick, onMount } from 'svelte';
   import { slide } from 'svelte/transition';
+  import { showToast } from '../../../utils/toast';
   import { createQuery } from '@tanstack/svelte-query';
   import { t, locale } from '../../../lib/kiosk-i18n';
   import { online } from '../../../lib/onlineStore';
@@ -34,6 +35,18 @@
     initialItems?: any[];
     currentUserId?: string | null;
   }>();
+
+  // Flash toast from the compose flow (?just_posted=1) — the compose page
+  // navigates here immediately, so its own toast never renders; we show it on
+  // arrival and strip the param (newsboard just_submitted / marketplace pattern).
+  onMount(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('just_posted') === '1') {
+      showToast($t['forum.compose.success'], { type: 'success' });
+      url.searchParams.delete('just_posted');
+      window.history.replaceState({}, '', url.toString());
+    }
+  });
 
   const query = createQuery(() => ({
     queryKey: ['forum', 'all'],
@@ -193,6 +206,27 @@
         return aRej - bRej;
       })
   );
+
+  // Client-side pagination — the feed query returns everything; the footer's
+  // "MEHR LADEN ↓" reveals a page at a time (wired 2026-09-05, replacing the
+  // inert span). Pins/featured render separately, so only filteredRest pages.
+  const PAGE_SIZE = 12;
+  let visibleCount = $state(PAGE_SIZE);
+  const visibleRest = $derived(filteredRest.slice(0, visibleCount));
+  const feedHasMore = $derived(filteredRest.length > visibleCount);
+  const pageCount = $derived(Math.max(1, Math.ceil(filteredRest.length / PAGE_SIZE)));
+  const currentPage = $derived(
+    Math.min(pageCount, Math.max(1, Math.ceil(visibleCount / PAGE_SIZE)))
+  );
+  function loadMore() {
+    visibleCount += PAGE_SIZE;
+  }
+  // Reset to the first page whenever the active filter or tag changes.
+  $effect(() => {
+    activeFilter;
+    activeTag;
+    visibleCount = PAGE_SIZE;
+  });
 
   function topTags(input: any[], n = 6): string[] {
     const counts = new Map<string, number>();
@@ -527,7 +561,7 @@
                          and see the post normally with a small ⚑ GEMELDET
                          chip via the card's inferredBadge derive — that's
                          the "subtle mark" treatment, no stigma. -->
-      {#each filteredRest as topic (topic._id)}
+      {#each visibleRest as topic (topic._id)}
         {@const status = ownStatusFor(topic)}
         {@const justPosted = isJustPosted(topic)}
         {#if justPosted}
@@ -635,5 +669,11 @@
     </div>
   {/if}
 
-  <FeedStatusFooter mode={footerMode} pageCount={1} currentPage={1} />
+  <FeedStatusFooter
+    mode={footerMode}
+    pageCount={pageCount}
+    currentPage={currentPage}
+    hasMore={feedHasMore}
+    onLoadMore={loadMore}
+  />
 </main>

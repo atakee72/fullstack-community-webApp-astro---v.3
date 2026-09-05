@@ -20,12 +20,16 @@
     mode = 'fresh',
     pageCount = 1,
     currentPage = 1,
-    minutesSinceLast = 28
+    minutesSinceLast = 28,
+    hasMore = false,
+    onLoadMore = () => {}
   } = $props<{
     mode?: 'fresh' | 'loading' | 'offline' | 'live';
     pageCount?: number;
     currentPage?: number;
     minutesSinceLast?: number;
+    hasMore?: boolean;
+    onLoadMore?: () => void;
   }>();
 
   // Status indicator colour + copy per mode. 'live' fires for ~6 s after
@@ -53,5 +57,13 @@
 >
   <span>{pages}</span>
   <span class={indicator.color}>{indicator.text}</span>
-  <span>{$t['feed.footer.loadMore']}</span>
+  {#if hasMore}
+    <button
+      type="button"
+      onclick={onLoadMore}
+      class="font-dmmono text-[10px] text-wine hover:text-ink transition-colors uppercase tracking-[0.06em] cursor-pointer"
+    >{$t['feed.footer.loadMore']}</button>
+  {:else}
+    <span></span>
+  {/if}
 </div>
