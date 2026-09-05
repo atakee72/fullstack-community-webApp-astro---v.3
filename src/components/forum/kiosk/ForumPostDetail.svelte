@@ -203,8 +203,49 @@
       !topic.hasWarningLabel
   );
 
-  const likeCount = $derived(topic.likes ?? 0);
   const replyCount = $derived(comments.length);
+
+  // Like state — the engagement-strip heart. Initial filled state from the
+  // post's likedBy (server projects it; detail findOne returns the full doc).
+  // Optimistic flip with rollback; the in-flight lock is the drift guard —
+  // the API's $inc isn't conditioned on $addToSet actually adding, so we must
+  // never fire a redundant action. Reconcile the count from the authoritative
+  // response (likeCount). Mirrors toggleBookmark() below.
+  // svelte-ignore state_referenced_locally
+  let liked = $state(
+    !!currentUserId && (topic.likedBy ?? []).some((id: unknown) => String(id) === currentUserId)
+  );
+  // svelte-ignore state_referenced_locally
+  let likeCount = $state(topic.likes ?? 0);
+  let likeBusy = $state(false);
+  async function toggleLike() {
+    if (!currentUserId || likeBusy) return;
+    const next = !liked;
+    liked = next;
+    likeCount += next ? 1 : -1;
+    likeBusy = true;
+    try {
+      const res = await fetch('/api/likes/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          postId: String(topic._id),
+          collectionType,
+          action: next ? 'like' : 'unlike'
+        })
+      });
+      if (!res.ok) throw new Error(`like failed (${res.status})`);
+      const data = await res.json().catch(() => null);
+      if (typeof data?.likeCount === 'number') likeCount = data.likeCount; // authoritative
+    } catch {
+      liked = !next; // rollback
+      likeCount += next ? -1 : 1;
+      showError($locale === 'de' ? 'Aktion fehlgeschlagen.' : 'Could not update like.');
+    } finally {
+      likeBusy = false;
+    }
+  }
 
   // Save / bookmark state — fetched once on mount via /api/posts/save (GET
   // returns the user's saved-post id list). Toggled via POST {action:
@@ -675,7 +716,10 @@
         >
           <button
             type="button"
-            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-paper-warm border-2 border-ink hover:bg-paper transition-colors font-semibold"
+            onclick={toggleLike}
+            disabled={!currentUserId || likeBusy}
+            aria-pressed={liked}
+            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-ink transition-colors font-semibold disabled:cursor-not-allowed {liked ? 'bg-wine text-paper' : 'bg-paper-warm hover:bg-paper'}"
             aria-label="Like"
           >
             <span aria-hidden="true">♥</span>
