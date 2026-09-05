@@ -427,8 +427,13 @@
 
   <!-- ─── Mobile sticky bottom bar (non-owner only, lg:hidden) ──────────── -->
   {#if !isOwner}
+    <!-- `flex items-center gap-2.5` are CLASSES, not inline style, on
+         purpose: an inline `display: flex` beats `lg:hidden` (a class can
+         never override an inline declaration), so the bar used to stay
+         visible on desktop, doubling the sidebar form's own send CTA and
+         covering the page. Keep display/gap out of the style attribute. -->
     <div
-      class="lg:hidden"
+      class="lg:hidden flex items-center gap-2.5"
       style="
         position: fixed;
         bottom: 64px;
@@ -438,9 +443,6 @@
         background: var(--k-paper-warm, #f3ead8);
         border-top: 2px solid var(--k-ink);
         padding: 10px 16px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
         box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
       "
     >
