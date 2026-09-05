@@ -710,9 +710,14 @@
       {/if}
 
       {#if !editing}
-        <!-- Engagement strip -->
+        <!-- Engagement strip. `flex-wrap` is load-bearing on mobile: at
+             375px the three pills already fill the line, so share + report
+             (the `ml-auto` group) used to be pushed past the viewport edge
+             with no scroll path — report was literally unreachable there.
+             Wrapped, the group drops to its own line and stays right-aligned
+             (auto margins resolve per flex line, so desktop is unchanged). -->
         <div
-          class="flex items-center gap-3 py-2.5 mb-7 border-t border-b border-dashed border-rule font-dmmono text-[11px] text-ink-soft tracking-[0.04em]"
+          class="flex flex-wrap items-center gap-3 py-2.5 mb-7 border-t border-b border-dashed border-rule font-dmmono text-[11px] text-ink-soft tracking-[0.04em]"
         >
           <button
             type="button"
