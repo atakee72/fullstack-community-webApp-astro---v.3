@@ -5,6 +5,7 @@ import { fetchListingDetailForSSR } from '../../lib/listingsQuery';
 import { resolveCategory } from '../../lib/marketplaceResolvers';
 import MarketDetailInner from '../../components/marketplace/kiosk/detail/MarketDetailInner.svelte';
 import ListingUnavailable from '../../components/marketplace/kiosk/states/ListingUnavailable.astro';
+import { linkifySegments } from '../../lib/linkify';
 
 Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
 
@@ -96,7 +97,9 @@ const priceText = listing
           so a static hero img was pure visual duplication. OG/link-preview
           image is still set via the KioskLayout `image` prop above. */}
       <p style="font-family: var(--k-font-serif, Georgia, serif); font-style: italic; font-size: 16px; line-height: 1.6; color: var(--k-ink-soft, #4a4740); margin: 0 0 16px;">
-        {bodyText}
+        {linkifySegments(bodyText).map((seg) => seg.type === 'link'
+          ? <a href={seg.value} target="_blank" rel="noopener noreferrer" style="color: var(--k-wine, #b23a5b); text-decoration: underline; text-underline-offset: 2px; word-break: break-all;">{seg.value}</a>
+          : seg.value)}
       </p>
     </div>
 
