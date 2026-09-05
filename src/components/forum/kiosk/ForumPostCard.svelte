@@ -42,7 +42,8 @@
     team = false,
     pinned = false,
     bookmarked = false,
-    isOfficial = false
+    isOfficial = false,
+    slotFill = false
   } = $props<{
     topic: {
       _id: string;
@@ -68,6 +69,12 @@
     team?: boolean;
     pinned?: boolean;
     bookmarked?: boolean;
+    /** Set when the card is stacked under a status banner inside a
+     *  single grid cell (the author-only pending/reported/rejected
+     *  wrappers). Drops the 340px convergence floor so banner + card
+     *  together fit one normal grid slot instead of ~1.5x it — the
+     *  card still fills the slot via `h-full` on the flex parent. */
+    slotFill?: boolean;
     /** Set true when the announcement was posted by an admin via the
      *  /admin/announcements composer (which sets isOfficial=true on
      *  the doc). Switches the strap copy from the softer community
@@ -218,7 +225,7 @@
 
 <article
   class={`${cardBgClass} ${cardBorderClass} ${cardShadowClass} ${opacityClass} h-full flex flex-col rounded-lg overflow-hidden transition-all duration-[180ms] ease-out hover:-translate-x-px hover:-translate-y-px ${
-    featured ? '' : 'min-h-[340px]'
+    featured || slotFill ? '' : 'min-h-[340px]'
   }`}
 >
   {#if strapLabel}

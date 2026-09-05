@@ -553,14 +553,18 @@
       {/if}
 
       <!-- Regular feed. Per-topic moderation status drives placement:
-             pending   → dashed-warn wrapper around banner + own card (col-span-3, AUTHOR ONLY)
-             reported  → dashed-plum wrapper around banner + own card (col-span-3, AUTHOR ONLY)
-             rejected  → standalone banner block + ghosted card (both col-span-3, AUTHOR ONLY)
+             pending   → dashed-warn wrapper around banner + own card (one grid slot, AUTHOR ONLY)
+             reported  → dashed-plum wrapper around banner + own card (one grid slot, AUTHOR ONLY)
+             rejected  → dashed-danger wrapper around banner + ghosted card (one slot, AUTHOR ONLY)
              else      → normal grid card. Non-authors viewing
                          community-reported pending posts hit this branch
                          and see the post normally with a small ⚑ GEMELDET
                          chip via the card's inferredBadge derive — that's
-                         the "subtle mark" treatment, no stigma. -->
+                         the "subtle mark" treatment, no stigma.
+           The three status wrappers are `h-full flex flex-col`: the compact
+           banner takes its natural height and the card (slotFill → no 340px
+           floor) flexes into the rest, so the cell fills one normal grid slot
+           instead of stacking two full-height cards and inflating the row. -->
       {#each visibleRest as topic (topic._id)}
         {@const status = ownStatusFor(topic)}
         {@const justPosted = isJustPosted(topic)}
@@ -593,14 +597,14 @@
           </div>
         {:else if status === 'pending'}
           <div
-            class="p-1 rounded-lg border-2 border-dashed border-warn"
+            class="h-full flex flex-col p-1 rounded-lg border-2 border-dashed border-warn"
           >
-            <div class="px-2 pt-1.5 pb-2">
-              <OwnStatusBanner state="pending" />
+            <div class="shrink-0 px-2 pt-1.5 pb-2">
+              <OwnStatusBanner state="pending" compact />
             </div>
             <a
               href={detailHref(topic)}
-              class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+              class="flex-1 block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
             >
               <ForumPostCard
                 {topic}
@@ -609,17 +613,20 @@
                 isOfficial={topic.isOfficial === true}
                 team={topic.author?.role === 'admin'}
                 statusBadgeOverride="pending"
+                slotFill
               />
             </a>
           </div>
         {:else if status === 'rejected'}
-          <div class="p-1 rounded-lg border-2 border-dashed border-danger">
-            <div class="px-2 pt-1.5 pb-2">
-              <OwnStatusBanner state="rejected" reason={topic.rejectionReason} />
+          <div
+            class="h-full flex flex-col p-1 rounded-lg border-2 border-dashed border-danger"
+          >
+            <div class="shrink-0 px-2 pt-1.5 pb-2">
+              <OwnStatusBanner state="rejected" reason={topic.rejectionReason} compact />
             </div>
             <a
               href={detailHref(topic)}
-              class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+              class="flex-1 block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
             >
               <ForumPostCard
                 {topic}
@@ -628,19 +635,20 @@
                 isOfficial={topic.isOfficial === true}
                 team={topic.author?.role === 'admin'}
                 statusBadgeOverride="rejected"
+                slotFill
               />
             </a>
           </div>
         {:else if status === 'reported'}
           <div
-            class="p-1 rounded-lg border-2 border-dashed border-plum"
+            class="h-full flex flex-col p-1 rounded-lg border-2 border-dashed border-plum"
           >
-            <div class="px-2 pt-1.5 pb-2">
-              <OwnStatusBanner state="reported" />
+            <div class="shrink-0 px-2 pt-1.5 pb-2">
+              <OwnStatusBanner state="reported" compact />
             </div>
             <a
               href={detailHref(topic)}
-              class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
+              class="flex-1 block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
             >
               <ForumPostCard
                 {topic}
@@ -649,6 +657,7 @@
                 isOfficial={topic.isOfficial === true}
                 team={topic.author?.role === 'admin'}
                 statusBadgeOverride="reported"
+                slotFill
               />
             </a>
           </div>

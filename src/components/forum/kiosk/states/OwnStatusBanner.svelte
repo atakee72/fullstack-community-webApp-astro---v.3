@@ -23,13 +23,20 @@
 
   type State = 'pending' | 'rejected' | 'reported';
 
-  let { state, reason } = $props<{
+  let { state, reason, compact = false } = $props<{
     state: State;
     /** Admin's rejection note, when state === 'rejected' and the
      *  reviewer typed one. Rendered below the generic body as an
      *  italic quote so the author sees exactly why their post was
      *  declined. Other states ignore this prop. */
     reason?: string;
+    /** Feed variant: the banner shares one grid cell with the card
+     *  below it, so it drops to a two-line summary (no status-badge
+     *  row — the card already carries the badge, no rejection quote
+     *  — the detail page carries it in full). Keeps banner + card
+     *  inside a normal grid slot. The detail/standalone usages stay
+     *  on the full layout. */
+    compact?: boolean;
   }>();
 
   // Icon glyph + disc colour per state. These triple-up with the
@@ -66,13 +73,15 @@
 </script>
 
 <div
-  class={`px-4 py-2.5 rounded-md flex items-start gap-3 ${config.surfaceBg} ${config.borderClass}`}
+  class={`rounded-md flex items-start ${compact ? 'px-3 py-2 gap-2.5' : 'px-4 py-2.5 gap-3'} ${config.surfaceBg} ${config.borderClass}`}
   role="status"
   aria-live="polite"
 >
   <span
-    class={`shrink-0 inline-flex items-center justify-center text-paper text-[13px] font-bold ${config.discBg}`}
-    style="width: 28px; height: 28px; border-radius: 50%;"
+    class={`shrink-0 inline-flex items-center justify-center text-paper font-bold ${compact ? 'text-[11px]' : 'text-[13px]'} ${config.discBg}`}
+    style={compact
+      ? 'width: 22px; height: 22px; border-radius: 50%;'
+      : 'width: 28px; height: 28px; border-radius: 50%;'}
     aria-hidden="true"
   >
     {config.glyph}
@@ -86,17 +95,21 @@
         </span>
       {/if}
     </div>
-    <p class="font-bricolage text-[12.5px] text-ink-soft leading-relaxed mt-1">
+    <p
+      class={`font-bricolage text-ink-soft mt-1 ${
+        compact ? 'text-[11.5px] leading-snug line-clamp-2' : 'text-[12.5px] leading-relaxed'
+      }`}
+    >
       {$t[bodyKey]}
     </p>
-    {#if state === 'rejected' && reason}
+    {#if !compact && state === 'rejected' && reason}
       <blockquote
         class="mt-2 pl-3 border-l-2 border-danger/60 font-instrument italic text-[13px] text-ink leading-snug"
       >
         „{reason}"
       </blockquote>
     {/if}
-    {#if config.badge}
+    {#if config.badge && !compact}
       <div class="mt-2 flex items-center gap-2">
         <StatusBadge state={config.badge} size="sm" />
         {#if state === 'pending'}
