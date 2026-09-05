@@ -97,6 +97,9 @@ conversation-summary.md
 .playwright/
 .playwright-cli/
 
+# Scratch working dir — dev passwords (devpw.txt), audit reports, throwaway files. Never commit.
+scratchpad/
+
 # private local docs (strategy notes etc.) — everything else in docs/ is tracked
 docs/local/
 .vercel
