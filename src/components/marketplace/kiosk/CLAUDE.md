@@ -226,6 +226,8 @@ Hidden on pagination (`offset > 0`) and on any filtered view (kind/cat/search/vi
 
 **Rule:** For any new detail-page surface on marketplace, follow the same split: static Astro template for visible content + `client:load` island for interactivity.
 
+**GOTCHA — the description body has TWO render sites.** The DEFAULT visible description is the **SSR shell in `[id].astro`** (plain `{bodyText}`); `MarketDetailInner`'s description `<p>` is inside `{#if translation}` and renders ONLY the translated variant (deliberate dedup — see the comment there). So any change to how the body renders (linkify, `pre-line`, truncation, …) MUST be applied to the `[id].astro` shell — editing only the island silently does nothing in the normal, untranslated view. (Bit us 2026-09-05: a linkify fix went into the island first and shipped as a no-op.)
+
 ### Kind-key bridge (rail vs API)
 `MarketFilterRail.svelte` and the URL bar speak German keys: `verkaufen`, `tausch`, `verschenken`.
 The data layer, DB, and API speak English enum values: `sell`, `exchange`, `gift`.
