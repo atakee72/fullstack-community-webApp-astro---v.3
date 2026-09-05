@@ -212,6 +212,51 @@
     <!-- ══════════ LEFT COLUMN — main content ══════════ -->
     <div style="display: flex; flex-direction: column; gap: 20px;">
 
+      <!-- Translation, directly under the SSR description ────────────────
+           The description body itself is rendered by the Astro SSR shell
+           ABOVE this island (SEO/a11y — the sole permanent copy, see the
+           kiosk CLAUDE.md "two render sites" note); it is deliberately not
+           repeated here. Control + translated copy therefore live at the
+           very top of the island so they sit next to that original: the
+           page reads original → translate toggle → translation. Rendering
+           them further down (they used to follow the gallery + metadata)
+           stranded a translation screens away from the text it translates.
+           The translated block is client-only and additive — it exists only
+           once a translation has been fetched, so nothing duplicates the
+           original in the default state. Hidden for an owner's rejected
+           listing, which shows ListingRejectedPanel instead of the
+           description + actions. -->
+      {#if !(isOwner && listing.moderationStatus === 'rejected')}
+        <TranslateControl
+          contentType="listing"
+          contentId={String(listing._id)}
+          accent="var(--k-wine, #b23a5b)"
+          onTranslated={(t) => (translation = t)}
+        />
+        {#if translation}
+          <div style="padding-top: 4px;">
+            {#if displayTitle !== listing.title}
+              <p
+                style="
+                  font-family: var(--k-font-display, sans-serif); font-weight: 700;
+                  font-size: 18px; color: var(--k-ink, #1b1a17); margin: 0 0 4px;
+                "
+              >{displayTitle}</p>
+            {/if}
+            <p
+              style="
+                font-family: var(--k-font-serif, Georgia, serif);
+                font-style: italic;
+                font-size: 16px;
+                line-height: 1.6;
+                color: var(--k-ink-soft, #4a4740);
+                margin: 0;
+              "
+            >{#each linkifySegments(displayDescription) as seg}{#if seg.type === 'link'}<a href={seg.value} target="_blank" rel="noopener noreferrer" class="underline underline-offset-2 decoration-[1.5px] break-all hover:text-wine">{seg.value}</a>{:else}{seg.value}{/if}{/each}</p>
+          </div>
+        {/if}
+      {/if}
+
       <!-- Gallery -->
       <DetailGallery {listing} />
 
@@ -265,42 +310,6 @@
           onDelete={handleDelete}
         />
       {:else}
-        <!-- Description body is rendered by the Astro SSR shell above (SEO/
-             a11y — kept as the sole permanent copy, see kiosk CLAUDE.md);
-             removed here to avoid the duplicate that was hurting the page UX.
-             The translated variant below is client-only and additive: it
-             renders ONLY once a translation exists, so nothing duplicates
-             the SSR original in the default (untranslated) state. It
-             appears directly beneath the SSR description in page order. -->
-        {#if translation}
-          <div style="padding-top: 4px;">
-            {#if displayTitle !== listing.title}
-              <p
-                style="
-                  font-family: var(--k-font-display, sans-serif); font-weight: 700;
-                  font-size: 18px; color: var(--k-ink, #1b1a17); margin: 0 0 4px;
-                "
-              >{displayTitle}</p>
-            {/if}
-            <p
-              style="
-                font-family: var(--k-font-serif, Georgia, serif);
-                font-style: italic;
-                font-size: 16px;
-                line-height: 1.6;
-                color: var(--k-ink-soft, #4a4740);
-                margin: 0;
-              "
-            >{#each linkifySegments(displayDescription) as seg}{#if seg.type === 'link'}<a href={seg.value} target="_blank" rel="noopener noreferrer" class="underline underline-offset-2 decoration-[1.5px] break-all hover:text-wine">{seg.value}</a>{:else}{seg.value}{/if}{/each}</p>
-          </div>
-        {/if}
-        <TranslateControl
-          contentType="listing"
-          contentId={String(listing._id)}
-          accent="var(--k-wine, #b23a5b)"
-          onTranslated={(t) => (translation = t)}
-        />
-
         <!-- SpecStrip (only when any spec is filled) -->
         <SpecStrip {listing} />
       {/if}
