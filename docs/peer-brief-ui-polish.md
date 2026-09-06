@@ -31,12 +31,6 @@ CLAUDE.md — not repeated here.
 - Budgets (CI ratchet, never raise): tsc ≤ 27, svelte-check ≤ 94.
 - Browser-gate every `.svelte` change with playwright-cli at the viewport the task names
   (usually 375 / 768 / 1280) — build/svelte-check don't catch visual regressions.
-- **A gate marked OPTIONAL is time-boxed and disposable.** The moment the code is done
-  and `tsc`/`svelte-check` are green, REPORT — don't run an optional gate "anyway".
-  If any gate (optional or not) starts fighting the harness (stale refs, events not
-  firing, re-login loops), STOP and drop it — never debug the harness for a check that
-  isn't the deliverable. Report what you verified and what you didn't, and move on.
-  (A gap #1 copy fix once cost ~3h of an optional 375 gate on a harness artifact — never again.)
 - Commits: simple concise messages, NO "Generated with Claude Code", NO Co-Authored-By.
 - Secrets stay in `.env`, never staged / never printed. Playwright pw hygiene: fill
   password LAST, URL-check via `eval "() => location.pathname"`, never snapshot a filled
