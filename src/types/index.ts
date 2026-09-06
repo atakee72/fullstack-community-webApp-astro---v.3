@@ -155,7 +155,9 @@ export interface Recommendation {
 
 // Event Types (Calendar) — kiosk redesign:
 //   - 6 categories (kiez/oeffentlich/markt/kultur/sport/sonstiges)
-//   - capacity?: cap on going-RSVPs (UI-only enforcement in v1; API allows over-cap)
+//   - capacity?: cap on going-RSVPs — ENFORCED (2026-09-06): the RSVP API rejects an
+//     over-cap 'going' with 409 event_full (atomic), and RsvpButtons disables "ich komme"
+//     + shows "ausgebucht" when full. Absent/null capacity = unlimited.
 //   - allDay?: explicit flag; otherwise time component of startDate/endDate is shown
 //   - rsvps?: embedded arrays of user IDs. v1 single-neighbourhood scale.
 export type EventCategory =

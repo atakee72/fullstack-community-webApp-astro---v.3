@@ -13,12 +13,21 @@
   let {
     eventId,
     myStatus = null,
-    currentUserId = null
+    currentUserId = null,
+    capacity = null,
+    goingCount = 0
   } = $props<{
     eventId: string;
     myStatus?: 'going' | 'maybe' | null;
     currentUserId?: string | null;
+    capacity?: number | null;
+    goingCount?: number;
   }>();
+
+  // Capacity caps 'going' only. A user already in 'going' can always
+  // cancel, so they're never blocked; everyone else is blocked at the cap.
+  const isFull = $derived(typeof capacity === 'number' && goingCount >= capacity);
+  const goingBlocked = $derived(isFull && myStatus !== 'going');
 
   // Mutation must be created with a non-empty user id (the optimistic
   // onMutate callback uses it). When unauthenticated we render a
@@ -35,7 +44,8 @@
       { eventId, status: next },
       {
         onError: (err) => {
-          showError(err instanceof Error ? err.message : 'RSVP fehlgeschlagen.');
+          const msg = err instanceof Error ? err.message : 'RSVP fehlgeschlagen.';
+          showError(msg === 'event_full' ? $t['cal.rsvp.error.full'] : msg);
         }
       }
     );
@@ -56,7 +66,7 @@
       <button
         type="button"
         onclick={() => setStatus('going')}
-        disabled={rsvp.isPending}
+        disabled={rsvp.isPending || goingBlocked}
         aria-pressed={myStatus === 'going'}
         class={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bricolage font-bold text-[13px] border-2 transition-transform hover:scale-[1.02] disabled:opacity-60 ${
           myStatus === 'going'
@@ -67,7 +77,7 @@
         {#if myStatus === 'going'}
           <span class="k-cal-rsvp-check inline-block" aria-hidden="true">✓</span>
         {/if}
-        {$t['cal.rsvp.going.cta']}
+        {goingBlocked ? $t['cal.rsvp.full.cta'] : $t['cal.rsvp.going.cta']}
       </button>
       <button
         type="button"

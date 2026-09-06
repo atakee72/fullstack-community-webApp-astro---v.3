@@ -53,10 +53,24 @@ export const POST: APIRoute = async ({ params, request }) => {
     // MongoDB allows mixing $pull on one field and $addToSet on another
     // in the same update doc, so all three branches are single ops.
     let updateOp: Record<string, any>;
+    // Only 'going' is capacity-capped. The filter matches when the event
+    // has no numeric capacity (unlimited), the user is already in 'going'
+    // (idempotent re-click), or there is still room — so the cap is
+    // enforced atomically and two racing RSVPs can't both slip past a
+    // read-then-write check. A non-match on 'going' means "full" (below).
+    let filter: Record<string, any> = { _id: new ObjectId(eventId) };
     if (status === 'going') {
       updateOp = {
         $pull: { 'rsvps.maybe': userId },
         $addToSet: { 'rsvps.going': userId }
+      };
+      filter = {
+        _id: new ObjectId(eventId),
+        $or: [
+          { capacity: { $not: { $type: 'number' } } },
+          { 'rsvps.going': userId },
+          { $expr: { $lt: [{ $size: { $ifNull: ['$rsvps.going', []] } }, '$capacity'] } }
+        ]
       };
     } else if (status === 'maybe') {
       updateOp = {
@@ -69,13 +83,25 @@ export const POST: APIRoute = async ({ params, request }) => {
       };
     }
 
-    const result = await eventsCollection.findOneAndUpdate(
-      { _id: new ObjectId(eventId) },
-      updateOp,
-      { returnDocument: 'after' }
-    );
+    const result = await eventsCollection.findOneAndUpdate(filter, updateOp, {
+      returnDocument: 'after'
+    });
 
     if (!result) {
+      // For 'going' a non-match is ambiguous: the event is full OR it
+      // doesn't exist. Disambiguate so the client gets the right signal.
+      if (status === 'going') {
+        const exists = await eventsCollection.findOne(
+          { _id: new ObjectId(eventId) },
+          { projection: { _id: 1 } }
+        );
+        if (exists) {
+          return new Response(JSON.stringify({ error: 'event_full' }), {
+            status: 409,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      }
       return new Response(JSON.stringify({ error: 'Event not found' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }

@@ -11,7 +11,7 @@
   //   left  — category strip + title + when/where/by slab + description
   //   right — RSVP buttons + capacity bar + attendee stack + export
 
-  import { format, differenceInHours } from 'date-fns';
+  import { format, differenceInMinutes } from 'date-fns';
   import { de as deLocale, enUS } from 'date-fns/locale';
 
   import { linkifySegments } from '../../../lib/linkify';
@@ -146,9 +146,15 @@
     if (event?.allDay) return $t['cal.allDay'];
     const start = format(startDate, 'HH:mm');
     const end = format(endDate, 'HH:mm');
-    const hours = Math.max(1, differenceInHours(endDate, startDate));
-    const unit = $locale === 'de' ? 'Stunden' : 'hours';
-    return `${start} – ${end} · ${hours} ${unit}`;
+    const totalMin = Math.max(0, differenceInMinutes(endDate, startDate));
+    if (totalMin === 0) return `${start} – ${end}`;
+    const de = $locale === 'de';
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    const parts: string[] = [];
+    if (h > 0) parts.push(`${h} ${de ? (h === 1 ? 'Stunde' : 'Stunden') : h === 1 ? 'hour' : 'hours'}`);
+    if (m > 0) parts.push(`${m} ${de ? (m === 1 ? 'Minute' : 'Minuten') : m === 1 ? 'minute' : 'minutes'}`);
+    return `${start} – ${end} · ${parts.join(' ')}`;
   });
 
   const goingArr = $derived<string[]>((event?.rsvps?.going as string[]) ?? []);
@@ -507,6 +513,8 @@
           eventId={eventId}
           myStatus={myStatus}
           currentUserId={currentUserId}
+          capacity={event.capacity ?? null}
+          goingCount={goingCount}
         />
 
         {#if myStatus}

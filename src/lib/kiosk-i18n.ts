@@ -495,6 +495,8 @@ const de = {
   'cal.agenda.row.details': 'details',
   'cal.rsvp.going.cta': 'ich komme',
   'cal.rsvp.maybe.cta': 'vielleicht',
+  'cal.rsvp.full.cta': 'ausgebucht',
+  'cal.rsvp.error.full': 'Dieser Termin ist schon ausgebucht.',
   'cal.event.soldOut': 'ausverkauft',
 
   // ─── Compose (event create flow) ─────────────────────────────────
@@ -2380,6 +2382,8 @@ const en: Dict = {
   'cal.agenda.row.details': 'details',
   'cal.rsvp.going.cta': 'going',
   'cal.rsvp.maybe.cta': 'maybe',
+  'cal.rsvp.full.cta': 'full',
+  'cal.rsvp.error.full': 'This event is already full.',
   'cal.event.soldOut': 'sold out',
 
   // Compose
