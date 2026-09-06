@@ -120,6 +120,19 @@ CTA routes to `/marketplace/edit/{id}?from=backfill`. Edit page pre-populates wh
 - `replyTo: senderEmail` on the seller email is the privacy mechanism — seller can reply directly to the buyer, but the seller's email never appears on any page the buyer sees.
 - Confirmation email to buyer has an "ignore if you didn't send this" footer for impersonation victims.
 
+**No synchronous 550/bounce → `seller_unreachable` mapping (parked, prod-impossible).**
+The `410 seller_unreachable` fires only when the seller row has **no email at
+all** (`contact.ts` ~L194). A hard SMTP 550 (recipient rejected) is thrown from
+inside the owner `sendMail` (~L224) and falls to the outer catch → generic
+**500**. Mapping 550→410 was considered and deliberately NOT done: prod transport
+is **Resend**, which resolves the send and reports bounces **asynchronously via
+webhook** — a 550 never surfaces synchronously in prod, only on the local-dev
+SMTP path. So the mapping would guard a case that can't fire in production. If a
+real need appears (e.g. SMTP returns as prod transport, or Resend bounce webhooks
+get wired to flip a seller flag), catch the owner-send throw, sniff nodemailer's
+`responseCode === 550` (distinguish from transient failures, which must stay 500
+so the buyer retries), and return `jsonErr('seller_unreachable', 410)`.
+
 **Required env vars for contact relay:**
 ```
 SMTP_HOST=                 # SMTP relay (with SMTP_USER+SMTP_PASS: active transport; see src/lib/email/mailer.ts)

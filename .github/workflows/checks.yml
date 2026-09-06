@@ -12,8 +12,10 @@ jobs:
       # Ratchet-only error budgets: lower them as errors get fixed, never raise.
       # tsc baseline recorded 2026-08-30; svelte-check baseline same day
       # (includes 5 unfixable errors from auth-astro via tsconfig's include glob).
-      TSC_ERROR_BUDGET: "27"
-      SVELTE_CHECK_ERROR_BUDGET: "94"
+      # Lowered 27→26 / 94→93 on 2026-09-06: the contact-form i18n fix removed an
+      # untyped local record, clearing one pre-existing tsc + one svelte-check error.
+      TSC_ERROR_BUDGET: "26"
+      SVELTE_CHECK_ERROR_BUDGET: "93"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
