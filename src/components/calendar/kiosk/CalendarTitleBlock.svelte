@@ -72,17 +72,24 @@
          category-rail row beneath (see CalCategoryRail). -->
     <div class="flex items-center flex-wrap gap-3">
       <!-- Month stepper — ‹ MAI 2026 › per CD's desktop header. -->
+      <!-- No `overflow-hidden` here on purpose: it used to clip the pill's
+           corners, but it also clipped the buttons' invisible hit-area
+           extenders, so the enlarged tap targets silently did nothing
+           (rects measured right, `elementFromPoint` still missed). The end
+           buttons carry `rounded-l/r-full` instead, which reproduces the
+           same clipped-corner look without a clipping container. -->
       <div
         data-tour="cal-month-nav"
-        class="inline-flex items-center border-2 border-ink rounded-full overflow-hidden font-dmmono text-[11px] font-semibold"
+        class="inline-flex items-center border-2 border-ink rounded-full font-dmmono text-[11px] font-semibold"
       >
         <button
           type="button"
           onclick={onPrevMonth}
           aria-label={$t['cal.nav.prevMonth.aria']}
-          class="px-2.5 py-1 leading-none hover:bg-paper-warm transition-colors"
+          class="relative rounded-l-full px-2.5 py-1 leading-none hover:bg-paper-warm transition-colors"
         >
           ‹
+          <span aria-hidden="true" style="position:absolute; inset:-16px -9px -9px;"></span>
         </button>
         <span
           class="px-3 py-1 border-l-2 border-r-2 border-ink uppercase tracking-[0.05em]"
@@ -93,30 +100,40 @@
           type="button"
           onclick={onNextMonth}
           aria-label={$t['cal.nav.nextMonth.aria']}
-          class="px-2.5 py-1 leading-none hover:bg-paper-warm transition-colors"
+          class="relative rounded-r-full px-2.5 py-1 leading-none hover:bg-paper-warm transition-colors"
         >
           ›
+          <span aria-hidden="true" style="position:absolute; inset:-16px -9px -9px;"></span>
         </button>
       </div>
 
-      <!-- View switcher — Monat / Agenda / Tag. -->
+      <!-- View switcher — Monat / Agenda / Tag. Modelled as a group of
+           toggle buttons (`aria-pressed`), not a tablist: these switch the
+           calendar body in place, and there is no `role="tabpanel"` /
+           `aria-controls` target nor roving-tabindex arrow navigation to
+           back up tab semantics. Mirrors CalCategoryRail's pills. -->
       <div
         data-tour="cal-view"
-        class="inline-flex border-2 border-ink rounded-full overflow-hidden font-dmmono text-[11px] font-semibold shrink-0"
-        role="tablist"
+        class="inline-flex border-2 border-ink rounded-full font-dmmono text-[11px] font-semibold shrink-0"
+        role="group"
         aria-label="View"
       >
         {#each views as v, i (v.k)}
           <button
             type="button"
-            role="tab"
-            aria-selected={view === v.k}
+            aria-pressed={view === v.k}
             onclick={() => onView?.(v.k)}
-            class="px-3 py-1 transition-colors {
+            class="relative px-3 py-1 transition-colors {
               view === v.k ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
-            } {i > 0 ? 'border-l-2 border-ink' : ''}"
+            } {i > 0 ? 'border-l-2 border-ink' : ''} {
+              i === 0 ? 'rounded-l-full' : i === views.length - 1 ? 'rounded-r-full' : ''
+            }"
           >
             {v.label()}
+            <!-- Vertical-only extender: the three buttons are flush
+                 neighbours, so any horizontal growth would steal a
+                 neighbour's tap zone. They are already ≥44px wide. -->
+            <span aria-hidden="true" style="position:absolute; inset:-9px 0 -11px;"></span>
           </button>
         {/each}
       </div>

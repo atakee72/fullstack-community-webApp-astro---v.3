@@ -411,17 +411,20 @@
 
     <!-- Combined month stepper: ‹ {Mai} {2026} › — italic teal month +
          bold year inside the same pill as the prev/next buttons. -->
+    <!-- No `overflow-hidden` on the pill wrappers below: it clipped the
+         buttons' invisible hit-area extenders, silently undoing the ≥44px
+         tap targets. The end buttons round themselves instead. -->
     <div class="flex items-center justify-end gap-2 mt-5">
       <div
         data-tour="cal-month-nav"
-        class="inline-flex items-center border-[1.5px] border-ink rounded-full overflow-hidden font-dmmono text-[11px] font-semibold leading-none"
+        class="inline-flex items-center border-[1.5px] border-ink rounded-full font-dmmono text-[11px] font-semibold leading-none"
       >
         <button
           type="button"
           onclick={onPrevMonth}
           aria-label={$t['cal.nav.prevMonth.aria']}
-          class="px-2.5 py-1 hover:bg-paper-warm transition-colors"
-        >‹</button>
+          class="relative rounded-l-full px-2.5 py-1 hover:bg-paper-warm transition-colors"
+        >‹<span aria-hidden="true" style="position:absolute; inset:-18px -9px -7px;"></span></button>
         <span
           class="px-3 py-1 border-l-[1.5px] border-r-[1.5px] border-ink uppercase tracking-[0.05em]"
         >
@@ -431,8 +434,8 @@
           type="button"
           onclick={onNextMonth}
           aria-label={$t['cal.nav.nextMonth.aria']}
-          class="px-2.5 py-1 hover:bg-paper-warm transition-colors"
-        >›</button>
+          class="relative rounded-r-full px-2.5 py-1 hover:bg-paper-warm transition-colors"
+        >›<span aria-hidden="true" style="position:absolute; inset:-18px -9px -7px;"></span></button>
       </div>
       {#if showToday}
         <button
@@ -452,23 +455,28 @@
           · <b class="text-ochre">{liveCount}</b> {$t['cal.mobile.statsLiveNow']}
         {/if}
       </div>
+      <!-- Toggle-button group, not a tablist — see the same switcher in
+           CalendarTitleBlock.svelte for why. -->
       <div
         data-tour="cal-view"
-        class="inline-flex border-2 border-ink rounded-full overflow-hidden font-dmmono text-[12px] font-semibold shrink-0"
-        role="tablist"
+        class="inline-flex border-2 border-ink rounded-full font-dmmono text-[12px] font-semibold shrink-0"
+        role="group"
         aria-label="View"
       >
         {#each views as v, i (v.k)}
           <button
             type="button"
-            role="tab"
-            aria-selected={view === v.k}
+            aria-pressed={view === v.k}
             onclick={() => onView?.(v.k)}
-            class="px-3 py-1 transition-colors {
+            class="relative px-3 py-1 transition-colors {
               view === v.k ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
-            } {i > 0 ? 'border-l-2 border-ink' : ''}"
+            } {i > 0 ? 'border-l-2 border-ink' : ''} {
+              i === 0 ? 'rounded-l-full' : i === views.length - 1 ? 'rounded-r-full' : ''
+            }"
           >
             {v.label()}
+            <!-- Vertical-only extender — flush neighbours, already ≥44 wide. -->
+            <span aria-hidden="true" style="position:absolute; inset:-7px 0 -11px;"></span>
           </button>
         {/each}
       </div>

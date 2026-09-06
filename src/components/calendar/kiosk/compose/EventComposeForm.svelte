@@ -189,7 +189,7 @@
           type="button"
           onclick={() => (category = cat)}
           aria-pressed={on}
-          class={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bricolage font-semibold text-[13px] border-[1.5px] transition-all flex-shrink-0 ${
+          class={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bricolage font-semibold text-[13px] border-[1.5px] transition-all flex-shrink-0 ${
             on
               ? `${style.bgClass} ${style.borderClass} ${style.textOnFill} shadow-[2px_2px_0_var(--k-ink,#1b1a17)]`
               : `bg-transparent ${style.borderClass} ${style.textClass}`
@@ -197,6 +197,15 @@
         >
           <span aria-hidden="true">{style.glyph}</span>
           <span>{$t[`cal.cat.${cat}.label` as const]}</span>
+          <!-- Invisible hit-area extender (SaveToggle pattern) — the small
+               pill is a deliberate look, so the tap target grows without it.
+               The row is an overflow-x scroller, so anything outside its
+               padding box would be clipped: the extender therefore grows
+               DOWNWARD into the row's `pb-3`, taking only the 2px available
+               above. Horizontal stays inside half the `gap-1.5`. Insets
+               resolve against the padding box, hence the 1.5px border
+               compensation. -->
+          <span aria-hidden="true" style="position:absolute; inset:-2px -4px -12px;"></span>
         </button>
       {/each}
     </div>
@@ -244,7 +253,7 @@
         <input
           type="date"
           bind:value={startDate}
-          class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
+          class="w-full min-h-[44px] appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
         />
       </label>
       <label class="block">
@@ -255,7 +264,7 @@
           type="time"
           bind:value={startTime}
           disabled={allDay}
-          class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px] disabled:opacity-50"
+          class="w-full min-h-[44px] appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px] disabled:opacity-50"
         />
       </label>
       <label class="block">
@@ -266,7 +275,7 @@
           type="time"
           bind:value={endTime}
           disabled={allDay}
-          class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px] disabled:opacity-50"
+          class="w-full min-h-[44px] appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px] disabled:opacity-50"
         />
       </label>
     </div>
@@ -279,7 +288,7 @@
           type="date"
           bind:value={endDate}
           min={startDate}
-          class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
+          class="w-full min-h-[44px] appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
         />
       </label>
     {/if}
@@ -356,7 +365,7 @@
           max="10000"
           bind:value={capacity}
           placeholder={$t['cal.compose.field.capacity.placeholder']}
-          class="w-full appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
+          class="w-full min-h-[44px] appearance-none bg-paper border border-ink rounded-sm px-3 py-1.5 font-bricolage text-[14px]"
         />
       </label>
       <!-- Sichtbarkeit select HIDDEN 2026-08-30 (was public/private): the
