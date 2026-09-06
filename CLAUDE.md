@@ -26,7 +26,7 @@ pnpm build        # Production build
 pnpm preview      # Preview production build
 pnpm type-check   # TypeScript validation
 npx -y svelte-check@4  # Svelte diagnostics sweep — dev-only warnings (e.g. state_referenced_locally) never appear in `pnpm build` output
-# CI (checks.yml) gates PRs on ratchet-only error budgets: tsc ≤27, svelte-check ≤94 (2026-08-30 baselines — lower them when errors get fixed, never raise them)
+# CI (checks.yml) gates PRs on ratchet-only error budgets: tsc ≤26, svelte-check ≤93 (2026-09-06 baselines, lowered from 27/94 when the contact-form i18n fix cleared an untyped record — lower them when errors get fixed, never raise them)
 ```
 
 ## Project Structure

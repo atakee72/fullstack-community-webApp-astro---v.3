@@ -120,6 +120,16 @@ CTA routes to `/marketplace/edit/{id}?from=backfill`. Edit page pre-populates wh
 - `replyTo: senderEmail` on the seller email is the privacy mechanism — seller can reply directly to the buyer, but the seller's email never appears on any page the buyer sees.
 - Confirmation email to buyer has an "ignore if you didn't send this" footer for impersonation victims.
 
+**Contact-form copy is fully i18n'd (DE/EN).** Both the server error codes and
+the client `validate()` messages live in kiosk-i18n under `market.contact.error.*`
+and `market.contact.validate.*` (`0576253e` + `6b1b60d6`, 2026-09-06). Before that,
+`ContactForm.svelte` carried a local German-only `ERROR_MESSAGES` record that
+*shadowed* the existing dict keys, so EN visitors got German error text — a dead-code
+bug, not missing translation. `errorCopy(code?)` resolves a known code to its key and
+falls back to `market.contact.error.generic`; `validate()` returns dict strings via
+`tStr` with `{n}` for the length limits. Add new codes as keys in BOTH dicts, never as
+local literals.
+
 **No synchronous 550/bounce → `seller_unreachable` mapping (parked, prod-impossible).**
 The `410 seller_unreachable` fires only when the seller row has **no email at
 all** (`contact.ts` ~L194). A hard SMTP 550 (recipient rejected) is thrown from
