@@ -53,11 +53,32 @@ export const POST: APIRoute = async ({ request }) => {
     const db = await connectDB();
     const collection = db.collection(collectionType);
 
-    // Toggle like/unlike
-    // Note: We store userId in likedBy array using the ID from the NextAuth session.
+    // Toggle like/unlike.
+    // We store userId in likedBy using the ID from the NextAuth session, and
+    // derive `likes` from likedBy.length in the SAME update (aggregation
+    // pipeline) so the count can never drift from the array: a repeated like
+    // (already in likedBy) or repeated unlike (already absent) is idempotent,
+    // and any pre-existing drift self-heals on the next toggle. This replaces
+    // the old $addToSet/$pull + unconditional $inc, where a double-fire would
+    // bump `likes` without changing likedBy.
     const updateOperation = action === 'like'
-      ? { $addToSet: { likedBy: userId }, $inc: { likes: 1 } }
-      : { $pull: { likedBy: userId }, $inc: { likes: -1 } };
+      ? [
+          { $set: { likedBy: { $setUnion: [{ $ifNull: ['$likedBy', []] }, [userId]] } } },
+          { $set: { likes: { $size: { $ifNull: ['$likedBy', []] } } } },
+        ]
+      : [
+          {
+            $set: {
+              likedBy: {
+                $filter: {
+                  input: { $ifNull: ['$likedBy', []] },
+                  cond: { $ne: ['$$this', userId] },
+                },
+              },
+            },
+          },
+          { $set: { likes: { $size: { $ifNull: ['$likedBy', []] } } } },
+        ];
 
     const result = await collection.updateOne(
       { _id: new ObjectId(postId) },
