@@ -423,9 +423,10 @@ const de = {
   // Live mode for the feed footer.
   'feed.footer.live': '● LIVE · post just landed',
 
-  // ─── Comment edit / delete ─────────────────────────────────────────
+  // ─── Comment edit / delete / report ────────────────────────────────
   'comment.actions.edit': 'bearbeiten',
   'comment.actions.delete': 'löschen',
+  'comment.actions.report': 'melden',
   'comment.edited': 'bearbeitet',
   'comment.edit.save': 'speichern',
   'comment.edit.cancel': 'abbrechen',
@@ -2311,6 +2312,7 @@ const en: Dict = {
 
   'comment.actions.edit': 'edit',
   'comment.actions.delete': 'delete',
+  'comment.actions.report': 'report',
   'comment.edited': 'edited',
   'comment.edit.save': 'save',
   'comment.edit.cancel': 'cancel',

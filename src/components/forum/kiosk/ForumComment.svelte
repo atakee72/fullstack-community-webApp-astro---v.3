@@ -6,8 +6,10 @@
   //   │ Body text (1-2 lines)                                │
   //   └─────────────────────────────────────────────────────┘
   //
-  // Actions row (pencil + trash) is visible only when the viewer is the
-  // author. Pencil is gated by:
+  // Actions row is author-XOR-reader: the author sees pencil + trash, any
+  // other logged-in viewer sees the ⚑ report trigger instead (the two
+  // guards are mutually exclusive, so they share one slot).
+  // Pencil is gated by:
   //   • isLatest — this is the newest comment on the thread (no later
   //     comment from anyone has landed yet).
   //   • inTimeWindow — under 15 min since `comment.date`.
@@ -17,6 +19,7 @@
 
   import KioskAvatar from './KioskAvatar.svelte';
   import TranslateControl from './TranslateControl.svelte';
+  import KioskReportModal from './KioskReportModal.svelte';
   import { t, tStr } from '../../../lib/kiosk-i18n';
 
   let {
@@ -99,6 +102,15 @@
   );
   const canEdit = $derived(isAuthor && isLatest && inTimeWindow && isApproved && !!onEdit);
   const canDelete = $derived(isAuthor && !!onDelete);
+  // Mirrors the post-level guard in ForumPostDetail: logged in, not your own.
+  const canReport = $derived(!!currentUserId && !isAuthor);
+
+  let reportOpen = $state(false);
+  // The modal's subtitle wants a short handle on what's being reported;
+  // a comment has no title, so quote the (untranslated) opening words.
+  const reportTitle = $derived(
+    originalBody.length > 60 ? `${originalBody.slice(0, 60).trimEnd()}…` : originalBody
+  );
 
   // ─── Edit mode ──────────────────────────────────────────────────────
   let editing = $state(false);
@@ -233,7 +245,14 @@
           · {$t['comment.edited']}
         </span>
       {/if}
-      {#if (canEdit || canDelete) && !editing}
+      {#if (canEdit || canDelete || canReport) && !editing}
+        <!-- Hit-area extenders (the `aria-hidden` absolute spans) grow each
+             control's tap target without touching its visible box — the
+             SaveToggle pattern. Vertical is free (the header row has room
+             above and below); horizontal is capped at half the 10px
+             `gap-2.5` so two adjacent extenders meet but never overlap —
+             which lands the tap targets at ~42px rather than a full 44,
+             the deliberate trade for not restructuring the row. -->
         <span
           class="ml-auto inline-flex items-center gap-2.5"
         >
@@ -241,20 +260,33 @@
             <button
               type="button"
               onclick={enterEdit}
-              class="font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute hover:text-ink underline-offset-2 hover:underline"
+              class="relative font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute hover:text-ink underline-offset-2 hover:underline"
               aria-label={$t['comment.actions.edit']}
             >
               ✎ {$t['comment.actions.edit']}
+              <span aria-hidden="true" style="position:absolute; inset:-13px -5px;"></span>
             </button>
           {/if}
           {#if canDelete}
             <button
               type="button"
               onclick={handleDeleteClick}
-              class="font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute hover:text-danger underline-offset-2 hover:underline"
+              class="relative font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute hover:text-danger underline-offset-2 hover:underline"
               aria-label={$t['comment.actions.delete']}
             >
               🗑 {$t['comment.actions.delete']}
+              <span aria-hidden="true" style="position:absolute; inset:-13px -5px;"></span>
+            </button>
+          {/if}
+          {#if canReport}
+            <button
+              type="button"
+              onclick={() => (reportOpen = true)}
+              class="relative font-dmmono text-[10.5px] uppercase tracking-[0.08em] text-ink-mute hover:text-danger underline-offset-2 hover:underline"
+              aria-label={$t['comment.actions.report']}
+            >
+              ⚑ {$t['comment.actions.report']}
+              <span aria-hidden="true" style="position:absolute; inset:-13px -5px;"></span>
             </button>
           {/if}
         </span>
@@ -304,3 +336,11 @@
     {/if}
   </div>
 </article>
+
+<KioskReportModal
+  open={reportOpen}
+  contentId={String(comment._id)}
+  contentType="comment"
+  contentTitle={reportTitle}
+  onClose={() => (reportOpen = false)}
+/>
