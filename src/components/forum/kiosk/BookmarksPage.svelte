@@ -60,7 +60,12 @@
       {/if}
     </h1>
     <p class="font-dmmono text-[10px] uppercase tracking-[0.05em] text-ink-mute mt-1.5">
-      {items.length} {$locale === 'de' ? 'BEITRÄGE' : 'POSTS'}
+      {items.length}
+      {#if items.length === 1}
+        {$locale === 'de' ? 'BEITRAG' : 'POST'}
+      {:else}
+        {$locale === 'de' ? 'BEITRÄGE' : 'POSTS'}
+      {/if}
     </p>
   </section>
 
