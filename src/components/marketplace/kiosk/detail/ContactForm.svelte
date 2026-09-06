@@ -37,16 +37,31 @@
   }
 
   // ─── Error code → toast copy ────────────────────────────────────────────
+  //
+  // The copy lives in kiosk-i18n under `market.contact.error.*` (DE + EN),
+  // like every other string in this component — a local German-only record
+  // used to shadow those keys, so EN visitors got German error text. Codes
+  // are whatever `/api/listings/[id]/contact` returns; anything not in this
+  // list (a newly added server code, say) falls back to the generic line
+  // rather than surfacing a raw code.
 
-  const ERROR_MESSAGES: Record<string, string> = {
-    listing_pending_review: 'Diese Anzeige wird gerade geprüft.',
-    rate_limited_hourly: 'Du hast in der letzten Stunde zu viele Nachrichten gesendet.',
-    rate_limited_daily_to_owner: 'Du hast diesen Verkäufer heute schon mehrfach kontaktiert.',
-    rate_limited_ip: 'Zu viele Anfragen aus deinem Netzwerk.',
-    listing_flooded: 'Diese Anzeige bekommt gerade viele Nachrichten. Versuch es später.',
-    message_flagged: 'Deine Nachricht wurde vom System markiert.',
-    seller_unreachable: 'Der Verkäufer ist gerade nicht erreichbar.',
-  };
+  const KNOWN_ERROR_CODES = [
+    'listing_pending_review',
+    'rate_limited_hourly',
+    'rate_limited_daily_to_owner',
+    'rate_limited_ip',
+    'listing_flooded',
+    'message_flagged',
+    'seller_unreachable',
+  ] as const;
+
+  type KnownErrorCode = (typeof KNOWN_ERROR_CODES)[number];
+
+  function errorCopy(code?: string): string {
+    return code && (KNOWN_ERROR_CODES as readonly string[]).includes(code)
+      ? $t[`market.contact.error.${code as KnownErrorCode}`]
+      : $t['market.contact.error.generic'];
+  }
 
   // ─── Submit ──────────────────────────────────────────────────────────────
 
@@ -74,9 +89,7 @@
       formState = 'sent';
     } else {
       formState = 'error';
-      const userMsg = result.error
-        ? (ERROR_MESSAGES[result.error] ?? 'Etwas ist schiefgelaufen. Bitte versuch es erneut.')
-        : 'Etwas ist schiefgelaufen. Bitte versuch es erneut.';
+      const userMsg = errorCopy(result.error);
       errorMessage = userMsg;
       showError(userMsg);
     }

@@ -750,6 +750,8 @@ const de = {
   'market.contact.error.listing_flooded': 'Diese Anzeige bekommt gerade viele Nachrichten. Versuch es später.',
   'market.contact.error.message_flagged': 'Deine Nachricht wurde vom System markiert.',
   'market.contact.error.seller_unreachable': 'Der Verkäufer ist gerade nicht erreichbar.',
+  // Fallback for any code the client doesn't know (new server code, network hiccup).
+  'market.contact.error.generic': 'Etwas ist schiefgelaufen. Bitte versuch es erneut.',
 
   // ─── Marketplace ─ Owner actions ───────────────────────────────────────
 
@@ -2603,6 +2605,8 @@ const en: Dict = {
   'market.contact.error.listing_flooded': 'This listing is getting a lot of messages right now. Try again later.',
   'market.contact.error.message_flagged': 'Your message was flagged by our system.',
   'market.contact.error.seller_unreachable': 'The seller is currently unreachable.',
+  // Fallback for any code the client doesn't know (new server code, network hiccup).
+  'market.contact.error.generic': 'Something went wrong. Please try again.',
 
   // ─── Marketplace ─ Owner actions ───────────────────────────────────────
 
