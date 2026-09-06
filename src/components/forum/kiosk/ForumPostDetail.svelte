@@ -715,7 +715,19 @@
              (the `ml-auto` group) used to be pushed past the viewport edge
              with no scroll path — report was literally unreachable there.
              Wrapped, the group drops to its own line and stays right-aligned
-             (auto margins resolve per flex line, so desktop is unchanged). -->
+             (auto margins resolve per flex line, so desktop is unchanged).
+
+             The `aria-hidden` absolute spans inside Like / gespeichert /
+             ⚑ melden are invisible hit-area extenders (the SaveToggle
+             pattern) that lift those three tap targets to ≥44px without
+             changing a visible box. The insets are asymmetric on purpose:
+             `inset` resolves against the PADDING box, so the two pill
+             buttons need 2px extra to clear their own `border-2`, and once
+             the strip wraps at 375 the pills sit on stacked lines — each
+             one may only claim half the 12px row gap on the side facing
+             its neighbour. Horizontal insets stay inside half the flex gap
+             for the same reason. „Antworten" and „↗ teilen" are
+             deliberately left alone — they have no click handler yet. -->
         <div
           class="flex flex-wrap items-center gap-3 py-2.5 mb-7 border-t border-b border-dashed border-rule font-dmmono text-[11px] text-ink-soft tracking-[0.04em]"
         >
@@ -724,11 +736,12 @@
             onclick={toggleLike}
             disabled={!currentUserId || likeBusy}
             aria-pressed={liked}
-            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-ink transition-colors font-semibold disabled:cursor-not-allowed {liked ? 'bg-wine text-paper' : 'bg-paper-warm hover:bg-paper'}"
+            class="relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-ink transition-colors font-semibold disabled:cursor-not-allowed {liked ? 'bg-wine text-paper' : 'bg-paper-warm hover:bg-paper'}"
             aria-label="Like"
           >
             <span aria-hidden="true">♥</span>
             <span>{likeCount} {$t['detail.engagement.thanks']}</span>
+            <span aria-hidden="true" style="position:absolute; inset:-13px -8px -8px;"></span>
           </button>
           <button
             type="button"
@@ -743,13 +756,14 @@
             onclick={toggleBookmark}
             disabled={!currentUserId || bookmarkBusy}
             aria-pressed={bookmarked}
-            class={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-ink transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
+            class={`relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-ink transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
               bookmarked ? 'bg-ochre' : 'bg-transparent hover:bg-paper-warm'
             }`}
             aria-label={$t['detail.engagement.saved']}
           >
             <span aria-hidden="true">🔖</span>
             <span>{$t['detail.engagement.saved']}</span>
+            <span aria-hidden="true" style="position:absolute; inset:-8px -8px -13px;"></span>
           </button>
           <span class="ml-auto flex gap-3.5 text-ink-mute">
             <button
@@ -762,9 +776,10 @@
               <button
                 type="button"
                 onclick={() => (reportOpen = true)}
-                class="inline-flex items-center gap-1 hover:text-ink transition-colors"
+                class="relative inline-flex items-center gap-1 hover:text-ink transition-colors"
               >
                 <span aria-hidden="true">⚑</span> {$t['detail.report']}
+                <span aria-hidden="true" style="position:absolute; inset:-14px -7px;"></span>
               </button>
             {/if}
           </span>
