@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { t } from '../../../../lib/kiosk-i18n';
+  import { t, tStr } from '../../../../lib/kiosk-i18n';
   import { sendContactMessage } from '../../../../hooks/api/useContactListingMutation';
   import { showToast, showSuccess, showError } from '../../../../utils/toast';
   import type { Listing } from '../../../../types/listing';
@@ -27,12 +27,16 @@
 
   // ─── Validation ──────────────────────────────────────────────────────────
 
+  // Copy lives in kiosk-i18n under `market.contact.validate.*` (DE + EN), next
+  // to the server error codes below — these land in the same inline slot, so
+  // they were the other half of the German-only gap. The limit rides along as
+  // `{n}` via tStr, keeping the number next to the check it belongs to.
   function validate(): string | null {
-    if (name.trim().length < 2) return 'Name mindestens 2 Zeichen.';
-    if (name.trim().length > 60) return 'Name maximal 60 Zeichen.';
-    if (!email.trim().match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) return 'Bitte eine gültige E-Mail eingeben.';
-    if (message.trim().length < 20) return 'Nachricht mindestens 20 Zeichen.';
-    if (message.trim().length > 600) return 'Nachricht maximal 600 Zeichen.';
+    if (name.trim().length < 2) return tStr($t['market.contact.validate.name.min'], { n: 2 });
+    if (name.trim().length > 60) return tStr($t['market.contact.validate.name.max'], { n: 60 });
+    if (!email.trim().match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) return $t['market.contact.validate.email'];
+    if (message.trim().length < 20) return tStr($t['market.contact.validate.message.min'], { n: 20 });
+    if (message.trim().length > 600) return tStr($t['market.contact.validate.message.max'], { n: 600 });
     return null;
   }
 

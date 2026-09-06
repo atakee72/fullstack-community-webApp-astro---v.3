@@ -753,6 +753,14 @@ const de = {
   // Fallback for any code the client doesn't know (new server code, network hiccup).
   'market.contact.error.generic': 'Etwas ist schiefgelaufen. Bitte versuch es erneut.',
 
+  // Client-side field validation (same inline slot as the error codes above).
+  // {n} is the limit, interpolated with tStr so the number lives in the check.
+  'market.contact.validate.name.min': 'Name mindestens {n} Zeichen.',
+  'market.contact.validate.name.max': 'Name maximal {n} Zeichen.',
+  'market.contact.validate.email': 'Bitte eine gültige E-Mail eingeben.',
+  'market.contact.validate.message.min': 'Nachricht mindestens {n} Zeichen.',
+  'market.contact.validate.message.max': 'Nachricht maximal {n} Zeichen.',
+
   // ─── Marketplace ─ Owner actions ───────────────────────────────────────
 
   'market.owner.header': 'DEINE ANZEIGE',
@@ -2607,6 +2615,14 @@ const en: Dict = {
   'market.contact.error.seller_unreachable': 'The seller is currently unreachable.',
   // Fallback for any code the client doesn't know (new server code, network hiccup).
   'market.contact.error.generic': 'Something went wrong. Please try again.',
+
+  // Client-side field validation (same inline slot as the error codes above).
+  // {n} is the limit, interpolated with tStr so the number lives in the check.
+  'market.contact.validate.name.min': 'Name must be at least {n} characters.',
+  'market.contact.validate.name.max': 'Name must be at most {n} characters.',
+  'market.contact.validate.email': 'Please enter a valid email address.',
+  'market.contact.validate.message.min': 'Message must be at least {n} characters.',
+  'market.contact.validate.message.max': 'Message must be at most {n} characters.',
 
   // ─── Marketplace ─ Owner actions ───────────────────────────────────────
 
