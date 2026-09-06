@@ -43,21 +43,27 @@
   }>();
 
   // ─── State ─────────────────────────────────────────────────────────
-  // Defaults computed at mount: today + 09:00–17:00 (or "next full hour"
-  // if today and now is past 09:00). Mirrors the existing calendar's
-  // tooltip prefill behaviour.
-  function defaultStartHHMM(): string {
-    const now = new Date();
-    const next = now.getHours() < 9 ? 9 : Math.min(23, now.getHours() + 1);
-    return next.toString().padStart(2, '0') + ':00';
-  }
-  function defaultEndHHMM(): string {
-    const now = new Date();
-    const next = now.getHours() < 9 ? 17 : Math.min(23, now.getHours() + 4);
-    return next.toString().padStart(2, '0') + ':00';
-  }
+  // Default times: a daytime 09:00–17:00 slot. Only when the chosen day
+  // is TODAY does "next full hour" kick in (past 09:00) — a future day
+  // must never inherit the current wall-clock (e.g. picking a day at 22:00
+  // used to prefill 22:00–23:00). Mirrors the calendar tooltip's prefill.
   function todayISO(): string {
     return new Date().toISOString().slice(0, 10);
+  }
+  function isTodayISO(d?: string): boolean {
+    return (d ?? todayISO()) === todayISO();
+  }
+  function defaultStartHHMM(forDate?: string): string {
+    const now = new Date();
+    const next =
+      !isTodayISO(forDate) || now.getHours() < 9 ? 9 : Math.min(23, now.getHours() + 1);
+    return next.toString().padStart(2, '0') + ':00';
+  }
+  function defaultEndHHMM(forDate?: string): string {
+    const now = new Date();
+    const next =
+      !isTodayISO(forDate) || now.getHours() < 9 ? 17 : Math.min(23, now.getHours() + 4);
+    return next.toString().padStart(2, '0') + ':00';
   }
 
   // svelte-ignore state_referenced_locally
@@ -69,11 +75,13 @@
   // svelte-ignore state_referenced_locally
   let startDate = $state(initialValues?.startDate ?? todayISO());
   // svelte-ignore state_referenced_locally
-  let startTime = $state(initialValues?.startTime ?? defaultStartHHMM());
+  let startTime = $state(initialValues?.startTime ?? defaultStartHHMM(initialValues?.startDate));
   // svelte-ignore state_referenced_locally
   let endDate = $state(initialValues?.endDate ?? initialValues?.startDate ?? todayISO());
   // svelte-ignore state_referenced_locally
-  let endTime = $state(initialValues?.endTime ?? defaultEndHHMM());
+  let endTime = $state(
+    initialValues?.endTime ?? defaultEndHHMM(initialValues?.endDate ?? initialValues?.startDate)
+  );
   // svelte-ignore state_referenced_locally
   let allDay = $state(initialValues?.allDay ?? false);
   // svelte-ignore state_referenced_locally
