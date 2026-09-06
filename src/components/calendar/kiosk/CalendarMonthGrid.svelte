@@ -287,7 +287,14 @@
   >
     {#each cells as cell, i (cell.toISOString())}
       {@const inMonth = isSameMonth(cell, visibleMonth)}
-      {@const today = isTodayDate(cell)}
+      <!-- `today` is scoped to the visible month on purpose: the grid pads
+           the first/last week with adjacent-month days, so browsing August
+           while it is Sep 6 used to paint the wine disc, the paper-warm
+           cell tint AND the HEUTE badge onto a 35%-opacity spillover cell.
+           All three are the same "you are here" marker, so all three are
+           suppressed together — getting back to the real today is what the
+           rail's HEUTE button is for. -->
+      {@const today = isTodayDate(cell) && inMonth}
       {@const weekend = isWeekend(cell)}
       {@const dayEvents = sortEventsForDay(events.filter((ev) => eventCoversDay(ev, cell))).slice(0, 3)}
       {@const overflow = events.filter((ev) => eventCoversDay(ev, cell)).length - dayEvents.length}
