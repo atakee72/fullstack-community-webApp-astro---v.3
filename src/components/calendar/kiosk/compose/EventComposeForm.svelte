@@ -227,7 +227,7 @@
       bind:value={title}
       maxlength="80"
       placeholder={$t['cal.compose.field.title.placeholder']}
-      class="w-full appearance-none bg-paper-warm border-[1.5px] border-ink rounded-md px-3 py-2 font-bricolage text-[15px] text-ink placeholder:text-ink-mute/55 outline-none focus:border-wine"
+      class="w-full min-h-[44px] appearance-none bg-paper-warm border-[1.5px] border-ink rounded-md px-3 py-2 font-bricolage text-[15px] text-ink placeholder:text-ink-mute/55 outline-none focus:border-wine"
     />
     <div class="font-dmmono text-[10.5px] text-ink-mute mt-1">
       {titleHint(title.length)}
@@ -320,7 +320,7 @@
       bind:value={location}
       maxlength="200"
       placeholder={$t['cal.compose.field.location.placeholder']}
-      class="w-full appearance-none bg-paper-warm border-[1.5px] border-ink rounded-md px-3 py-2 font-bricolage text-[14px] text-ink placeholder:text-ink-mute/55 outline-none focus:border-wine"
+      class="w-full min-h-[44px] appearance-none bg-paper-warm border-[1.5px] border-ink rounded-md px-3 py-2 font-bricolage text-[14px] text-ink placeholder:text-ink-mute/55 outline-none focus:border-wine"
     />
   </div>
 
