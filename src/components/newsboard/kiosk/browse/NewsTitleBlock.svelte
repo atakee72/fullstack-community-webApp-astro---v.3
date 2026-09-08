@@ -11,7 +11,7 @@
     <div class="font-dmmono uppercase" style="font-size:11px; color:var(--k-ink); letter-spacing:0.16em;">
       {$t['news.titleblock.kicker']}
     </div>
-    <h2 class="font-bricolage" style="font-size:clamp(26px,4vw,38px); font-weight:800; letter-spacing:-0.03em; line-height:1; margin:6px 0 0;">
+    <h2 class="font-bricolage break-words" style="font-size:clamp(26px,4vw,38px); font-weight:800; letter-spacing:-0.03em; line-height:1; margin:6px 0 0;">
       {@html $t['news.titleblock.heading']}
     </h2>
   </div>

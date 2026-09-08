@@ -30,7 +30,7 @@
 
     <a href={`/newsboard/${article.id}`} class="block no-underline">
       <h2
-        class="font-bricolage"
+        class="font-bricolage break-words hyphens-auto"
         style="font-weight:800; font-size:clamp(28px, 7.5vw, 42px); line-height:1.02; letter-spacing:-0.035em;
                margin:0 0 12px; color:var(--k-ink);"
       >{title}</h2>

@@ -40,7 +40,7 @@
 
     <a href={`/newsboard/${article.id}`} class="block no-underline">
       <h3
-        class="font-bricolage"
+        class="font-bricolage break-words hyphens-auto"
         style="font-weight:700; font-size:22px; line-height:1.15; letter-spacing:-0.02em;
                margin:0 0 6px; color:var(--k-ink);"
       >{title}</h3>
