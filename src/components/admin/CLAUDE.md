@@ -7,6 +7,7 @@ Loaded lazily when Claude reads/edits files in `src/components/admin/`.
 - API endpoints under `/api/admin/*` gate via `requireAdminSession()` from `src/lib/auth.ts` — returns a pre-shaped 401/403 `Response` if there's no session or the session lacks admin role. Used by every `/api/admin/announcements/*` and `/api/admin/moderation/*` endpoint. No `ADMIN_USER_IDS` fallback.
 - **Banned-admin gap**: `requireAdminSession()` checks role but not `isBanned` — a banned account that still has `role: 'admin'` keeps moderation access. Documented in `src/components/auth/kiosk/CLAUDE.md`; candidate to close when touching admin APIs next (not fixed here).
 - `/admin/moderation` and `/admin/announcements` both use **`AdminLayout`** (kiosk, plum accent) — both admin surfaces are fully migrated off the legacy `BaseLayout`.
+- **Section rail (2026-09-09)**: `AdminLayout` renders a mono-uppercase nav row (Moderation · Amtliches · Mitglieder, active = `Astro.url.pathname` prefix, plum underline + `aria-current="page"`) under the masthead on desktop AND as a horizontal chip rail on mobile (with a trailing „← Forum"). Static DE like the ribbon. The old per-page `backHref`/`backLabel` props are gone — desktop shows a fixed „← zum Forum". The avatar menu keeps ONE admin entry, „Admin-Bereich" / "Admin area" (`nav.menu.adminArea` → `/admin/moderation`); the rail does the rest. Before this, Amtliches and Mitglieder were URL-only and mobile admin pages had no way out.
 
 ## Kiosk moderation app (`/admin/moderation`)
 
@@ -61,7 +62,7 @@ Below `md`, the app is triage-only by design (per the design handoff's non-negot
 ## Admin Official Announcements (`AnnounceApp.svelte` + `/admin/announcements.astro`)
 **Kiosk design system** (`AdminLayout`, plum accent via `[data-page="admin"]` like moderation) — migrated from the legacy `BaseLayout` panel in July 2026 (Tasks 1–5). Page-level auth gate redirects (unlike moderation's in-page no-access state): logged-out → `/login?redirect=/admin/announcements`, non-admin → `/`.
 
-**Page**: `src/pages/admin/announcements.astro` — SSR-fetches all officials (`{ isOfficial: true }`, sorted createdAt desc, limit 50) via `populateAuthors`, passes as `initialItems`. Mounts `<AnnounceApp client:only="svelte" initialItems adminName />` inside `AdminLayout` with `wordmark="amtliches"`, `backHref="/admin/moderation"`, `backLabel="← zur Moderation"`, `ribbonEcho="requireAdminSession()"`.
+**Page**: `src/pages/admin/announcements.astro` — SSR-fetches all officials (`{ isOfficial: true }`, sorted createdAt desc, limit 50) via `populateAuthors`, passes as `initialItems`. Mounts `<AnnounceApp client:only="svelte" initialItems adminName />` inside `AdminLayout` with `wordmark="amtliches"`, `ribbonEcho="requireAdminSession()"`.
 
 **Component roster** (`src/components/admin/kiosk/announce/`):
 - `AnnounceApp.svelte` — orchestrator. Owns `items`/`status` state, the live kicker clock, `pinnedItems`/`archiveItems`/`nextDisplaced` derivations (`isPinned()` from `annFormat.ts`, `pickDisplaced()`/`MAX_PINS` from `src/lib/announcements/pinRules.ts` — server invariant: at most `MAX_PINS` (3) items pinned at once), and every mutation (create, unpin, re-pin, edit, delete).
@@ -87,7 +88,7 @@ Below `md`, the app is triage-only by design (per the design handoff's non-negot
 - **Known deviation from an early plan draft**: the create endpoint is `POST /api/admin/announcements/create` (not `/api/admin/announcements` with a bare POST) — the composer's mono echo line (`POST /api/admin/announcements/create`) documents this in the UI itself. Reviewed and upheld; don't "fix" it back.
 
 ## Members list (`MitgliederApp.svelte` + `/admin/mitglieder`)
-Kiez-verification v1 (Aug 2026): `users.verified` is strict (`=== true`) and admin-toggled — the toggle IS the proof mechanism for now. Page self-gates like `moderation.astro` (302 → login when logged out, §09 state for non-admins), `AdminLayout` with `wordmark="mitglieder"`, `backHref="/admin/moderation"`. Reached by direct URL (same convention as `/admin/announcements` — no inbound nav link).
+Kiez-verification v1 (Aug 2026): `users.verified` is strict (`=== true`) and admin-toggled — the toggle IS the proof mechanism for now. Page self-gates like `moderation.astro` (302 → login when logged out, §09 state for non-admins), `AdminLayout` with `wordmark="mitglieder"`. Reached via the AdminLayout section rail (see below) — before 2026-09-09 it was reachable only by direct URL.
 - **`GET /api/admin/users`** — all non-tombstoned users (`anonymized: { $ne: true }`), ALLOWLIST projection `{ name, handle, createdAt, emailVerified, verified, role }`, createdAt desc, cap 1000. Never widen to a blocklist projection.
 - **`PATCH /api/admin/users/[id]`** — body strictly `{ verified: boolean }` (Zod `.strict()`), match excludes tombstones (404). This endpoint is the ONLY writer of `users.verified`.
 - Badge sites flipped to strict in the same feature: `getProfileMe`/`getPublicProfile` (`verified === true`), `ForumPostDetail` (`topic.author?.verified === true`), marketplace `populateSellers` → `sellerVerified` → `SellerCard`.

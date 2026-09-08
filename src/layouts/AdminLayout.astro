@@ -13,8 +13,6 @@ export interface Props {
   title: string;
   adminName?: string;
   wordmark?: string;   // masthead italic word — 'moderation' | 'amtliches' | …
-  backHref?: string;   // desktop back-link target
-  backLabel?: string;  // desktop back-link label
   ribbonEcho?: string; // mono echo on the right of the internal-area ribbon
 }
 
@@ -22,10 +20,20 @@ const {
   title,
   adminName = '',
   wordmark = 'moderation',
-  backHref = '/',
-  backLabel = '← zurück zum Forum',
   ribbonEcho = 'user.role === "admin"',
 } = Astro.props;
+
+// Section rail (2026-09-09): the three admin pages are siblings, so the
+// layout owns the navigation between them — before this, Amtliches and
+// Mitglieder were reachable only by URL (the avatar menu links to
+// /admin/moderation alone) and mobile had no back-link at all. Static DE,
+// same locked decision as the ribbon. Active = current path prefix.
+const ADMIN_SECTIONS = [
+  { href: '/admin/moderation',    label: 'Moderation' },
+  { href: '/admin/announcements', label: 'Amtliches' },
+  { href: '/admin/mitglieder',    label: 'Mitglieder' },
+] as const;
+const currentPath = Astro.url.pathname;
 
 const trimmedAdminName = adminName.trim();
 const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
@@ -80,7 +88,7 @@ const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
         </div>
 
         <div class="flex items-center" style="gap:14px;">
-          <a href={backHref} class="font-dmmono no-underline" style="font-size:11px; color:var(--k-ink-mute);">{backLabel}</a>
+          <a href="/forum" class="font-dmmono no-underline" style="font-size:11px; color:var(--k-ink-mute);">← zum Forum</a>
           <AuthLangToggle client:load />
           <div
             class="font-bricolage"
@@ -89,12 +97,27 @@ const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
           >{adminInitial}</div>
         </div>
       </header>
+
+      <nav aria-label="Admin-Bereiche" class="flex font-dmmono" style="gap:28px; padding:10px 36px; border-bottom:1px dashed var(--k-rule); font-size:11px; letter-spacing:0.12em; text-transform:uppercase;">
+        {ADMIN_SECTIONS.map(({ href, label }) => {
+          const active = currentPath.startsWith(href);
+          return (
+            <a
+              href={href}
+              aria-current={active ? 'page' : undefined}
+              class="no-underline"
+              style={`padding:2px 0; border-bottom:2px solid ${active ? 'var(--k-accent)' : 'transparent'}; color:${active ? 'var(--k-accent)' : 'var(--k-ink-mute)'}; font-weight:${active ? 700 : 400};`}
+            >{label}</a>
+          );
+        })}
+      </nav>
     </div>
 
     <!-- ═══ Mobile (< md) masthead — slim ribbon + compact wordmark. ═══
-         Per JSX kiosk-admin.jsx:482-491. No back-link, no avatar — those
-         are desktop-only chrome; AuthLangToggle stays available (moved
-         into this row) so DE/EN swap still works on mobile. -->
+         Per JSX kiosk-admin.jsx:482-491. No avatar — desktop-only chrome;
+         AuthLangToggle stays available (moved into this row) so DE/EN swap
+         still works on mobile. The section rail below carries navigation
+         (sections + ← Forum) so no admin page is a dead end on a phone. -->
     <div class="md:hidden">
       <div
         class="font-dmmono"
@@ -115,6 +138,21 @@ const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
 
         <AuthLangToggle client:load />
       </header>
+
+      <nav aria-label="Admin-Bereiche" class="no-scrollbar flex overflow-x-auto font-dmmono" style="gap:20px; padding:9px 18px; border-bottom:1px dashed var(--k-rule); font-size:10px; letter-spacing:0.12em; text-transform:uppercase; white-space:nowrap;">
+        {ADMIN_SECTIONS.map(({ href, label }) => {
+          const active = currentPath.startsWith(href);
+          return (
+            <a
+              href={href}
+              aria-current={active ? 'page' : undefined}
+              class="no-underline shrink-0"
+              style={`padding:2px 0; border-bottom:2px solid ${active ? 'var(--k-accent)' : 'transparent'}; color:${active ? 'var(--k-accent)' : 'var(--k-ink-mute)'}; font-weight:${active ? 700 : 400};`}
+            >{label}</a>
+          );
+        })}
+        <a href="/forum" class="no-underline shrink-0" style="margin-left:auto; padding:2px 0; color:var(--k-ink-mute);">← Forum</a>
+      </nav>
     </div>
 
     <main class="flex-1">

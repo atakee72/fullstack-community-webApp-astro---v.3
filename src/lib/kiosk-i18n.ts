@@ -83,7 +83,7 @@ const de = {
   'nav.menu.beitraege': 'Meine Beiträge',
   'nav.menu.gespeichert': 'Gespeichert',
   'nav.menu.beilage': 'Die Beilage',
-  'nav.menu.moderation': 'Moderation',
+  'nav.menu.adminArea': 'Admin-Bereich',
   'nav.menu.abmelden': 'Abmelden',
   'nav.menu.seit': 'IM KIEZ SEIT',
 
@@ -2002,7 +2002,7 @@ const en: Dict = {
   'nav.menu.beitraege': 'My posts',
   'nav.menu.gespeichert': 'Saved',
   'nav.menu.beilage': 'The Beilage (blog)',
-  'nav.menu.moderation': 'Moderation',
+  'nav.menu.adminArea': 'Admin area',
   'nav.menu.abmelden': 'Sign out',
   'nav.menu.seit': 'IN THE KIEZ SINCE',
 

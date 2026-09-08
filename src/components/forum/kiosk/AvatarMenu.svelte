@@ -122,7 +122,7 @@
     </div>
     {#if isAdmin}
       <div class="am-group am-admin">
-        <a role="menuitem" href="/admin/moderation" class="am-row am-plum font-bricolage">{$t['nav.menu.moderation']}</a>
+        <a role="menuitem" href="/admin/moderation" class="am-row am-plum font-bricolage">{$t['nav.menu.adminArea']}</a>
       </div>
     {/if}
     <div class="am-foot">
