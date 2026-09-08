@@ -81,6 +81,9 @@
       <AdmCheckbox checked={selected} onclick={onToggleSelect} />
       <AdmSourceStrap {item} />
       <AdmTypeChip type={item.contentType} />
+      {#if item.contentDeleted}
+        <span class="font-dmmono" title={$t['admin.card.contentDeleted']} style="font-size: 10.5px; font-weight: 600; color: var(--k-ink-mute); background: transparent; padding: 3px 9px; border-radius: var(--k-radius-sm); border: 1px dashed var(--k-ink-mute); display: inline-flex; align-items: center; gap: 4px;">⌫ {$t['admin.card.contentDeleted']}</span>
+      {/if}
       <span style="font-size: 13px; color: var(--k-ink-soft); display: inline-flex; align-items: center; gap: 7px;">
         {$t['admin.card.by']} <b>{item.authorName ?? item.authorId}</b>
         <AdmStrikeDots n={item.authorStrikes} />

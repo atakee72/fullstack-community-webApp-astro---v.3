@@ -77,6 +77,9 @@
     <div style="display: flex; align-items: center; gap: 7px; padding: 10px 14px; flex-wrap: wrap; border-bottom: 1px dashed var(--k-rule);">
       <AdmSourceStrap {item} />
       <AdmTypeChip type={item.contentType} />
+      {#if item.contentDeleted}
+        <span class="font-dmmono" title={$t['admin.card.contentDeleted']} style="font-size: 9.5px; font-weight: 600; color: var(--k-ink-mute); background: transparent; padding: 2px 7px; border-radius: var(--k-radius-sm); border: 1px dashed var(--k-ink-mute); display: inline-flex; align-items: center; gap: 3px;">⌫ {$t['admin.card.contentDeleted']}</span>
+      {/if}
       <span class="font-dmmono" style="font-size: 10px; color: var(--k-ink-mute); margin-left: auto;">{formatTime(item.createdAt)}</span>
     </div>
 

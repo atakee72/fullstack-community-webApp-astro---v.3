@@ -136,6 +136,10 @@ export interface FlaggedItem {
   reportDetails?: string;
   reportCount?: number;
 
+  // Set when the author self-deleted the content while this flag was open —
+  // the record stays in the queue, reviewed/struck from the stored snapshot.
+  contentDeleted?: boolean;
+
   // Review status
   reviewStatus: AdmReviewStatus;
   reviewedBy?: string;
