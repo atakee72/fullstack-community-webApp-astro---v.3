@@ -7,6 +7,7 @@ import { parseRequestBody } from '../../../schemas/validation.utils';
 import { moderateText, checkSpamWithGPT, mergeModerationResults, createFlaggedContentRecord } from '../../../lib/moderation';
 import { rejectIfBanned } from '../../../lib/auth/banGuard';
 import { alertModerationFlagged } from '../../../lib/adminAlerts';
+import { decodeHtmlEntities } from '../../../utils/decodeHtmlEntities';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -50,7 +51,14 @@ export const POST: APIRoute = async ({ request }) => {
       return validation.response;
     }
 
-    const { title, description, sourceUrl, sourceName, imageUrl, submitterComment, sektion } = validation.data;
+    const { title: rawTitle, description: rawDescription, sourceUrl, sourceName, imageUrl, submitterComment, sektion } = validation.data;
+
+    // Pasted headlines/descriptions often carry HTML entities („ as &#8222;
+    // etc.). Decode at the ingest boundary so the stored text is real
+    // characters — the newsboard renders titles as escaped text and would
+    // otherwise show the entity literally.
+    const title = decodeHtmlEntities(rawTitle);
+    const description = decodeHtmlEntities(rawDescription);
 
     // Check for duplicate URL
     const db = dbEarly;

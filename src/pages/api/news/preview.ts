@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getSession } from 'auth-astro/server';
+import { decodeHtmlEntities } from '../../../utils/decodeHtmlEntities';
 
 export const GET: APIRoute = async ({ url, request }) => {
   try {
@@ -81,23 +82,14 @@ export const GET: APIRoute = async ({ url, request }) => {
     const siteName = getMetaContent('og:site_name')
       || getMetaContent('application-name');
 
-    // Decode HTML entities
-    const decodeEntities = (str: string | undefined): string | undefined => {
-      if (!str) return undefined;
-      return str
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/&#x27;/g, "'");
-    };
-
+    // Decode HTML entities with the shared decoder — the previous local helper
+    // only knew a handful of NAMED entities and silently passed numeric ones
+    // (`&#8222;` „) through, which is exactly what leaked onto the newsboard.
     return new Response(JSON.stringify({
-      title: decodeEntities(title) || '',
-      description: decodeEntities(description) || '',
+      title: decodeHtmlEntities(title),
+      description: decodeHtmlEntities(description),
       image: image || '',
-      siteName: decodeEntities(siteName) || '',
+      siteName: decodeHtmlEntities(siteName),
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }

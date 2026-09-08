@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/astro';
 import { connectDB } from '../../../lib/mongodb';
 import { checkAirLoggerFreshness } from '../../../lib/kiez/airFreshness';
 import type { NewsItem } from '../../../types';
+import { decodeHtmlEntities } from '../../../utils/decodeHtmlEntities';
 import crypto from 'crypto';
 
 // ============================================================================
@@ -121,15 +122,15 @@ async function fetchRSS(feedUrl: string, sourceName: string): Promise<FetchedArt
     const articles: FetchedArticle[] = [];
 
     for (const item of items.slice(0, 30)) { // Max 30 per feed
-      const title = extractTag(item, 'title');
+      // Feeds deliver entity-encoded punctuation („ as &#8222;). Decode at
+      // ingest with the shared decoder — the old inline chain only knew five
+      // named entities, passed numeric ones through (the literal "&#8222;" on
+      // the newsboard), and ran &amp; FIRST (double-decoding &amp;lt; to "<").
+      const title = decodeHtmlEntities(extractTag(item, 'title'));
       const link = extractTag(item, 'link');
-      const description = extractTag(item, 'description')
-        .replace(/<[^>]+>/g, '') // Strip HTML tags
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&apos;/g, "'")
+      const description = decodeHtmlEntities(
+        extractTag(item, 'description').replace(/<[^>]+>/g, '') // Strip HTML tags BEFORE decoding
+      )
         .replace(/mehr\.\.\.$/, '') // taz "mehr..." suffix
         .trim()
         .substring(0, 500);
@@ -188,8 +189,10 @@ async function fetchNewsDataIO(apiKey: string): Promise<FetchedArticle[]> {
       if (data.results) {
         for (const item of data.results) {
           articles.push({
-            title: item.title || '',
-            description: item.description || item.title || '',
+            // NewsData delivers entity-encoded punctuation („ as &#8222;) —
+            // decode at ingest so dedup-by-title and the stored doc see real text.
+            title: decodeHtmlEntities(item.title || ''),
+            description: decodeHtmlEntities(item.description || item.title || ''),
             url: item.link || '',
             imageUrl: item.image_url || undefined,
             sourceName: item.source_id || 'NewsData.io',
