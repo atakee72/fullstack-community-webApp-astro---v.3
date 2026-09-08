@@ -67,6 +67,13 @@ export const DELETE: APIRoute = async ({ params, request }) => {
     const commentsCollection = db.collection('comments');
     await commentsCollection.deleteMany({ relevantPostId: new ObjectId(id) });
 
+    // A pending report/flag on now-deleted content stays in the moderation
+    // queue, marked deleted (still strikeable from the stored snapshot).
+    await db.collection('flaggedContent').updateMany(
+      { contentId: id, contentType: 'topic' },
+      { $set: { contentDeleted: true, contentDeletedAt: new Date() } }
+    );
+
     // Kiez-Daten Anwohner-Kontext chips freeze topic titles/links for 24h —
     // drop the cache so a deleted topic never serves a 404 chip.
     await invalidateKiezKontext();

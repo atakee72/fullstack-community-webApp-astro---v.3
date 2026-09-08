@@ -325,6 +325,12 @@ export interface FlaggedContent {
   reviewNotes?: string;
   rejectionReason?: string;
 
+  // Set when the author self-deletes the content while a report/flag is open.
+  // The record STAYS in the queue (reviewStatus unchanged) and stays strikeable
+  // from the stored snapshot; the admin card renders a "deleted" badge.
+  contentDeleted?: boolean;
+  contentDeletedAt?: Date;
+
   // If approved, should it have a warning label?
   hasWarningLabel?: boolean;
   warningText?: string;

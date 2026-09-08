@@ -66,6 +66,13 @@ export const DELETE: APIRoute = async ({ params, request }) => {
     const commentsCollection = db.collection('comments');
     await commentsCollection.deleteMany({ topic: new ObjectId(id) });
 
+    // A pending report/flag on now-deleted content stays in the moderation
+    // queue, marked deleted (still strikeable from the stored snapshot).
+    await db.collection('flaggedContent').updateMany(
+      { contentId: id, contentType: 'recommendation' },
+      { $set: { contentDeleted: true, contentDeletedAt: new Date() } }
+    );
+
     return new Response(JSON.stringify({
       message: 'Recommendation deleted successfully',
       id: id
