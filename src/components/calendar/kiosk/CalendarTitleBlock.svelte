@@ -116,7 +116,7 @@
         data-tour="cal-view"
         class="inline-flex border-2 border-ink rounded-full font-dmmono text-[11px] font-semibold shrink-0"
         role="group"
-        aria-label="View"
+        aria-label={$t['cal.view.switcher.aria']}
       >
         {#each views as v, i (v.k)}
           <button
