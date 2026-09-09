@@ -12,6 +12,7 @@
 
   import { eventCoversDay, isLiveNow } from '../../../lib/calendar/eventTime';
   import { now } from '../../../lib/calendar/nowTicker';
+  import { swipeX } from '../../../lib/swipe';
   import { CATEGORIES } from '../../../lib/calendar/categories';
   import { t, locale } from '../../../lib/kiosk-i18n';
   import type { Event as EventDoc, EventCategory } from '../../../types';
@@ -73,7 +74,8 @@
   <!-- Day list — same card treatment as the agenda view: today gets the
        dark ink block, other days get the date column + per-event paper
        cards with the category border. -->
-  <div class="px-4 md:px-9 lg:px-10 py-3">
+  <!-- Swipe left/right = next/previous day (touch), same handlers as the arrows below. -->
+  <div class="px-4 md:px-9 lg:px-10 py-3" use:swipeX={{ onLeft: goNext, onRight: goPrev }}>
     {#if isOnToday}
       <div
         class="bg-ink rounded-md shadow-[3px_3px_0_var(--k-wine,#b23a5b)] mb-4 px-4 py-1 flex flex-col gap-1 lg:grid lg:grid-cols-[140px_1fr] lg:gap-4 lg:items-stretch"

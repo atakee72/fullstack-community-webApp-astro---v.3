@@ -26,6 +26,7 @@
 
   import { CATEGORIES, CATEGORY_ORDER } from '../../../../lib/calendar/categories';
   import { scrollFade } from '../../../../lib/scrollFade';
+  import { swipeX } from '../../../../lib/swipe';
   import {
     eventCoversDay,
     isLiveNow,
@@ -398,7 +399,9 @@
        CalCategoryRail now render for month view too, so the chrome is identical across
        month / agenda / day. This component is the dot-grid + day panel only. -->
   <!-- Mini dot-grid -->
-  <div data-tour="cal-grid" class="px-2 pt-2 relative" bind:this={gridWrapper}>
+  <!-- Swipe left/right on the grid = next/previous month (touch); taps and the
+       long-press range selection are untouched (a swipe has travel, they don't). -->
+  <div data-tour="cal-grid" class="px-2 pt-2 relative" bind:this={gridWrapper} use:swipeX={{ onLeft: onNextMonth, onRight: onPrevMonth }}>
     <div class="grid grid-cols-7 border-b border-ink">
       {#each dowLabels as label, i (label + '-' + i)}
         <div
