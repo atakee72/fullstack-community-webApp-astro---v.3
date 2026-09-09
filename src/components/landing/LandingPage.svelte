@@ -10,7 +10,7 @@
     blog: { slug: string; title: string; description: string; pubDateISO: string }[];
   }>();
 
-  const GITHUB_URL = 'https://github.com/atakee72/fullstack-community-webApp-astro---v.3';
+  const GITHUB_URL = 'https://github.com/atakee72/mahalle-digital';
   const year = new Date().getFullYear();
 
   const dateLine = $derived(

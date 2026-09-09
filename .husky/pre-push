@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+# Pre-push hook: refresh the off-site code backup in Dropbox.
+# Writes ONE bundle file (full history, all branches) that Dropbox syncs;
+# a bare repo in Dropbox can corrupt when synced mid-write, a bundle can't
+# (git writes to a .lock file and renames). Restore: `git clone <file>`.
+# Non-blocking: a missing Dropbox mount warns loudly but never stops the push.
+# Independent of the GitHub remote — unaffected by rename or visibility.
+
+BACKUP_DIR="/mnt/c/Users/atakee/Dropbox/Backups"
+BUNDLE="$BACKUP_DIR/mahalle-digital.bundle"
+
+if [ ! -d "$BACKUP_DIR" ]; then
+  echo "WARN: $BACKUP_DIR not found — Dropbox backup skipped."
+  exit 0
+fi
+
+if git bundle create "$BUNDLE" --all --quiet; then
+  echo "backup: $BUNDLE refreshed"
+else
+  echo "WARN: git bundle failed — Dropbox backup NOT refreshed."
+fi
+exit 0
