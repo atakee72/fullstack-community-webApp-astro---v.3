@@ -72,6 +72,13 @@
   const tileClass =
     'min-w-[58px] rounded-[var(--k-radius-md)] px-[9px] py-[5px] text-center lg:min-w-[74px] lg:px-[13px] lg:py-[7px]';
   const gradeTextClass = 'font-dmmono text-[16px] font-medium lg:text-[20px]';
+
+  // Grade words come from the dictionary, not the API's German
+  // `gradeLabel`/`overallLabel` (audit 2026-09-09: EN locale showed „gut").
+  function gradeLabel(grade: number | null): string {
+    if (grade == null || grade < 1 || grade > 5) return $t['kiez.air.grade.none'];
+    return $t[`kiez.air.grade.${grade}` as 'kiez.air.grade.1'];
+  }
   const headlineLiveClass = 'mt-0.5 text-[18px] font-extrabold lg:text-[24px]';
   const headlineOffClass = 'mt-0.5 text-[17px] font-extrabold opacity-75 lg:text-[22px]';
   // viewBox is 170×52: top 40px is the bar field (spec geometry, untouched),
@@ -118,7 +125,7 @@
           {$t['kiez.strip.station']} · {isStale ? $t['kiez.strip.disrupted'] : $t['kiez.strip.live']}
         </div>
         <div class="{headlineLiveClass}">
-          {$t['kiez.strip.airQuality']}: <span style={`color:${gradeColor(air.overallGrade)}`}>{air.overallGrade} · {air.overallLabel}</span>
+          {$t['kiez.strip.airQuality']}: <span style={`color:${gradeColor(air.overallGrade)}`}>{air.overallGrade} · {gradeLabel(air.overallGrade)}</span>
           <span class="ml-3 font-dmmono text-[10px] font-normal opacity-60">{formatAirTs(air.datetime)}</span>
         </div>
         {#if isStale}
@@ -133,7 +140,7 @@
           <div class="{tileClass} border-[1.5px] border-[rgba(243,234,216,0.3)]" class:opacity-55={p.grade === null}>
             <div class="font-dmmono text-[9.5px] opacity-65">{p.name}</div>
             <div class="{gradeTextClass}" style={`color:${gradeColor(p.grade)}`}>{p.grade ?? '–'}</div>
-            <div class="hidden font-dmmono text-[8.5px] opacity-70 lg:block">{p.gradeLabel}</div>
+            <div class="hidden font-dmmono text-[8.5px] opacity-70 lg:block">{gradeLabel(p.grade)}</div>
           </div>
         {/each}
       </div>
