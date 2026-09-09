@@ -478,13 +478,14 @@
     <CalendarSkeleton />
   {:else if eventsQuery.isError}
     <CalendarError onRetry={() => eventsQuery.refetch()} />
-  {:else if events.length === 0}
-    {#if view === 'month'}{@render mobileMonth()}{/if}
+  {:else if events.length === 0 && view !== 'month'}
     <CalendarEmpty />
-  {:else if displayedEvents.length === 0}
-    {#if view === 'month'}{@render mobileMonth()}{/if}
+  {:else if displayedEvents.length === 0 && view !== 'month'}
     <CalendarFilteredEmpty onClear={clearFilters} />
   {:else if view === 'month'}
+    <!-- Month view ALWAYS shows the grid, even with zero events (user decision
+         2026-09-09: the „Pause" empty card read as "nothing happens here" —
+         a user complained). Only agenda/day fall back to the empty states. -->
     {@render mobileMonth()}
     <!-- Desktop month: full grid with event pills + drag-select. -->
     <div data-tour="cal-rsvp" class="hidden lg:block">
@@ -501,6 +502,10 @@
         {currentUserId}
       />
     </div>
+    {#if events.length > 0 && displayedEvents.length === 0}
+      <!-- Filters hide every event of the month: keep the grid, add the clear hint. -->
+      <CalendarFilteredEmpty onClear={clearFilters} />
+    {/if}
   {:else if view === 'agenda'}
     <CalendarAgendaView
       events={displayedEvents}

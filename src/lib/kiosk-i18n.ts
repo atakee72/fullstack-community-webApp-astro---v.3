@@ -614,8 +614,8 @@ const de = {
   'cal.detail.verifiziert': 'verifiziert im Kiez',
 
   // ─── States ──────────────────────────────────────────────────────
-  'cal.state.empty.title': 'Im Kiez ist gerade Pause.',
-  'cal.state.empty.body': 'Diese Woche: 0 Termine.',
+  'cal.state.empty.title': 'Noch nichts eingetragen.',
+  'cal.state.empty.body': 'Für diesen Zeitraum gibt es noch keine Termine — leg den ersten an.',
   'cal.state.filtered.title': 'Nichts Passendes diese Woche.',
   'cal.state.filtered.body': 'Versuche andere Filter oder zeige alles.',
   'cal.state.filtered.clear': 'filter zurücksetzen',
@@ -2511,8 +2511,8 @@ const en: Dict = {
   'cal.detail.verifiziert': 'verified in the Kiez',
 
   // States
-  'cal.state.empty.title': 'The Kiez is on a break.',
-  'cal.state.empty.body': 'This week: 0 events.',
+  'cal.state.empty.title': 'Nothing listed yet.',
+  'cal.state.empty.body': 'No events for this period so far — add the first one.',
   'cal.state.filtered.title': 'No matches this week.',
   'cal.state.filtered.body': 'Try different filters or show everything.',
   'cal.state.filtered.clear': 'clear filters',
