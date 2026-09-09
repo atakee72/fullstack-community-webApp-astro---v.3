@@ -19,6 +19,8 @@
     y,
     from,
     to,
+    flip = false,
+    tailX = 12,
     onConfirm,
     onCancel
   } = $props<{
@@ -26,6 +28,13 @@
     y: number;
     from: Date;
     to: Date;
+    /** Render ABOVE the anchor: `y` is then the pin's BOTTOM edge (the
+     *  wrapper is pulled up by its own height), so the caller never has to
+     *  estimate how tall the pin renders. Tail flips to point down. */
+    flip?: boolean;
+    /** Tail offset from the pin's left edge — points the tail at the anchor
+     *  cell even after `x` has been clamped to stay inside the grid. */
+    tailX?: number;
     onConfirm: () => void;
     onCancel: () => void;
   }>();
@@ -59,21 +68,36 @@
   // Keeps the mobile tooltip compact without sacrificing desktop clarity.
 </script>
 
+<!-- The flip translate lives on this OUTER wrapper, never on `.k-cal-pin`:
+     the pop keyframe animates `transform` with `both`, so a fill-forwards
+     animated transform would win over an inline one on the same element. -->
 <div
-  class="absolute z-30 k-cal-pin"
+  class="absolute z-30"
   style:left="{x}px"
   style:top="{y}px"
+  style:transform={flip ? 'translateY(-100%)' : null}
   role="dialog"
   aria-label={kicker}
 >
+ <div class="k-cal-pin">
   <div
     class="relative bg-ink text-paper border-2 border-ink rounded-md px-2.5 py-1.5 shadow-[4px_4px_0_var(--k-wine,#b23a5b)] min-w-[180px]"
   >
-    <!-- Tail pointing up to the pointerup cell -->
-    <div
-      class="absolute -top-1.5 left-3 w-0 h-0 border-l-[6px] border-r-[6px] border-l-transparent border-r-transparent border-b-[6px] border-b-ink"
-      aria-hidden="true"
-    ></div>
+    <!-- Tail pointing at the anchor cell — up when the pin sits below it,
+         down when it has been flipped above. -->
+    {#if flip}
+      <div
+        class="absolute -bottom-1.5 w-0 h-0 border-l-[6px] border-r-[6px] border-l-transparent border-r-transparent border-t-[6px] border-t-ink"
+        style:left="{tailX}px"
+        aria-hidden="true"
+      ></div>
+    {:else}
+      <div
+        class="absolute -top-1.5 w-0 h-0 border-l-[6px] border-r-[6px] border-l-transparent border-r-transparent border-b-[6px] border-b-ink"
+        style:left="{tailX}px"
+        aria-hidden="true"
+      ></div>
+    {/if}
 
     <div class="font-dmmono text-[9px] uppercase tracking-[0.12em] text-ochre">
       ◆ {kicker}
@@ -101,4 +125,5 @@
       </button>
     </div>
   </div>
+ </div>
 </div>
