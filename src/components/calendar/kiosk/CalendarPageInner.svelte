@@ -441,16 +441,12 @@
     />
   </div>
 
-  {#if eventsQuery.isPending && !events.length}
-    <CalendarSkeleton />
-  {:else if eventsQuery.isError}
-    <CalendarError onRetry={() => eventsQuery.refetch()} />
-  {:else if events.length === 0}
-    <CalendarEmpty />
-  {:else if displayedEvents.length === 0}
-    <CalendarFilteredEmpty onClear={clearFilters} />
-  {:else if view === 'month'}
-    <!-- Mobile month: dot-grid + day-detail panel (owns its own header). -->
+  <!-- Mobile month: dot-grid + day-detail panel (owns its own header, prev/next
+       and the category rail). Rendered from a snippet because it must ALSO mount
+       when the month has no (visible) events — the empty states below used to
+       replace it, which stranded phone users on an empty month with no header
+       and no way back (mobile audit 2026-09-09). Desktop keeps its header outside. -->
+  {#snippet mobileMonth()}
     <div class="lg:hidden">
       <CalendarMobileMonth
         {visibleMonth}
@@ -472,8 +468,24 @@
         onSaved={() => (saved = !saved)}
         {view}
         onView={switchView}
+        savedIds={savedIds.ids}
+        onToggleSave={currentUserId ? onToggleSave : undefined}
       />
     </div>
+  {/snippet}
+
+  {#if eventsQuery.isPending && !events.length}
+    <CalendarSkeleton />
+  {:else if eventsQuery.isError}
+    <CalendarError onRetry={() => eventsQuery.refetch()} />
+  {:else if events.length === 0}
+    {#if view === 'month'}{@render mobileMonth()}{/if}
+    <CalendarEmpty />
+  {:else if displayedEvents.length === 0}
+    {#if view === 'month'}{@render mobileMonth()}{/if}
+    <CalendarFilteredEmpty onClear={clearFilters} />
+  {:else if view === 'month'}
+    {@render mobileMonth()}
     <!-- Desktop month: full grid with event pills + drag-select. -->
     <div data-tour="cal-rsvp" class="hidden lg:block">
       <CalendarMonthGrid

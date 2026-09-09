@@ -89,7 +89,9 @@
     onMyMaybes,
     onSaved,
     view = 'month',
-    onView
+    onView,
+    savedIds = new Set<string>(),
+    onToggleSave
   } = $props<{
     visibleMonth?: Date;
     events?: EventDoc[];
@@ -108,6 +110,8 @@
     onMyRsvps?: () => void;
     onMyMaybes?: () => void;
     onSaved?: () => void;
+    savedIds?: Set<string>;
+    onToggleSave?: (eventId: string) => void;
     view?: View;
     onView?: (v: View) => void;
   }>();
@@ -693,6 +697,23 @@
                 }`}
               >
                 {going ? '✓' : '+'}
+              </button>
+            {/if}
+            {#if onToggleSave}
+              {@const isSaved = savedIds.has(String(ev._id))}
+              <button
+                type="button"
+                onclick={() => onToggleSave(String(ev._id))}
+                aria-pressed={isSaved}
+                aria-label={$t['cal.agenda.row.save']}
+                title={$t['cal.agenda.row.save']}
+                class={`shrink-0 w-9 h-9 rounded-full border-[1.5px] border-ink flex items-center justify-center transition-colors ${
+                  isSaved ? 'bg-ink text-paper' : 'bg-paper text-ink hover:bg-paper-warm'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="currentColor" fill={isSaved ? 'currentColor' : 'none'} aria-hidden="true">
+                  <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+                </svg>
               </button>
             {/if}
           </li>

@@ -13,7 +13,7 @@ Loaded lazily when Claude reads/edits files in `src/components/calendar/kiosk/` 
 
 ### Saved events — `src/lib/savedEventsQueries.ts` + `/api/events/save`
 - Mirrors `savedPosts` exactly: `{ userId, eventId, savedAt }` collection, optimistic mutation pattern (onMutate snapshot + onError rollback + onSettled invalidate). Keyed by `qk.savedEvents` in `src/lib/queryKeys.ts`.
-- The bookmark UI is wired into AgendaRow (paper-card variant action column) and the mobile day-panel rows. Calendar's mobile "Gespeichert" filter pill toggles a client-side filter on the resulting set.
+- The bookmark UI is wired into AgendaRow (paper-card variant action column) and the mobile day-panel rows (`mobile/CalendarMobileMonth` gets `savedIds`/`onToggleSave` from `CalendarPageInner` since 2026-09-09 — before that this sentence was aspirational: the month view's day panel had RSVP only, caught by the mobile-behavior audit). Calendar's mobile "Gespeichert" filter pill toggles a client-side filter on the resulting set.
 
 ### Attendee profiles — `src/lib/userProfilesQueries.ts` + `/api/users/profiles`
 - Batch endpoint returning `{ users: { id, name, image }[] }` for up to 60 ids. Used by EventDetailModal's attendee stack to fetch the going-list profiles **only when the modal is open** (`enabled: open && goingArr.length > 0`). Dedupes + sorts ids in the cache key.
@@ -160,3 +160,8 @@ Two synthetic-user audit passes (A=browse/navigate, B=compose/interact) → 0 Cr
 - **Today marker scoped to in-month** (`a02404f4`): `CalendarMonthGrid` → `today = isTodayDate(cell) && inMonth`. The wine disc, `bg-paper-warm` tint AND the HEUTE badge (all the same „you are here" marker) were painting on 35%-opacity adjacent-month spillover cells (e.g. Sep 6 shown in the August grid).
 
 **Deferred — both SHIPPED 2026-09-08:** (1) ~~deleting an event leaves an orphaned `flaggedContent`/report record~~ — fixed app-wide (all 6 self-delete handlers, not just events) — the report stays `pending` in the queue marked `contentDeleted: true`, strikeable from the snapshot, with a „Vom Autor gelöscht" admin badge. See root `CLAUDE.md` „User reports". (2) ~~the view-switcher's `aria-label="View"` is a hardcoded untranslated string~~ — now `{$t['cal.view.switcher.aria']}` (DE „Ansicht wählen" / EN "Select view"), wired in both `CalendarTitleBlock` and `mobile/CalendarMobileMonth`.
+
+### Mobile-behavior audit 2026-09-09 (390×844 functional pass)
+- **Empty month no longer strands phone users.** `CalendarPageInner` used to render `CalendarEmpty` / `CalendarFilteredEmpty` INSTEAD of `mobile/CalendarMobileMonth` — but on mobile that component is the only thing carrying the header, prev/next and the category rail, so stepping into an event-less month (or filtering everything away) left just the empty card + FAB with no way back. The mobile month block is now a `{#snippet mobileMonth()}` rendered in the empty branches too (`{#if view === 'month'}{@render mobileMonth()}{/if}` above the empty card); desktop is unchanged (its header lives outside the branch).
+- Save button in the month view's day panel (see „Saved events" above).
+- Parked for the UI-polish peer: the day-selection coachmark floats over grid row 2 instead of anchoring to the tapped day.
