@@ -1,27 +1,33 @@
 ---
-// Editorial Kiosk layout for the internal admin moderation back-office.
+// Editorial Kiosk layout for the internal admin back-office.
 // Sibling to AuthLayout, but for the OPPOSITE audience: a logged-in admin,
 // not a logged-out visitor. No KioskNav (this isn't part of the public app
 // nav), no footer. Plum accent via [data-page="admin"] in tokens.css.
-// Session-independent by design — the page (moderation.astro) resolves
-// getSession and passes only what the masthead needs (adminName).
+// The layout never calls getSession itself — each page resolves the session
+// and passes `user` (name/image/role) for the masthead avatar + menu.
 import AuthLangToggle from '../components/auth/kiosk/AuthLangToggle.svelte';
+import AdmAvatar from '../components/admin/kiosk/AdmAvatar.svelte';
 import ToastProvider from '../components/ToastProvider';
 import { ViewTransitions } from 'astro:transitions';
 
 export interface Props {
   title: string;
-  adminName?: string;
+  user: { name?: string | null; image?: string | null; role?: string };
   wordmark?: string;   // masthead italic word — 'moderation' | 'amtliches' | …
   ribbonEcho?: string; // mono echo on the right of the internal-area ribbon
 }
 
 const {
   title,
-  adminName = '',
+  user,
   wordmark = 'moderation',
   ribbonEcho = 'user.role === "admin"',
 } = Astro.props;
+
+// Island props are serialized into the HTML for hydration — pass only what
+// the avatar needs, never the whole session user (id/email would otherwise
+// land in the page source).
+const avatarUser = { name: user.name ?? null, image: user.image ?? null, role: user.role };
 
 // Section rail (2026-09-09): the three admin pages are siblings, so the
 // layout owns the navigation between them — before this, Amtliches and
@@ -34,9 +40,6 @@ const ADMIN_SECTIONS = [
   { href: '/admin/mitglieder',    label: 'Mitglieder' },
 ] as const;
 const currentPath = Astro.url.pathname;
-
-const trimmedAdminName = adminName.trim();
-const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
 ---
 
 <!DOCTYPE html>
@@ -59,7 +62,7 @@ const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
     class="min-h-screen k-paper-bg text-ink font-bricolage antialiased flex flex-col"
     data-page="admin"
   >
-    <!-- ═══ Desktop (≥ md) masthead — full ribbon + branding + back-link. ═══ -->
+    <!-- ═══ Desktop (≥ md) masthead — full ribbon + branding + back-link + avatar menu. ═══ -->
     <div class="hidden md:block">
       <!-- Internal-area ribbon — static DE, locked decision (Task 1 brief). -->
       <div
@@ -90,11 +93,7 @@ const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
         <div class="flex items-center" style="gap:14px;">
           <a href="/forum" class="font-dmmono no-underline" style="font-size:11px; color:var(--k-ink-mute);">← zum Forum</a>
           <AuthLangToggle client:load />
-          <div
-            class="font-bricolage"
-            style="width:38px; height:38px; background:var(--k-accent); border-radius:50%; border:2px solid var(--k-ink); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; color:var(--k-paper);"
-            aria-label={`Angemeldet als ${trimmedAdminName || 'Admin'}`}
-          >{adminInitial}</div>
+          <AdmAvatar client:load user={avatarUser} size={38} />
         </div>
       </header>
 
@@ -114,10 +113,9 @@ const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
     </div>
 
     <!-- ═══ Mobile (< md) masthead — slim ribbon + compact wordmark. ═══
-         Per JSX kiosk-admin.jsx:482-491. No avatar — desktop-only chrome;
-         AuthLangToggle stays available (moved into this row) so DE/EN swap
-         still works on mobile. The section rail below carries navigation
-         (sections + ← Forum) so no admin page is a dead end on a phone. -->
+         Per JSX kiosk-admin.jsx:482-491. AuthLangToggle + the avatar menu
+         (bottom sheet on this viewport) sit in this row; the section rail
+         below carries section navigation (+ ← Forum). -->
     <div class="md:hidden">
       <div
         class="font-dmmono"
@@ -136,7 +134,10 @@ const adminInitial = (trimmedAdminName[0] ?? '?').toUpperCase();
           <div class="font-bricolage" style="font-size:17px; font-weight:800; letter-spacing:-0.02em;">{wordmark}</div>
         </div>
 
-        <AuthLangToggle client:load />
+        <div class="flex items-center" style="gap:10px;">
+          <AuthLangToggle client:load />
+          <AdmAvatar client:load user={avatarUser} size={32} />
+        </div>
       </header>
 
       <nav aria-label="Admin-Bereiche" class="no-scrollbar flex overflow-x-auto font-dmmono" style="gap:20px; padding:9px 18px; border-bottom:1px dashed var(--k-rule); font-size:10px; letter-spacing:0.12em; text-transform:uppercase; white-space:nowrap;">

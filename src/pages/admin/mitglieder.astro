@@ -8,12 +8,11 @@ if (!session?.user) {
   return Astro.redirect('/login?redirect=/admin/mitglieder', 302);
 }
 const isAdmin = session.user.role === 'admin';
-const adminName = session.user.name ?? '';
 ---
 
 <AdminLayout
   title="Mahalle · Mitglieder"
-  adminName={adminName}
+  user={session.user}
   wordmark="mitglieder"
   ribbonEcho="users.verified === true"
 >

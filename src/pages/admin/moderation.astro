@@ -11,7 +11,7 @@ const isAdmin = session.user.role === 'admin';
 const adminName = session.user.name ?? '';
 ---
 
-<AdminLayout title="Mahalle · Moderation" adminName={adminName}>
+<AdminLayout title="Mahalle · Moderation" user={session.user}>
   {isAdmin ? (
     <ModerationApp client:only="svelte" adminName={adminName} />
   ) : (
