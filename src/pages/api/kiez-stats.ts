@@ -127,6 +127,11 @@ export const GET: APIRoute = async () => {
           transferBenefitRate: avg('transfer_benefit_rate'),
           statusIndex: avg('status_index'),
           dynamikIndex: avg('dynamik_index'),
+          // Gesamt class from the mean of the ±1 signs; null while any
+          // PLR row still predates the class-aware sync (honest blank).
+          dynamikClass: socialDocs.every((d) => d.dynamik_class)
+            ? avg('dynamik_index') > 0.5 ? 'positiv' : avg('dynamik_index') < -0.5 ? 'negativ' : 'stabil'
+            : null,
         };
 
         // Attach per-PLR social data
@@ -140,6 +145,7 @@ export const GET: APIRoute = async () => {
               transferBenefitRate: s.transfer_benefit_rate,
               statusIndex: s.status_index,
               dynamikIndex: s.dynamik_index,
+              dynamikClass: s.dynamik_class ?? null,
             };
           }
         }

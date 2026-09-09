@@ -1,7 +1,7 @@
 // Pure view-model mapping for the Kiez-Daten kiosk page. NO db/fetch imports —
 // this must stay client-safe (imported by both server-rendered .astro
 // frontmatter and client-hydrated Svelte islands).
-import type { AgeDistributionEntry, KiezStatsResponse, PlrAreaDetail } from '../../types/kiezStats';
+import type { AgeDistributionEntry, DynamikClass, KiezStatsResponse, PlrAreaDetail } from '../../types/kiezStats';
 
 export const KZ_PLR_SHORT: Record<string, string> = {
   '08100102': 'Schiller. N',
@@ -60,7 +60,7 @@ export interface KzAreaVM {
   agePct: number[]; // 7 groups, percentages
   ageAbs: number[]; // 7 groups, counts
   mig: { a: number; mh: number; o: number } | null; // non-overlapping percentages (1 decimal)
-  social: { alq: number; ka: number; tr: number; status: number; dyn: number } | null;
+  social: { alq: number; ka: number; tr: number; status: number; dyn: number; dynClass: DynamikClass | null } | null;
   trend: { label: string; value: number }[]; // population per period, "H2 '21" labels
 }
 
@@ -86,6 +86,7 @@ type SocialCounts = {
   transferBenefitRate: number;
   statusIndex: number;
   dynamikIndex: number;
+  dynamikClass?: DynamikClass | null;
 } | null;
 
 function buildArea(
@@ -137,6 +138,7 @@ function buildArea(
           tr: social.transferBenefitRate,
           status: social.statusIndex,
           dyn: social.dynamikIndex,
+          dynClass: social.dynamikClass ?? null,
         }
       : null,
     trend,

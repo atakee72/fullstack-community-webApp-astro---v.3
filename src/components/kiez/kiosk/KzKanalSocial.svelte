@@ -91,7 +91,9 @@
 
       <div class="mt-2 flex flex-wrap gap-4 border-t border-dashed border-rule pt-2.5 font-dmmono text-[10.5px] text-ink-soft">
         <span>{$t['kiez.k04.status']}: <b>{fmtIdx(area.social.status)}</b></span>
-        <span>{$t['kiez.k04.dyn']}: <b>{fmtIdx(area.social.dyn)}</b></span>
+        <!-- Dynamik is a class (positiv/stabil/negativ), not a number; „–" until
+             the social rows have been re-synced with the class-aware importer. -->
+        <span>{$t['kiez.k04.dyn']}: <b>{area.social.dynClass ? $t[`kiez.k04.dyn.${area.social.dynClass}` as 'kiez.k04.dyn.stabil'] : '–'}</b></span>
         <span class="text-ink-mute">{$t['kiez.k04.mss']}</span>
       </div>
 

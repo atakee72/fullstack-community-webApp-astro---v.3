@@ -33,6 +33,16 @@ function cellValue(row: ExcelJS.Row, col: number): string | number | undefined {
   return v as string | number;
 }
 
+type DynamikClass = 'positiv' | 'stabil' | 'negativ';
+/** SDI col 6: '+' → positiv, '+/-' (or '±', '0') → stabil, '-' → negativ. */
+function parseDynamikClass(v: unknown): DynamikClass | undefined {
+  const s = String(v ?? '').trim();
+  if (s === '+') return 'positiv';
+  if (s === '-' || s === '−') return 'negativ';
+  if (s === '+/-' || s === '±' || s === '0') return 'stabil';
+  return undefined;
+}
+
 function toNumber(v: string | number | undefined): number {
   if (v === undefined || v === null || v === '') return 0;
   const n = Number(v);
@@ -364,7 +374,10 @@ async function syncMSS(db: any) {
   console.log(`  Data starts at row ${dataStart}`);
 
   // Download SDI file for Status/Dynamik index
-  const sdiMap = new Map<string, { status: number; dynamik: number }>();
+  // Dynamik is a CLASS in the SDI file, not a number: col 6 holds the sign
+  // ('+', '+/-', '-'), col 7 the word (positiv/stabil/negativ). `toNumber`
+  // on the sign silently yielded 0 for every PLR (found 2026-09-09).
+  const sdiMap = new Map<string, { status: number; dynamik: number; dynamikClass?: DynamikClass }>();
   if (MSS_SDI_URL) {
     try {
       const sdiWb = await downloadXlsx(MSS_SDI_URL);
@@ -374,9 +387,11 @@ async function syncMSS(db: any) {
         const row = sdiWs.getRow(r);
         const plr = String(cellValue(row, 1) ?? '').trim();
         if (!matchCodes.includes(plr)) continue;
+        const dynamikClass = parseDynamikClass(cellValue(row, 6));
         sdiMap.set(plr, {
           status: toNumber(cellValue(row, 4)),
-          dynamik: toNumber(cellValue(row, 6)),
+          dynamik: dynamikClass === 'positiv' ? 1 : dynamikClass === 'negativ' ? -1 : 0,
+          dynamikClass,
         });
       }
     } catch (e) {
@@ -394,7 +409,10 @@ async function syncMSS(db: any) {
     child_poverty_rate: number;
     transfer_benefit_rate: number;
     status_index: number;
+    /** +1 / 0 / -1 derived from the Dynamik class sign (was always 0 before 2026-09-09). */
     dynamik_index: number;
+    /** MSS Dynamik-Index class; absent when the SDI file had no row for the PLR. */
+    dynamik_class?: DynamikClass;
     single_parent_children_rate?: number;
   }
 
@@ -416,6 +434,7 @@ async function syncMSS(db: any) {
       status_index: sdi?.status ?? 0,
       dynamik_index: sdi?.dynamik ?? 0,
     };
+    if (sdi?.dynamikClass) socialRow.dynamik_class = sdi.dynamikClass;
     if (periodNum >= 2023) {
       socialRow.single_parent_children_rate = Math.round(toNumber(cellValue(row, COL_S2)) * 100) / 100;
     }

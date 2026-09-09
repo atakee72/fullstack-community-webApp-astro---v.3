@@ -1,4 +1,6 @@
 /** MongoDB document for AfS demographics (per PLR, per period) */
+export type DynamikClass = 'positiv' | 'stabil' | 'negativ';
+
 export interface KiezDemographicsDoc {
   plr_code: string;
   plr_name: string;
@@ -36,7 +38,10 @@ export interface KiezSocialDoc {
   child_poverty_rate: number;
   transfer_benefit_rate: number;
   status_index: number;
+  /** +1 / 0 / -1 from the MSS Dynamik class sign; 0 also for legacy rows synced before 2026-09-09. */
   dynamik_index: number;
+  /** MSS Dynamik-Index class; absent on legacy rows (re-sync to populate). */
+  dynamik_class?: DynamikClass;
   /** 2023+ only: S2 — share of children in single-parent households (NOT poverty). Pre-2023 S2 (Langzeitarbeitslose) is not stored. */
   single_parent_children_rate?: number;
 }
@@ -79,6 +84,8 @@ export interface PlrAreaDetail {
     transferBenefitRate: number;
     statusIndex: number;
     dynamikIndex: number;
+    /** null until the social data has been re-synced with the class-aware importer. */
+    dynamikClass?: DynamikClass | null;
   } | null;
 }
 
@@ -103,6 +110,8 @@ export interface KiezStatsResponse {
     transferBenefitRate: number;
     statusIndex: number;
     dynamikIndex: number;
+    /** null until the social data has been re-synced with the class-aware importer. */
+    dynamikClass?: DynamikClass | null;
   } | null;
   plrAreas: PlrAreaDetail[];
   trend: Array<{
