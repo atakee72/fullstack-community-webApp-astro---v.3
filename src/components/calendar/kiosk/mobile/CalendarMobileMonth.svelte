@@ -134,24 +134,22 @@
   let gridWrapper: HTMLDivElement | undefined = $state();
   let panelEl: HTMLDivElement | undefined = $state();
 
-  // After a plain tap, bring the day panel into view without losing the
-  // tapped row of the grid (user request 2026-09-10: the list rendered
-  // below the fold and nobody saw it). Scroll by the SMALLEST amount that
-  // puts the panel's kicker plus ~2 rows above the bottom nav, capped so
-  // the tapped cell stays under the sticky masthead. No-op when the panel
-  // is already visible; instant under reduced motion.
-  async function revealPanel(date: Date) {
+  // After a plain tap, scroll so the month stepper („‹ SEPTEMBER 2026 ›",
+  // `data-tour="cal-month-nav"` in CalendarTitleBlock's mobile hero) sits
+  // right under the sticky masthead (user, 2026-09-10 — the earlier
+  // "smallest delta" version scrolled too little). That keeps the whole
+  // grid on screen and shows as much of the day panel as the viewport
+  // allows. Aligns in both directions; no-op when already there; instant
+  // under reduced motion.
+  async function revealPanel() {
     await tick();
-    if (!panelEl || !gridWrapper) return;
-    const nav = document.querySelector<HTMLElement>('nav.fixed.bottom-0');
-    const navTop = nav ? nav.getBoundingClientRect().top : window.innerHeight;
-    const overflow = panelEl.getBoundingClientRect().top + 140 - navTop;
-    if (overflow <= 0) return;
-    const cell = gridWrapper.querySelector<HTMLElement>(`[data-cell-date="${date.toISOString()}"]`);
+    if (!panelEl) return;
+    const stepper = Array.from(document.querySelectorAll<HTMLElement>('[data-tour="cal-month-nav"]'))
+      .find((el) => el.getBoundingClientRect().height > 0);
+    if (!stepper) return;
     const mastheadBottom = document.querySelector('header')?.getBoundingClientRect().bottom ?? 0;
-    const keepCell = cell ? cell.getBoundingClientRect().top - mastheadBottom - 8 : overflow;
-    const delta = Math.min(overflow, keepCell);
-    if (delta < 4) return;
+    const delta = stepper.getBoundingClientRect().top - mastheadBottom - 8;
+    if (Math.abs(delta) < 4) return;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     window.scrollBy({ top: delta, behavior: reduced ? 'auto' : 'smooth' });
   }
@@ -188,7 +186,7 @@
     // Always update the bottom-panel day; a plain tap also scrolls the
     // panel into view (a long-press keeps the pin where the finger is).
     selectedDay = date;
-    if (!viaLongPress) void revealPanel(date);
+    if (!viaLongPress) void revealPanel();
 
     // Past date: clear all selection state. Bottom panel still shows
     // events for that day (above), but no range can start in the past.
