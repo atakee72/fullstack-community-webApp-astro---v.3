@@ -14,6 +14,7 @@
     href,
     type = 'button',
     onclick,
+    class: klass = '',
     children,
   }: {
     primary?: boolean;
@@ -23,6 +24,8 @@
     href?: string;
     type?: 'button' | 'submit' | 'reset';
     onclick?: (e: MouseEvent) => void;
+    /** Extra classes — used for the ≥44px tap-target extender (.prof-tap). */
+    class?: string;
     children?: Snippet;
   } = $props();
 
@@ -41,7 +44,7 @@
 </script>
 
 {#if href && !disabled}
-  <a {href} {style}>{@render children?.()}</a>
+  <a {href} {style} class={klass}>{@render children?.()}</a>
 {:else}
-  <button {type} {disabled} {onclick} {style}>{@render children?.()}</button>
+  <button {type} {disabled} {onclick} {style} class={klass}>{@render children?.()}</button>
 {/if}

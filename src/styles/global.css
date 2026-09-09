@@ -1239,3 +1239,36 @@ button.am-row { width: 100%; text-align: left; }
   font-size: 10px;
   color: var(--k-danger);
 }
+
+/* ── Profile tap targets (≥44px on touch viewports) ───────────────
+   Lives here, not in profile.css: PAvatar/PKontoCard/PFilterChip are
+   nested islands (a local <style> would be orphaned in the prod build)
+   AND they also render on /nachbarn/[handle], which doesn't import
+   profile.css. Desktop keeps the compact design, so the whole block is
+   gated to ≤1023px.
+   .prof-tap  = invisible hit-area extender; the painted control is
+                untouched (the pseudo is out of flow, so it adds no box
+                and survives inside flex parents).
+   .prof-tap-chip = the Archiv filter chips: they sit in an overflow-x
+                scroller, which would clip/eat an outside extender — so
+                the BUTTON grows to 44px and the painted pill stays put
+                inside it. */
+@media (max-width: 1023px) {
+  .prof-tap { position: relative; }
+  .prof-tap::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    /* 48, not 44: an absolutely positioned pseudo centres on its origin's
+       PADDING box, so on a control with a bottom border (the ochre "ändern"
+       underline) a bare 44 sits ~1px high and the bottom corners of a strict
+       44×44 probe fall outside. 48 keeps the guarantee with slack. */
+    min-width: 48px;
+    min-height: 48px;
+  }
+  .prof-tap-chip { min-height: 44px; }
+}
