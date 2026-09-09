@@ -135,7 +135,7 @@
 {#if today}
   <!-- ─── Today variant: compact row inside the dark block ─── -->
   <article
-    class={`grid grid-cols-[48px_1fr_auto] gap-3 items-stretch py-2 ${ghostOutline} ${ghostState ? 'pl-2 pr-2' : ''}`}
+    class={`grid grid-cols-[72px_1fr_auto] gap-3 items-stretch py-2 ${ghostOutline} ${ghostState ? 'pl-2 pr-2' : ''}`}
   >
     <!-- Time column — start hour, with ochre dot inline if live -->
     <div class="pt-0.5">

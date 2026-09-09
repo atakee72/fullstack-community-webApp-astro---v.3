@@ -503,7 +503,7 @@
             <button
               type="button"
               onclick={() => onPickEvent?.(ev)}
-              class="flex-1 min-w-0 grid grid-cols-[44px_1fr] gap-2 py-2 text-left items-start"
+              class="flex-1 min-w-0 grid grid-cols-[64px_1fr] gap-2 py-2 text-left items-start"
             >
               <span
                 class={`font-dmmono text-[11px] font-semibold pt-0.5 ${
