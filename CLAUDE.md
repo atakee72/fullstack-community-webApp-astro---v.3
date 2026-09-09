@@ -400,6 +400,9 @@ The project uses these CSS variables (defined in `global.css`):
 
 When I say yellow, red, green, I always mean the default variants of the project.
 
+### Masthead + bottom nav (kiosk chrome, 2026-09-10)
+Both bars are ochre (`var(--k-ochre)`); the admin masthead stays plum. Bar rhythm: 54 px on phones / 67 px desktop, title-block kickers sit 20/24 px under the masthead rule on every surface. Anatomy of the DE/EN pill and the paper avatar disc: `src/components/forum/kiosk/CLAUDE.md` → "Ochre masthead".
+
 ### Page-accent rule (kiosk)
 Each main page has its own accent color used for **kickers** (mono-uppercase eyebrows) and **carved-italic title accents**. The pairing:
 
