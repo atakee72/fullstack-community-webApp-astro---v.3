@@ -137,12 +137,11 @@
   let myMaybes = $state(false);
   let saved = $state(false);
 
-  // Desktop category rail uses single-select-with-all-reset semantics:
+  // The category rail (CalCategoryRail, shared by every view + viewport)
+  // uses single-select-with-all-reset semantics:
   //   Alle click → all categories on.
   //   Category click → isolate that category.
   //   Click already-isolated category → revert to "all".
-  // Mobile filter rail (CalendarMobileMonth) still uses multi-toggle
-  // via `toggleCat` — kept for backwards compatibility.
   const isAllActive = $derived(active.size === CATEGORY_ORDER.length);
 
   function selectAll() {
@@ -155,12 +154,6 @@
     } else {
       active = new Set([cat]);
     }
-  }
-
-  function toggleCat(cat: EventCategory) {
-    if (active.has(cat)) active.delete(cat);
-    else active.add(cat);
-    active = new Set(active);
   }
 
   function clearFilters() {
@@ -443,33 +436,20 @@
     />
   </div>
 
-  <!-- Mobile month: dot-grid + day-detail panel (owns its own header, prev/next
-       and the category rail). Rendered from a snippet because it must ALSO mount
-       when the month has no (visible) events — the empty states below used to
-       replace it, which stranded phone users on an empty month with no header
-       and no way back (mobile audit 2026-09-09). Desktop keeps its header outside. -->
+  <!-- Mobile month: dot-grid + day-detail panel (the header and category rail
+       are the shared CalendarTitleBlock + CalCategoryRail above). Rendered from
+       a snippet because it must ALSO mount when the month has no (visible)
+       events — the empty states below used to replace it, which stranded phone
+       users on an empty month with no way back (mobile audit 2026-09-09). -->
   {#snippet mobileMonth()}
     <div class="lg:hidden">
       <CalendarMobileMonth
         {visibleMonth}
         events={displayedEvents}
-        {active}
-        onToggleCat={toggleCat}
         onPickEvent={onPickEvent}
         onPrevMonth={goPrevMonth}
         onNextMonth={goNextMonth}
-        liveCount={liveNow}
         {currentUserId}
-        showToday={!isOnTodayMonth}
-        onToday={goToday}
-        {myRsvps}
-        {myMaybes}
-        {saved}
-        onMyRsvps={() => (myRsvps = !myRsvps)}
-        onMyMaybes={() => (myMaybes = !myMaybes)}
-        onSaved={() => (saved = !saved)}
-        {view}
-        onView={switchView}
         savedIds={savedIds.ids}
         onToggleSave={currentUserId ? onToggleSave : undefined}
       />
