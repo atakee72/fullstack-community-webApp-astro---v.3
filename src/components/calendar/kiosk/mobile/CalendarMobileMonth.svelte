@@ -151,8 +151,13 @@
     }
   }
 
-  // 1:1 port of the legacy state machine (RANGED → ANCHORED on plain
-  // tap, long-press always re-anchors + arms, etc).
+  // Tap vs. long-press (changed 2026-09-09, user request): a plain tap only
+  // SELECTS the day for the panel below — it never opens the „+ termin"
+  // pin. Long-press anchors + arms the pin (and a following tap on another
+  // day extends it to a range). A plain tap while nothing is armed clears
+  // any leftover selection, so the pin can't linger from an earlier
+  // long-press. The legacy "tap anchors" behavior lives on only on desktop
+  // (CalendarMonthGrid's drag-select).
   function handleDateTap(date: Date, viaLongPress: boolean) {
     const isPast = isBefore(startOfDay(date), startOfDay(new Date()));
 
@@ -168,10 +173,7 @@
       return;
     }
 
-    const hasRange = !!(rangeStart && rangeEnd);
-    const sameAsAnchor = rangeStart && isSameDay(date, rangeStart);
-
-    // Long-press always re-anchors + arms.
+    // Long-press always re-anchors + arms (pin opens on this day).
     if (viaLongPress) {
       rangeStart = date;
       rangeEnd = null;
@@ -179,16 +181,8 @@
       return;
     }
 
-    // RANGED state — plain tap clears range, anchors at D.
-    if (hasRange) {
-      rangeStart = date;
-      rangeEnd = null;
-      isRangeArmed = false;
-      return;
-    }
-
-    // ANCHORED(-armed) + tap on the same day → no-op.
-    if (sameAsAnchor) return;
+    // ARMED + plain tap on the anchor day → no-op (pin stays).
+    if (rangeStart && isRangeArmed && isSameDay(date, rangeStart)) return;
 
     // ARMED + plain tap on a different day → form the range.
     if (rangeStart && isRangeArmed) {
@@ -202,8 +196,9 @@
       return;
     }
 
-    // IDLE / ANCHORED + plain tap on a different day → move/set anchor.
-    rangeStart = date;
+    // Not armed (idle, or a finished range) → plain tap just selects the
+    // day; drop any leftover anchor/range so the pin closes.
+    rangeStart = null;
     rangeEnd = null;
     isRangeArmed = false;
   }
