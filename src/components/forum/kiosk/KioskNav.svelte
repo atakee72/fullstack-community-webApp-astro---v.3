@@ -102,18 +102,21 @@
 </script>
 
 <!-- ─── Top bar (sticky, all viewports) ───────────────────────────────── -->
-<header class="sticky top-0 {menuOpen || bellOpen ? 'z-50' : 'z-40'} border-b-2 border-ink k-paper-bg">
-  <div class="max-w-7xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between gap-4">
+<header class="sticky top-0 {menuOpen || bellOpen ? 'z-50' : 'z-40'} border-b-2 border-ink" style="background: var(--k-ochre);">
+  <!-- py-2 below lg: a lower bar on phones (user, 2026-09-10); the 44px tap
+       boxes inside the 25px locale pill overflow it invisibly, so they don't
+       push the row height. -->
+  <div class="max-w-7xl mx-auto px-4 md:px-8 py-2 lg:py-3 flex items-center justify-between gap-4">
     <!-- Brand: wine disc + wordmark + place tagline below -->
     <a href="/" class="flex items-center gap-3 group shrink-0 kiosk-tap">
       <span
-        class="w-10 h-10 rounded-full bg-wine text-paper flex items-center justify-center font-bricolage font-bold text-xl leading-none group-hover:scale-105 transition-transform duration-[180ms] ease-out"
+        class="w-9 h-9 lg:w-10 lg:h-10 rounded-full bg-wine text-paper flex items-center justify-center font-bricolage font-bold text-xl leading-none group-hover:scale-105 transition-transform duration-[180ms] ease-out"
       >m</span>
       <span class="hidden sm:flex flex-col leading-tight">
         <span class="font-bricolage font-bold text-ink text-xl tracking-tight">
           {$t['brand.name']}
         </span>
-        <span class="font-dmmono text-[10px] uppercase tracking-[0.18em] text-ink-mute">
+        <span class="font-dmmono text-[10px] uppercase tracking-[0.18em] text-ink/80">
           {$t['brand.location']}
         </span>
       </span>
@@ -138,28 +141,35 @@
 
     <!-- Right: segmented locale toggle + avatar disc -->
     <div class="flex items-center gap-3 shrink-0">
-      <!-- DE/EN segmented pill -->
+      <!-- DE/EN segmented pill. The pill itself is a fixed 25px tall; the two
+           buttons wear `.kiosk-tap-box` (44px on touch viewports) and overflow
+           it invisibly, with the paint on inner spans — so the hit area grows
+           without the pill (user: "too big on mobile", 2026-09-10). -->
       <div
-        class="inline-flex items-center rounded-full border-2 border-ink overflow-hidden font-dmmono text-[11px] uppercase tracking-[0.12em] bg-ink"
+        class="inline-flex items-center h-[25px] rounded-full border-2 border-ink font-dmmono text-[11px] uppercase tracking-[0.12em] bg-ink"
         role="group"
         aria-label="Language"
       >
         <button
           type="button"
           onclick={() => $locale === 'en' && toggleLocale()}
-          class="kiosk-tap-box inline-flex items-center justify-center px-2.5 py-0.5 transition-colors {
-            $locale === 'de' ? 'bg-paper text-ink' : 'bg-ink text-paper hover:text-paper-warm'
-          }"
+          class="kiosk-tap-box inline-flex items-center justify-center"
           aria-pressed={$locale === 'de'}
-        >DE</button>
+        >
+          <span class="inline-flex items-center justify-center w-full h-[21px] px-2.5 leading-none rounded-l-full transition-colors {
+            $locale === 'de' ? 'bg-paper text-ink' : 'bg-ink text-paper hover:text-paper-warm'
+          }">DE</span>
+        </button>
         <button
           type="button"
           onclick={() => $locale === 'de' && toggleLocale()}
-          class="kiosk-tap-box inline-flex items-center justify-center px-2.5 py-0.5 transition-colors {
-            $locale === 'en' ? 'bg-paper text-ink' : 'bg-ink text-paper hover:text-paper-warm'
-          }"
+          class="kiosk-tap-box inline-flex items-center justify-center"
           aria-pressed={$locale === 'en'}
-        >EN</button>
+        >
+          <span class="inline-flex items-center justify-center w-full h-[21px] px-2.5 leading-none rounded-r-full transition-colors {
+            $locale === 'en' ? 'bg-paper text-ink' : 'bg-ink text-paper hover:text-paper-warm'
+          }">EN</span>
+        </button>
       </div>
 
       <!-- User disc (ochre + initials, or photo) -->
@@ -175,7 +185,7 @@
             aria-label={user.name}
             aria-current={profileActive ? 'page' : undefined}
             class:prof-nav-avatar-active={profileActive}
-            class="w-9 h-9 rounded-full border-2 border-ink flex items-center justify-center font-dmmono font-bold text-[11px] uppercase tracking-wider bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out kiosk-tap"
+            class="w-9 h-9 rounded-full border-2 border-ink flex items-center justify-center font-dmmono font-bold text-[11px] uppercase tracking-wider bg-paper text-ink hover:scale-105 transition-transform duration-[180ms] ease-out kiosk-tap"
           >
             {#if liveImage ?? user.image}
               <img src={liveImage ?? user.image} alt="" class="w-full h-full object-cover rounded-full" />
@@ -191,7 +201,7 @@
         <a
           href="/login"
           aria-label="Sign in"
-          class="w-9 h-9 rounded-full border-2 border-ink flex items-center justify-center bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out kiosk-tap"
+          class="w-9 h-9 rounded-full border-2 border-ink flex items-center justify-center bg-paper text-ink hover:scale-105 transition-transform duration-[180ms] ease-out kiosk-tap"
         >
           <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
             <circle cx="12" cy="8.5" r="3.5" />

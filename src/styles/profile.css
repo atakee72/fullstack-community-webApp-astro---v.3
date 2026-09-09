@@ -85,7 +85,7 @@
    KioskNav avatar disc carries an ochre ring instead. Consumed by
    a later task (KioskNav wiring). */
 .prof-nav-avatar-active {
-  box-shadow: 0 0 0 2px var(--k-paper), 0 0 0 4px var(--k-ochre);
+  box-shadow: 0 0 0 2px var(--k-paper), 0 0 0 4px var(--k-ink);
 }
 
 /* ── Reduced motion ────────────────────────────────────────────
