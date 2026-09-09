@@ -37,7 +37,7 @@
     onclick={() => (open = !open)}
     aria-haspopup="menu"
     aria-expanded={open}
-    aria-label={user.name ?? 'Admin'}
+    aria-label={user.name?.trim() || 'Admin'}
     class="font-bricolage"
     style="width:{size}px; height:{size}px; padding:0; background:var(--k-accent); border-radius:50%; border:2px solid var(--k-ink); display:flex; align-items:center; justify-content:center; overflow:hidden; font-weight:700; font-size:{Math.round(size * 0.37)}px; color:var(--k-paper); cursor:pointer;"
   >
