@@ -3,9 +3,9 @@
   // ink border. Optional mono count badge (ochre when active, ink-mute
   // otherwise). Design source: kiosk-profile.jsx (PFilterChip).
   //
-  // Tap target: the <button> is a bare 44px-tall (≤1023px, `.prof-tap-chip`
+  // Tap target: the <button> is a bare 44px-tall (≤1023px, `.kiosk-tap-box`
   // in global.css) transparent box and the PAINTED pill is the inner <span>.
-  // The usual `.prof-tap` pseudo-extender can't be used here — these chips
+  // The usual `.kiosk-tap` pseudo-extender can't be used here — these chips
   // sit in an overflow-x scroller, which clips anything reaching outside the
   // button's own box. Desktop is unchanged (no min-height ⇒ pill height).
 
@@ -26,7 +26,7 @@
   type="button"
   {onclick}
   aria-pressed={active}
-  class="shrink-0 prof-tap-chip"
+  class="shrink-0 kiosk-tap-box"
   style="background: none; border: none; padding: 0; cursor: pointer; display: inline-flex; align-items: center;"
 >
   <span

@@ -113,7 +113,7 @@
       <button
         type="button"
         onclick={onChangeEmail}
-        class="font-bricolage prof-tap"
+        class="font-bricolage kiosk-tap"
         style="flex-shrink: 0; background: none; border: none; padding: 0 0 1px; cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--k-ink); border-bottom: 2px solid var(--k-ochre);"
       >{$t['profile.konto.change']}</button>
     {/if}
@@ -155,14 +155,14 @@
       <button
         type="button"
         onclick={onChangePassword}
-        class="font-bricolage prof-tap"
+        class="font-bricolage kiosk-tap"
         style="flex-shrink: 0; background: none; border: none; padding: 0 0 1px; cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--k-ink); border-bottom: 2px solid var(--k-ochre);"
       >{$t['profile.konto.change']}</button>
     {/if}
   </div>
 
   <div style="display: flex; gap: 8px; margin-top: 16px;">
-    <PBtn small class="prof-tap" onclick={handleLogout}>{$t['profile.konto.logout']}</PBtn>
+    <PBtn small class="kiosk-tap" onclick={handleLogout}>{$t['profile.konto.logout']}</PBtn>
   </div>
 
   {#if deletionScheduledAt}
@@ -203,7 +203,7 @@
             style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 4px;"
           >
             <span class="font-bricolage" style="font-size: 12.5px; color: var(--k-ink-soft);">{$t['profile.del.zone.row']}</span>
-            <PBtn danger small class="prof-tap" onclick={onOpenDelete}>{$t['profile.del.zone.cta']}</PBtn>
+            <PBtn danger small class="kiosk-tap" onclick={onOpenDelete}>{$t['profile.del.zone.cta']}</PBtn>
           </div>
         {/if}
       </div>
@@ -215,7 +215,7 @@
         </div>
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
           <span class="font-bricolage" style="font-size: 12.5px; color: var(--k-ink-soft);">{$t['profile.del.zone.row']}</span>
-          <PBtn danger small class="prof-tap" onclick={onOpenDelete}>{$t['profile.del.zone.cta']}</PBtn>
+          <PBtn danger small class="kiosk-tap" onclick={onOpenDelete}>{$t['profile.del.zone.cta']}</PBtn>
         </div>
       </div>
     {/if}

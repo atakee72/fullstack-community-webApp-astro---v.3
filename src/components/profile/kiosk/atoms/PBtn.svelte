@@ -24,7 +24,7 @@
     href?: string;
     type?: 'button' | 'submit' | 'reset';
     onclick?: (e: MouseEvent) => void;
-    /** Extra classes — used for the ≥44px tap-target extender (.prof-tap). */
+    /** Extra classes — used for the ≥44px tap-target extender (.kiosk-tap). */
     class?: string;
     children?: Snippet;
   } = $props();
