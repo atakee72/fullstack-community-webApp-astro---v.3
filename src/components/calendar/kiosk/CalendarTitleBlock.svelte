@@ -70,7 +70,11 @@
     <!-- Right side of the stats row: month stepper · view switcher ·
          new-event CTA. Coachmark `?` + Heute still live on the
          category-rail row beneath (see CalCategoryRail). -->
-    <div class="flex items-center flex-wrap gap-3">
+    <!-- ml-auto + justify-end: on phones the stats row takes the full width and
+         this control group wraps onto its own line(s) — keep it on the RIGHT,
+         where the month view's own header (CalendarMobileMonth) puts the same
+         controls, so they don't jump sides when switching views (2026-09-09). -->
+    <div class="flex items-center flex-wrap justify-end gap-3 ml-auto">
       <!-- Month stepper — ‹ MAI 2026 › per CD's desktop header. -->
       <!-- No `overflow-hidden` here on purpose: it used to clip the pill's
            corners, but it also clipped the buttons' invisible hit-area
