@@ -179,7 +179,11 @@ const title = 'Kiez in Zahlen';
       </div>
     </div>
 
-    <div class="kiez-sheet-frame">
+    <!-- On screens narrower than A4 the frame is zoomed down to fit (see
+         the `fitSheet` script below) — without it the site-wide
+         `overflow-x: clip` hid a third of the sheet on phones with no way
+         to scroll to it. Print resets the zoom (media rule below). -->
+    <div class="kiez-sheet-frame" id="kiez-sheet-frame">
       <div class="kiez-sheet" id="kiez-sheet">
         <div class="kiez-sheet__head">
           <div class="kiez-sheet__kicker">KIEZ IN ZAHLEN{stand && ` · STAND ${stand}`}</div>
@@ -249,6 +253,25 @@ const title = 'Kiez in Zahlen';
     <p class="kiez-druck-caption">A4 · HOCHFORMAT · 210 × 297 MM</p>
   </div>
 </KioskLayout>
+
+<script>
+  // Screen-only fit: zoom the A4 frame down when the viewport is narrower
+  // than the sheet (210mm ≈ 794px + 3px moss shadow), so phones see the
+  // whole sheet instead of a clipped third. `zoom` (not `transform`) so
+  // layout height follows and the caption below stays attached. The print
+  // media rule above forces zoom back to 1 for the actual printout.
+  const SHEET_PX = 800;
+  function fitSheet() {
+    const frame = document.getElementById('kiez-sheet-frame') as HTMLElement | null;
+    if (!frame) return;
+    const avail = document.documentElement.clientWidth - 32; // page padding 16px each side
+    const scale = Math.min(1, avail / SHEET_PX);
+    frame.style.zoom = scale < 1 ? String(Math.round(scale * 1000) / 1000) : '';
+  }
+  fitSheet();
+  window.addEventListener('resize', fitSheet, { passive: true });
+  document.addEventListener('astro:page-load', fitSheet);
+</script>
 
 <style>
   /* ─── Screen layout (print-preview shell) ─────────────────────────── */
@@ -336,6 +359,11 @@ const title = 'Kiez in Zahlen';
 
   .kiez-sheet-frame {
     position: relative;
+  }
+  @media print {
+    .kiez-sheet-frame {
+      zoom: 1 !important;
+    }
   }
 
   .kiez-druck-caption {

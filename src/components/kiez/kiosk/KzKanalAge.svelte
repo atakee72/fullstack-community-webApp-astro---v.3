@@ -1,7 +1,7 @@
 <script lang="ts">
   // Kanal 02 — Alter. 7-row horizontal bar chart, bar opacity scaled to the
   // row's share of the area's largest bucket. Precise (never-wobbled)
-  // vertical gridlines at 0/10/20/30/40 %. Spec: kiosk-kiezdaten.jsx:328-358.
+  // vertical gridlines every 10 % across a data-aware domain (≥42 %). Spec: kiosk-kiezdaten.jsx:328-358.
   import { t, locale } from '../../../lib/kiosk-i18n';
   import { KZ_SERIES_COLORS } from '../../../lib/kiez/kiezViewModel';
   import type { KzAreaVM, KiezVM } from '../../../lib/kiez/kiezViewModel';
@@ -13,13 +13,19 @@
 
   const color = $derived(KZ_SERIES_COLORS[area.code] ?? KZ_SERIES_COLORS.all);
   const maxPct = $derived(Math.max(...area.agePct) || 1);
+  // X-domain: the spec's fixed 42 % floor, widened when the data outgrows
+  // it (Gesamt 27–44 hit 43,9 % with the 2025h2 sync — the bar ran past
+  // the last gridline and pushed its value label off the SVG). The 0.9
+  // divisor keeps ~10 % of the plot width free for the label text.
+  const domain = $derived(Math.max(42, Math.ceil(maxPct / 0.9)));
+  const ticks = $derived(Array.from({ length: Math.floor(domain / 10) + 1 }, (_, i) => i * 10));
 
   const fmtPct = (n: number) => ($locale === 'de' ? String(n).replace('.', ',') : String(n)) + ' %';
   const fmtNum = (n: number) => n.toLocaleString($locale === 'de' ? 'de-DE' : 'en-GB');
   const roundedAbs = (n: number) => Math.round(n / 10) * 10;
 
   function barW(pct: number): number {
-    return (pct / 42) * 990;
+    return (pct / domain) * 990;
   }
 </script>
 
@@ -30,10 +36,10 @@
 <KzKanal nr="02" title={$t['kiez.k02.title']} area={area.name} {right}>
   <div class="rounded-2xl border-[1.5px] border-ink bg-paper-warm px-4 py-3.5 lg:px-[22px]">
     <svg viewBox="0 0 1130 258" class="w-full">
-      {#each [0, 10, 20, 30, 40] as p (p)}
+      {#each ticks as p (p)}
         <g>
-          <line x1={80 + (p / 42) * 990} x2={80 + (p / 42) * 990} y1={6} y2={238} stroke="var(--k-rule)" stroke-width="0.8" />
-          <text x={80 + (p / 42) * 990} y="252" text-anchor="middle" font-family="var(--k-font-mono)" font-size="10" fill="var(--k-ink-mute)">{p}%</text>
+          <line x1={80 + barW(p)} x2={80 + barW(p)} y1={6} y2={238} stroke="var(--k-rule)" stroke-width="0.8" />
+          <text x={80 + barW(p)} y="252" text-anchor="middle" font-family="var(--k-font-mono)" font-size="10" fill="var(--k-ink-mute)">{p}%</text>
         </g>
       {/each}
       <line x1={80} y1={4} x2={80} y2={238} stroke="var(--k-ink)" stroke-width="1.2" />

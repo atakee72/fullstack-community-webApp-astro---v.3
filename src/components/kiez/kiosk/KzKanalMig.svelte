@@ -58,14 +58,17 @@
 <KzKanal nr="03" title={$t['kiez.k03.title']} area={area.name} {right}>
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-[440px_1fr] lg:gap-[22px]">
     {#if area.mig}
-      <div class="flex items-center gap-5 rounded-2xl border-[1.5px] border-ink bg-paper-warm px-4 py-3.5 lg:px-5">
-        <KzDonut segs={legs.map((s) => ({ v: s.v, c: s.c }))} />
+      <!-- Donut above the legend on phones (a 148px donut left a ~140px
+           legend column at 375px — the three-line labels pushed the
+           percentages off the card), side by side from `sm` up. -->
+      <div class="flex flex-col items-stretch gap-4 rounded-2xl border-[1.5px] border-ink bg-paper-warm px-4 py-3.5 sm:flex-row sm:items-center sm:gap-5 lg:px-5">
+        <div class="self-center"><KzDonut segs={legs.map((s) => ({ v: s.v, c: s.c }))} /></div>
         <div class="min-w-0 flex-1">
           {#each legs as s (s.key)}
             <div class="flex items-baseline gap-2 border-b border-dashed border-rule py-1.5">
               <span class="h-2.5 w-2.5 shrink-0 rounded-sm border border-ink" style={`background:${s.c}`}></span>
               <span class="flex-1 text-[12.5px] leading-tight text-ink-soft">{s.l}</span>
-              <span class="font-dmmono text-[15px] font-medium text-ink">{fmtPct(s.v)}</span>
+              <span class="shrink-0 whitespace-nowrap font-dmmono text-[15px] font-medium text-ink">{fmtPct(s.v)}</span>
             </div>
           {/each}
           <div class="mt-2 font-dmmono text-[9px] text-ink-mute">{$t['kiez.k03.caption']}</div>
