@@ -24,6 +24,7 @@
   import { de as deLocale, enUS } from 'date-fns/locale';
 
   import { CATEGORIES } from '../../../../lib/calendar/categories';
+  import { tick } from 'svelte';
   import { swipeX } from '../../../../lib/swipe';
   import {
     eventCoversDay,
@@ -131,6 +132,29 @@
   let longPressTimer: ReturnType<typeof setTimeout> | null = null;
   let longPressFired = false;
   let gridWrapper: HTMLDivElement | undefined = $state();
+  let panelEl: HTMLDivElement | undefined = $state();
+
+  // After a plain tap, bring the day panel into view without losing the
+  // tapped row of the grid (user request 2026-09-10: the list rendered
+  // below the fold and nobody saw it). Scroll by the SMALLEST amount that
+  // puts the panel's kicker plus ~2 rows above the bottom nav, capped so
+  // the tapped cell stays under the sticky masthead. No-op when the panel
+  // is already visible; instant under reduced motion.
+  async function revealPanel(date: Date) {
+    await tick();
+    if (!panelEl || !gridWrapper) return;
+    const nav = document.querySelector<HTMLElement>('nav.fixed.bottom-0');
+    const navTop = nav ? nav.getBoundingClientRect().top : window.innerHeight;
+    const overflow = panelEl.getBoundingClientRect().top + 140 - navTop;
+    if (overflow <= 0) return;
+    const cell = gridWrapper.querySelector<HTMLElement>(`[data-cell-date="${date.toISOString()}"]`);
+    const mastheadBottom = document.querySelector('header')?.getBoundingClientRect().bottom ?? 0;
+    const keepCell = cell ? cell.getBoundingClientRect().top - mastheadBottom - 8 : overflow;
+    const delta = Math.min(overflow, keepCell);
+    if (delta < 4) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollBy({ top: delta, behavior: reduced ? 'auto' : 'smooth' });
+  }
 
   // Slide direction for the month swap (swipe or the header arrows —
   // both arrive here as a new `visibleMonth`): forward → grid comes in
@@ -161,8 +185,10 @@
   function handleDateTap(date: Date, viaLongPress: boolean) {
     const isPast = isBefore(startOfDay(date), startOfDay(new Date()));
 
-    // Always update the bottom-panel day.
+    // Always update the bottom-panel day; a plain tap also scrolls the
+    // panel into view (a long-press keeps the pin where the finger is).
     selectedDay = date;
+    if (!viaLongPress) void revealPanel(date);
 
     // Past date: clear all selection state. Bottom panel still shows
     // events for that day (above), but no range can start in the past.
@@ -479,7 +505,7 @@
 
   <!-- Bottom day panel -->
   <!-- pb-24: the fixed „+" FAB (bottom-16, 56px) otherwise covers the last row's RSVP/save buttons. -->
-  <div data-tour="cal-rsvp" class="px-4 pt-4 pb-24 mt-2 border-t-[1.5px] border-ink">
+  <div data-tour="cal-rsvp" class="px-4 pt-4 pb-24 mt-2 border-t-[1.5px] border-ink" bind:this={panelEl}>
     <div class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-teal mb-2">
       {dayKicker}
     </div>
