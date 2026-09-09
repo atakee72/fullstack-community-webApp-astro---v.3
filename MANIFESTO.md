@@ -49,6 +49,7 @@ Anyone deploying Mahalle for a community is expected — not legally compelled, 
 - **A public moderation log** so that decisions about removing content, banning users, or escalating reports are visible to the community they serve.
 - **A transparent funding source** — if Mahalle costs money to run, where the money comes from is public.
 - **An exit clause** — if the operator becomes unable or unwilling to continue, the community can take over the data and the deployment without paying ransom.
+- **A hello before going live** — a short message to the author (admin@mahalle.digital) saying which community you're deploying for. Not a permission request; the license already grants one. It keeps the map of where Mahalle travels honest, and it's how forks find each other.
 
 These are not bureaucratic requirements; they are the difference between a *community platform* and a *community-shaped private fiefdom*.
 

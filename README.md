@@ -446,3 +446,5 @@ For more information:
 Free for noncommercial use by neighborhood associations, housing cooperatives, public institutions, and community groups. **Not permitted** for political parties, for-profit entities, religious proselytizing, single-individual personal deployments, or surveillance of residents. Commercial licensing inquiries: contact the author.
 
 Before deploying or forking, please read [`MANIFESTO.md`](./MANIFESTO.md) — the project's binding statement of intent on what Mahalle is, who it is for, and what it refuses to become.
+
+**Before you deploy your own instance**, please say hello at admin@mahalle.digital. The license doesn't require it, but Mahalle is a neighborhood project and I'd like to know where it travels.
