@@ -422,6 +422,9 @@
       onNextMonth={goNextMonth}
       {view}
       onView={switchView}
+      monthEvents={displayedEvents.length}
+      showToday={!isOnTodayMonth}
+      onToday={goToday}
     />
 
     <CalCategoryRail

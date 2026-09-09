@@ -4,7 +4,10 @@
   // switcher / coachmark / Heute live on the category-rail row beneath
   // (see CalCategoryRail.svelte).
 
-  import { t } from '../../../lib/kiosk-i18n';
+  import { format } from 'date-fns';
+  import { de as deLocale, enUS } from 'date-fns/locale';
+  import { t, locale } from '../../../lib/kiosk-i18n';
+  import { now } from '../../../lib/calendar/nowTicker';
 
   type View = 'month' | 'agenda' | 'day';
 
@@ -18,7 +21,10 @@
     onPrevMonth,
     onNextMonth,
     view = 'month',
-    onView
+    onView,
+    monthEvents = 0,
+    showToday = false,
+    onToday
   } = $props<{
     monthLabel?: string;
     visibleMonthLabel?: string;
@@ -30,7 +36,19 @@
     onNextMonth?: () => void;
     view?: View;
     onView?: (v: View) => void;
+    /** Mobile hero only: visible-month event count + „Heute" pill (mirrors CalendarMobileMonth). */
+    monthEvents?: number;
+    showToday?: boolean;
+    onToday?: () => void;
   }>();
+
+  // Mobile hero dateline — same derivation as mobile/CalendarMobileMonth so
+  // the header reads identically in month, agenda and day view (2026-09-09:
+  // agenda/day used to show the desktop kicker + stats with no title, and the
+  // controls sat on the other side — user-reported).
+  const dateLocale = $derived($locale === 'de' ? deLocale : enUS);
+  const todayKicker = $derived(format($now, 'EEEE d. MMM', { locale: dateLocale }).toUpperCase());
+  const timeNow = $derived(format($now, 'HH:mm'));
 
   const views: { k: View; label: () => string }[] = [
     { k: 'month',  label: () => $t['cal.view.month']  },
@@ -40,8 +58,81 @@
 </script>
 
 <section
-  class="px-4 md:px-9 lg:px-10 pt-6 pb-4 border-b border-dashed border-rule"
+  class="px-4 md:px-9 lg:px-10 pt-5 lg:pt-6 pb-3 lg:pb-4 border-b border-dashed border-rule"
 >
+  <!-- ── Mobile hero (agenda/day) — a copy of CalendarMobileMonth's header so the
+       three views share one look on phones: dateline kicker, title, stepper on the
+       right, stats left + switcher right. ─────────────────────────────────── -->
+  <div class="lg:hidden">
+    <div class="font-dmmono text-[10px] uppercase tracking-[0.1em] text-teal mb-2">
+      {todayKicker} · {timeNow}
+    </div>
+    <h1 class="font-bricolage font-extrabold text-ink leading-[0.95] tracking-tight mt-6 text-[40px] md:text-[48px]">
+      {$t['cal.title.q1']}
+      <span class="font-instrument italic font-normal text-teal">{$t['cal.title.q2']}</span>
+      {$t['cal.title.q3']}
+    </h1>
+    <div class="flex items-center justify-end gap-2 mt-5">
+      <div class="inline-flex items-center border-[1.5px] border-ink rounded-full font-dmmono text-[11px] font-semibold leading-none">
+        <button
+          type="button"
+          onclick={onPrevMonth}
+          aria-label={$t['cal.nav.prevMonth.aria']}
+          class="relative rounded-l-full px-2.5 py-1 hover:bg-paper-warm transition-colors"
+        >‹<span aria-hidden="true" style="position:absolute; inset:-18px -9px -7px;"></span></button>
+        <span class="px-3 py-1 border-l-[1.5px] border-r-[1.5px] border-ink uppercase tracking-[0.05em]">
+          {visibleMonthLabel}
+        </span>
+        <button
+          type="button"
+          onclick={onNextMonth}
+          aria-label={$t['cal.nav.nextMonth.aria']}
+          class="relative rounded-r-full px-2.5 py-1 hover:bg-paper-warm transition-colors"
+        >›<span aria-hidden="true" style="position:absolute; inset:-18px -9px -7px;"></span></button>
+      </div>
+      {#if showToday}
+        <button
+          type="button"
+          onclick={onToday}
+          class="inline-flex items-center px-3 py-1.5 rounded-full border-[1.5px] border-ink font-dmmono text-[10px] uppercase tracking-[0.06em] hover:bg-paper-warm transition-colors shrink-0"
+        >
+          {$t['cal.cell.today']}
+        </button>
+      {/if}
+    </div>
+    <div class="flex items-center justify-between gap-3 mt-3">
+      <div class="font-dmmono text-[11px] text-ink-mute">
+        <b class="text-ink">{monthEvents}</b> {$t['cal.mobile.statsMonthEvents']}
+        {#if liveNow > 0}
+          · <b class="text-ochre">{liveNow}</b> {$t['cal.mobile.statsLiveNow']}
+        {/if}
+      </div>
+      <div
+        class="inline-flex border-2 border-ink rounded-full font-dmmono text-[12px] font-semibold shrink-0"
+        role="group"
+        aria-label={$t['cal.view.switcher.aria']}
+      >
+        {#each views as v, i (v.k)}
+          <button
+            type="button"
+            aria-pressed={view === v.k}
+            onclick={() => onView?.(v.k)}
+            class="relative px-3 py-1 transition-colors {
+              view === v.k ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
+            } {i > 0 ? 'border-l-2 border-ink' : ''} {
+              i === 0 ? 'rounded-l-full' : i === views.length - 1 ? 'rounded-r-full' : ''
+            }"
+          >
+            {v.label()}
+            <span aria-hidden="true" style="position:absolute; inset:-7px 0 -11px;"></span>
+          </button>
+        {/each}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Desktop header ──────────────────────────────────────────────────── -->
+  <div class="hidden lg:block">
   <div class="font-dmmono text-[11px] uppercase tracking-[0.12em] text-teal">
     {$t['cal.title.kicker']}{#if monthLabel} · {monthLabel}{/if}
   </div>
@@ -152,5 +243,6 @@
         {$t['cal.cta.newEvent']}
       </a>
     </div>
+  </div>
   </div>
 </section>
