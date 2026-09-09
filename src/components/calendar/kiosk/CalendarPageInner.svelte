@@ -408,9 +408,10 @@
 </script>
 
 <div data-page="calendar">
-  <!-- Title block + category rail are hidden on mobile when month view —
-       CalendarMobileMonth owns its own header + filter rail there. -->
-  <div class={view === 'month' ? 'hidden lg:block' : 'block'}>
+  <!-- Title block + category rail render on EVERY view and viewport (2026-09-09,
+       user decision): CalendarTitleBlock carries the mobile hero, CalCategoryRail
+       the outlined „Alle …" pills — CalendarMobileMonth is grid + day panel only. -->
+  <div>
     <CalendarTitleBlock
       {monthLabel}
       {visibleMonthLabel}
@@ -423,8 +424,6 @@
       {view}
       onView={switchView}
       monthEvents={displayedEvents.length}
-      showToday={!isOnTodayMonth}
-      onToday={goToday}
     />
 
     <CalCategoryRail

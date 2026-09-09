@@ -22,9 +22,7 @@
     onNextMonth,
     view = 'month',
     onView,
-    monthEvents = 0,
-    showToday = false,
-    onToday
+    monthEvents = 0
   } = $props<{
     monthLabel?: string;
     visibleMonthLabel?: string;
@@ -36,10 +34,8 @@
     onNextMonth?: () => void;
     view?: View;
     onView?: (v: View) => void;
-    /** Mobile hero only: visible-month event count + „Heute" pill (mirrors CalendarMobileMonth). */
+    /** Mobile hero only: visible-month event count. */
     monthEvents?: number;
-    showToday?: boolean;
-    onToday?: () => void;
   }>();
 
   // Mobile hero dateline — same derivation as mobile/CalendarMobileMonth so
@@ -60,9 +56,10 @@
 <section
   class="px-4 md:px-9 lg:px-10 pt-5 lg:pt-6 pb-3 lg:pb-4 border-b border-dashed border-rule"
 >
-  <!-- ── Mobile hero (agenda/day) — a copy of CalendarMobileMonth's header so the
-       three views share one look on phones: dateline kicker, title, stepper on the
-       right, stats left + switcher right. ─────────────────────────────────── -->
+  <!-- ── Mobile hero (ALL views since 2026-09-09) — dateline kicker, title,
+       stepper on the right, stats left + switcher right. CalendarMobileMonth
+       no longer renders its own header/rail; this + CalCategoryRail are the
+       single mobile chrome for month, agenda and day. ─────────────────── -->
   <div class="lg:hidden">
     <div class="font-dmmono text-[10px] uppercase tracking-[0.1em] text-teal mb-2">
       {todayKicker} · {timeNow}
@@ -73,7 +70,8 @@
       {$t['cal.title.q3']}
     </h1>
     <div class="flex items-center justify-end gap-2 mt-5">
-      <div class="inline-flex items-center border-[1.5px] border-ink rounded-full font-dmmono text-[11px] font-semibold leading-none">
+      <!-- data-tour anchors duplicate the desktop ones below; the tour engine takes the first VISIBLE match. -->
+      <div data-tour="cal-month-nav" class="inline-flex items-center border-[1.5px] border-ink rounded-full font-dmmono text-[11px] font-semibold leading-none">
         <button
           type="button"
           onclick={onPrevMonth}
@@ -90,15 +88,6 @@
           class="relative rounded-r-full px-2.5 py-1 hover:bg-paper-warm transition-colors"
         >›<span aria-hidden="true" style="position:absolute; inset:-18px -9px -7px;"></span></button>
       </div>
-      {#if showToday}
-        <button
-          type="button"
-          onclick={onToday}
-          class="inline-flex items-center px-3 py-1.5 rounded-full border-[1.5px] border-ink font-dmmono text-[10px] uppercase tracking-[0.06em] hover:bg-paper-warm transition-colors shrink-0"
-        >
-          {$t['cal.cell.today']}
-        </button>
-      {/if}
     </div>
     <div class="flex items-center justify-between gap-3 mt-3">
       <div class="font-dmmono text-[11px] text-ink-mute">
@@ -108,6 +97,7 @@
         {/if}
       </div>
       <div
+        data-tour="cal-view"
         class="inline-flex border-2 border-ink rounded-full font-dmmono text-[12px] font-semibold shrink-0"
         role="group"
         aria-label={$t['cal.view.switcher.aria']}
