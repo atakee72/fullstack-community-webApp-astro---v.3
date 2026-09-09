@@ -838,6 +838,8 @@ option:disabled {
 .am-sub { font-size: 9.5px; color: var(--k-ink-mute); letter-spacing: 0.08em; margin-top: 2px; }
 .am-group { padding: 6px 0; }
 .am-group.am-admin { border-top: 1px dashed var(--k-rule); }
+.am-group.am-areas { border-bottom: 1px dashed var(--k-rule); }
+.am-kicker { padding: 6px 14px 2px; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--k-ink-mute); }
 .am-foot { border-top: 1.5px solid var(--k-ink); padding: 6px 0; background: var(--k-paper-warm); }
 .am-row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;

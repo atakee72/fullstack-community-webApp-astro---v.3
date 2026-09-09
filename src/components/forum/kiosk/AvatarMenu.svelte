@@ -9,12 +9,27 @@
   import { t } from '../../../lib/kiosk-i18n';
   import { whoamiCache, setWhoamiCache } from './avatarMenuCache';
 
-  let { user, onClose } = $props<{
-    user: { name?: string; role?: string };
+  // `context`: 'app' (default — KioskNav on the member surfaces) or 'admin'
+  // (AdmAvatar in the admin masthead). Admin context adds a „Bereiche" group
+  // so the admin can jump to any member surface from the back-office, and
+  // drops the „Admin-Bereich" row (you're already there).
+  let { user, onClose, context = 'app' } = $props<{
+    user: { name?: string | null; role?: string };
     onClose: (restoreFocus: boolean) => void;
+    context?: 'app' | 'admin';
   }>();
 
   const isAdmin = $derived(user?.role === 'admin');
+
+  // Same six surfaces as KioskNav's topNav, same i18n keys.
+  const AREAS = [
+    { href: '/forum',        key: 'nav.forum' },
+    { href: '/calendar',     key: 'nav.calendar' },
+    { href: '/newsboard',    key: 'nav.news' },
+    { href: '/marketplace',  key: 'nav.marketplace' },
+    { href: '/schillerkiez', key: 'nav.kiez' },
+    { href: '/blog',         key: 'nav.blog' },
+  ] as const;
 
   // Who-am-i extras — one lazy fetch across the session (module cache above),
   // name renders regardless.
@@ -113,6 +128,14 @@
         <div class="am-sub font-dmmono">@{handle}{#if sinceYear}&nbsp;· {$t['nav.menu.seit']} {sinceYear}{/if}</div>
       {/if}
     </div>
+    {#if context === 'admin'}
+      <div class="am-group am-areas">
+        <div class="am-kicker font-dmmono">{$t['nav.menu.areas']}</div>
+        {#each AREAS as area (area.href)}
+          <a role="menuitem" href={area.href} class="am-row font-bricolage">{$t[area.key]}</a>
+        {/each}
+      </div>
+    {/if}
     <div class="am-group">
       <a role="menuitem" href="/profile" class="am-row font-bricolage">{$t['nav.menu.profil']}<span class="am-icon font-dmmono">→</span></a>
       <a role="menuitem" href="/profile?filter=forum" class="am-row font-bricolage">{$t['nav.menu.beitraege']}</a>
@@ -120,7 +143,7 @@
       <button role="menuitem" class="am-row font-bricolage" onclick={() => { close(); (window as any).__mahalleTourStart?.(); }}>{$t['nav.menu.tour']}<span class="am-icon font-dmmono">◎</span></button>
       <a role="menuitem" href="/blog" class="am-row font-bricolage">{$t['nav.menu.beilage']}<span class="am-icon font-dmmono">❡</span></a>
     </div>
-    {#if isAdmin}
+    {#if isAdmin && context !== 'admin'}
       <div class="am-group am-admin">
         <a role="menuitem" href="/admin/moderation" class="am-row am-plum font-bricolage">{$t['nav.menu.adminArea']}</a>
       </div>
