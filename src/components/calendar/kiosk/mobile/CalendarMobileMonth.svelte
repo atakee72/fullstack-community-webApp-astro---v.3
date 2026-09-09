@@ -132,6 +132,18 @@
   let longPressFired = false;
   let gridWrapper: HTMLDivElement | undefined = $state();
 
+  // Slide direction for the month swap (swipe or the header arrows —
+  // both arrive here as a new `visibleMonth`): forward → grid comes in
+  // from the right. Set in `$effect.pre` so the {#key}-remounted grid
+  // wears the class on mount; null on first render = no animation.
+  let swapDir = $state<'left' | 'right' | null>(null);
+  let lastMonthTs: number | null = null;
+  $effect.pre(() => {
+    const ts = visibleMonth.getTime();
+    if (lastMonthTs !== null && ts !== lastMonthTs) swapDir = ts > lastMonthTs ? 'left' : 'right';
+    lastMonthTs = ts;
+  });
+
   function clearLongPress() {
     if (longPressTimer) {
       clearTimeout(longPressTimer);
@@ -393,8 +405,10 @@
         </div>
       {/each}
     </div>
+    <!-- Keyed on the month so the dot-grid remounts and slides in (C09). -->
+    {#key visibleMonth.getTime()}
     <div
-      class="grid grid-cols-7"
+      class={`grid grid-cols-7 ${swapDir ? `k-cal-swap-${swapDir}` : ''}`}
       style:grid-template-rows={`repeat(${rows}, minmax(52px, 1fr))`}
       style:touch-action="manipulation"
     >
@@ -445,6 +459,7 @@
         </button>
       {/each}
     </div>
+    {/key}
 
     {#if pin}
       <DragSelectPin

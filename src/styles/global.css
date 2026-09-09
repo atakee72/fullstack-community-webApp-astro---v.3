@@ -673,6 +673,26 @@ option:disabled {
   animation: k-cal-tick 380ms cubic-bezier(.4, 0, .2, 1) both;
 }
 
+/* C09 · day / month swap slide — the incoming keyed block (Tag view list,
+   mobile month dot-grid) slides in from the side the content came from:
+   forward in time = from the right (`-left`, content moved left), back =
+   from the left (`-right`). Applied on mount of a {#key}-ed node, so no
+   out-animation and no double layout. Reduced motion: fade only. */
+@keyframes k-cal-swap-left {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes k-cal-swap-right {
+  from { opacity: 0; transform: translateX(-28px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes k-cal-swap-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.k-cal-swap-left  { animation: k-cal-swap-left  200ms cubic-bezier(.2, .7, .2, 1) both; }
+.k-cal-swap-right { animation: k-cal-swap-right 200ms cubic-bezier(.2, .7, .2, 1) both; }
+
 /* Reduced-motion fallback */
 @media (prefers-reduced-motion: reduce) {
   .k-cal-live-dot,
@@ -684,6 +704,10 @@ option:disabled {
   .k-cal-capacity-bar,
   .k-cal-tick {
     animation: none !important;
+  }
+  .k-cal-swap-left,
+  .k-cal-swap-right {
+    animation: k-cal-swap-fade 160ms ease-out both;
   }
 }
 

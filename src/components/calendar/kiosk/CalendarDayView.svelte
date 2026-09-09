@@ -53,6 +53,17 @@
     selectedDay = addDays(selectedDay, 1);
     onDayChange?.(selectedDay);
   }
+  // Slide direction for the day swap (swipe, arrows, mini-calendar pick):
+  // forward in time → the new list comes in from the right. `$effect.pre`
+  // runs before the DOM flush, so the {#key}-remounted node wears the
+  // class on mount. Null on first render = no animation.
+  let swapDir = $state<'left' | 'right' | null>(null);
+  let lastDayTs: number | null = null;
+  $effect.pre(() => {
+    const ts = selectedDay.getTime();
+    if (lastDayTs !== null && ts !== lastDayTs) swapDir = ts > lastDayTs ? 'left' : 'right';
+    lastDayTs = ts;
+  });
   const isOnToday = $derived(isTodayDate(selectedDay));
   const liveCount = $derived(dayEvents.filter((e) => isLiveNow(e, $now)).length);
   const termLabel = $derived(
@@ -76,6 +87,9 @@
        cards with the category border. -->
   <!-- Swipe left/right = next/previous day (touch), same handlers as the arrows below. -->
   <div class="px-4 md:px-9 lg:px-10 py-3" use:swipeX={{ onLeft: goNext, onRight: goPrev }}>
+    <!-- Keyed on the day so the list remounts and slides in (C09) on every change. -->
+    {#key selectedDay.getTime()}
+    <div class={swapDir ? `k-cal-swap-${swapDir}` : undefined}>
     {#if isOnToday}
       <div
         class="bg-ink rounded-md shadow-[3px_3px_0_var(--k-wine,#b23a5b)] mb-4 px-4 py-1 flex flex-col gap-1 lg:grid lg:grid-cols-[140px_1fr] lg:gap-4 lg:items-stretch"
@@ -136,6 +150,8 @@
         {/if}
       </div>
     {/if}
+    </div>
+    {/key}
 
     <!-- Day-nav footer: prev / next. (A jump-to-today shortcut lived in
          the middle until Aug 2026 — removed, it read like a caption for
