@@ -3,20 +3,27 @@
 # Writes ONE bundle file (full history, all branches) that Dropbox syncs;
 # a bare repo in Dropbox can corrupt when synced mid-write, a bundle can't
 # (git writes to a .lock file and renames). Restore: `git clone <file>`.
-# Non-blocking: a missing Dropbox mount warns loudly but never stops the push.
+# Retries 3x (Dropbox may briefly lock the file while syncing the last write).
+# Non-blocking: any failure warns loudly but never stops the push.
 # Independent of the GitHub remote — unaffected by rename or visibility.
 
 BACKUP_DIR="/mnt/c/Users/atakee/Dropbox/Backups"
 BUNDLE="$BACKUP_DIR/mahalle-digital.bundle"
 
 if [ ! -d "$BACKUP_DIR" ]; then
-  echo "WARN: $BACKUP_DIR not found — Dropbox backup skipped."
+  echo "backup: WARN $BACKUP_DIR not found — Dropbox backup skipped."
   exit 0
 fi
 
-if git bundle create "$BUNDLE" --all --quiet; then
-  echo "backup: $BUNDLE refreshed"
-else
-  echo "WARN: git bundle failed — Dropbox backup NOT refreshed."
-fi
+n=1
+while [ $n -le 3 ]; do
+  if git bundle create "$BUNDLE" --all --quiet; then
+    echo "backup: $BUNDLE refreshed ($(git rev-parse --short HEAD))"
+    exit 0
+  fi
+  echo "backup: attempt $n failed, retrying…"
+  n=$((n + 1))
+  sleep 2
+done
+echo "backup: WARN git bundle failed 3x — Dropbox backup NOT refreshed."
 exit 0
