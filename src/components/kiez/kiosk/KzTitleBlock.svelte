@@ -69,7 +69,9 @@
         </div>
         <p class="text-[13.5px] lg:text-[14px] leading-snug text-ink-soft">{readingLine}</p>
         <div class="mt-2.5 pt-2.5 border-t border-dashed border-rule">
-          <a href={shareHref} class="font-dmmono text-[11px] font-semibold" style="color: var(--k-accent, var(--k-moss));">
+          <!-- kiosk-tap: inline link, so the invisible pseudo-extender lifts the
+               hit area to 48px on touch viewports without moving the text. -->
+          <a href={shareHref} class="font-dmmono text-[11px] font-semibold inline-block kiosk-tap" style="color: var(--k-accent, var(--k-moss));">
             {$t['kiez.zdw.share']}
           </a>
         </div>

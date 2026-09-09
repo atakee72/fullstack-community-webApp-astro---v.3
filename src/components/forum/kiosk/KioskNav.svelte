@@ -105,7 +105,7 @@
 <header class="sticky top-0 {menuOpen || bellOpen ? 'z-50' : 'z-40'} border-b-2 border-ink k-paper-bg">
   <div class="max-w-7xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between gap-4">
     <!-- Brand: wine disc + wordmark + place tagline below -->
-    <a href="/" class="flex items-center gap-3 group shrink-0">
+    <a href="/" class="flex items-center gap-3 group shrink-0 kiosk-tap">
       <span
         class="w-10 h-10 rounded-full bg-wine text-paper flex items-center justify-center font-bricolage font-bold text-xl leading-none group-hover:scale-105 transition-transform duration-[180ms] ease-out"
       >m</span>
@@ -147,7 +147,7 @@
         <button
           type="button"
           onclick={() => $locale === 'en' && toggleLocale()}
-          class="px-2.5 py-0.5 transition-colors {
+          class="kiosk-tap-box inline-flex items-center justify-center px-2.5 py-0.5 transition-colors {
             $locale === 'de' ? 'bg-paper text-ink' : 'bg-ink text-paper hover:text-paper-warm'
           }"
           aria-pressed={$locale === 'de'}
@@ -155,7 +155,7 @@
         <button
           type="button"
           onclick={() => $locale === 'de' && toggleLocale()}
-          class="px-2.5 py-0.5 transition-colors {
+          class="kiosk-tap-box inline-flex items-center justify-center px-2.5 py-0.5 transition-colors {
             $locale === 'en' ? 'bg-paper text-ink' : 'bg-ink text-paper hover:text-paper-warm'
           }"
           aria-pressed={$locale === 'en'}
@@ -175,10 +175,10 @@
             aria-label={user.name}
             aria-current={profileActive ? 'page' : undefined}
             class:prof-nav-avatar-active={profileActive}
-            class="w-9 h-9 rounded-full border-2 border-ink overflow-hidden flex items-center justify-center font-dmmono font-bold text-[11px] uppercase tracking-wider bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
+            class="w-9 h-9 rounded-full border-2 border-ink flex items-center justify-center font-dmmono font-bold text-[11px] uppercase tracking-wider bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out kiosk-tap"
           >
             {#if liveImage ?? user.image}
-              <img src={liveImage ?? user.image} alt="" class="w-full h-full object-cover" />
+              <img src={liveImage ?? user.image} alt="" class="w-full h-full object-cover rounded-full" />
             {:else}
               {initialsOf(user.name)}
             {/if}
@@ -191,7 +191,7 @@
         <a
           href="/login"
           aria-label="Sign in"
-          class="w-9 h-9 rounded-full border-2 border-ink flex items-center justify-center bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out"
+          class="w-9 h-9 rounded-full border-2 border-ink flex items-center justify-center bg-ochre text-ink hover:scale-105 transition-transform duration-[180ms] ease-out kiosk-tap"
         >
           <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
             <circle cx="12" cy="8.5" r="3.5" />
@@ -213,7 +213,7 @@
     {#each bottomNav as item (item.href)}
       <a
         href={item.href}
-        class="flex-1 py-3.5 font-dmmono text-[10px] uppercase tracking-[0.12em] text-center transition-colors text-ink {
+        class="flex-1 min-h-[44px] flex items-center justify-center py-3.5 font-dmmono text-[10px] uppercase tracking-[0.12em] text-center transition-colors text-ink {
           isActive(item.match)
             ? 'font-bold bg-paper-warm'
             : 'opacity-70 hover:opacity-100'

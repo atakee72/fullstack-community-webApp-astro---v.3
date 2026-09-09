@@ -17,7 +17,7 @@
       {$t['footer.licensedUnder']}
       <a
         href="https://polyformproject.org/licenses/noncommercial/1.0.0"
-        class="underline decoration-rule decoration-1 underline-offset-2 hover:text-ink hover:decoration-ink transition-colors"
+        class="inline-block kiosk-tap underline decoration-rule decoration-1 underline-offset-2 hover:text-ink hover:decoration-ink transition-colors"
         target="_blank"
         rel="noopener noreferrer"
       >
