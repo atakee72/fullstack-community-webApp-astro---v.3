@@ -483,7 +483,8 @@
   </p>
 
   <!-- Bottom day panel -->
-  <div data-tour="cal-rsvp" class="px-4 pt-4 mt-2 border-t-[1.5px] border-ink">
+  <!-- pb-24: the fixed „+" FAB (bottom-16, 56px) otherwise covers the last row's RSVP/save buttons. -->
+  <div data-tour="cal-rsvp" class="px-4 pt-4 pb-24 mt-2 border-t-[1.5px] border-ink">
     <div class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-teal mb-2">
       {dayKicker}
     </div>
