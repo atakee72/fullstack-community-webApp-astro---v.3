@@ -581,8 +581,8 @@ Chronik carries no private data (see `chronik.ts`'s own comments).
 
 `getChronik(userId)` (`src/lib/profile/chronik.ts`, SERVER-ONLY) is the sole
 producer of `ChronikData`. Consumed by BOTH `profile.astro` (own view) and
-`nachbarn/[handle].astro` (public view, same shape, no gating needed — the
-Chronik carries no private data by construction: only dates + an `active`
+`nachbarn/[handle].astro` (public view, same shape, no DATA gating needed — the
+route itself is login-gated by middleware, but the Chronik carries no private data by construction: only dates + an `active`
 boolean, never counts/content).
 
 - **Cache**: `chronikCache` collection, one row per user
@@ -615,9 +615,14 @@ boolean, never counts/content).
 
 ## Public profile (`/nachbarn/[handle]`, Plan B Task 3/4)
 
-Trimmed neighbor-facing view of a user's Meldebogen. Session is NOT
-required — entry point is clicking an author name/byline anywhere content
-is attributed (Forum/Market/Calendar). A logged-in visitor viewing their OWN
+Trimmed neighbor-facing view of a user's Meldebogen. **Login-gated** like
+every member surface (`/nachbarn` is in `src/middleware.ts` `GATED_PAGES`;
+re-confirmed by the user 2026-09-09 after the profile audit flagged the
+contradiction: resident names/avatars/activity stay off the open web). Entry
+point is clicking an author name/byline anywhere content is attributed
+(Forum/Market/Calendar) — all of which are gated too, so the gate is never
+felt in-app; the printed Steckbrief QR bounces non-members to
+`/login?redirect=/nachbarn/<handle>` (the Steckbrief page says so). A logged-in visitor viewing their OWN
 handle here still sees the trimmed public view (honest "this is what
 neighbors see" preview, not a bug).
 
@@ -670,6 +675,9 @@ visibility: visible }`, `position: fixed` pulled to the page origin,
 `!important` needed throughout to out-rank Astro's scoped-style attribute
 selectors — see the file's own inline comments for the full specificity
 story). Encodes `{base}/nachbarn/{handle}` into a server-generated QR (the
+target is login-gated — members land on the profile, non-members on login
+with redirect; fallback base is `https://mahalle.digital` when
+`NEXTAUTH_URL` is unset, fixed 2026-09-09 from a stale `mahalle.berlin`) (the
 `qrcode` package, SVG, injected via `set:html` — safe because the input
 string is built entirely from OUR trusted base + the session's own handle,
 never from request/body input). v1 is DE-only for the card content itself

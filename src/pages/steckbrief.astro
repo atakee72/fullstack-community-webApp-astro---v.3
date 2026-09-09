@@ -38,7 +38,7 @@ const base = getTrustedBaseUrl(Astro.request);
 // relative URL would just be a broken printed card, not a security issue.
 // Fall back to the canonical production domain so the card always has a
 // working URL.
-const publicBase = base || 'https://mahalle.berlin';
+const publicBase = base || 'https://mahalle.digital';
 const publicUrl = `${publicBase}/nachbarn/${profile.handle}`;
 // Footer shows the human-readable form (no protocol); the QR encodes the
 // full publicUrl.
@@ -80,6 +80,7 @@ const title = 'Steckbrief — Mahalle';
       <h1 class="steckbrief-heading">Ein Profil zum <em>Anfassen</em></h1>
       <p class="steckbrief-sub">
         A6 quer, druckt sich direkt aus diesem Bildschirm — fürs Schwarze Brett, den Hausflur, das Kiezfest.
+        Der QR-Code führt Mitglieder zu deinem Nachbarschaftsprofil; wer noch keins hat, landet beim Login.
       </p>
       <div class="steckbrief-actions">
         <button type="button" class="steckbrief-print-btn" onclick="window.print()">Drucken</button>
