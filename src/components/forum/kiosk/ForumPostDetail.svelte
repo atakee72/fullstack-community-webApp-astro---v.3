@@ -672,6 +672,31 @@
           rows="10"
           class="w-full bg-paper-soft border-[1.5px] border-ink rounded-md px-4 py-3.5 mb-5 font-bricolage text-[16px] leading-[1.55] text-ink outline-none focus:border-wine resize-y min-h-[180px]"
         ></textarea>
+        <!-- Mobile edit actions: the desktop action column below is `hidden lg:block`,
+             so without this row a phone user who taps „Bearbeiten" has no touch-reachable
+             save/cancel/delete (mobile audit 2026-09-09). Same handlers + state as the aside. -->
+        <div class="lg:hidden mb-5">
+          <div class="flex flex-wrap gap-2 mb-3">
+            <KioskBtn variant="primary" size="md" onclick={saveEdit} disabled={saving || !isDirty}>
+              {saving ? '…' : $t['edit.cta.save']}
+            </KioskBtn>
+            <KioskBtn variant="secondary" size="md" onclick={() => cancelEdit()} disabled={saving}>
+              {$t['edit.cta.cancel']}
+            </KioskBtn>
+          </div>
+          {#if !deleteOpen}
+            <KioskBtn variant="danger" size="sm" onclick={() => (deleteOpen = true)}>
+              {$t['edit.cta.delete']}
+            </KioskBtn>
+          {:else}
+            <DeleteConfirmCard
+              replyCount={replyCount}
+              deleting={deleting}
+              onConfirm={confirmDelete}
+              onCancel={() => (deleteOpen = false)}
+            />
+          {/if}
+        </div>
         {#if editHistoryCount > 0}
           <div class="mb-4">
             <p class="font-dmmono text-[10px] uppercase tracking-[0.1em] text-ink-mute mb-1.5">

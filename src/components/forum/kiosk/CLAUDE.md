@@ -161,3 +161,8 @@ These sections describe the **legacy React forum** (`ForumWrapper` / `ForumConta
 **Fix pattern**: hybrid SSR-static + island-hydrate, same as the marketplace detail page implemented in `/marketplace/[id].astro`. Render title + body + first image in the Astro template directly; let the Svelte island layer on for interactivity (likes, comments, action toolbar). See `src/components/marketplace/kiosk/CLAUDE.md` → "Hybrid SSR-static + island-hydrate pattern" for the recipe + rationale.
 
 **Why deferred**: surfaced during the marketplace SEO investigation, not in the original forum redesign scope. Forum traffic is primarily logged-in users navigating in-app, so the SEO impact is lower than marketplace (which is search-discovery-driven). Worth a small separate PR after the marketplace stabilizes; not urgent.
+
+### Mobile-behavior audit 2026-09-09 (390×844 functional pass)
+- **Edit mode has a mobile action row.** `ForumPostDetail`'s save / cancel / „post löschen…" + `DeleteConfirmCard` lived only in the `<aside class="hidden lg:block">` action column, so a phone user who tapped „Bearbeiten" had no touch-reachable way out (only keyboard Escape). A `lg:hidden` row with the same handlers/state now renders under the body textarea while editing.
+- Known, not fixed: browser back from a topic detail to `/forum` resets scroll position and the active filter tab (client-only island, no URL-synced state). Needs a small state-in-URL design — parked.
+- The post-publish toast is briefly behind the bottom nav for ~1 frame of its slide-up; at rest it clears the nav by 35px. Not a bug (sonner enters from `translateY(100%)`).
