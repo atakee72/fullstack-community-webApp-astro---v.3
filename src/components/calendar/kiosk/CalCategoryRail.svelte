@@ -5,6 +5,11 @@
   // "Zugesagt" + "Gespeichert" toggle chips. On the right end the
   // desktop coachmark / Heute / view switcher cluster (mirrors
   // CalendarTitleBlock's stats-row stepper + CTA one row above).
+  //
+  // Tap targets: every chip in the scroller wears `.kiosk-tap-box`, so the
+  // BUTTON grows to ≥44px below `lg` while the painted pill lives in an
+  // inner <span> and keeps its 28px look (same pattern as the newsboard's
+  // NewsFilterRail — an inset extender would be clipped by the scroller).
 
   import { t } from '../../../lib/kiosk-i18n';
   import { CATEGORIES, CATEGORY_ORDER } from '../../../lib/calendar/categories';
@@ -61,11 +66,15 @@
       type="button"
       onclick={() => onSelectAll?.()}
       aria-pressed={isAllActive}
-      class="shrink-0 inline-flex items-center px-3.5 py-1 rounded-full font-bricolage font-semibold text-[12px] border-[1.5px] border-ink transition-colors {
-        isAllActive ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
-      }"
+      class="shrink-0 kiosk-tap-box inline-flex items-center justify-center"
     >
-      {$t['cal.filter.all']}
+      <span
+        class="inline-flex items-center px-3.5 py-1 rounded-full font-bricolage font-semibold text-[12px] border-[1.5px] border-ink transition-colors {
+          isAllActive ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
+        }"
+      >
+        {$t['cal.filter.all']}
+      </span>
     </button>
 
     {#each CATEGORY_ORDER as cat (cat)}
@@ -75,19 +84,23 @@
         type="button"
         onclick={() => onSelectOnly?.(cat)}
         aria-pressed={isOnly}
-        class="shrink-0 inline-flex items-center gap-2 px-3 py-1 rounded-full font-bricolage font-semibold text-[12px] border-[1.5px] border-ink transition-colors {
-          isOnly
-            ? `${style.bgClass} ${style.textOnFill}`
-            : 'bg-transparent text-ink hover:bg-paper-warm'
-        }"
+        class="shrink-0 kiosk-tap-box inline-flex items-center justify-center"
       >
-        {#if !isOnly}
-          <span
-            class={`w-[8px] h-[8px] ${style.bgClass} border border-ink/40`}
-            aria-hidden="true"
-          ></span>
-        {/if}
-        <span>{$t[`cal.cat.${cat}.label` as const]}</span>
+        <span
+          class="inline-flex items-center gap-2 px-3 py-1 rounded-full font-bricolage font-semibold text-[12px] border-[1.5px] border-ink transition-colors {
+            isOnly
+              ? `${style.bgClass} ${style.textOnFill}`
+              : 'bg-transparent text-ink hover:bg-paper-warm'
+          }"
+        >
+          {#if !isOnly}
+            <span
+              class={`w-[8px] h-[8px] ${style.bgClass} border border-ink/40`}
+              aria-hidden="true"
+            ></span>
+          {/if}
+          <span>{$t[`cal.cat.${cat}.label` as const]}</span>
+        </span>
       </button>
     {/each}
 
@@ -98,33 +111,45 @@
         type="button"
         onclick={onMyRsvps}
         aria-pressed={myRsvps}
-        class="shrink-0 inline-flex items-center px-2.5 py-1 rounded-full font-bricolage font-semibold text-[12px] border-[1.5px] border-ink transition-colors {
-          myRsvps ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
-        }"
+        class="shrink-0 kiosk-tap-box inline-flex items-center justify-center"
       >
-        {$t['cal.filter.myRsvps']}
+        <span
+          class="inline-flex items-center px-2.5 py-1 rounded-full font-bricolage font-semibold text-[12px] border-[1.5px] border-ink transition-colors {
+            myRsvps ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
+          }"
+        >
+          {$t['cal.filter.myRsvps']}
+        </span>
       </button>
 
       <button
         type="button"
         onclick={onMyMaybes}
         aria-pressed={myMaybes}
-        class="shrink-0 inline-flex items-center px-2.5 py-1 rounded-full font-bricolage font-semibold text-[12px] border-[1.5px] border-ink transition-colors {
-          myMaybes ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
-        }"
+        class="shrink-0 kiosk-tap-box inline-flex items-center justify-center"
       >
-        {$t['cal.filter.myMaybes']}
+        <span
+          class="inline-flex items-center px-2.5 py-1 rounded-full font-bricolage font-semibold text-[12px] border-[1.5px] border-ink transition-colors {
+            myMaybes ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
+          }"
+        >
+          {$t['cal.filter.myMaybes']}
+        </span>
       </button>
 
       <button
         type="button"
         onclick={onSaved}
         aria-pressed={saved}
-        class="shrink-0 inline-flex items-center px-2.5 py-1 rounded-full font-bricolage font-semibold text-[12px] border-[1.5px] border-ink transition-colors {
-          saved ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
-        }"
+        class="shrink-0 kiosk-tap-box inline-flex items-center justify-center"
       >
-        {$t['cal.filter.saved']}
+        <span
+          class="inline-flex items-center px-2.5 py-1 rounded-full font-bricolage font-semibold text-[12px] border-[1.5px] border-ink transition-colors {
+            saved ? 'bg-ink text-paper' : 'bg-transparent text-ink hover:bg-paper-warm'
+          }"
+        >
+          {$t['cal.filter.saved']}
+        </span>
       </button>
     </span>
   </div>

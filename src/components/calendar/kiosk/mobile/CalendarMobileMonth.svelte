@@ -1,9 +1,8 @@
 <script lang="ts">
-  // Mobile month view — replaces the desktop CalendarTitleBlock +
-  // CalCategoryRail + CalendarMonthGrid stack on viewports below `lg`.
-  // Per CD's mock at `kiosk-calendar-flows.jsx:716–828`:
-  //   compact stat-line title + tiny `+` disc CTA + horizontal-scroll
-  //   filter rail + dot-only mini grid + day-detail bottom panel.
+  // Mobile month view — the dot-only mini grid + day-detail bottom panel
+  // shown below `lg` in place of the desktop CalendarMonthGrid. The mobile
+  // header and filter rail live in CalendarTitleBlock + CalCategoryRail
+  // (shared with agenda/day since 2026-09-09), not here.
   //
   // Pure presentation: state still owned by CalendarPageInner.
   // Internal state: `selectedDay` (drives the bottom panel; defaults
@@ -24,8 +23,7 @@
   } from 'date-fns';
   import { de as deLocale, enUS } from 'date-fns/locale';
 
-  import { CATEGORIES, CATEGORY_ORDER } from '../../../../lib/calendar/categories';
-  import { scrollFade } from '../../../../lib/scrollFade';
+  import { CATEGORIES } from '../../../../lib/calendar/categories';
   import { swipeX } from '../../../../lib/swipe';
   import {
     eventCoversDay,
@@ -69,59 +67,25 @@
     return '';
   }
 
-  type View = 'month' | 'agenda' | 'day';
-
   let {
     visibleMonth = new Date(),
     events = [],
-    active,
-    onToggleCat,
     onPickEvent,
     onPrevMonth,
     onNextMonth,
-    liveCount = 0,
     currentUserId = null,
-    showToday = false,
-    onToday,
-    myRsvps = false,
-    myMaybes = false,
-    saved = false,
-    onMyRsvps,
-    onMyMaybes,
-    onSaved,
-    view = 'month',
-    onView,
     savedIds = new Set<string>(),
     onToggleSave
   } = $props<{
     visibleMonth?: Date;
     events?: EventDoc[];
-    active: Set<EventCategory>;
-    onToggleCat: (cat: EventCategory) => void;
     onPickEvent?: (ev: EventDoc) => void;
     onPrevMonth?: () => void;
     onNextMonth?: () => void;
-    liveCount?: number;
     currentUserId?: string | null;
-    showToday?: boolean;
-    onToday?: () => void;
-    myRsvps?: boolean;
-    myMaybes?: boolean;
-    saved?: boolean;
-    onMyRsvps?: () => void;
-    onMyMaybes?: () => void;
-    onSaved?: () => void;
     savedIds?: Set<string>;
     onToggleSave?: (eventId: string) => void;
-    view?: View;
-    onView?: (v: View) => void;
   }>();
-
-  const views: { k: View; label: () => string }[] = [
-    { k: 'month',  label: () => $t['cal.view.month']  },
-    { k: 'agenda', label: () => $t['cal.view.agenda'] },
-    { k: 'day',    label: () => $t['cal.view.day']    }
-  ];
 
   // RSVP toggle for the day-panel rows. Mutation is bound to the
   // current user id at component init; clicking +/✓ on a row flips
@@ -390,21 +354,6 @@
   );
   const cells = $derived(eachDayOfInterval({ start: gridStart, end: gridEnd }));
   const rows = $derived(Math.ceil(cells.length / 7));
-
-  // Hero header derivations.
-  // - todayKicker: today's full date label (e.g., "MITTWOCH 6. MAI").
-  //   Reads from $now so it ticks across midnight without a refresh.
-  // - timeNow: live wall-clock "HH:mm", same $now ticker.
-  // - italicMonth / visibleYear: split for the italic-serif + bold pair.
-  const todayKicker = $derived(
-    format($now, 'EEEE d. MMM', { locale: dateLocale }).toUpperCase()
-  );
-  const timeNow = $derived(format($now, 'HH:mm'));
-  const italicMonth = $derived(format(visibleMonth, 'MMMM', { locale: dateLocale }));
-  const visibleYear = $derived(format(visibleMonth, 'yyyy'));
-  const visibleMonthLabel = $derived(
-    format(visibleMonth, 'MMMM yyyy', { locale: dateLocale }).toUpperCase()
-  );
 
   // Bottom-panel data
   const dayEvents = $derived(
