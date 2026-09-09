@@ -2,6 +2,8 @@
 
 ## What / where
 
+> **Code backup is separate**: the repo itself is bundled to Dropbox on every `git push` by `.husky/pre-push` (`Dropbox/Backups/mahalle-digital.bundle`, full history). See root `CLAUDE.md` → "Repo identity & code backup". This runbook covers the DATABASE only.
+
 - `.github/workflows/db-backup.yml` runs nightly at 03:17 UTC (plus `workflow_dispatch`).
 - It dumps the prod database `mahalle` (`mongodump --gzip --archive`), encrypts it with
   **AES-256-CBC / PBKDF2, 200,000 iterations** (`openssl enc`), and uploads

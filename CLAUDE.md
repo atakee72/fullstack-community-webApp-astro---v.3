@@ -498,5 +498,10 @@ See `src/components/forum/kiosk/CLAUDE.md` — full notes load when working in t
 - **CI safety net**: `.github/workflows/gitleaks.yml` runs `gitleaks/gitleaks-action@v2` on push to `main` and on PRs — catches anything that bypassed the local hook.
 - **Whitelist**: `.gitleaksignore` lists historical findings accepted as residual risk (fingerprint format `<sha>:<file>:<rule>:<line>`). Add new entries only after a deliberate decision; each line silences a real finding.
 
+## Repo identity & code backup
+- **GitHub repo**: `atakee72/mahalle-digital` (renamed 2026-09-09 from `fullstack-community-webApp-astro---v.3`; the old URL 301-redirects for web, clone and push). Kept **public** by decision — the Impressum and the manifest blog post link to it as a trust point. The local folder name was deliberately NOT renamed (worktrees, memory dir and scratchpad paths depend on it).
+- **Off-site code backup**: `.husky/pre-push` writes ONE bundle file (`git bundle create … --all`, full history + all branches) to `/mnt/c/Users/atakee/Dropbox/Backups/mahalle-digital.bundle` on every push. A bundle, not a bare repo, because Dropbox syncing a bare repo mid-write can corrupt objects; git writes the bundle to a `.lock` and renames it. Non-blocking: a missing Dropbox mount warns and lets the push through. Restore: `git clone <bundle>`. Independent of the GitHub remote (rename/visibility don't touch it). `.env` is the one file no backup covers — keep a copy in the password manager.
+- **If the repo ever goes private**: Actions minutes stop being unlimited (2,000/month on Free, each job rounded up to a full minute — the 30-min air logger alone is ~1,460/month → switch it to hourly first; each tick stores only the current BLUME reading, so 2-hourly halves the dataset), enable "Include private contributions" on the GitHub profile (streak widget + daily routine), rewrite the Impressum's „öffentlich einsehbar" sentence, and host `MANIFESTO.md` on-site (the manifest post links into the repo).
+
 ## License
 PolyForm Noncommercial 1.0.0 — see `LICENSE`. Free for noncommercial use; commercial use requires a separate license from the author.
