@@ -39,9 +39,15 @@
     {#each drafts as draft (draft._id)}
       {@const id = String(draft._id)}
       {@const thumb = draft.images?.[0]}
+      <!-- flex-wrap + a 60% floor on the title column: the three action
+           pills are `flex: 0 0 auto` and together are wider than a 390px
+           row, so without wrapping they overflowed and painted OVER the
+           title/meta text (pre-existing; the ≥44px targets widen them
+           further). Wrapping drops the actions onto their own line on
+           narrow rows and changes nothing once there is room. -->
       <div
         style="
-          display: flex; align-items: center; gap: 12px;
+          display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
           padding: 10px 12px;
           background: var(--k-paper-soft, var(--k-paper));
           border: 1px dashed var(--k-rule);
@@ -61,7 +67,7 @@
         ></div>
 
         <!-- Title + meta -->
-        <div style="flex: 1; min-width: 0;">
+        <div style="flex: 1 1 60%; min-width: 0;">
           <div
             style="
               font-family: var(--k-font-display); font-weight: 700;
@@ -77,43 +83,47 @@
         </div>
 
         <!-- Actions -->
-        <div style="flex: 0 0 auto; display: flex; align-items: center; gap: 6px;">
+        <div style="flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 6px;">
           <button
             type="button"
             onclick={() => onEdit(id)}
-            class="font-dmmono uppercase"
-            style="
-              padding: 5px 11px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
-              background: transparent; color: var(--k-ink);
-              border: 1.5px solid var(--k-ink); border-radius: var(--k-radius-pill, 999px);
-              cursor: pointer;
-            "
-          >{$t['market.owner.draft.edit']}</button>
+            class="font-dmmono uppercase kiosk-tap-box"
+            style="background: none; border: none; padding: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;"
+          ><span
+              style="
+                padding: 5px 11px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+                background: transparent; color: var(--k-ink);
+                border: 1.5px solid var(--k-ink); border-radius: var(--k-radius-pill, 999px);
+              "
+            >{$t['market.owner.draft.edit']}</span></button>
 
           <button
             type="button"
             onclick={() => onPublish(id)}
-            class="font-dmmono uppercase"
-            style="
-              padding: 5px 11px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
-              background: var(--k-wine); color: var(--k-paper);
-              border: 1.5px solid var(--k-ink); border-radius: var(--k-radius-pill, 999px);
-              box-shadow: 1.5px 1.5px 0 var(--k-ink); cursor: pointer;
-            "
-          >{$t['market.owner.draft.publish']}</button>
+            class="font-dmmono uppercase kiosk-tap-box"
+            style="background: none; border: none; padding: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;"
+          ><span
+              style="
+                padding: 5px 11px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+                background: var(--k-wine); color: var(--k-paper);
+                border: 1.5px solid var(--k-ink); border-radius: var(--k-radius-pill, 999px);
+                box-shadow: 1.5px 1.5px 0 var(--k-ink);
+              "
+            >{$t['market.owner.draft.publish']}</span></button>
 
           <button
             type="button"
             onclick={() => onDelete(id)}
             aria-label={$t['market.owner.draft.delete']}
-            class="font-dmmono uppercase"
-            style="
-              padding: 5px 9px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
-              background: transparent; color: var(--k-danger, #c0392b);
-              border: 1.5px dashed var(--k-rule); border-radius: var(--k-radius-pill, 999px);
-              cursor: pointer;
-            "
-          >✕</button>
+            class="font-dmmono uppercase kiosk-tap-box"
+            style="background: none; border: none; padding: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;"
+          ><span
+              style="
+                padding: 5px 9px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+                background: transparent; color: var(--k-danger, #c0392b);
+                border: 1.5px dashed var(--k-rule); border-radius: var(--k-radius-pill, 999px);
+              "
+            >✕</span></button>
         </div>
       </div>
     {/each}
