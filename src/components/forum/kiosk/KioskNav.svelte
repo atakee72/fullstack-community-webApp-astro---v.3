@@ -35,7 +35,11 @@
     // or focus was still inside the menu (keyboard nav) — NOT on an
     // outside-click that landed on another interactive element (e.g. a text
     // field), which would otherwise yank focus back 140ms later.
-    if (restoreFocus) avatarEl?.focus();
+    // preventScroll: the avatar sits in the sticky masthead, so it never needs
+    // scrolling into view — and a plain focus() here yanked the page back to the
+    // top right after the menu's „Führung" row had scrolled the tour's first
+    // anchor into place (Kiez-Daten mobile audit, 2026-09-09).
+    if (restoreFocus) avatarEl?.focus({ preventScroll: true });
   }
 
   // `/` is the public landing now — the Forum pill points at /forum and no

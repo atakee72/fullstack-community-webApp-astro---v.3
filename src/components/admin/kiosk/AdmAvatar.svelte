@@ -26,7 +26,7 @@
 
   function onClose(restoreFocus: boolean) {
     open = false;
-    if (restoreFocus) triggerEl?.focus();
+    if (restoreFocus) triggerEl?.focus({ preventScroll: true }); // masthead is sticky; see KioskNav
   }
 </script>
 
