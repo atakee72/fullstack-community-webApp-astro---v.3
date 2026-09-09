@@ -2,8 +2,9 @@
   // Delete-account danger modal — kiosk-profile-flows.jsx §05
   // DeleteAccountModal. Native <dialog> + showModal(), mirroring
   // KioskReportModal.svelte's conventions (src/components/forum/kiosk/
-  // KioskReportModal.svelte): the browser handles scroll-lock, focus trap,
-  // and Escape-to-close for free via the native dialog element; backdrop
+  // KioskReportModal.svelte): the browser handles focus trap and
+  // Escape-to-close for free via the native dialog element (scroll-lock is
+  // NOT free — lockPageScroll() below); backdrop
   // click-close is a manual `onclick` check against the dialog itself.
   // Single mount by ProfileInner, gated by a local `deleteModalOpen`
   // boolean (same topology as PEmailChangePanel/PPasswordChangePanel).
@@ -21,6 +22,7 @@
   // password field.
 
   import { t } from '../../../lib/kiosk-i18n';
+  import { lockPageScroll } from '../../../lib/scrollLock';
   import { showError } from '../../../utils/toast';
   import PBtn from './atoms/PBtn.svelte';
 
@@ -63,6 +65,13 @@
     if (!dialog) return;
     if (open && !dialog.open) dialog.showModal();
     else if (!open && dialog.open) dialog.close();
+  });
+
+  // Native showModal() makes the page inert but does NOT stop it scrolling
+  // (verified 2026-09-09 at 390×844) — lock html+body while open.
+  $effect(() => {
+    if (!open) return;
+    return lockPageScroll();
   });
 
   function onDialogClose() {

@@ -18,6 +18,7 @@ const handle = userId ? await getHandleForPublic(userId) : null;
 if (handle) {
   return Astro.redirect(`/nachbarn/${handle}`, 302);
 }
+Astro.response.status = 404;
 ---
 
 <KioskLayout title="Nachbarschaft — Mahalle" page="profile">

@@ -29,6 +29,7 @@ const profile = validHandle ? await getPublicProfile(handle) : null;
 const chronik = profile ? await getChronik(profile.id) : null;
 
 const title = profile ? `@${profile.handle} — Mahalle` : 'Nachbarschaft — Mahalle';
+if (!profile) Astro.response.status = 404; // not-found card renders in-page, but crawlers/tools need the real status
 ---
 
 {profile ? (

@@ -2,8 +2,8 @@
   // Event detail modal — Editorial Kiosk treatment.
   //
   // Built on the native <dialog> element + showModal() so the browser
-  // handles scroll-lock, focus trap, ESC dismiss, and ARIA modal
-  // semantics for free. The modal renders in the top-layer which
+  // handles focus trap, ESC dismiss, and ARIA modal semantics for free
+  // (NOT scroll-lock — see lockPageScroll below). The modal renders in the top-layer which
   // escapes any backdrop-filter containing-block on ancestor elements
   // (see CLAUDE.md gotcha re: backdrop-blur).
   //
@@ -15,6 +15,7 @@
   import { de as deLocale, enUS } from 'date-fns/locale';
 
   import { linkifySegments } from '../../../lib/linkify';
+  import { lockPageScroll } from '../../../lib/scrollLock';
   import TranslateControl from '../../forum/kiosk/TranslateControl.svelte';
   import RsvpButtons from './RsvpButtons.svelte';
   import CapacityBar from './CapacityBar.svelte';
@@ -54,6 +55,13 @@
     if (!dialog) return;
     if (open && !dialog.open) dialog.showModal();
     else if (!open && dialog.open) dialog.close();
+  });
+
+  // Native showModal() makes the page inert but does NOT stop it scrolling
+  // (verified 2026-09-09 at 390×844) — lock html+body while open.
+  $effect(() => {
+    if (!open) return;
+    return lockPageScroll();
   });
 
   // The browser fires a 'close' event when ESC or the close-via-form

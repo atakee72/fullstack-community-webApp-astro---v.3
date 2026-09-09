@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../../../../lib/kiosk-i18n';
+  import { lockPageScroll } from '../../../../lib/scrollLock';
   import type { Listing } from '../../../../types/listing';
   import ListingImagePlaceholder from '../primitives/ListingImagePlaceholder.svelte';
   import MarketStrap from '../primitives/MarketStrap.svelte';
@@ -13,6 +14,8 @@
   let currentIndex = $state(0);
   let lightboxOpen = $state(false);
   let dialogEl: HTMLDialogElement | undefined = $state();
+  // showModal() doesn't stop the page scrolling behind the lightbox.
+  let releaseScroll: (() => void) | null = null;
 
   const images = $derived(listing.images ?? []);
   const count = $derived(images.length);
@@ -26,11 +29,13 @@
     if (count === 0) return;
     lightboxOpen = true;
     dialogEl?.showModal();
+    releaseScroll ??= lockPageScroll();
   }
 
   function closeLightbox() {
     lightboxOpen = false;
     dialogEl?.close();
+    releaseScroll?.(); releaseScroll = null;
   }
 
   function handleKey(e: KeyboardEvent) {
@@ -42,6 +47,7 @@
 
   function handleDialogClose() {
     lightboxOpen = false;
+    releaseScroll?.(); releaseScroll = null;
   }
 </script>
 

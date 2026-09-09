@@ -11,6 +11,7 @@
   import type { ReportReason } from '../../../schemas/moderation.schema';
   import type { ModeratedContentType } from '../../../types';
   import { t } from '../../../lib/kiosk-i18n';
+  import { lockPageScroll } from '../../../lib/scrollLock';
   import { showSuccess } from '../../../utils/toast';
   import KioskBtn from './KioskBtn.svelte';
 
@@ -44,6 +45,13 @@
     if (!dialog) return;
     if (open && !dialog.open) dialog.showModal();
     else if (!open && dialog.open) dialog.close();
+  });
+
+  // Native showModal() makes the page inert but does NOT stop it scrolling
+  // (verified 2026-09-09 at 390×844) — lock html+body while open.
+  $effect(() => {
+    if (!open) return;
+    return lockPageScroll();
   });
 
   function onDialogClose() {
