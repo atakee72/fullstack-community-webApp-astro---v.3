@@ -1,4 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { get } from 'svelte/store';
+import { t as kioskT } from '../lib/kiosk-i18n';
+import { lockPageScroll } from '../lib/scrollLock';
 
 interface ConfirmDetail {
   message: string;
@@ -17,6 +20,9 @@ export default function ConfirmDialog() {
   const messageRef = useRef<HTMLParagraphElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
+  // Native showModal() makes the page inert but does NOT stop it scrolling
+  // (mobile audit 2026-09-09) — same fix as the Svelte native-dialog modals.
+  const releaseScrollRef = useRef<(() => void) | null>(null);
 
   const dismiss = useCallback((value: boolean) => {
     if (resolveRef.current) {
@@ -24,6 +30,8 @@ export default function ConfirmDialog() {
       resolveRef.current = null;
     }
     dialogRef.current?.close();
+    releaseScrollRef.current?.();
+    releaseScrollRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -42,14 +50,16 @@ export default function ConfirmDialog() {
       detailRef.current = detail;
 
       // Update DOM imperatively to avoid re-renders
+      // Defaults follow the kiosk locale at open time (was English-only).
+      const dict = get(kioskT);
       if (titleRef.current) {
-        titleRef.current.textContent = detail.title || 'Are you sure?';
+        titleRef.current.textContent = detail.title || dict['common.confirm.title'];
       }
       if (messageRef.current) {
         messageRef.current.textContent = detail.message;
       }
       if (confirmBtnRef.current) {
-        confirmBtnRef.current.textContent = detail.confirmLabel || 'Confirm';
+        confirmBtnRef.current.textContent = detail.confirmLabel || dict['common.confirm.cta'];
         // Update button color based on variant
         const isDanger = detail.variant === 'danger';
         confirmBtnRef.current.className = isDanger
@@ -57,10 +67,11 @@ export default function ConfirmDialog() {
           : 'px-4 py-2 rounded-lg text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2';
       }
       if (cancelBtnRef.current) {
-        cancelBtnRef.current.textContent = detail.cancelLabel || 'Cancel';
+        cancelBtnRef.current.textContent = detail.cancelLabel || dict['common.cancel'];
       }
 
       dialog.showModal();
+      releaseScrollRef.current ??= lockPageScroll();
       // Focus the cancel button (safe action)
       cancelBtnRef.current?.focus();
     };

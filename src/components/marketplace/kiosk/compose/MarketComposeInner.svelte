@@ -413,7 +413,7 @@
       display: grid;
       grid-template-columns: 1fr;
       gap: 24px;
-      padding: 20px 20px 96px;
+      padding: 20px 20px 144px; /* mobile: sticky publish bar (~64px) + bottom nav (~45px) + slack, so a focused field scrolled into view isn't under them */
       max-width: 1200px;
       margin: 0 auto;
     "
@@ -744,7 +744,7 @@
               font-weight: 700;
               color: var(--k-ink);
             "
-          >{kindRail === 'verkaufen' ? 'Preis &amp; Übergabe' : 'Übergabe'}</span>
+          >{kindRail === 'verkaufen' ? 'Preis & Übergabe' : 'Übergabe'}</span>
           {#if sectionDone.s05}
             <span style="margin-left: auto; color: var(--k-moss); font-size: 16px;">✓</span>
           {/if}
@@ -1015,6 +1015,7 @@
     onPublish={handlePublish}
     onSaveDraft={mode === 'create' ? handleSaveDraft : undefined}
     draftLabel={$t['market.compose.cta.draft']}
+    publishLabel={mode === 'create' ? $t['market.compose.cta.publish'] : $t['market.compose.cta.saveChanges']}
     onPreview={() => {
       // v1: scroll to preview section (desktop shows it inline; mobile hint)
       window.scrollTo({ top: 0, behavior: 'smooth' });

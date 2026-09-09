@@ -18,6 +18,7 @@
   import BackfillBanner from '../states/BackfillBanner.svelte';
   import ListingRejectedPanel from '../states/ListingRejectedPanel.svelte';
   import KioskReportModal from '../../../forum/kiosk/KioskReportModal.svelte';
+  import { t } from '../../../../lib/kiosk-i18n';
   import TranslateControl from '../../../forum/kiosk/TranslateControl.svelte';
 
   // ─── Props ─────────────────────────────────────────────────────────────────
@@ -178,9 +179,9 @@
   }
 
   async function handleDelete() {
-    const ok = await confirmAction('Diese Anzeige wirklich löschen?', {
-      title: 'Löschen',
-      confirmLabel: 'Löschen',
+    const ok = await confirmAction($t['market.owner.deleteConfirm'], {
+      title: $t['market.owner.deleteConfirm.title'],
+      confirmLabel: $t['market.owner.deleteConfirm.cta'],
       variant: 'danger',
     });
     if (!ok) return;
@@ -405,6 +406,7 @@
         sellerImage={listing.sellerImage}
         listingCount={0}
         isVerified={listing.sellerVerified === true}
+        onReport={isOwner ? undefined : () => (reportOpen = true)}
       />
 
       <!-- Similar listings placeholder — out of v1 scope -->

@@ -11,6 +11,7 @@
     onPreview,
     onSaveDraft,
     draftLabel = 'Entwurf',
+    publishLabel = 'veröffentlichen →',
   }: {
     disabled?: boolean;
     publishing?: boolean;
@@ -20,6 +21,8 @@
     /** When provided, renders a "save as draft" button (create mode only). */
     onSaveDraft?: () => void;
     draftLabel?: string;
+    /** Edit mode passes „Änderungen speichern →" — the bar is the only CTA visible on mobile. */
+    publishLabel?: string;
   } = $props();
 </script>
 
@@ -117,7 +120,7 @@
     {#if publishing}
       ◐ bitte warten…
     {:else}
-      veröffentlichen →
+      {publishLabel}
     {/if}
   </button>
 </div>

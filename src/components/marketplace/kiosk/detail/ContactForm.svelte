@@ -211,7 +211,7 @@
       style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;"
     />
 
-    <form onsubmit={handleSubmit} style="display: flex; flex-direction: column; gap: 12px;">
+    <form onsubmit={handleSubmit} novalidate style="display: flex; flex-direction: column; gap: 12px;">
       <!-- Name field -->
       <div>
         <label

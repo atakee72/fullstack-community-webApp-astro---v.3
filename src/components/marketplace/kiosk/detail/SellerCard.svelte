@@ -141,6 +141,7 @@
         text-decoration: none;
       "
     >{$t['market.seller.moreListings']}</a>
+    {#if onReport}
     <button
       onclick={onReport}
       style="
@@ -150,5 +151,6 @@
       "
       type="button"
     >⚑ {$t['market.seller.report']}</button>
+    {/if}
   </div>
 </div>

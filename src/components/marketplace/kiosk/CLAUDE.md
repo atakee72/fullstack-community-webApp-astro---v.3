@@ -342,3 +342,10 @@ only when the named condition appears.
    specific listing (e.g. during an event). **Fix when triggered:** mirror the forum's
    `isOfficial: boolean` + `pinnedUntil: Date | null` pattern on `listings` + an admin
    endpoint (server-controlled, never client-settable — same as announcements).
+
+### Mobile-behavior audit 2026-09-09 (390×844 functional pass)
+- `SellerCard`'s „⚑ melden" was never wired (no `onReport` passed) and rendered for the owner too. `MarketDetailInner` now passes `onReport={isOwner ? undefined : () => (reportOpen = true)}` and the card renders the button only when it has a handler.
+- Compose: bottom padding raised 96→144px so a field scrolled into view isn't under the stacked mobile sticky publish bar (~64px) + bottom nav (~45px); the sticky bar's CTA follows `mode` via the new `publishLabel` prop (`market.compose.cta.publish` / new `market.compose.cta.saveChanges`) — it used to say „veröffentlichen →" while editing; the „Preis & Übergabe" section heading rendered a literal `&amp;` (it was inside a JS string, not HTML text).
+- `ContactForm` is `novalidate` now: the `required`/`minlength` attributes let the browser's English bubbles pre-empt the bilingual `validate()` copy.
+- Listing delete confirm is i18n'd (`market.owner.deleteConfirm*`); the shared `ConfirmDialog`'s defaults are locale-aware (root `CLAUDE.md` „Confirm dialog").
+- Parked for the UI-polish peer: „bearbeiten / veröffentlichen / löschen" on the Entwürfe rows measure 27px tall (`browse/OwnerDraftsSection.svelte`).
