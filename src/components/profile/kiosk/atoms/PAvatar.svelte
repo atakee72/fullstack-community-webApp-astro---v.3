@@ -57,6 +57,7 @@
       type="button"
       onclick={onOpenUpload}
       aria-label={$t['profile.avatar.change']}
+      class="kiosk-tap"
       style="
         position: absolute; bottom: -6px; right: -10px; padding: 3px 9px;
         background: var(--k-ochre); border: 1.5px solid var(--k-ink); border-radius: 999px;

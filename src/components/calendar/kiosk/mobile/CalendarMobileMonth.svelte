@@ -161,7 +161,7 @@
   let rangeEnd = $state<Date | null>(null);
   let isRangeArmed = $state(false);
   let pulseCellKey = $state<string | null>(null);
-  let pin = $state<{ x: number; y: number; from: Date; to: Date } | null>(null);
+  let pin = $state<{ x: number; y: number; from: Date; to: Date; flip: boolean; tailX: number } | null>(null);
 
   // Non-reactive locals — internal flags only.
   let longPressTimer: ReturnType<typeof setTimeout> | null = null;
@@ -265,14 +265,38 @@
   // target cell's bounds and stash the pin's x/y. Cells expose a
   // `data-cell-date={cell.toISOString()}` attribute below. Coordinates
   // are clamped to the wrapper rect so the pin never bleeds past the
-  // viewport edges (left/right) and flips above the cell when the
-  // cell sits in the bottom half of the grid (else the pin would
-  // render below the visible area).
+  // grid edges, and the pin flips ABOVE the cell when there isn't room
+  // below it.
+  //
+  // The pin must read as ATTACHED to the selected day (2026-09-09 fix):
+  //  · flipped placement anchors the pin's BOTTOM edge 8px above the
+  //    cell (`flip` → the pin translates itself up by its own height),
+  //    so a wrong height estimate can no longer leave it floating two
+  //    rows above the cell — which is exactly what happened before,
+  //    when a row-4 tap put the card over row 2;
+  //  · `tailX` re-points the tail at the cell's centre after `x` has
+  //    been clamped, so the tail isn't stuck at the card's left edge;
+  //  · PIN_H is measured from the rendered card (`pinH`) and only used
+  //    to DECIDE the flip, never to place the card.
   // Conservative width estimate so the pin always fits inside the
   // grid wrapper. Min-width is 180 but the rendered card grows to
   // ~220 with the '+ neuer termin' + 'abbrechen' buttons inside.
   const PIN_W = 230;
   const PIN_H = 100;
+  const PIN_GAP = 8;
+  let pinH = $state(PIN_H);
+
+  // Measure the rendered card once it exists — the estimate above is a
+  // fallback for the first frame only. Writes `pinH`, which re-runs the
+  // placement effect below; the guard stops that settling into a loop.
+  $effect(() => {
+    if (!pin || !gridWrapper) return;
+    const el = gridWrapper.querySelector<HTMLElement>('.k-cal-pin');
+    if (!el) return;
+    const h = el.offsetHeight;
+    if (h > 0 && Math.abs(h - pinH) > 1) pinH = h;
+  });
+
   $effect(() => {
     if (!rangeStart || !gridWrapper) {
       pin = null;
@@ -289,20 +313,27 @@
     const hi = rangeEnd && rangeStart < rangeEnd ? rangeEnd : rangeStart;
 
     // Horizontal clamp — keep [8 .. wrapRect.width − PIN_W − 8].
-    const ideal = cellRect.left - wrapRect.left + cellRect.width / 2 - PIN_W / 2;
+    const cellCentreRel = cellRect.left - wrapRect.left + cellRect.width / 2;
+    const ideal = cellCentreRel - PIN_W / 2;
     const x = Math.max(8, Math.min(wrapRect.width - PIN_W - 8, ideal));
+    // Tail follows the cell centre; clamped inside the card's minimum
+    // width (180) so it can't hang off a narrow card's corner.
+    const tailX = Math.max(10, Math.min(158, cellCentreRel - x - 6));
 
-    // Vertical placement — by default below the cell. If the cell
-    // sits in the bottom half of the grid, flip ABOVE so the pin
-    // doesn't fall off the visible area.
+    // Vertical placement — below the cell by default, above it when
+    // there is no room below AND there is room above.
     const cellTopRel = cellRect.top - wrapRect.top;
     const cellBottomRel = cellRect.bottom - wrapRect.top;
-    const wouldOverflowDown = cellBottomRel + 8 + PIN_H > wrapRect.height;
-    const y = wouldOverflowDown
-      ? Math.max(8, cellTopRel - PIN_H - 8)
-      : cellBottomRel + 8;
+    const roomBelow = wrapRect.height - cellBottomRel;
+    const roomAbove = cellTopRel;
+    const flip = roomBelow < pinH + PIN_GAP && roomAbove >= pinH + PIN_GAP;
+    // Flipped: `y` is the pin's BOTTOM edge. Otherwise its top edge,
+    // kept inside the wrapper when neither side has full room.
+    const y = flip
+      ? cellTopRel - PIN_GAP
+      : Math.max(PIN_GAP, Math.min(cellBottomRel + PIN_GAP, wrapRect.height - pinH - PIN_GAP));
 
-    pin = { x, y, from: lo, to: hi };
+    pin = { x, y, from: lo, to: hi, flip, tailX };
   });
 
   function clearSelection() {
@@ -472,6 +503,8 @@
         y={pin.y}
         from={pin.from}
         to={pin.to}
+        flip={pin.flip}
+        tailX={pin.tailX}
         onConfirm={confirmPin}
         onCancel={clearSelection}
       />

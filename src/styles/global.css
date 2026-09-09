@@ -1239,3 +1239,43 @@ button.am-row { width: 100%; text-align: left; }
   font-size: 10px;
   color: var(--k-danger);
 }
+
+/* ── Tap targets (≥44px on touch viewports) ──────────────────────
+   Shared kiosk vocabulary — first used by Profile (PAvatar/PKontoCard/
+   PFilterChip), then Newsboard's filter rail and the Marketplace draft
+   rows. Lives here, not in a per-surface stylesheet: the consumers are
+   nested islands (a local <style> would be orphaned in the prod build)
+   and several of them render on more than one route. Desktop keeps the
+   compact design, so the whole block is gated to ≤1023px.
+
+   .kiosk-tap     — invisible hit-area extender; the painted control is
+                    untouched (the pseudo is out of flow, so it adds no
+                    box and survives inside flex parents). For isolated
+                    controls with room around them.
+   .kiosk-tap-box — the BUTTON itself grows to ≥44px and the painted pill
+                    lives in an inner <span>. For controls inside an
+                    overflow-x scroller (which clips anything reaching
+                    outside the button's own box) or packed side by side,
+                    where an extender would overlap its neighbour. */
+@media (max-width: 1023px) {
+  .kiosk-tap { position: relative; }
+  .kiosk-tap::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    /* 48, not 44: an absolutely positioned pseudo centres on its origin's
+       PADDING box, so on a control with a bottom border (the ochre "ändern"
+       underline) a bare 44 sits ~1px high and the bottom corners of a strict
+       44×44 probe fall outside. 48 keeps the guarantee with slack. */
+    min-width: 48px;
+    min-height: 48px;
+  }
+  .kiosk-tap-box {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

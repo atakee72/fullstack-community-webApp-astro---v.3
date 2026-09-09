@@ -36,21 +36,23 @@
     </span>
     <div use:scrollFade class="kiosk-scroll-fade no-scrollbar flex items-center gap-2 overflow-x-auto lg:flex-wrap lg:overflow-visible">
       <button type="button" onclick={() => onSektionChange(null)} aria-pressed={activeSektion === null}
-        class="shrink-0 font-bricolage font-semibold"
-        style="padding:5px 12px; font-size:12.5px; border-radius:var(--k-radius-pill);
+        class="shrink-0 kiosk-tap-box inline-flex items-center justify-center font-bricolage font-semibold">
+        <span style="padding:5px 12px; font-size:12.5px; border-radius:var(--k-radius-pill);
                border:{activeSektion === null ? '2px solid var(--k-ink)' : '1.5px solid var(--k-rule)'};
                background:{activeSektion === null ? 'var(--k-ink)' : 'transparent'};
                color:{activeSektion === null ? 'var(--k-paper)' : 'var(--k-ink-mute)'};">
-        {$t['news.filter.all']}
+          {$t['news.filter.all']}
+        </span>
       </button>
       {#each SEKTION_KEYS as key (key)}
         <button type="button" onclick={() => onSektionChange(activeSektion === key ? null : key)} aria-pressed={activeSektion === key}
-          class="shrink-0 font-bricolage font-semibold"
-          style="padding:5px 12px; font-size:12.5px; border-radius:var(--k-radius-pill);
+          class="shrink-0 kiosk-tap-box inline-flex items-center justify-center font-bricolage font-semibold">
+          <span style="padding:5px 12px; font-size:12.5px; border-radius:var(--k-radius-pill);
                  border:{activeSektion === key ? '2px solid var(--k-ink)' : '1.5px solid var(--k-rule)'};
                  background:{activeSektion === key ? 'var(--k-ink)' : 'transparent'};
                  color:{activeSektion === key ? 'var(--k-paper)' : 'var(--k-ink)'};">
-          {$t[`news.sektion.${key}` as keyof typeof $t]}
+            {$t[`news.sektion.${key}` as keyof typeof $t]}
+          </span>
         </button>
       {/each}
     </div>
@@ -63,12 +65,13 @@
     </span>
     {#each ZEITRAUM as z (z.id)}
       <button type="button" onclick={() => onZeitraumChange(z.id)} aria-pressed={activeZeitraum === z.id}
-        class="shrink-0 font-bricolage font-semibold"
-        style="padding:5px 12px; font-size:12.5px; border-radius:var(--k-radius-pill);
+        class="shrink-0 kiosk-tap-box inline-flex items-center justify-center font-bricolage font-semibold">
+        <span style="padding:5px 12px; font-size:12.5px; border-radius:var(--k-radius-pill);
                border:{activeZeitraum === z.id ? '2px solid var(--k-ink)' : '1.5px solid var(--k-rule)'};
                background:{activeZeitraum === z.id ? 'var(--k-ink)' : 'transparent'};
                color:{activeZeitraum === z.id ? 'var(--k-paper)' : 'var(--k-ink)'};">
-        {$t[z.key as keyof typeof $t]}
+          {$t[z.key as keyof typeof $t]}
+        </span>
       </button>
     {/each}
 
@@ -77,20 +80,22 @@
     <button type="button" onclick={() => onSavedToggle(!savedOnly)} disabled={!isAuthenticated}
       title={!isAuthenticated ? $t['news.filter.saved.gated'] : undefined} aria-pressed={savedOnly}
       data-tour="kurier-saved"
-      class="shrink-0 font-bricolage font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-      style="padding:5px 13px; font-size:12.5px; border-radius:var(--k-radius-pill);
+      class="shrink-0 kiosk-tap-box inline-flex items-center justify-center font-bricolage font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+      <span style="padding:5px 13px; font-size:12.5px; border-radius:var(--k-radius-pill);
              border:{savedOnly ? '2px solid var(--k-ink)' : '2px dashed var(--k-rule)'};
              background:{savedOnly ? 'var(--k-ink)' : 'transparent'};
              color:{savedOnly ? 'var(--k-paper)' : 'var(--k-ink-soft)'};">
-      ☆ {$t['news.filter.saved']}
+        ☆ {$t['news.filter.saved']}
+      </span>
     </button>
 
     <!-- Unread toggle: rendered but disabled in Phase 1 (needs read-state, Phase 3) -->
     <button type="button" disabled title={$t['news.filter.unread.soon']}
-      class="shrink-0 font-bricolage font-semibold opacity-50 cursor-not-allowed"
-      style="padding:5px 13px; font-size:12.5px; border-radius:var(--k-radius-pill);
+      class="shrink-0 kiosk-tap-box inline-flex items-center justify-center font-bricolage font-semibold opacity-50 cursor-not-allowed">
+      <span style="padding:5px 13px; font-size:12.5px; border-radius:var(--k-radius-pill);
              border:2px dashed var(--k-rule); background:transparent; color:var(--k-ink-soft);">
-      ● {$t['news.filter.unread']}
+        ● {$t['news.filter.unread']}
+      </span>
     </button>
   </div>
 </section>
