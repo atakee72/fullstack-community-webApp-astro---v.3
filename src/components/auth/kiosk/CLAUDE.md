@@ -212,3 +212,44 @@ Phase 2A (above). Forgot/reset password + email-verify soft gate + unverified ba
 shipped in subsequent phases (see sections above). Rate-limit (state 05) shipped —
 see the Rate-limit / hardening section.
 The "Passwort vergessen?" link resolves (shipped 2026-06-27).
+
+## Audit record (2026-09-10/11, 4 passes: visual / functional / API / mobile @390)
+
+1 critical (no focus indicator on inputs), 11 important, ~17 minor across the
+passes — the auditors' "critical" tap-target items are counted here as
+important. Shipped `e1589b12` (mine) + peer tap-target batch:
+
+- **`AuthField` is no longer a wrapping `<label>`**: with the show/hide toggle
+  inside, the accessible name of the password input became „Passwort zeigen".
+  Now `<label for>` ↔ `input id="auth-field-<name>"`; the box still focuses
+  the input on click (unless the click hit the toggle). Focus indicator is a
+  `focus-within` outline on the box (the input keeps `outline: none`).
+  Inputs are 16px below `lg` (iOS Safari zooms on focus under 16px) and
+  14.5px on desktop.
+- **Register**: each field clears its own error on input (the „zu schwach"
+  text used to stick after the password became strong); no false „stimmen
+  nicht überein" when both password fields are empty; the server's English
+  moderation reason (`… contains inappropriate content`) maps to
+  `auth.err.nameBlocked` instead of leaking raw.
+- **Cache headers**: `/login`, `/register`, `/forgot-password` send `no-store`
+  like reset/verify (logged-in members are bounced to `/forum`, so the
+  response varies by session — this redirect is real behaviour, not just for
+  `/`), and `GET /api/auth/verification-status` + `account-status` send
+  `no-store` (session-varying booleans; same class as the listings-detail fix).
+- Reset „done" CTA is a button with an onclick, not `<a><button>`; the
+  verify page's foot link reads „→ zum Forum" when a session exists;
+  KiezHeartbeat has singular strings (`auth.heartbeat.*.one`).
+- **Splash + reduced motion**: the code SKIPS the splash entirely under
+  `prefers-reduced-motion` (overlay removed before paint); the CSS carve-in
+  fallback only serves the can't-play-video path. Earlier notes above saying
+  the fallback shows on reduced motion were wrong — the code is right.
+- Peer batch: DE/EN pill halves, password toggle, text links and the
+  VerifyEmailBanner controls ≥44px; the reset-password invalid-link card
+  uses the calmer verify-page treatment.
+
+Verified non-issues: the strength meter renders fine (one auditor's DOM probe
+missed it); generic 200 on forgot-password, 409 on taken email, GET on
+`/api/auth/signout` NOT signing out, and the open-redirect guard all behaved
+as documented. Left open: favicon.ico 404 (only `favicon.svg` ships), no
+diacritic folding anywhere, `/login?redirect=` shows no hint of where you'll
+land.

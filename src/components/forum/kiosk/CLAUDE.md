@@ -172,3 +172,20 @@ These sections describe the **legacy React forum** (`ForumWrapper` / `ForumConta
 `KioskNav`'s sticky top bar is ochre (`background: var(--k-ochre)`) to match the mobile bottom nav — the admin masthead stays plum. Knock-ons handled in the same change: the avatar disc is paper-filled (an ochre disc vanished on the ochre bar), the „SCHILLERKIEZ · NEUKÖLLN" tagline is `text-ink/80`, and the profile page's active-avatar ring (`.prof-nav-avatar-active` in `profile.css`) uses an ink outer ring. **Locale pill anatomy**: the pill is a fixed 25 px tall `h-[25px]` box; the two buttons wear `.kiosk-tap-box` (44 px on touch viewports) and overflow it invisibly, each with a `w-full h-[21px]` painted span (`rounded-l-full` / `rounded-r-full`) so both halves stay equal whichever is active — do not put `overflow-hidden` back on the pill, it would clip the tap boxes. Bar height on phones is 54 px (`py-2 lg:py-3`, 36 px logo disc below `lg`).
 - **Forum title-block rhythm** (2026-09-10, `f07cee20`): the index `<main>` is `pt-5 md:pt-6` (was `py-8 md:py-10`) so the kicker sits 20/24 px under the masthead rule like calendar, news and market. If a new surface adds a title block, use the same 20/24 px.
 
+
+### Card numbers are real (2026-09-11)
+- **🔖 on cards is a count**: `attachSavedCounts()` in `src/lib/topicsQuery.ts`
+  runs inside `fetchCollectionWithAuthors` (one `$group` over `savedPosts`,
+  whose `postId` is the string id) and stamps `savedCount` on every feed item
+  — a read-time join like authors, never denormalized. The card renders
+  `🔖 {savedCount}` and turns ochre when the viewer's own save is among them:
+  `ForumIndexInner` fetches `GET /api/posts/save` once on mount and passes
+  `bookmarked` to every `ForumPostCard` (before this every card read as
+  unsaved). The detail page button reads „speichern" until saved,
+  „gespeichert" after (`detail.engagement.save`/`.saved`).
+- **Feed footer „letzter Post vor …"** is the newest item date across the
+  unfiltered feed (`lastPostAgo`), not the prototype's hardcoded 28 minutes.
+  `FeedStatusFooter` takes a preformatted `lastPostAgo` string.
+- **`src/lib/relTime.ts`** is the single relative-time helper (locale-aware
+  short form: „vor 5 min" / "5 min ago" … then `dd. MMM`). ForumPostCard,
+  ForumPostDetail and the pin bars all use it — don't add another copy.
