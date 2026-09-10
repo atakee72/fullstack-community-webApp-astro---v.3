@@ -10,7 +10,7 @@ import ForumPostDetail from '../../components/forum/kiosk/ForumPostDetail.svelte
 import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../lib/mongodb';
 import { ObjectId } from 'mongodb';
-import { buildModerationFilter, populateAuthors } from '../../lib/topicsQuery';
+import { buildModerationFilter, fetchRelatedForDetail, populateAuthors } from '../../lib/topicsQuery';
 
 const { id } = Astro.params;
 
@@ -68,6 +68,7 @@ const comments = await populateAuthors(rawComments as any[]);
 // Date / ObjectId → string before sending across the SSR boundary.
 const initialTopic = JSON.parse(JSON.stringify(topic));
 const initialComments = JSON.parse(JSON.stringify(comments));
+const related = await fetchRelatedForDetail('topics', topicDoc as any);
 
 const pageTitle = topicDoc.title ? `${topicDoc.title} · Mahalle Forum` : 'Mahalle Forum';
 ---
@@ -78,5 +79,6 @@ const pageTitle = topicDoc.title ? `${topicDoc.title} · Mahalle Forum` : 'Mahal
     initialTopic={initialTopic}
     initialComments={initialComments}
     currentUserId={currentUserId ?? null}
+    {related}
   />
 </KioskLayout>

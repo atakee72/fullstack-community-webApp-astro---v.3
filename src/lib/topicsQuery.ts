@@ -178,3 +178,62 @@ export async function fetchForumItemsForSSR(
   return JSON.parse(JSON.stringify(result.items));
 }
 
+
+/**
+ * „Ähnliche Themen" for the detail rail — up to `max` sibling posts from
+ * the same collection, ranked by shared-tag count (desc) then newest-first,
+ * filled with the newest public posts when fewer than `max` share a tag
+ * (same recipe as the blog's `relatedFor`). Visibility is the strict public
+ * gate (approved or legacy-absent) — never the viewer's own pending/rejected
+ * posts, never reported items. Serialized for the client island.
+ */
+export interface RelatedPost {
+  id: string;
+  title: string;
+  replies: number;
+  date: string | number;
+}
+
+export async function fetchRelatedForDetail(
+  type: 'topics' | 'announcements' | 'recommendations',
+  current: { _id: ObjectId | string; tags?: string[] },
+  max = 3
+): Promise<RelatedPost[]> {
+  const db = await connectDB();
+  const collection = db.collection(type);
+  const selfId = typeof current._id === 'string' ? new ObjectId(current._id) : current._id;
+  const tags = (current.tags ?? []).filter((t) => typeof t === 'string' && t.length > 0);
+  const publicGate = { $or: [{ moderationStatus: 'approved' }, { moderationStatus: { $exists: false } }] };
+  const projection = { title: 1, tags: 1, comments: 1, date: 1 };
+
+  const byTag = tags.length
+    ? await collection
+        .find({ _id: { $ne: selfId }, tags: { $in: tags }, ...publicGate }, { projection })
+        .sort({ date: -1 })
+        .limit(24)
+        .toArray()
+    : [];
+  const tagSet = new Set(tags);
+  const ranked = byTag
+    .map((d) => ({ d, shared: (d.tags ?? []).filter((t: string) => tagSet.has(t)).length }))
+    .sort((a, b) => b.shared - a.shared || Number(b.d.date ?? 0) - Number(a.d.date ?? 0))
+    .map((x) => x.d);
+
+  const picked = ranked.slice(0, max);
+  if (picked.length < max) {
+    const exclude = [selfId, ...picked.map((d) => d._id)];
+    const fill = await collection
+      .find({ _id: { $nin: exclude }, ...publicGate }, { projection })
+      .sort({ date: -1 })
+      .limit(max - picked.length)
+      .toArray();
+    picked.push(...fill);
+  }
+
+  return picked.map((d) => ({
+    id: String(d._id),
+    title: String(d.title ?? ''),
+    replies: Array.isArray(d.comments) ? d.comments.length : 0,
+    date: d.date instanceof Date ? d.date.toISOString() : (d.date ?? 0),
+  }));
+}

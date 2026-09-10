@@ -13,7 +13,7 @@ import ForumPostDetail from '../../components/forum/kiosk/ForumPostDetail.svelte
 import { getSession } from 'auth-astro/server';
 import { connectDB } from '../../lib/mongodb';
 import { ObjectId } from 'mongodb';
-import { buildModerationFilter, populateAuthors } from '../../lib/topicsQuery';
+import { buildModerationFilter, fetchRelatedForDetail, populateAuthors } from '../../lib/topicsQuery';
 
 const { id } = Astro.params;
 
@@ -65,6 +65,7 @@ const comments = await populateAuthors(rawComments as any[]);
 
 const initialTopic = JSON.parse(JSON.stringify(hydrated));
 const initialComments = JSON.parse(JSON.stringify(comments));
+const related = await fetchRelatedForDetail('announcements', doc as any);
 
 const pageTitle = doc.title ? `${doc.title} · Mahalle Forum` : 'Mahalle Forum';
 ---
@@ -76,6 +77,7 @@ const pageTitle = doc.title ? `${doc.title} · Mahalle Forum` : 'Mahalle Forum';
     initialComments={initialComments}
     currentUserId={currentUserId ?? null}
     collectionType="announcements"
+    {related}
     isOfficial={initialTopic.isOfficial === true}
   />
 </KioskLayout>

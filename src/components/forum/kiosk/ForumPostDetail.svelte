@@ -35,11 +35,16 @@
     initialComments = [],
     currentUserId = null,
     collectionType = 'topics',
-    isOfficial = false
+    isOfficial = false,
+    related = []
   } = $props<{
     initialTopic: any;
     initialComments?: any[];
     currentUserId?: string | null;
+    /** „Ähnliche Themen" rail items — SSR-picked by fetchRelatedForDetail()
+     *  (shared tags first, newest-first fill), same collection as the post.
+     *  Empty array hides the section. */
+    related?: { id: string; title: string; replies: number; date: string | number }[];
     /** Which forum sub-collection the post lives in. Drives the
      *  edit/delete fetch URLs and the comment-create `collectionType`
      *  field. Defaults to 'topics' so the existing /topics/[id] route
@@ -115,17 +120,18 @@
     return () => clearInterval(id);
   });
 
-  function relTime(iso?: string): string {
+  function relTime(iso?: string | number): string {
     if (!iso) return '';
+    const de = $locale === 'de';
     const ms = Date.now() - new Date(iso).getTime();
     const min = Math.floor(ms / 60_000);
-    if (min < 1) return 'gerade eben';
-    if (min < 60) return `vor ${min} min`;
+    if (min < 1) return de ? 'gerade eben' : 'just now';
+    if (min < 60) return de ? `vor ${min} min` : `${min} min ago`;
     const hr = Math.floor(min / 60);
-    if (hr < 24) return `vor ${hr} std`;
+    if (hr < 24) return de ? `vor ${hr} std` : `${hr}h ago`;
     const d = Math.floor(hr / 24);
-    if (d < 7) return `vor ${d} t`;
-    return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
+    if (d < 7) return de ? `vor ${d} t` : `${d}d ago`;
+    return new Date(iso).toLocaleDateString(de ? 'de-DE' : 'en-GB', { day: '2-digit', month: 'short' });
   }
 
   const memberSince = $derived.by(() => {
@@ -905,42 +911,35 @@
             {/if}
           </section>
 
-          <!-- ◆ ÄHNLICHE THEMEN — hardcoded placeholders per the prototype.
-               Marker for later: replace this list with a real "related"
-               query (e.g. by shared tag or kind, ranked by recency + reply
-               count). When wired, swap the static array below for an
-               actual data source — markup pattern stays the same. -->
-          <section>
-            <p
-              class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-moss mb-2 flex items-center gap-1.5"
-            >
-              <span aria-hidden="true">◆</span> {$t['detail.related.heading']}
-            </p>
-            <ul class="space-y-2.5">
-              {#each ($locale === 'de'
-                ? [
-                    { title: 'Müllabfuhr fehlt seit Mittwoch', meta: '14 antworten · vor 2 t' },
-                    { title: 'Hauseingangs-Aushang Vorlage?',  meta: '8 antworten · vor 5 t' },
-                    { title: 'Erfahrungen mit Pestmann?',       meta: '19 antworten · vor 1 w' }
-                  ]
-                : [
-                    { title: 'No bin pickup since Wednesday', meta: '14 replies · 2d' },
-                    { title: 'Stairwell notice template?',    meta: '8 replies · 5d' },
-                    { title: 'Anyone used Pestmann?',          meta: '19 replies · 1w' }
-                  ]) as item, i (item.title)}
-                <li
-                  class={`pb-2.5 ${i < 2 ? 'border-b border-dashed border-rule' : ''}`}
-                >
-                  <p class="font-bricolage font-bold text-[12.5px] text-ink leading-tight">
-                    {item.title}
-                  </p>
-                  <p class="font-dmmono text-[10px] text-ink-mute mt-0.5">
-                    {item.meta}
-                  </p>
-                </li>
-              {/each}
-            </ul>
-          </section>
+          <!-- ◆ ÄHNLICHE THEMEN — real siblings from the same collection
+               (SSR `related` prop: shared tags first, newest-first fill).
+               Hidden entirely when there is nothing to show (2026-09-10;
+               was a hardcoded prototype list that readers tried to click). -->
+          {#if related.length > 0}
+            <section>
+              <p
+                class="font-dmmono text-[10px] uppercase tracking-[0.12em] text-moss mb-2 flex items-center gap-1.5"
+              >
+                <span aria-hidden="true">◆</span> {$t['detail.related.heading']}
+              </p>
+              <ul class="space-y-2.5">
+                {#each related as item, i (item.id)}
+                  <li
+                    class={`pb-2.5 ${i < related.length - 1 ? 'border-b border-dashed border-rule' : ''}`}
+                  >
+                    <a href={`/${collectionType}/${item.id}`} class="block group kiosk-tap">
+                      <p class="font-bricolage font-bold text-[12.5px] text-ink leading-tight group-hover:underline decoration-1 underline-offset-2">
+                        {item.title}
+                      </p>
+                      <p class="font-dmmono text-[10px] text-ink-mute mt-0.5">
+                        {item.replies} {$t['detail.engagement.replies']} · {relTime(item.date)}
+                      </p>
+                    </a>
+                  </li>
+                {/each}
+              </ul>
+            </section>
+          {/if}
 
           <!-- Trust-note serif italic quote — boxed with dashed border + lighter
                bg per prototype, sits as a contained quote on the rail surface. -->
