@@ -115,7 +115,11 @@
       type="password" name="password2" autocomplete="new-password" value={password2}
       error={pw2Err} success={!!password2 && password2 === password} oninput={(v) => (password2 = v)} />
 
-    <label class="flex" style="gap:9px; align-items:flex-start; cursor:pointer; margin-top:2px;">
+    <!-- The row itself is the accept-terms target, so it gets the 44px (below
+         lg); the two inline legal links stay prose-height on purpose — giving
+         THEM 44px hit boxes inside this label would swallow taps meant for the
+         checkbox. -->
+    <label class="flex min-h-[44px] lg:min-h-0" style="gap:9px; align-items:flex-start; cursor:pointer; margin-top:2px;">
       <input type="checkbox" bind:checked={terms}
         style="width:18px; height:18px; flex-shrink:0; margin-top:1px; accent-color:var(--k-ink); cursor:pointer;" />
       <span class="font-bricolage" style="font-size:12.5px; line-height:1.45; color:{termsErr ? 'var(--k-danger)' : 'var(--k-ink-soft)'};">
@@ -130,7 +134,7 @@
 
   <div class="font-dmmono" style="font-size:10px; color:var(--k-ink-mute); line-height:1.5; margin-top:14px; padding-top:12px; border-top:1px dashed var(--k-rule);">{$t['auth.register.note']}</div>
   <div class="font-bricolage" style="text-align:center; font-size:13.5px; color:var(--k-ink-soft); margin-top:14px;">
-    {$t['auth.register.alt']}<a href="/login" class="no-underline" style="font-weight:700; color:var(--k-ink); border-bottom:2px solid var(--k-accent);">{$t['auth.register.altLink']}</a>
+    {$t['auth.register.alt']}<a href="/login" class="no-underline kiosk-tap" style="font-weight:700; color:var(--k-ink); border-bottom:2px solid var(--k-accent);">{$t['auth.register.altLink']}</a>
   </div>
 </div>
 

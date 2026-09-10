@@ -64,7 +64,9 @@
       oninput={(e) => oninput((e.currentTarget as HTMLInputElement).value)}
     />
     {#if showToggle}
-      <button type="button" class="font-dmmono" style="font-size:10px; color:var(--k-ink-mute); letter-spacing:0.05em; background:none; border:none; border-bottom:1px dashed var(--k-ink-mute); cursor:pointer; padding:0;"
+      <!-- kiosk-tap, not a bigger box: the extender is out of flow, so the
+           field keeps its 11px/13px padding while the toggle gets 48px. -->
+      <button type="button" class="font-dmmono kiosk-tap" style="font-size:10px; color:var(--k-ink-mute); letter-spacing:0.05em; background:none; border:none; border-bottom:1px dashed var(--k-ink-mute); cursor:pointer; padding:0;"
         onclick={() => (revealed = !revealed)}>
         {revealed ? $t['auth.field.hide'] : $t['auth.field.show']}
       </button>

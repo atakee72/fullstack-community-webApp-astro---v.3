@@ -41,7 +41,7 @@
       <AuthPrimaryBtn loading={loading}>{loading ? $t['auth.forgot.ctaLoading'] : $t['auth.forgot.cta']}</AuthPrimaryBtn>
     </form>
     <div style="text-align:center; margin-top:16px;">
-      <a href="/login" class="font-dmmono no-underline" style="font-size:11px; color:var(--k-ink-soft); border-bottom:1px dashed var(--k-ink-mute);">{$t['auth.forgot.back']}</a>
+      <a href="/login" class="font-dmmono no-underline kiosk-tap" style="font-size:11px; color:var(--k-ink-soft); border-bottom:1px dashed var(--k-ink-mute);">{$t['auth.forgot.back']}</a>
     </div>
   {:else}
     <div class="flex justify-center" style="margin-bottom:16px;">
@@ -57,7 +57,7 @@
       <p class="font-bricolage" style="font-size:12.5px; color:var(--k-ink-soft); line-height:1.5; max-width:330px; margin:8px auto 0;">{$t['auth.forgot.sentBody']}</p>
     </div>
     <div style="text-align:center; margin-top:20px;">
-      <a href="/login" class="font-dmmono no-underline" style="font-size:11px; color:var(--k-ink-soft); border-bottom:1px dashed var(--k-ink-mute);">{$t['auth.forgot.back']}</a>
+      <a href="/login" class="font-dmmono no-underline kiosk-tap" style="font-size:11px; color:var(--k-ink-soft); border-bottom:1px dashed var(--k-ink-mute);">{$t['auth.forgot.back']}</a>
     </div>
   {/if}
 </div>
