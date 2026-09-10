@@ -14,6 +14,7 @@
   // forum, no new dialog.
 
   import { t, tStr, locale } from '../../../lib/kiosk-i18n';
+  import { relTime as relTimeFor } from '../../../lib/relTime';
   import { linkifySegments } from '../../../lib/linkify';
   import KioskAvatar from './KioskAvatar.svelte';
   import KioskBtn from './KioskBtn.svelte';
@@ -120,19 +121,7 @@
     return () => clearInterval(id);
   });
 
-  function relTime(iso?: string | number): string {
-    if (!iso) return '';
-    const de = $locale === 'de';
-    const ms = Date.now() - new Date(iso).getTime();
-    const min = Math.floor(ms / 60_000);
-    if (min < 1) return de ? 'gerade eben' : 'just now';
-    if (min < 60) return de ? `vor ${min} min` : `${min} min ago`;
-    const hr = Math.floor(min / 60);
-    if (hr < 24) return de ? `vor ${hr} std` : `${hr}h ago`;
-    const d = Math.floor(hr / 24);
-    if (d < 7) return de ? `vor ${d} t` : `${d}d ago`;
-    return new Date(iso).toLocaleDateString(de ? 'de-DE' : 'en-GB', { day: '2-digit', month: 'short' });
-  }
+  const relTime = (iso?: string | number) => relTimeFor(iso, $locale);
 
   const memberSince = $derived.by(() => {
     const created = topic.author?.createdAt;

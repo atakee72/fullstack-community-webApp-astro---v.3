@@ -305,7 +305,8 @@ const de = {
 
   // Feed footer rule.
   'feed.footer.pages': '{current} / {total} SEITEN',
-  'feed.footer.fresh': '↻ live · letzter post vor {n} min',
+  'feed.footer.fresh': '↻ live · letzter post {ago}',
+  'feed.footer.freshNoPosts': '↻ live',
   'feed.footer.offline': '● OFFLINE · CACHED',
   'feed.footer.loading': 'LADE…',
   'feed.footer.loadMore': 'MEHR LADEN ↓',
@@ -2225,7 +2226,8 @@ const en: Dict = {
     "We're reviewing it — it stays visible to everyone until we've decided.",
 
   'feed.footer.pages': '{current} / {total} PAGES',
-  'feed.footer.fresh': '↻ live · last post {n} min ago',
+  'feed.footer.fresh': '↻ live · last post {ago}',
+  'feed.footer.freshNoPosts': '↻ live',
   'feed.footer.offline': '● OFFLINE · CACHED',
   'feed.footer.loading': 'LOADING…',
   'feed.footer.loadMore': 'LOAD MORE ↓',

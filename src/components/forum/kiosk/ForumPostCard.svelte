@@ -29,7 +29,8 @@
   import KioskAvatar from './KioskAvatar.svelte';
   import StatusBadge from './StatusBadge.svelte';
   import PostTypeChip from './PostTypeChip.svelte';
-  import { t, tStr } from '../../../lib/kiosk-i18n';
+  import { t, tStr, locale } from '../../../lib/kiosk-i18n';
+  import { relTime as relTimeFor } from '../../../lib/relTime';
   import { optimizeCloudinary } from '../../../utils/cloudinary';
 
   let {
@@ -174,17 +175,7 @@
 
   // German short relative-time. EN strings come in Phase 4b/5b once
   // the design source's English variants are locked in.
-  function relTime(iso?: string): string {
-    if (!iso) return '';
-    const min = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
-    if (min < 1) return 'gerade eben';
-    if (min < 60) return `vor ${min} min`;
-    const hr = Math.floor(min / 60);
-    if (hr < 24) return `vor ${hr} std`;
-    const d = Math.floor(hr / 24);
-    if (d < 7) return `vor ${d} t`;
-    return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
-  }
+  const relTime = (iso?: string) => relTimeFor(iso, $locale);
 
   const body = $derived((topic.body ?? topic.description ?? '').trim());
   const commentCount = $derived(topic.comments?.length ?? 0);

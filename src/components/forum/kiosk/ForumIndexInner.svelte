@@ -19,6 +19,7 @@
   import { showToast } from '../../../utils/toast';
   import { createQuery } from '@tanstack/svelte-query';
   import { t, locale } from '../../../lib/kiosk-i18n';
+  import { relTime } from '../../../lib/relTime';
   import { online } from '../../../lib/onlineStore';
   import { MAX_PINS } from '../../../lib/announcements/pinRules';
   import ForumPostCard from './ForumPostCard.svelte';
@@ -165,20 +166,8 @@
     expandedLinkEl?.focus();
   }
 
-  // Short German relative time for the slim pin bars — same logic as
-  // ForumPostCard's relTime (that one is component-scoped; duplicating
-  // 10 lines beats exporting a card internal).
-  function pinBarTime(d?: string | number): string {
-    if (!d) return '';
-    const min = Math.floor((Date.now() - new Date(d).getTime()) / 60_000);
-    if (min < 1) return 'gerade eben';
-    if (min < 60) return `vor ${min} min`;
-    const hr = Math.floor(min / 60);
-    if (hr < 24) return `vor ${hr} std`;
-    const day = Math.floor(hr / 24);
-    if (day < 7) return `vor ${day} t`;
-    return new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
-  }
+  // Relative time for the slim pin bars — shared helper (src/lib/relTime.ts).
+  const pinBarTime = (d?: string | number) => relTime(d, $locale);
 
   // Filter state — Phase 4a applies tag filters locally only; type/saved/mine
   // filters toggle the active pill but don't reshape the data yet.
@@ -390,6 +379,18 @@
       items.length === 0
   );
   const showGrid = $derived(!showError && !showSkeleton && !showEmptyFilter && !showEmptyZero);
+
+  // Footer "letzter Post vor …": newest item date across the whole feed
+  // (unfiltered). Was a hardcoded 28-minute prototype default until
+  // 2026-09-11 — the user spotted "28 min ago" never changing.
+  const lastPostAgo = $derived.by(() => {
+    let newest = 0;
+    for (const it of items) {
+      const ts = new Date(it.date).getTime();
+      if (!Number.isNaN(ts) && ts > newest) newest = ts;
+    }
+    return newest ? relTime(newest, $locale) : '';
+  });
 
   // Cached-minutes for OfflineBanner — null when no data has loaded yet.
   const cachedMinutes = $derived(
@@ -700,6 +701,7 @@
 
   <FeedStatusFooter
     mode={footerMode}
+    lastPostAgo={lastPostAgo}
     pageCount={pageCount}
     currentPage={currentPage}
     hasMore={feedHasMore}

@@ -20,14 +20,15 @@
     mode = 'fresh',
     pageCount = 1,
     currentPage = 1,
-    minutesSinceLast = 28,
+    lastPostAgo = '',
     hasMore = false,
     onLoadMore = () => {}
   } = $props<{
     mode?: 'fresh' | 'loading' | 'offline' | 'live';
     pageCount?: number;
     currentPage?: number;
-    minutesSinceLast?: number;
+    /** Relative time of the newest feed item (empty -> plain "live"). */
+    lastPostAgo?: string;
     hasMore?: boolean;
     onLoadMore?: () => void;
   }>();
@@ -43,7 +44,7 @@
       ? { color: 'text-success', text: $t['feed.footer.live'] }
       : {
           color: 'text-wine',
-          text: tStr($t['feed.footer.fresh'], { n: minutesSinceLast })
+          text: lastPostAgo ? tStr($t['feed.footer.fresh'], { ago: lastPostAgo }) : $t['feed.footer.freshNoPosts']
         }
   );
 
