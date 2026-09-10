@@ -179,7 +179,7 @@
           value={password} error={pwErr} showToggle disabled={locked}
           oninput={(v) => (password = v)} />
         <div style="text-align:right; margin-top:7px;">
-          <a href="/forgot-password" class="font-dmmono no-underline" style="font-size:11px; color:var(--k-ink-soft); border-bottom:1px dashed var(--k-ink-mute);">{$t['auth.login.forgot']}</a>
+          <a href="/forgot-password" class="font-dmmono no-underline kiosk-tap" style="font-size:11px; color:var(--k-ink-soft); border-bottom:1px dashed var(--k-ink-mute);">{$t['auth.login.forgot']}</a>
         </div>
       </div>
       <AuthPrimaryBtn loading={status === 'loading'} disabled={locked}>
@@ -193,7 +193,7 @@
       <div style="flex:1; border-top:1px dashed var(--k-rule);"></div>
     </div>
     <div class="font-bricolage" style="text-align:center; font-size:13.5px; color:var(--k-ink-soft);">
-      {$t['auth.login.alt']}<a href="/register" class="no-underline" style="font-weight:700; color:var(--k-ink); border-bottom:2px solid var(--k-accent);">{$t['auth.login.altLink']}</a>
+      {$t['auth.login.alt']}<a href="/register" class="no-underline kiosk-tap" style="font-weight:700; color:var(--k-ink); border-bottom:2px solid var(--k-accent);">{$t['auth.login.altLink']}</a>
     </div>
   {/if}
 </div>

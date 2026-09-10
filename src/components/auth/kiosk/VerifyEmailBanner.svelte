@@ -51,7 +51,7 @@
         <span class="verify-banner-body">{$t['auth.banner.verifyBody']}</span>
         {#if resendErr}<span class="verify-banner-err">{resendErr}</span>{/if}
       </span>
-      <button type="button" class="font-bricolage verify-banner-resend" onclick={resend} disabled={resendState !== 'idle'}>
+      <button type="button" class="font-bricolage verify-banner-resend kiosk-tap" onclick={resend} disabled={resendState !== 'idle'}>
         {resendState === 'sent' ? $t['auth.banner.verifySent']
           : resendState === 'loading' ? $t['auth.verify.resendLoading']
           : $t['auth.banner.verifyResend']}
@@ -79,6 +79,10 @@
   .verify-banner-text { font-size: 13px; color: var(--k-ink-soft); line-height: 1.4; flex: 1; min-width: 0; }
   .verify-banner-text strong { color: var(--k-ink); font-weight: 700; margin-right: 6px; }
   .verify-banner-err { display: block; color: var(--k-danger); font-size: 12px; }
+  /* Both controls reach 44px without changing the strip's height: the resend
+     pill uses the out-of-flow .kiosk-tap extender (a taller box would paint a
+     taller pill), the dismiss X gets a real 44x44 box pulled back into the
+     8px row with negative margins. */
   .verify-banner-resend {
     flex-shrink: 0;
     background: var(--k-ink);
@@ -94,13 +98,19 @@
   .verify-banner-resend:disabled { opacity: 0.75; cursor: default; }
   .verify-banner-dismiss {
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    margin: -6px -11px; /* absorb the 22px the box grew, so the X stays put */
     background: transparent;
     border: none;
     color: var(--k-ink-mute);
     font-size: 20px;
     line-height: 1;
     cursor: pointer;
-    padding: 2px 6px;
+    padding: 0;
   }
   @media (max-width: 640px) {
     .verify-banner-body { display: none; } /* keep the strip one line on mobile */
