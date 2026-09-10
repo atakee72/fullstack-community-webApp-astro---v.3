@@ -236,3 +236,41 @@ Aufruf card background. Page-accent rule: rust is Blog's color across the
 whole site (see root CLAUDE.md's page-accent table) — same "don't touch
 semantic accents" carve-outs apply (wine stays wine on the Forum-CTA, live
 indicators etc. stay whatever they were).
+
+## Audit record (2026-09-10, 4 passes: visual / functional / routes-SSR / mobile @390)
+
+0 critical, 10 important, 5 minor — all importants shipped the same night
+(`95f668c6` + peer `29769aec`):
+
+- **Cache headers**: all three blog routes now send
+  `Cache-Control: no-store, must-revalidate` like every other session-aware
+  SSR page — `KioskLayout` reads the session for the nav, so the HTML varies
+  per viewer and must never sit in a shared cache. Any new blog route gets
+  the same line.
+- **Cover `width`/`height`**: `BlogPostCard` carries `coverWidth`/`coverHeight`
+  (`image().width/height`) and `BlogArticleHeader` puts them on both `<img>`
+  sites. Only `coverFit: 'full'` posts actually shifted layout (crop mode is
+  pinned by its fixed-height band), but the attributes are harmless there.
+- **Rubric chip count**: `BlRubrikChip` renders `{' '}{n}` — a literal space
+  inside the span gets trimmed by Svelte's whitespace handling, which glued
+  the count to the tag (`#community1`).
+- **Search bar**: the wrapper is a `<label>` (any tap on the bar focuses the
+  input), ≥44px on touch viewports, `focus-within` outline for keyboard users
+  (the input itself keeps `outline: none`).
+- **Tap targets (peer)**: `BlRubrikChip` is a tap-box (bare 44px `a`/`button`
+  with the painted pill in an inner snippet) rather than a `.kiosk-tap`
+  extender — the index's `overflow-x-auto` chip row clips the extender to the
+  scroller's box (measured 28px). Read-bar back link, pagination buttons and
+  the Archiv month row are ≥44px too; the pagination row wraps as two units
+  (page-size cluster / arrow cluster) at phone width.
+- **Fallback domain**: `ArticleShell.astro`'s QR/canonical fallback literal is
+  `mahalle.digital` (was the stale `mahalle.berlin`; only reachable when
+  `NEXTAUTH_URL` is unset in prod).
+
+Verified non-issues (don't re-file): dev-server `/@fs/` image paths and
+`localhost:3000` in the QR are `NEXTAUTH_URL`/Vite artifacts; the 65px strip
+above the masthead on a fresh profile is the tour offer; `/blog/tag/<unknown>`
+returning 200 is deliberate; search has no diacritic folding (unspecified);
+the DE/EN toggle drifts scroll by ~19px on the index (string-length reflow).
+Minor left open: the FOTO credit link and the footer license link are
+prose-height links (accepted).
