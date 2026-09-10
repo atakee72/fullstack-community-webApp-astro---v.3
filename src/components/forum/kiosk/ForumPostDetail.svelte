@@ -790,10 +790,11 @@
             class={`relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 border-ink transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
               bookmarked ? 'bg-ochre' : 'bg-transparent hover:bg-paper-warm'
             }`}
-            aria-label={$t['detail.engagement.saved']}
+            aria-label={bookmarked ? $t['detail.engagement.saved'] : $t['detail.engagement.save']}
           >
             <span aria-hidden="true">🔖</span>
-            <span>{$t['detail.engagement.saved']}</span>
+            <!-- verb while unsaved, state once saved — a constant „gespeichert" read as already-saved (user, 2026-09-10) -->
+            <span>{bookmarked ? $t['detail.engagement.saved'] : $t['detail.engagement.save']}</span>
             <span aria-hidden="true" style="position:absolute; inset:-8px -8px -13px;"></span>
           </button>
           <span class="ml-auto flex gap-3.5 text-ink-mute">
