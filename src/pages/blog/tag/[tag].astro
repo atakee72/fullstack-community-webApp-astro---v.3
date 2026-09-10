@@ -8,6 +8,8 @@ import { readingMinutes, tagCounts, type BeilagePost } from '../../../lib/blog/b
 
 const { tag = '' } = Astro.params;
 
+// Session-varying SSR (KioskLayout reads the session for the nav) — never let a shared cache keep it.
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
 const entries = await getCollection('blog', ({ data }) => !data.draft);
 const all: BeilagePost[] = entries
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
@@ -20,6 +22,8 @@ const all: BeilagePost[] = entries
     layout: e.data.postLayout,
     minutes: readingMinutes(e.body ?? ''),
     cover: e.data.cover?.src,
+    coverWidth: e.data.cover?.width,
+    coverHeight: e.data.cover?.height,
     coverAlt: e.data.coverAlt,
     coverPosition: e.data.coverPosition,
   }));

@@ -17,10 +17,9 @@ const { post, related } = Astro.props;
 
 // getTrustedBaseUrl fails closed to '' in prod when NEXTAUTH_URL is unset —
 // that protects EMAILED links; this route only prints a public URL into a
-// QR. Fall back to the canonical domain (same literal + rationale as
-// steckbrief.astro:41 — the Kiez final review marked mahalle.berlin the
-// forward-looking preference over druck's vercel.app literal).
-const baseUrl = getTrustedBaseUrl(Astro.request) || 'https://mahalle.berlin';
+// QR. Fall back to the canonical domain (same literal as steckbrief.astro;
+// mahalle.digital is live since 2026-08-09).
+const baseUrl = getTrustedBaseUrl(Astro.request) || 'https://mahalle.digital';
 const articleUrl = `${baseUrl}/blog/${post.id}`;
 // SAFE to set:html — QRCode.toString output for a same-origin URL we
 // construct ourselves; never user-supplied. Same pattern as steckbrief/druck.

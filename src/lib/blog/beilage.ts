@@ -16,6 +16,8 @@ export interface BeilagePost {
   layout: 'standard' | 'hero' | 'gallery';
   minutes: number;               // Lesezeit, precomputed at serialization
   cover?: string;                // processed asset URL (image().src)
+  coverWidth?: number;           // intrinsic px (image().width/height) — width/height attrs on the article <img> reserve the box, no CLS on coverFit: full
+  coverHeight?: number;
   coverAlt?: string;
   coverCredit?: string;
   coverCreditUrl?: string;

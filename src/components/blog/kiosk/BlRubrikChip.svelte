@@ -29,7 +29,7 @@
 </script>
 
 {#snippet chipContent()}
-  #{tag}{#if n != null}<span style="opacity: 0.55;"> {n}</span>{/if}
+  #{tag}{#if n != null}<span style="opacity: 0.55;">{' '}{n}</span>{/if}
 {/snippet}
 
 {#if href}

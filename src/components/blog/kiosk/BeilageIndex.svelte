@@ -112,7 +112,7 @@
 {#snippet searchBox()}
   <div>
     <div
-      class="flex items-center"
+      class="flex items-center focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink"
       style="gap: 8px; background: var(--k-paper-soft); border: {query ? '1.5px solid var(--k-ink)' : '1px solid var(--k-rule)'}; border-radius: var(--k-radius-md); padding: 9px 14px;"
     >
       <span style="font-size: 14px; opacity: 0.5;">⌕</span>
