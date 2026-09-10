@@ -20,7 +20,3 @@ export function formatRelativeTime(input: Date | string, locale: Locale): string
 
   return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(date);
 }
-
-// Avatar initials live in one place now — re-exported here so marketplace
-// callers keep their existing import path.
-export { initialsOf } from './initials';
