@@ -14,8 +14,9 @@ jobs:
       # (includes 5 unfixable errors from auth-astro via tsconfig's include glob).
       # Lowered 27→26 / 94→93 on 2026-09-06: the contact-form i18n fix removed an
       # untyped local record, clearing one pre-existing tsc + one svelte-check error.
+      # Lowered 93→92 on 2026-09-10: the shared initialsOf helper cleared one svelte-check error.
       TSC_ERROR_BUDGET: "26"
-      SVELTE_CHECK_ERROR_BUDGET: "93"
+      SVELTE_CHECK_ERROR_BUDGET: "92"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
