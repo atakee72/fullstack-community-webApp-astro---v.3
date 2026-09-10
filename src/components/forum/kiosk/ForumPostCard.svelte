@@ -56,6 +56,7 @@
       comments?: any[];
       date?: string;
       likes?: number;
+      savedCount?: number;
       moderationStatus?: string;
       isUserReported?: boolean;
       hasWarningLabel?: boolean;
@@ -188,6 +189,7 @@
   const body = $derived((topic.body ?? topic.description ?? '').trim());
   const commentCount = $derived(topic.comments?.length ?? 0);
   const likeCount = $derived(topic.likes ?? 0);
+  const savedCount = $derived(topic.savedCount ?? 0);
   const tags = $derived(topic.tags ?? []);
   const heroImage = $derived(
     topic.images?.[0]?.url ? optimizeCloudinary(topic.images[0].url) : null
@@ -371,7 +373,7 @@
           class={`flex items-center gap-1 ${bookmarked ? 'text-ochre' : ''}`}
           aria-label={$t['card.saved']}
         >
-          <span aria-hidden="true">🔖</span>{bookmarked ? ` ${$t['card.saved']}` : ''}
+          <span aria-hidden="true">🔖</span> {savedCount}
         </span>
       </span>
       <span class="flex items-center gap-1">→ {$t['card.cta.read']}</span>

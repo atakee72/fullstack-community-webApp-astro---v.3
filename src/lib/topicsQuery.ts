@@ -150,8 +150,30 @@ export async function fetchCollectionWithAuthors<T extends Document>(
     !options.fields || options.fields.length === 0 || options.fields.includes('author');
 
   const populated = shouldPopulateAuthor ? await populateAuthors(items as any[]) : items;
+  await attachSavedCounts(populated as any[]);
 
   return { items: populated as T[], pagination };
+}
+
+/**
+ * `savedCount` per feed item — how many members bookmarked it (one batched
+ * `$group` over `savedPosts`, whose `postId` is the string id). Read-time
+ * join like authors: never denormalized onto the post. Cards render it
+ * next to likes/replies (user request, 2026-09-10).
+ */
+export async function attachSavedCounts(items: Array<{ _id: any; savedCount?: number }>): Promise<void> {
+  if (!items.length) return;
+  const ids = items.map((it) => String(it._id));
+  const db = await connectDB();
+  const rows = await db
+    .collection('savedPosts')
+    .aggregate<{ _id: string; n: number }>([
+      { $match: { postId: { $in: ids } } },
+      { $group: { _id: '$postId', n: { $sum: 1 } } },
+    ])
+    .toArray();
+  const counts = new Map(rows.map((r) => [String(r._id), r.n]));
+  for (const it of items) it.savedCount = counts.get(String(it._id)) ?? 0;
 }
 
 /**
