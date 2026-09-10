@@ -39,12 +39,25 @@
   // Flash toast from the compose flow (?just_posted=1) — the compose page
   // navigates here immediately, so its own toast never renders; we show it on
   // arrival and strip the param (newsboard just_submitted / marketplace pattern).
+  // Saved-post ids for the card's 🔖 mark — the feed items don't carry
+  // per-viewer state, so fetch the viewer's list once (same GET the detail
+  // page uses). Without this every card read as unsaved (user, 2026-09-10).
+  let savedIds = $state<Set<string>>(new Set());
+
   onMount(() => {
     const url = new URL(window.location.href);
     if (url.searchParams.get('just_posted') === '1') {
       showToast($t['forum.compose.success'], { type: 'success' });
       url.searchParams.delete('just_posted');
       window.history.replaceState({}, '', url.toString());
+    }
+    if (currentUserId) {
+      fetch('/api/posts/save')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (Array.isArray(data?.savedIds)) savedIds = new Set(data.savedIds.map(String));
+        })
+        .catch(() => {});
     }
   });
 
@@ -527,6 +540,7 @@
                     pinned
                     isOfficial
                     team={pin.author?.role === 'admin'}
+                    bookmarked={savedIds.has(String(pin._id))}
                   />
                 </a>
               </div>
@@ -592,6 +606,7 @@
                 optimistic
                 isOfficial={topic.isOfficial === true}
                 team={topic.author?.role === 'admin'}
+                bookmarked={savedIds.has(String(topic._id))}
                 statusBadgeOverride={status === 'rejected' ? 'rejected' : 'pending'}
               />
             </a>
@@ -613,6 +628,7 @@
                 optimistic
                 isOfficial={topic.isOfficial === true}
                 team={topic.author?.role === 'admin'}
+                bookmarked={savedIds.has(String(topic._id))}
                 statusBadgeOverride="pending"
                 slotFill
               />
@@ -635,6 +651,7 @@
                 ghosted
                 isOfficial={topic.isOfficial === true}
                 team={topic.author?.role === 'admin'}
+                bookmarked={savedIds.has(String(topic._id))}
                 statusBadgeOverride="rejected"
                 slotFill
               />
@@ -657,6 +674,7 @@
                 optimistic
                 isOfficial={topic.isOfficial === true}
                 team={topic.author?.role === 'admin'}
+                bookmarked={savedIds.has(String(topic._id))}
                 statusBadgeOverride="reported"
                 slotFill
               />
@@ -672,6 +690,7 @@
               kind={topic.kind ?? 'discussion'}
               isOfficial={topic.isOfficial === true}
               team={topic.author?.role === 'admin'}
+              bookmarked={savedIds.has(String(topic._id))}
             />
           </a>
         {/if}

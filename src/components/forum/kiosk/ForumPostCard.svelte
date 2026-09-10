@@ -369,7 +369,7 @@
         </span>
         <span
           class={`flex items-center gap-1 ${bookmarked ? 'text-ochre' : ''}`}
-          aria-label="Gespeichert"
+          aria-label={$t['card.saved']}
         >
           <span aria-hidden="true">🔖</span>{bookmarked ? ` ${$t['card.saved']}` : ''}
         </span>
