@@ -72,6 +72,7 @@ const pageTitle = doc.title ? `${doc.title} · Mahalle Forum` : 'Mahalle Forum';
     initialTopic={initialTopic}
     initialComments={initialComments}
     currentUserId={currentUserId ?? null}
+    currentUser={session?.user ? { name: session.user.name ?? null, image: session.user.image ?? null } : null}
     collectionType="recommendations"
     {related}
     isOfficial={initialTopic.isOfficial === true}

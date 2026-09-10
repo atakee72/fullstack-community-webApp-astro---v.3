@@ -104,8 +104,12 @@ export async function populateAuthors<T extends { author?: any }>(docs: T[]): Pr
     )
     .toArray();
 
+  // Avatar uploads land in `userPicture` (src/pages/api/profile/avatar.ts) while
+  // every consumer reads `author.image` — normalize here, the same
+  // `image || userPicture` the session callback does, so cards, comments and
+  // the „Wer mitredet" discs show the photo instead of initials (2026-09-11).
   const userMap = new Map<string, any>();
-  for (const u of users) userMap.set(u._id.toString(), u);
+  for (const u of users) userMap.set(u._id.toString(), { ...u, image: u.image || u.userPicture || null });
 
   return docs.map((doc) => {
     const a = doc.author;

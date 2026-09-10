@@ -37,7 +37,8 @@
     currentUserId = null,
     collectionType = 'topics',
     isOfficial = false,
-    related = []
+    related = [],
+    currentUser = null
   } = $props<{
     initialTopic: any;
     initialComments?: any[];
@@ -46,6 +47,10 @@
      *  (shared tags first, newest-first fill), same collection as the post.
      *  Empty array hides the section. */
     related?: { id: string; title: string; replies: number; date: string | number }[];
+    /** Trimmed session user for the reply composers' own-avatar disc — name +
+     *  image only, never the raw session object. Was a hardcoded „du" disc
+     *  with no photo (user, 2026-09-11). */
+    currentUser?: { name?: string | null; image?: string | null } | null;
     /** Which forum sub-collection the post lives in. Drives the
      *  edit/delete fetch URLs and the comment-create `collectionType`
      *  field. Defaults to 'topics' so the existing /topics/[id] route
@@ -859,8 +864,8 @@
             {#if currentUserId}
               <CommentComposer
                 currentUser={{
-                  name: 'du',
-                  image: null
+                  name: currentUser?.name ?? 'du',
+                  image: currentUser?.image ?? null
                 }}
                 submitting={postingComment}
                 onSubmit={submitComment}
@@ -948,8 +953,8 @@
 <CommentComposerMobile
   {currentUserId}
   currentUser={{
-    name: 'du',
-    image: null
+    name: currentUser?.name ?? 'du',
+    image: currentUser?.image ?? null
   }}
   submitting={postingComment}
   onSubmit={submitComment}
