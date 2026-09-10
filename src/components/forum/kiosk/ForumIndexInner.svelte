@@ -245,24 +245,22 @@
   }
   const tags = $derived(topTags(items));
 
-  // Stats: total / new since yesterday / "active now" stub (any comment in
-  // the last 24h). Phase 4b wires real presence.
+  // Stats: total / new since yesterday / discussed today (a visible reply in
+  // the last 24h — `lastCommentAt` is stamped server-side by
+  // attachLastCommentAt(); the feed's `comments` field is only ids). Was an
+  // always-0 "active now" stub until 2026-09-11.
   const stats = $derived.by(() => {
     const now = Date.now();
     const yesterday = now - 24 * 60 * 60 * 1000;
     const total = items.length;
     let newSinceYesterday = 0;
-    let activeNow = 0;
+    let discussedToday = 0;
     for (const it of items) {
       const d = it.date ? new Date(it.date).getTime() : 0;
       if (d > yesterday) newSinceYesterday++;
-      const lastComment = (it.comments ?? []).reduce((max: number, c: any) => {
-        const cd = c?.date ? new Date(c.date).getTime() : 0;
-        return cd > max ? cd : max;
-      }, 0);
-      if (lastComment > yesterday) activeNow++;
+      if (typeof it.lastCommentAt === 'number' && it.lastCommentAt > yesterday) discussedToday++;
     }
-    return { total, newSinceYesterday, activeNow };
+    return { total, newSinceYesterday, discussedToday };
   });
 
   let now = $state(new Date());
@@ -468,7 +466,7 @@
         {$t['forum.stats.new']}</span
       >
       <span
-        ><span class="font-bold text-ink">{stats.activeNow}</span> {$t['forum.stats.active']}</span
+        ><span class="font-bold text-ink">{stats.discussedToday}</span> {$t['forum.stats.discussed']}</span
       >
     </div>
   </section>

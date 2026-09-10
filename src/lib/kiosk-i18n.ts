@@ -180,7 +180,7 @@ const de = {
   // forum stats — counters above the filter bar
   'forum.stats.topics': 'Themen',
   'forum.stats.new': 'neu seit gestern',
-  'forum.stats.active': 'aktiv jetzt',
+  'forum.stats.discussed': 'diskutiert heute',
 
   // forum filters
   'filter.all': 'Alle',
@@ -2120,7 +2120,7 @@ const en: Dict = {
 
   'forum.stats.topics': 'topics',
   'forum.stats.new': 'new since yesterday',
-  'forum.stats.active': 'active now',
+  'forum.stats.discussed': 'discussed today',
 
   'filter.all': 'All',
   'filter.discussion': 'Discussion',

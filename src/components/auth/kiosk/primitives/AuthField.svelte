@@ -43,6 +43,8 @@
   </div>
   <!-- focus-within ring on the box replaces the input's own outline (WCAG 2.4.7);
        16px on touch viewports keeps iOS Safari from zooming on focus. -->
+  <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+  <!-- pointer-only convenience (click the box padding → focus the input); keyboard users tab straight into the input -->
   <div
     class="flex items-center focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink"
     style="gap:8px; background:var(--k-paper-soft); border:1.5px solid {borderColor}; border-radius:12px; padding:11px 13px;"

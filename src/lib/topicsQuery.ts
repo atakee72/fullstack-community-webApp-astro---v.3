@@ -151,6 +151,7 @@ export async function fetchCollectionWithAuthors<T extends Document>(
 
   const populated = shouldPopulateAuthor ? await populateAuthors(items as any[]) : items;
   await attachSavedCounts(populated as any[]);
+  await attachLastCommentAt(populated as any[]);
 
   return { items: populated as T[], pagination };
 }
@@ -258,4 +259,28 @@ export async function fetchRelatedForDetail(
     replies: Array.isArray(d.comments) ? d.comments.length : 0,
     date: d.date instanceof Date ? d.date.toISOString() : (d.date ?? 0),
   }));
+}
+
+/**
+ * `lastCommentAt` per feed item — newest visible comment (approved or
+ * legacy-absent moderation) on the post, as a ms timestamp. One batched
+ * `$group` over `comments` (`relevantPostId` is an ObjectId, `date` a number).
+ * Feeds the forum title-block „diskutiert heute" counter (2026-09-11) —
+ * before this the counter read comment IDS for dates and was always 0.
+ */
+export async function attachLastCommentAt(items: Array<{ _id: any; lastCommentAt?: number | null }>): Promise<void> {
+  if (!items.length) return;
+  const ids = items
+    .map((it) => (it._id instanceof ObjectId ? it._id : ObjectId.isValid(String(it._id)) ? new ObjectId(String(it._id)) : null))
+    .filter((id): id is ObjectId => id !== null);
+  const db = await connectDB();
+  const rows = await db
+    .collection('comments')
+    .aggregate<{ _id: ObjectId; last: number | Date }>([
+      { $match: { relevantPostId: { $in: ids }, $or: [{ moderationStatus: 'approved' }, { moderationStatus: { $exists: false } }] } },
+      { $group: { _id: '$relevantPostId', last: { $max: '$date' } } },
+    ])
+    .toArray();
+  const last = new Map(rows.map((r) => [String(r._id), r.last instanceof Date ? r.last.getTime() : Number(r.last)]));
+  for (const it of items) it.lastCommentAt = last.get(String(it._id)) ?? null;
 }
