@@ -1,6 +1,8 @@
 ---
 import AuthLayout from '../layouts/AuthLayout.astro';
 import AuthLoginInner from '../components/auth/kiosk/AuthLoginInner.svelte';
+// Session-varying (logged-in members are bounced to /forum) — parity with reset/verify.
+Astro.response.headers.set('Cache-Control', 'no-store, must-revalidate');
 ---
 
 <AuthLayout title="Anmelden">

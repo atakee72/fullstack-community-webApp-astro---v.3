@@ -1168,6 +1168,7 @@ const de = {
   'auth.err.pwShort': 'Mindestens 8 Zeichen.',
   'auth.err.pwWeak': 'Zu schwach — füge Zahlen & Groß-/Kleinbuchstaben hinzu.',
   'auth.err.nameShort': 'Bitte gib einen Anzeigenamen an.',
+  'auth.err.nameBlocked': 'Dieser Anzeigename ist nicht erlaubt. Bitte wähl einen anderen.',
   'auth.err.mismatch': 'Passwörter stimmen nicht überein.',
   'auth.err.termsUnchecked': 'Bitte akzeptiere die Bedingungen.',
   'auth.err.emailTakenTitle': 'E-Mail bereits registriert',
@@ -1216,6 +1217,8 @@ const de = {
   'auth.heartbeat.live': 'live im Kiez',
   'auth.heartbeat.events': 'Events am Wochenende',
   'auth.heartbeat.posts': 'Beiträge diese Woche',
+  'auth.heartbeat.events.one': 'Event am Wochenende',
+  'auth.heartbeat.posts.one': 'Beitrag diese Woche',
   'auth.heartbeat.air': 'Luft',
 
   // ── Auth (Phase 2: email-verify) ──
@@ -1230,6 +1233,7 @@ const de = {
   'auth.verify.resentNote': 'Neuer Link verschickt — gültig für 24 Std.',
   'auth.verify.throttled': 'Gerade erst gesendet — warte kurz und versuch es dann nochmal.',
   'auth.verify.back': '← zurück zur Anmeldung',
+  'auth.verify.toForum': '→ zum Forum',
   'auth.verify.confirming': 'Bestätige …',
   'auth.verify.confirmedEyebrow': 'KONTO AKTIV',
   'auth.verify.confirmedTitle': 'Bestätigt — willkommen im Kiez.',
@@ -3030,6 +3034,7 @@ const en: Dict = {
   'auth.err.pwShort': 'At least 8 characters.',
   'auth.err.pwWeak': 'Too weak — add numbers & upper/lowercase.',
   'auth.err.nameShort': 'Please enter a display name.',
+  'auth.err.nameBlocked': "That display name isn't allowed. Please pick another.",
   'auth.err.mismatch': "Passwords don't match.",
   'auth.err.termsUnchecked': 'Please accept the terms.',
   'auth.err.emailTakenTitle': 'Email already registered',
@@ -3077,6 +3082,8 @@ const en: Dict = {
   'auth.heartbeat.live': 'live in the Kiez',
   'auth.heartbeat.events': 'events this weekend',
   'auth.heartbeat.posts': 'posts this week',
+  'auth.heartbeat.events.one': 'event this weekend',
+  'auth.heartbeat.posts.one': 'post this week',
   'auth.heartbeat.air': 'air',
 
   // ── Auth (Phase 2: email-verify) ──
@@ -3091,6 +3098,7 @@ const en: Dict = {
   'auth.verify.resentNote': 'New link sent — valid for 24 hrs.',
   'auth.verify.throttled': 'Just sent — wait a moment and try again.',
   'auth.verify.back': '← back to sign in',
+  'auth.verify.toForum': '→ to the forum',
   'auth.verify.confirming': 'Confirming …',
   'auth.verify.confirmedEyebrow': 'ACCOUNT ACTIVE',
   'auth.verify.confirmedTitle': 'Confirmed — welcome to the Kiez.',

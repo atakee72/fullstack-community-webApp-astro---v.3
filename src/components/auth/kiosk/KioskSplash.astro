@@ -1,8 +1,9 @@
 ---
 // Kiosk auth splash — once-per-session reveal on the auth front door.
 // Reuses the proven SplashScreen.astro logic (LogoVideo.mp4 + dual-gate dismiss
-// + sessionStorage gate + 4s safety), paper-skinned for kiosk. On reduced motion
-// or when the video can't play, falls back to a CSS carve-in of the ochre
+// + sessionStorage gate + 4s safety), paper-skinned for kiosk. Reduced motion
+// SKIPS the splash entirely (overlay removed before paint — no forced reveal);
+// only the can't-play-video path falls back to the CSS carve-in of the ochre
 // monogram + wordmark. Scoped to AuthLayout (login/register) only.
 ---
 <div id="kiosk-splash" style="display:none;">

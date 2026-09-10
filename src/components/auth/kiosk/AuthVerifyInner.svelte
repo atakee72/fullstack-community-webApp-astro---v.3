@@ -109,7 +109,7 @@
       </AuthPrimaryBtn>
     </div>
     <div style="text-align:center; margin-top:16px;">
-      <a href="/login" class="font-dmmono no-underline" style="font-size:11px; color:var(--k-ink-soft); border-bottom:1px dashed var(--k-ink-mute);">{$t['auth.verify.back']}</a>
+      <a href={hasSession ? '/forum' : '/login'} class="font-dmmono no-underline" style="font-size:11px; color:var(--k-ink-soft); border-bottom:1px dashed var(--k-ink-mute);">{hasSession ? $t['auth.verify.toForum'] : $t['auth.verify.back']}</a>
     </div>
   {/if}
 </div>

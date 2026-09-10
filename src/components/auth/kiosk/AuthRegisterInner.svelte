@@ -46,7 +46,8 @@
     if (name.trim().length < 2) { nameErr = $t['auth.err.nameShort']; bad = true; }
     if (!emailOk) { emailErr = $t['auth.err.emailInvalid']; bad = true; }
     if (!pwOk) { pwErr = $t['auth.err.pwWeak']; bad = true; }
-    if (password2 !== password || !password2) { pw2Err = $t['auth.err.mismatch']; bad = true; }
+    // Both empty: the password error already covers it — „stimmen nicht überein" would be false.
+    if (password2 !== password || (!password2 && password)) { pw2Err = $t['auth.err.mismatch']; bad = true; }
     if (!terms) { termsErr = true; bad = true; }
     if (bad) return;
 
@@ -62,7 +63,8 @@
         if (res.status === 409) { emailTaken = true; status = 'idle'; return; }
         if (res.status === 429) { nameErr = $t['auth.err.tooMany']; status = 'idle'; return; }
         // 400 (e.g. profanity) or 500 → inline on the relevant field / generic
-        nameErr = data?.error || $t['auth.err.generic'];
+        // The server's reason is English (moderation lib) — never show it raw.
+        nameErr = /inappropriate|display name/i.test(String(data?.error ?? '')) ? $t['auth.err.nameBlocked'] : $t['auth.err.generic'];
         status = 'idle';
         return;
       }
@@ -99,14 +101,14 @@
   <form onsubmit={submit} style="display:flex; flex-direction:column; gap:14px; margin-top:20px;">
     <AuthField label={$t['auth.register.name']} placeholder={$t['auth.register.namePh']}
       name="name" autocomplete="nickname" value={name} error={nameErr}
-      success={name.trim().length >= 2} oninput={(v) => (name = v)} />
+      success={name.trim().length >= 2} oninput={(v) => { name = v; nameErr = null; }} />
     <AuthField label={$t['auth.register.email']} placeholder={$t['auth.register.emailPh']}
       type="email" name="email" autocomplete="email" value={email}
-      error={emailErr} success={emailOk && !emailTaken} oninput={(v) => (email = v)} />
+      error={emailErr} success={emailOk && !emailTaken} oninput={(v) => { email = v; emailErr = null; }} />
     <div>
       <AuthField label={$t['auth.register.pw']} placeholder={$t['auth.register.pwPh']}
         type="password" name="password" autocomplete="new-password" value={password}
-        error={pwErr} showToggle oninput={(v) => (password = v)} />
+        error={pwErr} showToggle oninput={(v) => { password = v; pwErr = null; }} />
       {#if password}<AuthStrength score={pwScore} />{/if}
     </div>
     <AuthField label={$t['auth.register.pw2']} placeholder={$t['auth.register.pwPh']}

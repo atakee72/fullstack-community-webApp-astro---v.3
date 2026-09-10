@@ -55,13 +55,13 @@
   {#if events !== null}
     <span class="inline-flex items-center" style="gap:5px;">
       <span style="width:1px; height:12px; background:var(--k-rule);"></span>
-      <b style="color:var(--k-ink); font-weight:700;">{events}</b> {$t['auth.heartbeat.events']}
+      <b style="color:var(--k-ink); font-weight:700;">{events}</b> {events === 1 ? $t['auth.heartbeat.events.one'] : $t['auth.heartbeat.events']}
     </span>
   {/if}
   {#if posts !== null}
     <span class="inline-flex items-center" style="gap:5px;">
       <span style="width:1px; height:12px; background:var(--k-rule);"></span>
-      <b style="color:var(--k-ink); font-weight:700;">{posts}</b> {$t['auth.heartbeat.posts']}
+      <b style="color:var(--k-ink); font-weight:700;">{posts}</b> {posts === 1 ? $t['auth.heartbeat.posts.one'] : $t['auth.heartbeat.posts']}
     </span>
   {/if}
   {#if air !== null}

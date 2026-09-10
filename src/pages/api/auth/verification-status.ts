@@ -8,7 +8,7 @@ import { connectDB } from '../../../lib/mongodb';
 // verifies — the VerifyEmailBanner calls this to avoid nagging verified users.
 export const GET: APIRoute = async ({ request }) => {
   const json = (body: object, status: number) =>
-    new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+    new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 
   try {
     const session = await getSession(request);

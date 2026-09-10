@@ -83,7 +83,7 @@
         {$t['auth.reset.doneTitle.a']}<span class="font-instrument" style="font-style:italic; font-weight:400; color:var(--k-accent);">{$t['auth.reset.doneTitle.accent']}</span>{$t['auth.reset.doneTitle.b']}
       </h1>
       <p class="font-instrument" style="font-style:italic; font-size:15px; color:var(--k-ink-soft); margin:0 0 22px;">{$t['auth.reset.doneSub']}</p>
-      <a href="/login" class="no-underline"><AuthPrimaryBtn type="button">{$t['auth.reset.doneCta']}</AuthPrimaryBtn></a>
+      <AuthPrimaryBtn type="button" onclick={() => (window.location.href = '/login')}>{$t['auth.reset.doneCta']}</AuthPrimaryBtn>
     </div>
   {/if}
 </div>
