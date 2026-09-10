@@ -186,6 +186,16 @@ These sections describe the **legacy React forum** (`ForumWrapper` / `ForumConta
 - **Feed footer „letzter Post vor …"** is the newest item date across the
   unfiltered feed (`lastPostAgo`), not the prototype's hardcoded 28 minutes.
   `FeedStatusFooter` takes a preformatted `lastPostAgo` string.
+- **Title-block counter „diskutiert heute"**: posts with a VISIBLE reply
+  (approved/legacy-absent) in the last 24h. `attachLastCommentAt()` in
+  `topicsQuery.ts` stamps `lastCommentAt` (ms) per feed item in one `$group`
+  over `comments`; the feed's `comments` field is only ids, which is why the
+  old "aktiv jetzt" stub was always 0. There is still NO presence tracking.
+- **Avatars**: uploads write `users.userPicture`, the session maps
+  `image || userPicture`, and `populateAuthors()` now normalizes the same way
+  — read `author.image` everywhere, never `userPicture` in a component. The
+  reply composers get a trimmed `currentUser` ({ name, image }) from the three
+  detail pages instead of the old hardcoded „du" disc.
 - **`src/lib/relTime.ts`** is the single relative-time helper (locale-aware
   short form: „vor 5 min" / "5 min ago" … then `dd. MMM`). ForumPostCard,
   ForumPostDetail and the pin bars all use it — don't add another copy.
