@@ -21,11 +21,6 @@ export function formatRelativeTime(input: Date | string, locale: Locale): string
   return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(date);
 }
 
-export function initialsOf(name: string | null | undefined): string {
-  if (!name) return '·';
-  return name
-    .split(/\s+/)
-    .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('')
-    .slice(0, 2);
-}
+// Avatar initials live in one place now — re-exported here so marketplace
+// callers keep their existing import path.
+export { initialsOf } from './initials';

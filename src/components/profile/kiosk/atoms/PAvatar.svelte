@@ -7,6 +7,7 @@
   // Design source: kiosk-profile.jsx (PAvatar).
 
   import { t } from '../../../../lib/kiosk-i18n';
+  import { initialsOf } from '../../../../lib/initials';
 
   let {
     name,
@@ -23,14 +24,6 @@
     onOpenUpload?: () => void;
     showSavedBadge?: boolean;
   } = $props();
-
-  // Same logic as initialsOf() in KioskNav.svelte:48 — first letters of the
-  // first two whitespace-split name words, uppercased, '·' fallback.
-  function initialsOf(n?: string): string {
-    if (!n) return '·';
-    const parts = n.trim().split(/\s+/).slice(0, 2);
-    return parts.map((p) => p[0]?.toUpperCase() ?? '').join('') || '·';
-  }
 
   const initials = $derived(initialsOf(name));
   const fontSize = $derived(size * 0.36);

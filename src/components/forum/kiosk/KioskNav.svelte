@@ -9,6 +9,7 @@
   // (bottom sheet on mobile); Profil is the menu's first row.
 
   import { locale, t, toggleLocale } from '../../../lib/kiosk-i18n';
+  import { initialsOf } from '../../../lib/initials';
   import AvatarMenu from './AvatarMenu.svelte';
   import NotificationBell from './NotificationBell.svelte';
 
@@ -76,13 +77,6 @@
   // src/styles/profile.css, which only loads on /profile — harmless no-op
   // class reference on other pages since profileActive is false there).
   const profileActive = $derived(currentPath === '/profile' || currentPath.startsWith('/profile/'));
-
-  // Avatar initials: take first letter of first two name parts.
-  function initialsOf(name?: string): string {
-    if (!name) return '·';
-    const parts = name.trim().split(/\s+/).slice(0, 2);
-    return parts.map((p) => p[0]?.toUpperCase() ?? '').join('') || '·';
-  }
 
   // Live avatar update — the nav's `user` prop is a session snapshot (only
   // refreshed on next login/SSR). The profile page's avatar-upload flow
