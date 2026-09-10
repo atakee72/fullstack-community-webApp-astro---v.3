@@ -9,6 +9,7 @@
   // (768px), so 768–1023px shows the desktop masthead with a bottom sheet —
   // same as KioskNav, accepted.
   import AvatarMenu from '../../forum/kiosk/AvatarMenu.svelte';
+  import { initialsOf } from '../../../lib/initials';
 
   let { user, size = 38 } = $props<{
     user: { name?: string | null; image?: string | null; role?: string };
@@ -17,12 +18,6 @@
 
   let open = $state(false);
   let triggerEl = $state<HTMLElement | null>(null);
-
-  function initialsOf(name?: string | null): string {
-    if (!name) return '·';
-    const parts = name.trim().split(/\s+/).slice(0, 2);
-    return parts.map((p) => p[0]?.toUpperCase() ?? '').join('') || '·';
-  }
 
   function onClose(restoreFocus: boolean) {
     open = false;

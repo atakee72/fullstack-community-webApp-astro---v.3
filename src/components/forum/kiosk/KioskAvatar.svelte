@@ -1,5 +1,6 @@
 <script lang="ts">
   import { optimizeCloudinary } from '../../../utils/cloudinary';
+  import { initialsOf } from '../../../lib/initials';
 
   // Avatar with two render modes:
   //   1. Cloudinary photo when `image` is provided (auto WebP/AVIF via optimizeCloudinary)
@@ -47,14 +48,7 @@
   }
 
   const trimmed = $derived(name.trim());
-  const initials = $derived(
-    trimmed
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((n) => n[0] ?? '')
-      .join('')
-      .toUpperCase() || '?'
-  );
+  const initials = $derived(initialsOf(name));
   // Explicit override wins; otherwise hash-derive from name.
   const slot = $derived(slotOverride ?? palette[colorIndex(trimmed || 'anon')]);
   const tone = $derived(slotClass[slot]);
