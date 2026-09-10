@@ -111,8 +111,11 @@
 
 {#snippet searchBox()}
   <div>
-    <div
-      class="flex items-center focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink"
+    <!-- <label>, not <div>: a tap anywhere on the bar (the 9px padding band
+         included) focuses the input. min-h 44px below lg keeps the whole bar
+         a legal touch target; desktop keeps its compact 41px look. -->
+    <label
+      class="flex items-center min-h-[44px] lg:min-h-0 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink"
       style="gap: 8px; background: var(--k-paper-soft); border: {query ? '1.5px solid var(--k-ink)' : '1px solid var(--k-rule)'}; border-radius: var(--k-radius-md); padding: 9px 14px;"
     >
       <span style="font-size: 14px; opacity: 0.5;">⌕</span>
@@ -133,7 +136,7 @@
           aria-label={$locale === 'de' ? 'Suche leeren' : 'Clear search'}
         >✕</button>
       {/if}
-    </div>
+    </label>
     {#if query}
       <div class="font-dmmono" style="font-size: 10px; color: var(--k-rust); margin-top: 5px;">
         {tStr($t['blog.search.hits'], { n: filtered.length })}
@@ -143,20 +146,27 @@
 {/snippet}
 
 {#snippet navBtn(disabled: boolean, ch: string, onclick: () => void)}
+  <!-- kiosk-tap-box (not kiosk-tap): the arrows sit 10px apart, so an
+       invisible extender would overlap its neighbour. The button grows to
+       44px below lg, the painted 30px pill lives in the inner span. -->
   <button
     type="button"
     {disabled}
     {onclick}
-    class="font-dmmono flex items-center justify-center"
-    style="
-      width: 30px; height: 30px;
-      border: 1.5px solid {disabled ? 'var(--k-rule)' : 'var(--k-ink)'};
-      border-radius: var(--k-radius-sm);
-      color: {disabled ? 'var(--k-rule)' : 'var(--k-ink)'};
-      font-size: 12px; background: none;
-      cursor: {disabled ? 'default' : 'pointer'};
-    "
-  >{ch}</button>
+    class="font-dmmono kiosk-tap-box flex items-center justify-center"
+    style="background: none; border: none; padding: 0; cursor: {disabled ? 'default' : 'pointer'};"
+  >
+    <span
+      class="flex items-center justify-center"
+      style="
+        width: 30px; height: 30px;
+        border: 1.5px solid {disabled ? 'var(--k-rule)' : 'var(--k-ink)'};
+        border-radius: var(--k-radius-sm);
+        color: {disabled ? 'var(--k-rule)' : 'var(--k-ink)'};
+        font-size: 12px;
+      "
+    >{ch}</span>
+  </button>
 {/snippet}
 
 {#snippet colCard(post: BeilagePost, thumb: boolean)}
@@ -203,7 +213,7 @@
       <button
         type="button"
         onclick={() => toggleMonth(g.key)}
-        class="w-full text-left flex items-center"
+        class="w-full text-left flex items-center min-h-[44px] lg:min-h-0"
         style="gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--k-rule); background: {activeMonth === g.key ? 'var(--k-rust-tint)' : 'transparent'}; border-left: none; border-right: none; border-top: none; cursor: pointer;"
       >
         <span class="font-dmmono" style="font-size: 11px; font-weight: 500; letter-spacing: 0.08em; color: {activeMonth === g.key ? 'var(--k-rust-deep)' : 'var(--k-ink)'};">
@@ -365,22 +375,32 @@
           </div>
         </div>
 
+        <!-- Two groups, not one flat row: at 44px tap targets the controls no
+             longer fit one line on a phone, and a flat row wrapped mid-arrow
+             („«" alone at the right edge). Grouped, they wrap as units. -->
         <div class="flex items-center flex-wrap" style="gap: 10px; padding-top: 16px;">
+          <div class="flex items-center flex-wrap" style="gap: 10px;">
           <span class="font-dmmono" style="font-size: 10px; letter-spacing: 0.12em; color: var(--k-ink-mute);">{$t['blog.pag.perPage']}</span>
           {#each [12, 24, 48] as n}
             <button
               type="button"
               onclick={() => setPageSize(n)}
-              class="font-dmmono rounded-full"
-              style="font-size: 11px; padding: 3px 9px; border: 1.5px solid {pageSize === n ? 'var(--k-rust)' : 'var(--k-rule)'}; background: {pageSize === n ? 'var(--k-rust)' : 'transparent'}; color: {pageSize === n ? 'var(--k-paper)' : 'var(--k-ink-mute)'}; cursor: pointer;"
-            >{n}</button>
+              class="font-dmmono kiosk-tap-box flex items-center justify-center"
+              style="background: none; border: none; padding: 0; cursor: pointer;"
+            ><span
+                class="rounded-full"
+                style="font-size: 11px; padding: 3px 9px; border: 1.5px solid {pageSize === n ? 'var(--k-rust)' : 'var(--k-rule)'}; background: {pageSize === n ? 'var(--k-rust)' : 'transparent'}; color: {pageSize === n ? 'var(--k-paper)' : 'var(--k-ink-mute)'};"
+              >{n}</span></button>
           {/each}
+          </div>
           <div class="flex-1"></div>
-          {@render navBtn(page === 0, '«', () => goToPage(0))}
-          {@render navBtn(page === 0, '‹', () => goToPage(page - 1))}
-          <span class="font-dmmono" style="font-size: 11px; color: var(--k-ink);">{$t['blog.pag.page']} <b>{page + 1}</b> / {totalPages}</span>
-          {@render navBtn(page >= totalPages - 1, '›', () => goToPage(page + 1))}
-          {@render navBtn(page >= totalPages - 1, '»', () => goToPage(totalPages - 1))}
+          <div class="flex items-center" style="gap: 10px;">
+            {@render navBtn(page === 0, '«', () => goToPage(0))}
+            {@render navBtn(page === 0, '‹', () => goToPage(page - 1))}
+            <span class="font-dmmono" style="font-size: 11px; color: var(--k-ink);">{$t['blog.pag.page']} <b>{page + 1}</b> / {totalPages}</span>
+            {@render navBtn(page >= totalPages - 1, '›', () => goToPage(page + 1))}
+            {@render navBtn(page >= totalPages - 1, '»', () => goToPage(totalPages - 1))}
+          </div>
         </div>
       {/if}
     </div>

@@ -77,7 +77,7 @@
   <div class="lg:hidden flex items-center justify-between" style="padding: 8px 18px;">
     <a
       href="/blog"
-      class="font-dmmono"
+      class="font-dmmono kiosk-tap inline-flex items-center"
       style="font-size: 10px; color: var(--k-rust-deep); text-decoration: none;"
     >{$t['blog.readbar.back.short']}</a>
     {#if done}
