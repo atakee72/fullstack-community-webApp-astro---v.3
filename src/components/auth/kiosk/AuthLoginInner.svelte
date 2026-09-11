@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { signIn } from 'auth-astro/client';
-  import { t } from '../../../lib/kiosk-i18n';
+  import { t, tStr } from '../../../lib/kiosk-i18n';
   import { LoginSchema } from '../../../schemas/auth.schema';
   import AuthField from './primitives/AuthField.svelte';
   import AuthPrimaryBtn from './primitives/AuthPrimaryBtn.svelte';
@@ -48,6 +48,30 @@
       history.replaceState(history.state, '', window.location.pathname + (qs ? `?${qs}` : ''));
     }
   }
+
+  // Gate hint: the middleware bounced a logged-out visitor here from a
+  // gated page (?redirect=/calendar…). Name the destination so the door
+  // explains itself; unknown paths fall back to the generic line.
+  const DEST_KEYS: [string, string][] = [
+    ['/forum', 'forum'], ['/topics', 'forum'], ['/announcements', 'forum'], ['/recommendations', 'forum'],
+    ['/calendar', 'calendar'], ['/events', 'calendar'],
+    ['/newsboard', 'news'], ['/marketplace', 'marketplace'],
+    ['/bookmarks', 'bookmarks'], ['/search', 'search'],
+    ['/nachbarn', 'nachbarn'], ['/steckbrief', 'steckbrief'],
+  ];
+  const redirectDest = $derived.by(() => {
+    const raw = new URLSearchParams(window.location.search).get('redirect');
+    if (!raw) return null;
+    const path = safeInternalPath(raw, '');
+    if (!path) return null;
+    const hit = DEST_KEYS.find(([prefix]) => path === prefix || path.startsWith(prefix + '/') || path.startsWith(prefix + '?'));
+    return hit ? hit[1] : 'generic';
+  });
+  const redirectHint = $derived(
+    redirectDest === null ? '' :
+    redirectDest === 'generic' ? $t['auth.login.hintGeneric'] :
+    tStr($t['auth.login.hint'], { where: ($t as Record<string, string>)[`auth.login.dest.${redirectDest}`] ?? '' })
+  );
 
   function startLock(sec: number) {
     lockSec = Math.max(1, Math.round(sec));
@@ -152,6 +176,15 @@
         style="margin-bottom: 14px; padding: 9px 12px; border: 1.5px solid var(--k-ink); border-radius: var(--k-radius-sm); background: var(--k-paper-warm); font-size: 10.5px; letter-spacing: 0.08em; color: var(--k-ink-soft);"
       >
         ✓ {$t['auth.login.signedout']}
+      </div>
+    {/if}
+    {#if redirectHint && !signedOut && status !== 'success'}
+      <div
+        class="font-dmmono"
+        role="status"
+        style="margin-top: 14px; padding: 9px 12px; border: 1.5px solid var(--k-accent); border-radius: var(--k-radius-sm); background: var(--k-paper-warm); font-size: 10.5px; letter-spacing: 0.08em; color: var(--k-ink-soft);"
+      >
+        → {redirectHint}
       </div>
     {/if}
 

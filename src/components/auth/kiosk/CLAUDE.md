@@ -28,6 +28,14 @@ established `--k-*` page-accent pattern instead.
 
 ## Backend reused untouched
 Login → `signIn('credentials', { redirect:false })`; register → `POST /api/auth/register`
+
+**Gate hint (2026-09-11)**: when the middleware bounces a logged-out visitor
+here with `?redirect=<path>`, `AuthLoginInner` shows an ochre strap under the
+title naming the destination („Bitte melde dich an, um zum Kalender zu
+kommen.") — prefix map `DEST_KEYS` in the island, labels `auth.login.dest.*`,
+unknown paths fall back to `auth.login.hintGeneric`. Runs through
+`safeInternalPath` first, so an escaped origin shows nothing. Hidden while the
+signed-out strap or the success banner is up.
 ({name,email,password}) then auto-login. Client validation reuses `LoginSchema` +
 a local password scorer mirroring `RegisterSchema` (min 8 + upper/lower/digit). No
 changes to `auth.config.ts` or `register.ts`.
