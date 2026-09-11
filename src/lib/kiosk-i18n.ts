@@ -2222,7 +2222,7 @@ const en: Dict = {
   'state.rate.kicker': 'LIMIT REACHED · 5 POSTS / DAY',
   'state.rate.title': 'Mahalle says: take a breath.',
   'state.rate.body':
-    "You've made 5 posts in the last 24 hours — that’s a lot! We're giving Mahalle and other readers some breathing room.",
+    "You've made 5 posts in the last 24 hours — that's a lot! We're giving Mahalle and other readers some breathing room.",
   'state.rate.unlocks': 'POSTING UNLOCKS IN',
   'state.rate.coda':
     'Meanwhile: read, comment, bookmark. Quiet time is part of the neighborhood too.',
