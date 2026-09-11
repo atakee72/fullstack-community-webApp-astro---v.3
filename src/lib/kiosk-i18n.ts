@@ -2222,7 +2222,7 @@ const en: Dict = {
   'state.rate.kicker': 'LIMIT REACHED · 5 POSTS / DAY',
   'state.rate.title': 'Mahalle says: take a breath.',
   'state.rate.body':
-    "You've made 5 posts in the last 24 hours — that's a lot! We're giving Mahalle and other readers some breathing room.",
+    "You've made 5 posts in the last 24 hours — that’s a lot! We're giving Mahalle and other readers some breathing room.",
   'state.rate.unlocks': 'POSTING UNLOCKS IN',
   'state.rate.coda':
     'Meanwhile: read, comment, bookmark. Quiet time is part of the neighborhood too.',
@@ -3808,7 +3808,7 @@ const en: Dict = {
   'tour.cal.s2.body': 'The ‹ and › arrows leaf through the months. The Kiez plans well ahead — the summer party is often already in there by spring.',
   'tour.cal.s3.title': 'Create an event',
   'tour.cal.s3.body': 'Click a day — your event starts there. A second click on a later day stretches it into a whole range.',
-  'tour.cal.s3.bodyMobile': 'Hold a day — your event starts there; keep dragging if it spans several days. Title, time, place — that's all it takes to begin.',
+  'tour.cal.s3.bodyMobile': 'Hold a day — your event starts there; keep dragging if it spans several days. Title, time, place — that’s all it takes to begin.',
   'tour.cal.s4.title': 'RSVP',
   'tour.cal.s4.body': 'Clicking an event opens the full details — place, time, who’s coming already. That’s where you say yes, and just as easily change your mind.',
   'tour.cal.s5.title': 'Your calendar inside the calendar',
