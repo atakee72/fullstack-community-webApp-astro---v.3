@@ -286,8 +286,15 @@
 
   function cellPointerMove(e: PointerEvent) {
     if (!dragging || e.pointerId !== dragPointerId || !rangeStart) return;
-    const under = document.elementFromPoint(e.clientX, e.clientY);
-    const iso = under?.closest('[data-cell-date]')?.getAttribute('data-cell-date') ?? null;
+    // The pin card can sit between the finger and the grid (it renders on
+    // the anchor until the first cell change, and again whenever the finger
+    // is back on the anchor) — walk the whole hit-test stack so the cell
+    // underneath still resolves.
+    let iso: string | null = null;
+    for (const el of document.elementsFromPoint(e.clientX, e.clientY)) {
+      const cell = el.closest('[data-cell-date]');
+      if (cell) { iso = cell.getAttribute('data-cell-date'); break; }
+    }
     const next = resolveDragEnd(rangeStart, iso ? new Date(iso) : null, startOfDay(new Date()), visibleMonth, rangeEnd);
     if ((next?.getTime() ?? null) === (rangeEnd?.getTime() ?? null)) return;
     rangeEnd = next;
