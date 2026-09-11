@@ -26,6 +26,7 @@
   import { CATEGORIES } from '../../../../lib/calendar/categories';
   import { tick } from 'svelte';
   import { swipeX } from '../../../../lib/swipe';
+  import { resolveDragEnd } from '../../../../lib/calendar/rangeDrag';
   import {
     eventCoversDay,
     isLiveNow,
@@ -128,6 +129,14 @@
   let pulseCellKey = $state<string | null>(null);
   let pin = $state<{ x: number; y: number; from: Date; to: Date; flip: boolean; tailX: number } | null>(null);
 
+  // Touch drag (2026-09-11): after the long-press fires, the SAME finger
+  // can keep moving over other days to stretch the range — no second tap
+  // needed. `dragging` is reactive because the pin effect hides the pin
+  // while a range is being stretched; `dragPointerId` pins the gesture to
+  // the finger that started it.
+  let dragging = $state(false);
+  let dragPointerId: number | null = null;
+
   // Non-reactive locals — internal flags only.
   let longPressTimer: ReturnType<typeof setTimeout> | null = null;
   let longPressFired = false;
@@ -164,6 +173,21 @@
     const ts = visibleMonth.getTime();
     if (lastMonthTs !== null && ts !== lastMonthTs) swapDir = ts > lastMonthTs ? 'left' : 'right';
     lastMonthTs = ts;
+  });
+
+  // While a drag is live, swallow touchmove so the browser never starts a
+  // pan (a pan would pointercancel the drag). Non-passive on purpose;
+  // attached once to the stable wrapper and checks the flag per event, so
+  // plain touches keep native scrolling. Reading `dragging` inside the
+  // listener does not subscribe the effect — that is intended.
+  $effect(() => {
+    const el = gridWrapper;
+    if (!el) return;
+    const block = (ev: TouchEvent) => {
+      if (dragging) ev.preventDefault();
+    };
+    el.addEventListener('touchmove', block, { passive: false });
+    return () => el.removeEventListener('touchmove', block);
   });
 
   function clearLongPress() {
@@ -231,6 +255,10 @@
     longPressFired = false;
     if (e.pointerType !== 'touch' || !isInMonth) return;
     clearLongPress();
+    // `currentTarget` is null once the event has finished dispatching —
+    // grab the button now for the pointer capture inside the timer.
+    const cellEl = e.currentTarget as HTMLElement | null;
+    const pointerId = e.pointerId;
     longPressTimer = setTimeout(() => {
       longPressFired = true;
       if ('vibrate' in navigator) {
@@ -241,7 +269,52 @@
       // Commit IN the timer — iOS Safari swallows the post-long-press
       // synthetic click, so onclick won't fire reliably.
       handleDateTap(date, true);
+      // Past days never arm (handleDateTap bails) — nothing to drag then.
+      if (!isRangeArmed) return;
+      // Drag phase: keep move/up events flowing to this cell even when
+      // the finger leaves it. The touchmove guard below stops the browser
+      // from turning the travel into a page scroll.
+      dragging = true;
+      dragPointerId = pointerId;
+      try {
+        cellEl?.setPointerCapture(pointerId);
+      } catch {
+        /* pointer already released — endDrag will never fire, harmless */
+      }
     }, 450);
+  }
+
+  function cellPointerMove(e: PointerEvent) {
+    if (!dragging || e.pointerId !== dragPointerId || !rangeStart) return;
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const iso = under?.closest('[data-cell-date]')?.getAttribute('data-cell-date') ?? null;
+    const next = resolveDragEnd(rangeStart, iso ? new Date(iso) : null, startOfDay(new Date()), visibleMonth, rangeEnd);
+    if ((next?.getTime() ?? null) === (rangeEnd?.getTime() ?? null)) return;
+    rangeEnd = next;
+    if ('vibrate' in navigator) {
+      try { navigator.vibrate(10); } catch { /* ignore */ }
+    }
+  }
+
+  // pointerup AND pointercancel. A finger that travelled to another day
+  // committed a range (same outcome as the second-tap path); no travel
+  // keeps the anchor armed so tap-to-extend still works. The wrapper's
+  // swipeX has already run by the time this delegated handler fires
+  // (Svelte 5 delegates pointerup to the root) — it reads `dragging`
+  // through its `ignore` option, still true at that moment, which is
+  // why the flag is cleared HERE and not earlier.
+  function endDrag(e: PointerEvent) {
+    clearLongPress();
+    if (!dragging || e.pointerId !== dragPointerId) return;
+    dragging = false;
+    dragPointerId = null;
+    if (rangeEnd) isRangeArmed = false;
+  }
+
+  // Android fires contextmenu ~500 ms into a press; after our long-press
+  // it would only get in the way of the drag.
+  function cellContextMenu(e: Event) {
+    if (longPressFired || dragging) e.preventDefault();
   }
 
   function cellClick(e: MouseEvent, date: Date, isInMonth: boolean) {
@@ -294,6 +367,13 @@
 
   $effect(() => {
     if (!rangeStart || !gridWrapper) {
+      pin = null;
+      return;
+    }
+    // Stretching a range under the finger: the pin would sit under the
+    // thumb and jump every cell — hide it until the finger lifts. The
+    // press itself (no travel yet) keeps showing the pin on the anchor.
+    if (dragging && rangeEnd) {
       pin = null;
       return;
     }
@@ -412,7 +492,7 @@
   <!-- Mini dot-grid -->
   <!-- Swipe left/right on the grid = next/previous month (touch); taps and the
        long-press range selection are untouched (a swipe has travel, they don't). -->
-  <div data-tour="cal-grid" class="px-2 pt-2 relative" bind:this={gridWrapper} use:swipeX={{ onLeft: onNextMonth, onRight: onPrevMonth }}>
+  <div data-tour="cal-grid" class="px-2 pt-2 relative" bind:this={gridWrapper} use:swipeX={{ onLeft: onNextMonth, onRight: onPrevMonth, ignore: () => dragging }}>
     <div class="grid grid-cols-7 border-b border-ink">
       {#each dowLabels as label, i (label + '-' + i)}
         <div
@@ -447,9 +527,11 @@
           data-cell-date={cell.toISOString()}
           onclick={(e) => cellClick(e, cell, inMonth)}
           onpointerdown={(e) => cellPointerDown(e, cell, inMonth)}
-          onpointerup={clearLongPress}
-          onpointercancel={clearLongPress}
+          onpointermove={cellPointerMove}
+          onpointerup={endDrag}
+          onpointercancel={endDrag}
           onpointerleave={clearLongPress}
+          oncontextmenu={cellContextMenu}
           disabled={!inMonth}
           class={`flex flex-col items-center justify-center gap-1 py-2 transition-colors ${
             inRange ? 'bg-wine/10' : selected && !today && !armed ? 'bg-wine/10' : ''

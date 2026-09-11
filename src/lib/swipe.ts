@@ -13,6 +13,7 @@ export interface SwipeXOptions {
   onLeft?: () => void;   // finger moved left → "next"
   onRight?: () => void;  // finger moved right → "previous"
   threshold?: number;    // px, default 60
+  ignore?: () => boolean; // true at pointerup → this gesture is someone else's (e.g. a live drag-select)
 }
 
 export function swipeX(node: HTMLElement, options: SwipeXOptions) {
@@ -30,6 +31,9 @@ export function swipeX(node: HTMLElement, options: SwipeXOptions) {
   function onUp(e: PointerEvent) {
     if (pointerId === null || e.pointerId !== pointerId) return;
     pointerId = null;
+    // Asked at pointerup, not pointerdown: a drag-select only becomes one
+    // 450 ms into the press, long after our onDown ran.
+    if (opts.ignore?.()) return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
     const threshold = opts.threshold ?? 60;
