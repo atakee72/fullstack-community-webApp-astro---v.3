@@ -579,7 +579,7 @@ const de = {
   'cal.mobile.rsvp.cancel.aria': 'Zusage zurücknehmen',
   'cal.mobile.dayEmpty': 'Keine Termine an diesem Tag.',
   'cal.mobile.guidance':
-    'Tippe auf einen Tag, um seine Termine zu sehen. Halte einen Tag gedrückt, um dort einen Termin anzulegen — zieh weiter (oder tippe danach auf einen anderen Tag) für einen Zeitraum.',
+    'Tippe auf einen Tag, um seine Termine zu sehen. Halte einen Tag gedrückt, um dort einen Termin anzulegen — ziehe weiter (oder tippe danach auf einen anderen Tag) für einen Zeitraum.',
 
   // ─── Detail modal ────────────────────────────────────────────────
   'cal.detail.when': 'WANN',
@@ -1936,7 +1936,7 @@ const de = {
   'tour.cal.s2.body': 'Mit ‹ und › blätterst du durch die Monate. Der Kiez plant weit voraus — das Sommerfest steht oft schon im Frühling drin.',
   'tour.cal.s3.title': 'Termin anlegen',
   'tour.cal.s3.body': 'Klick auf einen Tag — dort beginnt dein Termin. Ein zweiter Klick auf einen späteren Tag spannt gleich den ganzen Zeitraum auf.',
-  'tour.cal.s3.bodyMobile': 'Halte einen Tag gedrückt — dort beginnt dein Termin; zieh weiter, wenn er mehrere Tage dauert. Titel, Zeit, Ort — mehr braucht es fürs Erste nicht.',
+  'tour.cal.s3.bodyMobile': 'Halte einen Tag gedrückt — dort beginnt dein Termin; ziehe weiter, wenn er mehrere Tage dauert. Titel, Zeit, Ort — mehr braucht es fürs Erste nicht.',
   'tour.cal.s4.title': 'Zusagen',
   'tour.cal.s4.body': 'Ein Klick auf einen Termin öffnet alle Details — Ort, Zeit, wer schon zugesagt hat. Dort sagst du zu, und genauso leicht wieder ab.',
   'tour.cal.s5.title': 'Dein Kalender im Kalender',
