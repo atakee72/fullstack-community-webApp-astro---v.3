@@ -197,6 +197,10 @@
     }
   }
 
+  // The timer body writes reactive state and captures a pointer on the
+  // cell — never let it fire on a destroyed instance.
+  $effect(() => clearLongPress);
+
   // Tap vs. long-press (changed 2026-09-09, user request): a plain tap only
   // SELECTS the day for the panel below — it never opens the „+ termin"
   // pin. Long-press anchors + arms the pin (and a following tap on another
@@ -253,7 +257,7 @@
 
   function cellPointerDown(e: PointerEvent, date: Date, isInMonth: boolean) {
     longPressFired = false;
-    if (e.pointerType !== 'touch' || !isInMonth) return;
+    if (e.pointerType !== 'touch' || !isInMonth || !e.isPrimary || dragging) return;
     clearLongPress();
     // `currentTarget` is null once the event has finished dispatching —
     // grab the button now for the pointer capture inside the timer.
@@ -274,12 +278,17 @@
       // Drag phase: keep move/up events flowing to this cell even when
       // the finger leaves it. The touchmove guard below stops the browser
       // from turning the travel into a page scroll.
-      dragging = true;
-      dragPointerId = pointerId;
+      // Commit to the drag phase only once capture has actually succeeded:
+      // `dragging` gates the touchmove guard and the swipe `ignore`, so a
+      // latched flag would freeze grid scrolling and month swipes until a
+      // reload. A refused capture (finger already gone) means no drag phase.
       try {
-        cellEl?.setPointerCapture(pointerId);
+        if (!cellEl) throw new Error('no cell');
+        cellEl.setPointerCapture(pointerId);
+        dragging = true;
+        dragPointerId = pointerId;
       } catch {
-        /* pointer already released — endDrag will never fire, harmless */
+        /* no drag phase */
       }
     }, 450);
   }
@@ -514,7 +523,7 @@
     <!-- Keyed on the month so the dot-grid remounts and slides in (C09). -->
     {#key visibleMonth.getTime()}
     <div
-      class={`grid grid-cols-7 ${swapDir ? `k-cal-swap-${swapDir}` : ''}`}
+      class={`grid grid-cols-7 select-none ${swapDir ? `k-cal-swap-${swapDir}` : ''}`}
       style:grid-template-rows={`repeat(${rows}, minmax(52px, 1fr))`}
       style:touch-action="manipulation"
     >
@@ -537,6 +546,7 @@
           onpointermove={cellPointerMove}
           onpointerup={endDrag}
           onpointercancel={endDrag}
+          onlostpointercapture={endDrag}
           onpointerleave={clearLongPress}
           oncontextmenu={cellContextMenu}
           disabled={!inMonth}
