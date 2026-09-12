@@ -45,7 +45,8 @@
     bookmarked = false,
     isOfficial = false,
     slotFill = false,
-    readHref = null
+    readHref = null,
+    attached = false
   } = $props<{
     topic: {
       _id: string;
@@ -83,6 +84,11 @@
      *  as the one real link on the card. Null (default) keeps the CTA a
      *  plain span because the outer anchor already navigates. */
     readHref?: string | null;
+    /** The card hangs directly under a pin bar that already carries the
+     *  official/pinned label (forum pin accordion): drop the strap, the
+     *  top corners, the top border and the hover lift so bar + card fuse
+     *  into one box. */
+    attached?: boolean;
     /** Set true when the announcement was posted by an admin via the
      *  /admin/announcements composer (which sets isOfficial=true on
      *  the doc). Switches the strap copy from the softer community
@@ -223,11 +229,11 @@
 </script>
 
 <article
-  class={`${cardBgClass} ${cardBorderClass} ${cardShadowClass} ${opacityClass} h-full flex flex-col rounded-lg overflow-hidden transition-all duration-[180ms] ease-out hover:-translate-x-px hover:-translate-y-px ${
-    featured || slotFill ? '' : 'min-h-[340px]'
-  }`}
+  class={`${cardBgClass} ${cardBorderClass} ${cardShadowClass} ${opacityClass} h-full flex flex-col overflow-hidden transition-all duration-[180ms] ease-out ${
+    attached ? 'rounded-b-lg border-t-0' : 'rounded-lg hover:-translate-x-px hover:-translate-y-px'
+  } ${featured || slotFill ? '' : 'min-h-[340px]'}`}
 >
-  {#if strapLabel}
+  {#if strapLabel && !attached}
     <!-- Editorial strap (announcement + recommendation) -->
     <div
       class={`${strapBgClass} text-paper border-b border-ink flex items-center justify-between gap-3 px-3.5 py-1`}

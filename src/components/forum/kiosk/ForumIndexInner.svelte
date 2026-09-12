@@ -506,11 +506,13 @@
       <!-- Pinned official announcements (real DB docs, up to MAX_PINS).
            Accordion v3 (2026-09-12): pins keep their newest-first order
            and all start as slim one-line bars, stacked tight (8px) in one
-           full-width grid cell. Clicking a bar opens its card beneath it
-           (transition:slide) and collapses any other open one; clicking
-           the open bar again closes it. The card is NOT a link — only its
-           "→ read" CTA (readHref) navigates. Hidden when the kind filter
-           wouldn't include announcements. -->
+           full-width grid cell. Clicking a bar opens its card FUSED under
+           it (bar loses bottom corners + shadow, card is `attached`: no
+           strap, no top corners/border — one box) with transition:slide,
+           collapsing any other open one; clicking the open bar again
+           closes it. The card is NOT a link — only its "→ read" CTA
+           (readHref) navigates. Hidden when the kind filter wouldn't
+           include announcements. -->
       {#if (activeFilter === 'all' || activeFilter === 'announcement') && pinnedOfficials.length}
         <div class="md:col-span-2 lg:col-span-3 flex flex-col gap-2">
           {#each pinnedOfficials as pin (pin._id)}
@@ -524,7 +526,9 @@
                 aria-expanded={open}
                 aria-controls={`pin-card-${pin._id}`}
                 onclick={() => togglePin(pin._id)}
-                class="w-full text-left flex items-center gap-3 min-h-[44px] px-4 py-[9px] bg-ink text-paper border-[1.5px] border-teal rounded-lg shadow-[2px_2px_0_var(--k-teal)] focus:outline-none focus:ring-2 focus:ring-ink transition-all duration-[180ms] ease-out hover:-translate-x-px hover:-translate-y-px"
+                class={`w-full text-left flex items-center gap-3 min-h-[44px] px-4 py-[9px] bg-ink text-paper border-[1.5px] border-teal focus:outline-none focus:ring-2 focus:ring-ink transition-all duration-[180ms] ease-out ${
+                  open ? 'rounded-t-lg' : 'rounded-lg shadow-[2px_2px_0_var(--k-teal)] hover:-translate-x-px hover:-translate-y-px'
+                }`}
               >
                 <span aria-hidden="true" class="text-[12px]">📌</span>
                 <span class="shrink-0 font-dmmono text-[9px] uppercase tracking-[0.12em] text-[#7fc2ce]">{$t['pinned.bar.label']}</span>
@@ -534,7 +538,7 @@
               </button>
               {#if open}
                 <div id={`pin-card-${pin._id}`} transition:slide={{ duration: pinSlideMs }}>
-                  <div class="pt-2">
+                  <div>
                     <ForumPostCard
                       topic={pin}
                       kind="announcement"
@@ -544,6 +548,7 @@
                       team={pin.author?.role === 'admin'}
                       bookmarked={savedIds.has(String(pin._id))}
                       readHref={detailHref(pin)}
+                      attached
                     />
                   </div>
                 </div>
