@@ -6,8 +6,13 @@
 // A swipe counts when the horizontal travel beats `threshold` AND clearly
 // exceeds the vertical travel, so normal page scrolling is never hijacked;
 // a tap (no travel) still reaches the element's own click handlers.
-// `touch-action` is left alone on purpose: the browser keeps vertical
-// scrolling native, we only read the gesture after the fact.
+// The action sets `touch-action: pan-y` on the node (restored on destroy):
+// with horizontal panning allowed (auto/manipulation) mobile browsers fire
+// `pointercancel` after the first sideways pointermove and claim the touch
+// as a native pan, so the pointerup with the travel never arrives (found
+// 2026-09-12 on device, reproduced headlessly). Vertical scrolling stays
+// native. Ancestor/descendant touch-action values intersect, so a child's
+// `manipulation` can't re-enable horizontal panning under this node.
 
 export interface SwipeXOptions {
   onLeft?: () => void;   // finger moved left → "next"
@@ -43,12 +48,15 @@ export function swipeX(node: HTMLElement, options: SwipeXOptions) {
   }
   function onCancel() { pointerId = null; }
 
+  const prevTouchAction = node.style.touchAction;
+  node.style.touchAction = 'pan-y';
   node.addEventListener('pointerdown', onDown, { passive: true });
   node.addEventListener('pointerup', onUp, { passive: true });
   node.addEventListener('pointercancel', onCancel, { passive: true });
   return {
     update(next: SwipeXOptions) { opts = next; },
     destroy() {
+      node.style.touchAction = prevTouchAction;
       node.removeEventListener('pointerdown', onDown);
       node.removeEventListener('pointerup', onUp);
       node.removeEventListener('pointercancel', onCancel);
