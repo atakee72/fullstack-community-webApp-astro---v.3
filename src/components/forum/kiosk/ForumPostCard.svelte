@@ -44,7 +44,8 @@
     pinned = false,
     bookmarked = false,
     isOfficial = false,
-    slotFill = false
+    slotFill = false,
+    readHref = null
   } = $props<{
     topic: {
       _id: string;
@@ -77,6 +78,11 @@
      *  together fit one normal grid slot instead of ~1.5x it — the
      *  card still fills the slot via `h-full` on the flex parent. */
     slotFill?: boolean;
+    /** When the card is NOT wrapped in an outer <a> (the pinned-official
+     *  accordion), pass the detail URL here and the "→ read" CTA renders
+     *  as the one real link on the card. Null (default) keeps the CTA a
+     *  plain span because the outer anchor already navigates. */
+    readHref?: string | null;
     /** Set true when the announcement was posted by an admin via the
      *  /admin/announcements composer (which sets isOfficial=true on
      *  the doc). Switches the strap copy from the softer community
@@ -367,7 +373,14 @@
           <span aria-hidden="true">🔖</span> {savedCount}
         </span>
       </span>
-      <span class="flex items-center gap-1">→ {$t['card.cta.read']}</span>
+      {#if readHref}
+        <a
+          href={readHref}
+          class="flex items-center gap-1 min-h-[44px] -my-3 px-2 -mr-2 rounded focus:outline-none focus:ring-2 focus:ring-paper hover:underline underline-offset-2"
+        >→ {$t['card.cta.read']}</a>
+      {:else}
+        <span class="flex items-center gap-1">→ {$t['card.cta.read']}</span>
+      {/if}
     </div>
   </div>
 </article>

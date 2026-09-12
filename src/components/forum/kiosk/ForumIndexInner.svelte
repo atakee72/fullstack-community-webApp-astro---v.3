@@ -14,7 +14,7 @@
   // marker shows in the strap. Phase 5 reads a real `pinned` boolean +
   // admin role from the database.
 
-  import { tick, onMount } from 'svelte';
+  import { onMount } from 'svelte';
   import { slide } from 'svelte/transition';
   import { showToast } from '../../../utils/toast';
   import { createQuery } from '@tanstack/svelte-query';
@@ -137,16 +137,14 @@
   );
   const pinnedIds = $derived(new Set(pinnedOfficials.map((it: any) => it._id)));
 
-  // Pin accordion (user-decided 2026-08-25, v2 — supersedes the same-day
-  // position-swap): pins keep their newest-first positions; exactly one
-  // is EXPANDED in place as the full featured card, the rest are slim
-  // bars. Clicking a bar expands it in its own row (slide) and collapses
-  // the open one. Pure per-visit VIEW state: never persisted, never
-  // reordered — the newest pin is expanded again on next load.
+  // Pin accordion (v3, 2026-09-12 — supersedes the 08-25 "newest pin
+  // expanded" v2): pins keep their newest-first positions and ALL start
+  // collapsed as slim bars. Clicking a bar opens its card beneath the
+  // bar (slide) and collapses any other open one; clicking the open bar
+  // again collapses it. The card itself is not a link — only its
+  // "→ read" CTA navigates. Pure per-visit VIEW state: never persisted,
+  // never reordered.
   let expandedPinId = $state<string | null>(null);
-  const expandedPin = $derived(
-    pinnedOfficials.find((p: any) => p._id === expandedPinId) ?? pinnedOfficials[0]
-  );
 
   // Slide duration for the row swap — 0 under prefers-reduced-motion
   // (instant, no animation). Island is client:only, but guard anyway.
@@ -156,14 +154,8 @@
       ? 0
       : 180;
 
-  // Focus management: the clicked bar button is replaced in place by the
-  // expanded card, which would drop keyboard focus to <body>. Move focus
-  // to the expanded card's link instead.
-  let expandedLinkEl = $state<HTMLAnchorElement | null>(null);
-  async function expandPin(id: string) {
-    expandedPinId = id;
-    await tick();
-    expandedLinkEl?.focus();
+  function togglePin(id: string) {
+    expandedPinId = expandedPinId === id ? null : id;
   }
 
   // Relative time for the slim pin bars — shared helper (src/lib/relTime.ts).
@@ -512,58 +504,53 @@
       }`}
     >
       <!-- Pinned official announcements (real DB docs, up to MAX_PINS).
-           Accordion (Aug 2026 v2): pins keep their newest-first order;
-           exactly ONE is expanded in place as the full featured card,
-           the others are slim one-line pin bars. Clicking a bar expands
-           it in its own row and collapses the open one — both branches
-           carry transition:slide so the row height interpolates smoothly
-           (bar 44px ↔ card height; two rows animating in opposite
-           directions keep the page height near-constant). The expanded
-           card navigates to the detail page. Hidden when the kind filter
+           Accordion v3 (2026-09-12): pins keep their newest-first order
+           and all start as slim one-line bars, stacked tight (8px) in one
+           full-width grid cell. Clicking a bar opens its card beneath it
+           (transition:slide) and collapses any other open one; clicking
+           the open bar again closes it. The card is NOT a link — only its
+           "→ read" CTA (readHref) navigates. Hidden when the kind filter
            wouldn't include announcements. -->
-      {#if activeFilter === 'all' || activeFilter === 'announcement'}
-        {#each pinnedOfficials as pin (pin._id)}
-          <div class="md:col-span-2 lg:col-span-3">
-            {#if pin === expandedPin}
-              <div transition:slide={{ duration: pinSlideMs }}>
-                <a
-                  bind:this={expandedLinkEl}
-                  href={detailHref(pin)}
-                  class="block focus:outline-none focus:ring-2 focus:ring-ink rounded-lg"
-                  aria-label="Offizielle Ankündigung"
-                >
-                  <ForumPostCard
-                    topic={pin}
-                    kind="announcement"
-                    featured
-                    pinned
-                    isOfficial
-                    team={pin.author?.role === 'admin'}
-                    bookmarked={savedIds.has(String(pin._id))}
-                  />
-                </a>
-              </div>
-            {:else}
+      {#if (activeFilter === 'all' || activeFilter === 'announcement') && pinnedOfficials.length}
+        <div class="md:col-span-2 lg:col-span-3 flex flex-col gap-2">
+          {#each pinnedOfficials as pin (pin._id)}
+            {@const open = expandedPinId === pin._id}
+            <div>
               <!-- #7fc2ce is deliberate: teal legible on ink (no on-ink teal
                    token exists — same reason the blog has --k-rust-on-ink).
                    Don't "fix" it to text-teal, which vanishes on the ink bg. -->
-              <div transition:slide={{ duration: pinSlideMs }}>
-                <button
-                  type="button"
-                  aria-expanded="false"
-                  onclick={() => expandPin(pin._id)}
-                  class="w-full text-left flex items-center gap-3 min-h-[44px] px-4 py-[9px] bg-ink text-paper border-[1.5px] border-teal rounded-lg shadow-[2px_2px_0_var(--k-teal)] focus:outline-none focus:ring-2 focus:ring-ink transition-all duration-[180ms] ease-out hover:-translate-x-px hover:-translate-y-px"
-                >
-                  <span aria-hidden="true" class="text-[12px]">📌</span>
-                  <span class="shrink-0 font-dmmono text-[9px] uppercase tracking-[0.12em] text-[#7fc2ce]">{$t['pinned.bar.label']}</span>
-                  <span class="min-w-0 truncate font-bricolage text-[14px] font-bold tracking-[-0.01em]">{pin.title}</span>
-                  <span class="ml-auto shrink-0 font-dmmono text-[9.5px] text-paper/55">{pinBarTime(pin.date)}</span>
-                  <span aria-hidden="true" class="shrink-0 text-[#7fc2ce] font-bold">▾</span>
-                </button>
-              </div>
-            {/if}
-          </div>
-        {/each}
+              <button
+                type="button"
+                aria-expanded={open}
+                aria-controls={`pin-card-${pin._id}`}
+                onclick={() => togglePin(pin._id)}
+                class="w-full text-left flex items-center gap-3 min-h-[44px] px-4 py-[9px] bg-ink text-paper border-[1.5px] border-teal rounded-lg shadow-[2px_2px_0_var(--k-teal)] focus:outline-none focus:ring-2 focus:ring-ink transition-all duration-[180ms] ease-out hover:-translate-x-px hover:-translate-y-px"
+              >
+                <span aria-hidden="true" class="text-[12px]">📌</span>
+                <span class="shrink-0 font-dmmono text-[9px] uppercase tracking-[0.12em] text-[#7fc2ce]">{$t['pinned.bar.label']}</span>
+                <span class="min-w-0 truncate font-bricolage text-[14px] font-bold tracking-[-0.01em]">{pin.title}</span>
+                <span class="ml-auto shrink-0 font-dmmono text-[9.5px] text-paper/55">{pinBarTime(pin.date)}</span>
+                <span aria-hidden="true" class="shrink-0 text-[#7fc2ce] font-bold">{open ? '▴' : '▾'}</span>
+              </button>
+              {#if open}
+                <div id={`pin-card-${pin._id}`} transition:slide={{ duration: pinSlideMs }}>
+                  <div class="pt-2">
+                    <ForumPostCard
+                      topic={pin}
+                      kind="announcement"
+                      featured
+                      pinned
+                      isOfficial
+                      team={pin.author?.role === 'admin'}
+                      bookmarked={savedIds.has(String(pin._id))}
+                      readHref={detailHref(pin)}
+                    />
+                  </div>
+                </div>
+              {/if}
+            </div>
+          {/each}
+        </div>
       {/if}
 
       <!-- Regular feed. Per-topic moderation status drives placement:
