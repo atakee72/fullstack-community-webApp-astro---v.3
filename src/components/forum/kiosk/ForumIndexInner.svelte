@@ -526,7 +526,7 @@
                 aria-expanded={open}
                 aria-controls={`pin-card-${pin._id}`}
                 onclick={() => togglePin(pin._id)}
-                class={`w-full text-left flex items-center gap-3 min-h-[44px] px-4 py-[9px] bg-ink text-paper border-[1.5px] border-teal focus:outline-none focus:ring-2 focus:ring-ink transition-all duration-[180ms] ease-out ${
+                class={`w-full text-left flex items-center gap-3 min-h-[44px] md:min-h-[34px] px-4 py-[9px] md:py-[4px] bg-ink text-paper border-[1.5px] border-teal focus:outline-none focus:ring-2 focus:ring-ink transition-all duration-[180ms] ease-out ${
                   open ? 'rounded-t-lg' : 'rounded-lg shadow-[2px_2px_0_var(--k-teal)] hover:-translate-x-px hover:-translate-y-px'
                 }`}
               >
