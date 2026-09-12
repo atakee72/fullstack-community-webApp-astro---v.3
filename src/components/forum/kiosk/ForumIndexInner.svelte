@@ -14,12 +14,13 @@
   // marker shows in the strap. Phase 5 reads a real `pinned` boolean +
   // admin role from the database.
 
-  import { onMount } from 'svelte';
+  import { tick, onMount } from 'svelte';
   import { slide } from 'svelte/transition';
   import { showToast } from '../../../utils/toast';
   import { createQuery } from '@tanstack/svelte-query';
   import { t, locale } from '../../../lib/kiosk-i18n';
   import { relTime } from '../../../lib/relTime';
+  import { parseIndexState, serializeIndexState } from '../../../lib/forum/indexUrlState';
   import { online } from '../../../lib/onlineStore';
   import { MAX_PINS } from '../../../lib/announcements/pinRules';
   import ForumPostCard from './ForumPostCard.svelte';
@@ -50,7 +51,61 @@
     if (url.searchParams.get('just_posted') === '1') {
       showToast($t['forum.compose.success'], { type: 'success' });
       url.searchParams.delete('just_posted');
-      window.history.replaceState({}, '', url.toString());
+      // Keep Astro's ClientRouter state ({ index, scrollX, scrollY }) intact.
+      window.history.replaceState(window.history.state, '', url.toString());
+    }
+
+    // Scroll restore across browser back. Astro's router scrolls to the
+    // saved position right after the swap — while this client:only island
+    // is still empty, so the page is too short and the attempt clamps to
+    // ~0 (and its scrollend bookkeeping then overwrites history.state with
+    // that 0). So we keep our own snapshot: written when the page is left,
+    // honoured only when we come back to the SAME history entry and URL.
+    //
+    // window.top !== window.self guard (dev-only bug, found live 2026-09-12):
+    // Astro's dev server preloads a `client:only` destination page in a
+    // HIDDEN IFRAME before swapping (`prepareForClientOnlyComponents`,
+    // astro/dist/transitions/router.js — DEV ONLY, absent from prod
+    // builds). That iframe is same-origin, so it shares sessionStorage; it
+    // mounts a SECOND ForumIndexInner whose historyIndex() also reads 0 (a
+    // fresh top-level load), which spuriously matches our stored index and
+    // lets the iframe consume + immediately overwrite (with its own y:0)
+    // the real snapshot before the real page ever mounts. Skipping the
+    // whole snapshot/restore dance inside any iframe sidesteps it — this
+    // island never legitimately runs framed in production.
+    let cleanupScroll: (() => void) | undefined;
+    if (window.top === window.self) {
+      const SCROLL_KEY = 'forum-index-scroll';
+      const historyIndex = (): number | null =>
+        (window.history.state as { index?: number } | null)?.index ?? null;
+      const snapshot = () => {
+        try {
+          sessionStorage.setItem(
+            SCROLL_KEY,
+            JSON.stringify({ index: historyIndex(), href: window.location.href, y: window.scrollY })
+          );
+        } catch { /* storage unavailable — no restore, nothing else breaks */ }
+      };
+      try {
+        const raw = sessionStorage.getItem(SCROLL_KEY);
+        sessionStorage.removeItem(SCROLL_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw) as { index: number | null; href: string; y: number };
+          const samePath = new URL(saved.href, window.location.href).pathname === window.location.pathname;
+          if (saved.index === historyIndex() && samePath && saved.y > 0) {
+            tick().then(() => window.scrollTo({ top: saved.y, behavior: 'instant' as ScrollBehavior }));
+          }
+        }
+      } catch { /* malformed or unavailable — ignore */ }
+      // astro:before-preparation fires at the start of every client-routed
+      // navigation (ViewTransitions); pagehide covers hard navigations,
+      // reloads and tab discards.
+      document.addEventListener('astro:before-preparation', snapshot);
+      window.addEventListener('pagehide', snapshot);
+      cleanupScroll = () => {
+        document.removeEventListener('astro:before-preparation', snapshot);
+        window.removeEventListener('pagehide', snapshot);
+      };
     }
     if (currentUserId) {
       fetch('/api/posts/save')
@@ -60,6 +115,7 @@
         })
         .catch(() => {});
     }
+    return cleanupScroll;
   });
 
   const query = createQuery(() => ({
@@ -163,8 +219,15 @@
 
   // Filter state — Phase 4a applies tag filters locally only; type/saved/mine
   // filters toggle the active pill but don't reshape the data yet.
-  let activeFilter = $state<Filter>('all');
-  let activeTag = $state<string | null>(null);
+  // View state lives in the URL (?kind=&tag=&more=) so browser back from a
+  // post restores the same feed (parked since the 09-09 mobile audit).
+  // client:only island → window exists at init; the guard keeps the
+  // SSR-compile path harmless.
+  const initialUrlState = parseIndexState(
+    typeof window !== 'undefined' ? window.location.search : ''
+  );
+  let activeFilter = $state<Filter>(initialUrlState.kind);
+  let activeTag = $state<string | null>(initialUrlState.tag);
 
   // Filter ladder:
   //   1. kind filter (discussion / announcement / recommendation) when
@@ -205,7 +268,7 @@
   // "MEHR LADEN ↓" reveals a page at a time (wired 2026-09-05, replacing the
   // inert span). Pins/featured render separately, so only filteredRest pages.
   const PAGE_SIZE = 12;
-  let visibleCount = $state(PAGE_SIZE);
+  let visibleCount = $state(PAGE_SIZE * initialUrlState.pages);
   const visibleRest = $derived(filteredRest.slice(0, visibleCount));
   const feedHasMore = $derived(filteredRest.length > visibleCount);
   const pageCount = $derived(Math.max(1, Math.ceil(filteredRest.length / PAGE_SIZE)));
@@ -215,11 +278,29 @@
   function loadMore() {
     visibleCount += PAGE_SIZE;
   }
-  // Reset to the first page whenever the active filter or tag changes.
+  // Reset to the first page whenever the active filter or tag CHANGES —
+  // compared against the last seen pair, so the first run (which may
+  // carry ?more=N from the URL) doesn't reset anything.
+  let lastFilterKey = `${activeFilter}|${activeTag ?? ''}`;
   $effect(() => {
-    activeFilter;
-    activeTag;
+    const key = `${activeFilter}|${activeTag ?? ''}`;
+    if (key === lastFilterKey) return;
+    lastFilterKey = key;
     visibleCount = PAGE_SIZE;
+  });
+
+  // Mirror the view state into the URL. replaceState, not pushState: the
+  // back button leaves the forum, it doesn't step through filter clicks.
+  // history.state is passed through unchanged — Astro's ClientRouter keeps
+  // { index, scrollX, scrollY } there and loses its place if it's wiped.
+  $effect(() => {
+    if (typeof window === 'undefined') return;
+    const kind = activeFilter === 'saved' ? 'all' : activeFilter;
+    const next = serializeIndexState(
+      { kind, tag: activeTag, pages: Math.max(1, Math.ceil(visibleCount / PAGE_SIZE)) },
+      window.location.href
+    );
+    if (next !== window.location.href) window.history.replaceState(window.history.state, '', next);
   });
 
   function topTags(input: any[], n = 6): string[] {
