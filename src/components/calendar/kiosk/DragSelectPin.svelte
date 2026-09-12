@@ -48,11 +48,19 @@
         locale: dateLocale
       });
     }
-    const f = format(from, $locale === 'de' ? 'd.' : 'd', { locale: dateLocale });
-    const t2 = format(to, $locale === 'de' ? 'd. MMMM' : 'MMM d', { locale: dateLocale });
+    // Same month: „29.–30. September" / "Sep 29–30". Across a month
+    // boundary (a range may spill into the neighbouring month) both ends
+    // name their month, abbreviated so the pin stays narrow.
+    const sameMonth = from.getMonth() === to.getMonth() && from.getFullYear() === to.getFullYear();
+    const f = sameMonth
+      ? format(from, $locale === 'de' ? 'd.' : 'd', { locale: dateLocale })
+      : format(from, $locale === 'de' ? 'd. MMM' : 'MMM d', { locale: dateLocale });
+    const t2 = sameMonth
+      ? format(to, $locale === 'de' ? 'd. MMMM' : 'MMM d', { locale: dateLocale })
+      : format(to, $locale === 'de' ? 'd. MMM' : 'MMM d', { locale: dateLocale });
     const dowF = format(from, 'EEEEE', { locale: dateLocale });
     const dowT = format(to, 'EEEEE', { locale: dateLocale });
-    return `${f}–${t2} · ${dowF}–${dowT}`;
+    return `${f}${sameMonth ? '–' : ' – '}${t2} · ${dowF}–${dowT}`;
   });
 
   const kicker = $derived(

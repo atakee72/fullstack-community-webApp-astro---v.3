@@ -304,7 +304,7 @@
       const cell = el.closest('[data-cell-date]');
       if (cell) { iso = cell.getAttribute('data-cell-date'); break; }
     }
-    const next = resolveDragEnd(rangeStart, iso ? new Date(iso) : null, startOfDay(new Date()), visibleMonth, rangeEnd);
+    const next = resolveDragEnd(rangeStart, iso ? new Date(iso) : null, startOfDay(new Date()), rangeEnd);
     if ((next?.getTime() ?? null) === (rangeEnd?.getTime() ?? null)) return;
     rangeEnd = next;
     if ('vibrate' in navigator) {
