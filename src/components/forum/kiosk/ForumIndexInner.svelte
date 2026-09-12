@@ -1,3 +1,17 @@
+<script module lang="ts">
+  // Identifies THIS document. `<script module>` runs exactly once per
+  // module load (shared by every instance), unlike the instance `<script>`
+  // below which re-runs on each mount — so this survives client-routed
+  // (ViewTransitions) swaps that unmount/remount the island, and the token
+  // matches on a browser-back within the same document while differing
+  // after any hard load — a reload or a `location.href` navigation loads a
+  // fresh module and must not inherit the previous document's scroll
+  // position. (Was mistakenly placed in the instance script first — that
+  // re-executes on every mount, which defeated the whole point; caught via
+  // the probe's scrollAfterBack regressing to 0.)
+  const DOC_TOKEN = Math.random().toString(36).slice(2);
+</script>
+
 <script lang="ts">
   // Forum index inner — Phase 4a, loaded state.
   //
@@ -60,7 +74,15 @@
     // is still empty, so the page is too short and the attempt clamps to
     // ~0 (and its scrollend bookkeeping then overwrites history.state with
     // that 0). So we keep our own snapshot: written when the page is left,
-    // honoured only when we come back to the SAME history entry and URL.
+    // honoured only when we come back to the SAME history entry and URL —
+    // AND the same document (DOC_TOKEN, see its module-scope declaration
+    // above). Without the token, a hard load (e.g. compose's
+    // `location.href = '/forum?just_posted=1'` after publish/cancel) is a
+    // fresh document whose `history.state.index` is ALSO 0, which would
+    // otherwise false-positive match a stale snapshot from the page the
+    // member scrolled on before navigating away — restoring scroll onto a
+    // different list. A hard reload/nav therefore never restores scroll
+    // (accepted: only a same-document browser-back does).
     //
     // window.top !== window.self guard (dev-only bug, found live 2026-09-12):
     // Astro's dev server preloads a `client:only` destination page in a
@@ -82,7 +104,12 @@
         try {
           sessionStorage.setItem(
             SCROLL_KEY,
-            JSON.stringify({ index: historyIndex(), href: window.location.href, y: window.scrollY })
+            JSON.stringify({
+              token: DOC_TOKEN,
+              index: historyIndex(),
+              href: window.location.href,
+              y: window.scrollY
+            })
           );
         } catch { /* storage unavailable — no restore, nothing else breaks */ }
       };
@@ -90,9 +117,14 @@
         const raw = sessionStorage.getItem(SCROLL_KEY);
         sessionStorage.removeItem(SCROLL_KEY);
         if (raw) {
-          const saved = JSON.parse(raw) as { index: number | null; href: string; y: number };
+          const saved = JSON.parse(raw) as {
+            token?: string;
+            index: number | null;
+            href: string;
+            y: number;
+          };
           const samePath = new URL(saved.href, window.location.href).pathname === window.location.pathname;
-          if (saved.index === historyIndex() && samePath && saved.y > 0) {
+          if (saved.token === DOC_TOKEN && saved.index === historyIndex() && samePath && saved.y > 0) {
             tick().then(() => window.scrollTo({ top: saved.y, behavior: 'instant' as ScrollBehavior }));
           }
         }
@@ -316,7 +348,13 @@
       .slice(0, n)
       .map(([tag]) => tag);
   }
-  const tags = $derived(topTags(items));
+  // A URL-restored activeTag outside the top 6 by-count still needs a
+  // pressed pill to render (so it's visible AND toggleable) — append it
+  // when it isn't already in the top-6 list.
+  const tags = $derived.by(() => {
+    const base = topTags(items);
+    return activeTag && !base.includes(activeTag) ? [...base, activeTag] : base;
+  });
 
   // Stats: total / new since yesterday / discussed today (a visible reply in
   // the last 24h — `lastCommentAt` is stamped server-side by
